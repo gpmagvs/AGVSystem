@@ -12,10 +12,16 @@ namespace AGVSystem.Controllers
     {
 
         [HttpGet("AGVOnline")]
-        public async Task<IActionResult> AGVOnline(string ip)
+        public async Task<IActionResult> AGVOnline(string agv_name)
         {
-            VMSManager.AGVOnline(ip);
-            return Ok();
+            (bool success, string message) result = await VMSManager.AGVOnline(agv_name);
+            return Ok(new { Success = result.success, Message = result.message });
+        }
+        [HttpGet("AGVOffline")]
+        public async Task<IActionResult> AGVOffline(string agv_name)
+        {
+            (bool success, string message) result = await VMSManager.AGVOffline(agv_name);
+            return Ok(new { Success = result.success, Message = result.message });
         }
 
 

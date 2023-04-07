@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using static AGVSytemCommon.clsEnums;
 
 namespace AGVSystem.VMS.GPMxYUNTech_FORK
 {
@@ -14,6 +15,7 @@ namespace AGVSystem.VMS.GPMxYUNTech_FORK
 
         public clsYunForkVMS(string AGV_Name)
         {
+            agv_model = AGV_MODEL.YUNTECH_FORK_AGV;
             BaseProps = new AGVSytemCommon.VMSBaseProp
             {
                 AGV_Name = AGV_Name,
@@ -38,7 +40,7 @@ namespace AGVSystem.VMS.GPMxYUNTech_FORK
         /// 取得任務狀態
         /// </summary>
         /// <returns></returns>
-        public async Task<clsTaskStatus> GetTaskStatus()
+        public async Task< GPMxYUNTech_FORK.Models.clsTaskStatus> GetTaskStatus()
         {
 
             (HttpResponseMessage response, string content) resp = await Http.Get(APIHost, "GetTaskStatus");
@@ -50,7 +52,7 @@ namespace AGVSystem.VMS.GPMxYUNTech_FORK
                 var _data = JsonConvert.DeserializeObject<JArray>(json);
                 var _runningTasks = _data.First();
                 var _completedTasks = _data.Last();
-                clsTaskStatus task_status = new clsTaskStatus();
+                GPMxYUNTech_FORK.Models.clsTaskStatus task_status = new GPMxYUNTech_FORK.Models.clsTaskStatus();
                 task_status.RunningTasks = JsonConvert.DeserializeObject<List<clsTaskStatusItem>>(_runningTasks.ToString());
                 task_status.CompletedTasks = JsonConvert.DeserializeObject<List<clsTaskStatusItem>>(_completedTasks.ToString());
                 return task_status;

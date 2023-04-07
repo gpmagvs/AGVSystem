@@ -8,9 +8,6 @@ namespace AGVSystem.VMS
 
         public static Dictionary<string, VMSEntity> VMSList = new Dictionary<string, VMSEntity>()
         {
-            {"YUNAGV_01" , new GPMxYUNTech_FORK.clsYunForkVMS("YUNAGV_01"){} },
-            {"YUNAGV_02" , new GPMxYUNTech_FORK.clsYunForkVMS("YUNAGV_02")},
-            {"FORK_AGV_02" , new VMSEntity(AGV_Name:"FORK_AGV_02")},
         };
         public static bool TryAddVMS(Socket socket)
         {
@@ -41,21 +38,34 @@ namespace AGVSystem.VMS
             else
                 return null;
         }
-
-        public static void AGVOnline(string ip)
+        public static VMSEntity GetVMSByAGV_Name(string AGV_Name)
         {
-            var vms = GetVMSByIP(ip);
+            VMSEntity? vms = VMSList.Values.FirstOrDefault(d => d.BaseProps.AGV_Name == AGV_Name);
             if (vms != null)
-            {
-                vms.OnlineModeChangeRequest(AGVSytemCommon.clsEnums.ONLINE_STATE.ONLINE);
-            }
+                return vms;
+            else
+                return null;
+        }
 
+        internal static async Task<(bool success, string message)> AGVOffline(string AGV_Name)
+        {
+            VMSEntity vms = GetVMSByAGV_Name(AGV_Name);
+            if (vms == null)
+                return (false, $"{AGV_Name} doesn't exist");
+
+            return await vms.OnlineModeChangeRequest(AGVSytemCommon.clsEnums.ONLINE_STATE.OFFLINE);
+        }
+        public static async Task<(bool success, string message)> AGVOnline(string AGV_Name)
+        {
+            VMSEntity vms = GetVMSByAGV_Name(AGV_Name);
+            if (vms == null)
+                return (false, $"{AGV_Name} doesn't exist");
+
+            return await vms.OnlineModeChangeRequest(AGVSytemCommon.clsEnums.ONLINE_STATE.ONLINE);
         }
 
         internal static Dictionary<string, ViewModel.VMSViewModel> GetVMSViewData()
         {
-            VMSList.First().Value.Running_Status.Last_Visited_Node = 71;
-            VMSList.Last().Value.Running_Status.Last_Visited_Node = 53;
             return VMSList.ToDictionary(vms => vms.Key, vms => new ViewModel.VMSViewModel()
             {
                 BaseProps = vms.Value.BaseProps,
@@ -63,5 +73,6 @@ namespace AGVSystem.VMS
                 RunningStatus = vms.Value.Running_Status,
             });
         }
+
     }
 }
