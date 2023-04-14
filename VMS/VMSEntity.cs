@@ -1,12 +1,12 @@
-﻿using AGVSytemCommon;
-using AGVSytemCommon.AGVMessage;
+﻿using AGVSytemCommonNet6;
+using AGVSytemCommonNet6.AGVMessage;
 using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Diagnostics.Eventing.Reader;
 using System.Net.Sockets;
 using System.Text;
 using static AGVSystem.VMS.clsTaskStatus;
-using static AGVSytemCommon.clsEnums;
+using static AGVSytemCommonNet6.clsEnums;
 
 namespace AGVSystem.VMS
 {
@@ -87,7 +87,7 @@ namespace AGVSystem.VMS
             {
                 online_state_req = ONLINE_STATE.OFFLINE;
                 Console.WriteLine(ex.ToString());
-                Running_Status.AGV_Status = (int)AGV_STATUS.DOWN;
+                Running_Status.AGV_Status = (int)MAIN_STATUS.DOWN;
                 return;
             }
 
@@ -208,7 +208,7 @@ namespace AGVSystem.VMS
         private bool IsAGVOnlineModeChangeable(ONLINE_STATE mode_request, out string message)
         {
             message = "";
-            AGV_STATUS current_agv_status = Running_Status.GetAGVStatus();
+            MAIN_STATUS current_agv_status = Running_Status.GetAGVStatus();
             if (mode_request == ONLINE_STATE.ONLINE)
             {
                 if (Running_Status.Last_Visited_Node == 0)
@@ -216,7 +216,7 @@ namespace AGVSystem.VMS
                     message = "AGV 必須停在Tag上";
                     return false;
                 }
-                if (current_agv_status != AGV_STATUS.IDLE)
+                if (current_agv_status != MAIN_STATUS.IDLE)
                 {
                     message = "AGV 狀態不可上線";
                     return false;

@@ -53,7 +53,7 @@ namespace AGVSystem.VMS
             if (vms == null)
                 return (false, $"{AGV_Name} doesn't exist");
 
-            return await vms.OnlineModeChangeRequest(AGVSytemCommon.clsEnums.ONLINE_STATE.OFFLINE);
+            return await vms.OnlineModeChangeRequest(AGVSytemCommonNet6.clsEnums.ONLINE_STATE.OFFLINE);
         }
         public static async Task<(bool success, string message)> AGVOnline(string AGV_Name)
         {
@@ -61,7 +61,7 @@ namespace AGVSystem.VMS
             if (vms == null)
                 return (false, $"{AGV_Name} doesn't exist");
 
-            return await vms.OnlineModeChangeRequest(AGVSytemCommon.clsEnums.ONLINE_STATE.ONLINE);
+            return await vms.OnlineModeChangeRequest(AGVSytemCommonNet6.clsEnums.ONLINE_STATE.ONLINE);
         }
 
         internal static Dictionary<string, ViewModel.VMSViewModel> GetVMSViewData()

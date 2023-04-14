@@ -1,10 +1,10 @@
-﻿using AGVSystem.HttpHelper;
+﻿using AGVSytemCommonNet6.HttpHelper;
 using AGVSystem.VMS.GPMxYUNTech_FORK.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using static AGVSytemCommon.clsEnums;
+using static AGVSytemCommonNet6.clsEnums;
 
 namespace AGVSystem.VMS.GPMxYUNTech_FORK
 {
@@ -16,7 +16,7 @@ namespace AGVSystem.VMS.GPMxYUNTech_FORK
         public clsYunForkVMS(string AGV_Name)
         {
             agv_model = AGV_MODEL.YUNTECH_FORK_AGV;
-            BaseProps = new AGVSytemCommon.VMSBaseProp
+            BaseProps = new AGVSytemCommonNet6.VMSBaseProp
             {
                 AGV_Name = AGV_Name,
                 AGV_SID = "001:001:100",

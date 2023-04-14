@@ -1,5 +1,5 @@
 ﻿using AGVSystem.VMS;
-using AGVSytemCommon.MAP;
+using AGVSytemCommonNet6.MAP;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;

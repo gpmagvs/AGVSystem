@@ -1,6 +1,6 @@
-﻿using AGVSytemCommon;
-using AGVSytemCommon.AGVMessage;
-using static AGVSytemCommon.clsEnums;
+﻿using AGVSytemCommonNet6;
+using AGVSytemCommonNet6.AGVMessage;
+using static AGVSytemCommonNet6.clsEnums;
 
 namespace AGVSystem.ViewModel
 {

@@ -1,5 +1,5 @@
-﻿using AGVSystem.DATABASE;
-using AGVSystem.UserManagers;
+﻿using AGVSystemCommonNet6.DATABASE;
+using AGVSystemCommonNet6.UserManagers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.AspNetCore.Identity;
@@ -18,9 +18,9 @@ namespace AGVSystem.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private readonly UserDbContext _userDbContext;
+        private readonly AGVSDbContext _userDbContext;
 
-        public AuthController(UserDbContext dbContext)
+        public AuthController(AGVSDbContext dbContext)
         {
             _userDbContext = dbContext;
         }

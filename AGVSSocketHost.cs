@@ -24,7 +24,7 @@ namespace AGVSystem
         {
             // 設定伺服器 IP 位址和 Port
             string ipAddress = "127.0.0.1";
-            int port = 8888;
+            int port = 15500;
             IPAddress serverIPAddress = IPAddress.Parse(ipAddress);
             IPEndPoint serverEndPoint = new IPEndPoint(serverIPAddress, port);
             Socket serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);

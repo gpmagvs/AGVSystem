@@ -1,28 +1,27 @@
 using AGVSystem;
-using Microsoft.AspNetCore.Http.Json;
-using System.Diagnostics;
+using AGVSystem.TaskManagers;
+using AGVSystemCommonNet6.DATABASE;
+using AGVSystemCommonNet6.UserManagers;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http.Json;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using AGVSystem.DATABASE;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity;
-using AGVSystem.UserManagers;
-using System;
 
 AGVSSocketHost agvs_host = new AGVSSocketHost();
 agvs_host.Start();
 
-
 var builder = WebApplication.CreateBuilder(args);
+
+string  DBConnection = builder.Configuration.GetConnectionString("DefaultConnection");
+Directory.CreateDirectory(Path.GetDirectoryName(DBConnection.Split('=')[1]));
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers().AddJsonOptions(options => options.JsonSerializerOptions.PropertyNamingPolicy = null);
 
-builder.Services.AddDbContext<UserDbContext>(options => options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-
+builder.Services.AddDbContext<AGVSDbContext>(options => options.UseSqlite(DBConnection));
 
 builder.Services.Configure<JsonOptions>(options =>
 {
@@ -45,14 +44,20 @@ var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
-    var dbContext = scope.ServiceProvider.GetRequiredService<UserDbContext>();
+
+    AGVSDbContext TaskDbContext = scope.ServiceProvider.GetRequiredService<AGVSDbContext>();
+    TaskDbContext.Database.EnsureCreated();
+
+    var dbContext = scope.ServiceProvider.GetRequiredService<AGVSDbContext>();
     dbContext.Database.EnsureCreated();
     var existingUser = await dbContext.Users.FirstOrDefaultAsync(u => u.Username == "dev");
     if (existingUser == null)
     {
-        await dbContext.Users.AddAsync(new UserEntity { Username = "dev", Password = "12345678", Role = UserEntity.USER_ROLE.DEVELOPER});
+        await dbContext.Users.AddAsync(new UserEntity { Username = "dev", Password = "12345678", Role = UserEntity.USER_ROLE.DEVELOPER });
         await dbContext.SaveChangesAsync();
     }
+
+
 }
 
 
@@ -69,8 +74,8 @@ app.UseWebSockets(new WebSocketOptions { KeepAliveInterval = TimeSpan.FromSecond
 
 app.UseDefaultFiles(new DefaultFilesOptions()
 {
-
 });
+
 app.UseStaticFiles();
 
 //app.UseHttpsRedirection();

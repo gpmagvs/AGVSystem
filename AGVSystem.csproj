@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\AGVSytemCommon\AGVSytemCommon.csproj" />
+    <ProjectReference Include="..\AGVSystemCommonNet6\AGVSystemCommonNet6.csproj" />
   </ItemGroup>
 
 </Project>
