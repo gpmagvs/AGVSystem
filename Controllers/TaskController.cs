@@ -35,7 +35,7 @@ namespace AGVSystem.Controllers
             return Ok();
         }
 
-        [HttpGet("/ws/InCompletedTaskList")]
+        [HttpGet("/ws/TaskData")]
         public async Task GetNotFinishTaskListData()
         {
             if (HttpContext.WebSockets.IsWebSocketRequest)
@@ -49,8 +49,10 @@ namespace AGVSystem.Controllers
 
                     websocket_client.ReceiveAsync(new ArraySegment<byte>(rev_buffer), CancellationToken.None);
 
-                    var data = TaskAllocator.TaskList.FindAll(tk => tk.State != TASK_RUN_STATE.FINISH).ToArray();
-                    await websocket_client.SendAsync(new ArraySegment<byte>(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(data))), System.Net.WebSockets.WebSocketMessageType.Text, true, CancellationToken.None);
+                    var incompleteds = TaskAllocator.InCompletedTaskList.ToArray();
+                    var completeds = TaskAllocator.CompletedTaskList.ToArray();
+
+                    await websocket_client.SendAsync(new ArraySegment<byte>(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new { incompleteds, completeds }))), System.Net.WebSockets.WebSocketMessageType.Text, true, CancellationToken.None);
                 }
             }
             else
@@ -59,9 +61,22 @@ namespace AGVSystem.Controllers
             }
         }
 
+        [HttpGet("Cancel")]
+        [Authorize]
+        public async Task<IActionResult> Cancel(string task_name)
+        {
+            if (!UserValidation())
+            {
+                return Unauthorized();
+            }
+
+            bool canceled= TaskAllocator.Cancel(task_name);
+            return Ok(canceled);
+        }
+
         [HttpPost("move")]
         [Authorize]
-        public async Task<IActionResult> MoveTask(clsTaskDispatchDto taskData)
+        public async Task<IActionResult> MoveTask(clsTaskDto taskData)
         {
             if (!UserValidation())
             {
@@ -74,7 +89,7 @@ namespace AGVSystem.Controllers
         }
         [HttpPost("load")]
         [Authorize]
-        public async Task<IActionResult> LoadTask(clsTaskDispatchDto taskData)
+        public async Task<IActionResult> LoadTask(clsTaskDto taskData)
         {
             if (!UserValidation())
             {
@@ -87,7 +102,7 @@ namespace AGVSystem.Controllers
         }
         [HttpPost("unload")]
         [Authorize]
-        public async Task<IActionResult> UnloadTask(clsTaskDispatchDto taskData)
+        public async Task<IActionResult> UnloadTask(clsTaskDto taskData)
         {
             if (!UserValidation())
             {
@@ -100,7 +115,7 @@ namespace AGVSystem.Controllers
         }
         [HttpPost("carry")]
         [Authorize]
-        public async Task<IActionResult> CarryTask(clsTaskDispatchDto taskData)
+        public async Task<IActionResult> CarryTask(clsTaskDto taskData)
         {
             if (!UserValidation())
             {
@@ -113,7 +128,7 @@ namespace AGVSystem.Controllers
         }
         [HttpPost("charge")]
         [Authorize]
-        public async Task<IActionResult> ChargeTask(clsTaskDispatchDto taskData)
+        public async Task<IActionResult> ChargeTask(clsTaskDto taskData)
         {
             if (!UserValidation())
             {

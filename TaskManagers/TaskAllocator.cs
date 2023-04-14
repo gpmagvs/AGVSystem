@@ -3,14 +3,19 @@ using AGVSystem.VMS;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSytemCommonNet6.HttpHelper;
 using AGVSytemCommonNet6.TASK;
+using Microsoft.EntityFrameworkCore.Scaffolding.Metadata;
 using static AGVSytemCommonNet6.clsEnums;
 
 namespace AGVSystem.TaskManagers
 {
     public class TaskAllocator
     {
-        public static List<clsTaskState> TaskList = new List<clsTaskState>();
-     
+        public static List<clsTaskDto> TaskList => DatabaseHelper.GetALL();
+        public static List<clsTaskDto> InCompletedTaskList => DatabaseHelper.GetALLInCompletedTask();
+        public static List<clsTaskDto> CompletedTaskList => DatabaseHelper.GetALLCompletedTask();
+
+        public static TaskDatabaseHelper DatabaseHelper = new TaskDatabaseHelper();
+
         public enum TASK_RECIEVE_SOURCE
         {
             LOCAL,
@@ -19,9 +24,9 @@ namespace AGVSystem.TaskManagers
 
         public class clsExecuteTaskAck
         {
-            public bool HasAGV { get; set; }
+            public bool Confirm { get; set; }
             public clsAGV AGV { get; set; }
-            public clsTaskDispatchDto taskData { get; set; }
+            public clsTaskDto taskData { get; set; }
             public class clsAGV
             {
                 public AGV_MODEL model { get; set; }
@@ -32,15 +37,22 @@ namespace AGVSystem.TaskManagers
         }
 
 
-        public static void AddTask(clsTaskDispatchDto taskData, TASK_RECIEVE_SOURCE source = TASK_RECIEVE_SOURCE.LOCAL)
+        public static void AddTask(clsTaskDto taskData, TASK_RECIEVE_SOURCE source = TASK_RECIEVE_SOURCE.LOCAL)
         {
-            
-            //var firstTask = taskDbContext.Tasks.First();
             Task.Factory.StartNew(async () =>
             {
-                var response = await Http.PostAsync<clsTaskDispatchDto, clsExecuteTaskAck>($"{AppSettings.VMSHost}/api/VmsManager/ExecuteTask", taskData);
-                TaskList.Add(new clsTaskState(taskData.TaskName, taskData));
+                clsExecuteTaskAck response = await Http.PostAsync<clsTaskDto, clsExecuteTaskAck>($"{AppSettings.VMSHost}/api/VmsManager/ExecuteTask", taskData);
+                if (response.Confirm)
+                {
+                    taskData.RecieveTime = DateTime.Now;
+                    DatabaseHelper.AddTask(taskData);
+                }
             });
+        }
+
+        internal static bool Cancel(string task_name)
+        {
+            return DatabaseHelper.DeleteTask(task_name);
         }
     }
 }

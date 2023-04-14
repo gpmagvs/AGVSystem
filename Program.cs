@@ -54,9 +54,9 @@ using (var scope = app.Services.CreateScope())
     if (existingUser == null)
     {
         await dbContext.Users.AddAsync(new UserEntity { Username = "dev", Password = "12345678", Role = UserEntity.USER_ROLE.DEVELOPER });
-        await dbContext.SaveChangesAsync();
+        dbContext.SaveChanges();
+        dbContext.Dispose();
     }
-
 
 }
 
