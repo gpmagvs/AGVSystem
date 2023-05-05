@@ -1,6 +1,8 @@
 ﻿using AGVSystem.VMS;
+using AGVSystemCommonNet6.DATABASE;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using System.Text;
 
@@ -10,6 +12,12 @@ namespace AGVSystem.Controllers
     [ApiController]
     public class VMSManagerController : ControllerBase
     {
+        private AGVSDbContext _dbContent;
+
+        public VMSManagerController(AGVSDbContext dbContent)
+        {
+            _dbContent = dbContent;
+        }
 
         [HttpGet("AGVOnline")]
         public async Task<IActionResult> AGVOnline(string agv_name)
@@ -31,17 +39,27 @@ namespace AGVSystem.Controllers
             if (HttpContext.WebSockets.IsWebSocketRequest)
             {
                 var websocket_client = await HttpContext.WebSockets.AcceptWebSocketAsync();
-                while (websocket_client.State == System.Net.WebSockets.WebSocketState.Open)
+                try
                 {
-                    Thread.Sleep(1000);
+                    while (websocket_client.State == System.Net.WebSockets.WebSocketState.Open)
+                    {
+                        Thread.Sleep(200);
 
-                    byte[] rev_buffer = new byte[4096];
+                        byte[] rev_buffer = new byte[4096];
 
-                    websocket_client.ReceiveAsync(new ArraySegment<byte>(rev_buffer), CancellationToken.None);
-
-                    var data = VMSManager.GetVMSViewData();
-                    await websocket_client.SendAsync(new ArraySegment<byte>(Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(data))), System.Net.WebSockets.WebSocketMessageType.Text, true, CancellationToken.None);
+                        websocket_client.ReceiveAsync(new ArraySegment<byte>(rev_buffer), CancellationToken.None);
+                        using (AGVStatusDBHelper dBHelper = new AGVStatusDBHelper())
+                        {
+                            var data_db = dBHelper.GetALL().OrderBy(a => a.AGV_Name).ToList();
+                            await websocket_client.SendAsync(new ArraySegment<byte>(Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(data_db))), System.Net.WebSockets.WebSocketMessageType.Text, true, CancellationToken.None);
+                        }
+                    }
                 }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Websocket Client Closed (/ws/VMSStatus):" + ex.Message);
+                }
+
             }
             else
             {

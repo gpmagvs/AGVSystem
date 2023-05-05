@@ -4,6 +4,7 @@ using AGVSystemCommonNet6.DATABASE;
 using AGVSytemCommonNet6.HttpHelper;
 using AGVSytemCommonNet6.TASK;
 using Microsoft.EntityFrameworkCore.Scaffolding.Metadata;
+using System.Diagnostics;
 using static AGVSytemCommonNet6.clsEnums;
 
 namespace AGVSystem.TaskManagers
@@ -41,12 +42,12 @@ namespace AGVSystem.TaskManagers
         {
             Task.Factory.StartNew(async () =>
             {
+                
                 clsExecuteTaskAck response = await Http.PostAsync<clsTaskDto, clsExecuteTaskAck>($"{AppSettings.VMSHost}/api/VmsManager/ExecuteTask", taskData);
-                if (response.Confirm)
-                {
-                    taskData.RecieveTime = DateTime.Now;
-                    DatabaseHelper.AddTask(taskData);
-                }
+                taskData = response.taskData;
+                taskData.RecieveTime = DateTime.Now;
+                taskData.State = response.Confirm ? TASK_RUN_STATE.WAIT : TASK_RUN_STATE.FAILURE;
+                DatabaseHelper.Add(taskData);
             });
         }
 

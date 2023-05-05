@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using System.Drawing;
 using System.Runtime.InteropServices;
+using System.Text.Json.Serialization;
 
 namespace AGVSystem.Controllers
 {
@@ -36,11 +37,12 @@ namespace AGVSystem.Controllers
                 return Ok(null);
         }
         [HttpPost("SaveMap")]
-        public async Task<IActionResult> SaveMap(Map map_modified)
+        public async Task<IActionResult> SaveMap([FromBody] Map map_modified)
         {
-            return Ok(MapManager.SaveMapToFile(map_modified, local_map_file_path));
+            MapManager.SaveMapToFile(map_modified, local_map_file_path);
+            AGVSystemCommonNet6.Microservices.MapSync.SendReloadRequest();
+            return Ok();
         }
-
 
 
         [HttpGet("Tags")]
@@ -69,7 +71,7 @@ namespace AGVSystem.Controllers
                 current_tag = agv.Value.Running_Status.Last_Visited_Node,
                 previous_tag = agv.Value.Running_Status.Last_Visited_Node,
                 color = "blue"
-            }) ;
+            });
 
             return Ok(infos);
         }

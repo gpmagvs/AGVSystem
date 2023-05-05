@@ -1,5 +1,6 @@
 ﻿using AGVSystem.Models.TaskAllocation;
 using AGVSystem.TaskManagers;
+using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSytemCommonNet6.TASK;
 using Microsoft.AspNetCore.Authorization;
@@ -70,7 +71,7 @@ namespace AGVSystem.Controllers
                 return Unauthorized();
             }
 
-            bool canceled= TaskAllocator.Cancel(task_name);
+            bool canceled = TaskAllocator.Cancel(task_name);
             return Ok(canceled);
         }
 
