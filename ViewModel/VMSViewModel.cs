@@ -1,6 +1,7 @@
-﻿using AGVSytemCommonNet6;
-using AGVSytemCommonNet6.AGVMessage;
-using static AGVSytemCommonNet6.clsEnums;
+﻿using AGVSystemCommonNet6;
+using AGVSystemCommonNet6.AGVDispatch.Messages;
+
+using static AGVSystemCommonNet6.clsEnums;
 
 namespace AGVSystem.ViewModel
 {
@@ -8,7 +9,7 @@ namespace AGVSystem.ViewModel
     {
         private bool disposedValue;
 
-        public cls_0105_RunningStatusReportHeader RunningStatus { get; set; }
+        public RunningStatus RunningStatus { get; set; }
         public ONLINE_STATE OnlineStatus { get; set; }
         public VMSBaseProp BaseProps { get; set; }
 

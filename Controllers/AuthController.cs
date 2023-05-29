@@ -1,5 +1,5 @@
 ﻿using AGVSystemCommonNet6.DATABASE;
-using AGVSystemCommonNet6.UserManagers;
+using AGVSystemCommonNet6.User;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.AspNetCore.Identity;
@@ -35,7 +35,7 @@ namespace AGVSystem.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register(UserLoginRequest request)
         {
-            var existingUser = await _userDbContext.Users.FirstOrDefaultAsync(u => u.Username == request.Username);
+            var existingUser = await _userDbContext.Users.FirstOrDefaultAsync(u => u.UserName == request.Username);
             if (existingUser != null)
             {
                 return BadRequest(new { Success = false, Message = "Username already exists" });
@@ -43,7 +43,7 @@ namespace AGVSystem.Controllers
 
             var user = new UserEntity
             {
-                Username = request.Username,
+                UserName = request.Username,
                 Password = request.Password
             };
             await _userDbContext.Users.AddAsync(user);
@@ -57,7 +57,7 @@ namespace AGVSystem.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> Login(UserLoginRequest request)
         {
-            var user = await _userDbContext.Users.FirstOrDefaultAsync(u => u.Username == request.Username);
+            var user = await _userDbContext.Users.FirstOrDefaultAsync(u => u.UserName == request.Username);
             if (user == null)
             {
                 return BadRequest(new { Success = false, Message = "Invalid username", UserName = "" });
@@ -83,7 +83,7 @@ namespace AGVSystem.Controllers
             var identity = HttpContext.User.Identity as ClaimsIdentity;
             foreach (var user in usersData)
             {
-                var user_find = await _userDbContext.Users.FirstOrDefaultAsync(_user => _user.Username == user.Username);
+                var user_find = await _userDbContext.Users.FirstOrDefaultAsync(_user => _user.UserName == user.UserName);
 
                 if (user_find != null)
                 {
@@ -95,7 +95,7 @@ namespace AGVSystem.Controllers
             return Ok(new { Success = true });
         }
 
-        private string GenerateJwtToken(string username, string password, UserEntity.USER_ROLE role)
+        private string GenerateJwtToken(string username, string password, ERole role)
         {
             // TODO: 根據需要生成 JWT Token
             var tokenHandler = new JwtSecurityTokenHandler();

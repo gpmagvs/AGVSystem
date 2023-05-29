@@ -1,11 +1,8 @@
-﻿using AGVSystem.Models.TaskAllocation;
-using AGVSystem.VMS;
+﻿using AGVSystemCommonNet6.AGVDispatch.Messages;
 using AGVSystemCommonNet6.DATABASE;
-using AGVSytemCommonNet6.HttpHelper;
-using AGVSytemCommonNet6.TASK;
-using Microsoft.EntityFrameworkCore.Scaffolding.Metadata;
-using System.Diagnostics;
-using static AGVSytemCommonNet6.clsEnums;
+using AGVSystemCommonNet6.HttpHelper;
+using AGVSystemCommonNet6.TASK;
+using static AGVSystemCommonNet6.clsEnums;
 
 namespace AGVSystem.TaskManagers
 {
@@ -46,7 +43,7 @@ namespace AGVSystem.TaskManagers
                 clsExecuteTaskAck response = await Http.PostAsync<clsTaskDto, clsExecuteTaskAck>($"{AppSettings.VMSHost}/api/VmsManager/ExecuteTask", taskData);
                 taskData = response.taskData;
                 taskData.RecieveTime = DateTime.Now;
-                taskData.State = response.Confirm ? TASK_RUN_STATE.WAIT : TASK_RUN_STATE.FAILURE;
+                taskData.State = response.Confirm ? TASK_RUN_STATUS.WAIT : TASK_RUN_STATUS.FAILURE;
                 DatabaseHelper.Add(taskData);
             });
         }

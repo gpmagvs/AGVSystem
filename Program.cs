@@ -4,7 +4,7 @@ using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.Microservices;
-using AGVSystemCommonNet6.UserManagers;
+using AGVSystemCommonNet6.User;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.Data.Sqlite;
@@ -62,10 +62,10 @@ using (IServiceScope scope = app.Services.CreateScope())
 
         using (var ttra = dbContext.Database.BeginTransaction())
         {
-            UserEntity? existingUser = dbContext.Users.FirstOrDefault(u => u.Username == "dev");
+            UserEntity? existingUser = dbContext.Users.FirstOrDefault(u => u.UserName == "dev");
             if (existingUser == null)
             {
-                dbContext.Users.Add(new UserEntity { Username = "dev", Password = "12345678", Role = UserEntity.USER_ROLE.DEVELOPER });
+                dbContext.Users.Add(new UserEntity { UserName = "dev", Password = "12345678", Role = ERole.Developer });
                 dbContext.SaveChanges();
             }
             ttra.Commit();

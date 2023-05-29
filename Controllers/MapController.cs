@@ -1,5 +1,5 @@
-﻿using AGVSystem.VMS;
-using AGVSytemCommonNet6.MAP;
+﻿
+using AGVSystemCommonNet6.MAP;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
@@ -62,19 +62,6 @@ namespace AGVSystem.Controllers
             return Ok(pathInfo);
         }
 
-        [HttpGet("AGVList")]
-        public async Task<IActionResult> AGVList()
-        {
-            var infos = VMSManager.VMSList.Select(agv => new clsAGVInfoVM()
-            {
-                name = agv.Value.BaseProps.AGV_Name,
-                current_tag = agv.Value.Running_Status.Last_Visited_Node,
-                previous_tag = agv.Value.Running_Status.Last_Visited_Node,
-                color = "blue"
-            });
-
-            return Ok(infos);
-        }
 
         public class clsAGVInfoVM
         {

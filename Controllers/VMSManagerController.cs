@@ -1,4 +1,4 @@
-﻿using AGVSystem.VMS;
+﻿
 using AGVSystemCommonNet6.DATABASE;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -17,19 +17,6 @@ namespace AGVSystem.Controllers
         public VMSManagerController(AGVSDbContext dbContent)
         {
             _dbContent = dbContent;
-        }
-
-        [HttpGet("AGVOnline")]
-        public async Task<IActionResult> AGVOnline(string agv_name)
-        {
-            (bool success, string message) result = await VMSManager.AGVOnline(agv_name);
-            return Ok(new { Success = result.success, Message = result.message });
-        }
-        [HttpGet("AGVOffline")]
-        public async Task<IActionResult> AGVOffline(string agv_name)
-        {
-            (bool success, string message) result = await VMSManager.AGVOffline(agv_name);
-            return Ok(new { Success = result.success, Message = result.message });
         }
 
 

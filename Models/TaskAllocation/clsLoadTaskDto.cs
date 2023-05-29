@@ -1,4 +1,4 @@
-﻿using AGVSytemCommonNet6.MAP;
+﻿using AGVSystemCommonNet6.MAP;
 namespace AGVSystem.Models.TaskAllocation
 {
     public class clsLoadTaskDto : clsMoveTaskDto

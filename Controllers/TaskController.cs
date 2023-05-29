@@ -2,7 +2,8 @@
 using AGVSystem.TaskManagers;
 using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.DATABASE;
-using AGVSytemCommonNet6.TASK;
+using AGVSystemCommonNet6.TASK;
+using AGVSystemCommonNet6.User;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -10,7 +11,6 @@ using Newtonsoft.Json;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using static AGVSystemCommonNet6.UserManagers.UserEntity;
 
 namespace AGVSystem.Controllers
 {
@@ -151,7 +151,7 @@ namespace AGVSystem.Controllers
                 var userId = claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value;
                 var userRole = claims.FirstOrDefault(c => c.Type == "Role")?.Value;
 
-                if (userRole == USER_ROLE.VISITOR.ToString())
+                if (userRole == ERole.VISITOR.ToString())
                     return false;
 
                 return true;

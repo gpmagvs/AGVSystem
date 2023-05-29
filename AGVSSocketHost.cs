@@ -1,6 +1,5 @@
 ﻿using System.Net;
 using System.Net.Sockets;
-using AGVSystem.VMS;
 
 namespace AGVSystem
 {
@@ -41,7 +40,6 @@ namespace AGVSystem
                 while (true)
                 {
                     Socket clientSocket = serverSocket.Accept();
-                    VMSManager.TryAddVMS(clientSocket);
                 }
             });
         }
