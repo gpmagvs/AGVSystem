@@ -1,10 +1,12 @@
 using AGVSystem;
+using AGVSystem.Models.Map;
 using AGVSystem.TaskManagers;
 using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.Microservices;
 using AGVSystemCommonNet6.User;
+using EquipmentManagment;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.Data.Sqlite;
@@ -12,6 +14,15 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+
+TaskAllocator.Initialize();
+AGVSMapManager.Initialize();
+StaEQPManagager.InitializeAsync(new clsEQManagementConfigs
+{
+    UseEqEmu = AppSettings.UseEQEmu,
+    EQConfigPath = $"{AppSettings.EquipmentManagementConfigFolder}//EQConfigs.json",
+    WIPConfigPath = $"{AppSettings.EquipmentManagementConfigFolder}//WIPConfigs.json",
+});
 
 AGVSSocketHost agvs_host = new AGVSSocketHost();
 agvs_host.Start();
@@ -100,9 +111,5 @@ app.UseCors(c => c.AllowAnyHeader().AllowAnyOrigin().AllowAnyMethod());
 app.UseAuthorization();
 
 app.MapControllers();
-
-
-
-
 
 app.Run();

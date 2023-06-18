@@ -91,7 +91,12 @@ namespace AGVSystem.Controllers
                     user_find.Role = user.Role;
                     int change_cnt = _userDbContext.SaveChanges();
                 }
+                else
+                {
+                    _userDbContext.Add(user);
+                }
             }
+            _userDbContext.SaveChanges();
             return Ok(new { Success = true });
         }
 

@@ -1,4 +1,5 @@
 ﻿
+using AGVSystem.Models.Map;
 using AGVSystemCommonNet6.MAP;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -13,7 +14,7 @@ namespace AGVSystem.Controllers
     [ApiController]
     public class MapController : ControllerBase
     {
-        internal string local_map_file_path = @"D:\param\Map_UMTC_3F_Yellow.json";
+        internal string local_map_file_path => AppSettings.MapFile;
         private string tempMapFilePath = "";
         [HttpGet]
         public async Task<IActionResult> Get()
@@ -40,7 +41,13 @@ namespace AGVSystem.Controllers
         public async Task<IActionResult> SaveMap([FromBody] Map map_modified)
         {
             MapManager.SaveMapToFile(map_modified, local_map_file_path);
+
+            AGVSMapManager.CurrentMap = map_modified;
+            AGVSMapManager.SyncEQRegionSetting(map_modified.Points.Values.ToList());
+
             AGVSystemCommonNet6.Microservices.MapSync.SendReloadRequest();
+
+            
             return Ok();
         }
 
@@ -57,11 +64,35 @@ namespace AGVSystem.Controllers
         public async Task<IActionResult> PathPlan(int fromTag, int toTag)
         {
             PathFinder finder = new PathFinder();
-            var map = MapManager.LoadMapFromFile(@"D:\param\Map_UMTC_3F_Yellow.json");
+            var map = MapManager.LoadMapFromFile(local_map_file_path);
             var pathInfo = finder.FindShortestPathByTagNumber(map.Points, fromTag, toTag);
             return Ok(pathInfo);
         }
 
+
+        [HttpGet("MapPointTemplate")]
+        public async Task<IActionResult> MapPointTemplate()
+        {
+            return Ok(new MapStation()
+            {
+                Enable = true,
+                StationType = AGVSystemCommonNet6.AGVDispatch.Messages.STATION_TYPE.Normal,
+                TagNumber = 1
+            });
+        }
+
+        /// <summary>
+        /// 給前端的區域選項資料
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("RegionOptions")]
+        public async Task<IActionResult> RegionOptions()
+        {
+            //     { label: 'Normal',
+            //value: 0}
+            var options = AGVSMapManager.MapRegions.Select(map => new { label = map.RegionName, value = map.RegionName }).ToList();
+            return Ok(options);
+        }
 
         public class clsAGVInfoVM
         {

@@ -11,6 +11,7 @@ using Newtonsoft.Json;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using static SQLite.SQLite3;
 
 namespace AGVSystem.Controllers
 {
@@ -42,18 +43,28 @@ namespace AGVSystem.Controllers
             if (HttpContext.WebSockets.IsWebSocketRequest)
             {
                 var websocket_client = await HttpContext.WebSockets.AcceptWebSocketAsync();
+                byte[] rev_buffer = new byte[4096];
+                int incomTaskTotalNum = -1;
+                int comTaskTotalNum = -1;
                 while (websocket_client.State == System.Net.WebSockets.WebSocketState.Open)
                 {
                     Thread.Sleep(1000);
 
-                    byte[] rev_buffer = new byte[4096];
-
                     websocket_client.ReceiveAsync(new ArraySegment<byte>(rev_buffer), CancellationToken.None);
 
-                    var incompleteds = TaskAllocator.InCompletedTaskList.ToArray();
-                    var completeds = TaskAllocator.CompletedTaskList.ToArray();
+                    clsTaskDto[] incompleteds = TaskAllocator.InCompletedTaskList.ToArray();
+                    clsTaskDto[] completeds = TaskAllocator.CompletedTaskList.FindAll(task => task.RecieveTime.Date == DateTime.Now.Date).ToArray();
+                    var _incomtasks = incompleteds.Length;
+                    var _comtasks = completeds.Length;
 
-                    await websocket_client.SendAsync(new ArraySegment<byte>(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new { incompleteds, completeds }))), System.Net.WebSockets.WebSocketMessageType.Text, true, CancellationToken.None);
+                    if (_incomtasks != incomTaskTotalNum | _comtasks != comTaskTotalNum) //有變化再傳送
+                    {
+                        incomTaskTotalNum =_incomtasks;
+                        comTaskTotalNum = _comtasks;
+                        var dto = new { incompleteds, completeds };
+                        var _dtoJson = JsonConvert.SerializeObject(dto);
+                        await websocket_client.SendAsync(new ArraySegment<byte>(Encoding.UTF8.GetBytes(_dtoJson)), System.Net.WebSockets.WebSocketMessageType.Text, true, CancellationToken.None);
+                    }
                 }
             }
             else
@@ -83,10 +94,7 @@ namespace AGVSystem.Controllers
             {
                 return Unauthorized();
             }
-
-            TaskAllocator.AddTask(taskData);
-
-            return Ok();
+            return Ok(await AddTask(taskData));
         }
         [HttpPost("load")]
         [Authorize]
@@ -96,10 +104,7 @@ namespace AGVSystem.Controllers
             {
                 return Unauthorized();
             }
-
-            TaskAllocator.AddTask(taskData);
-
-            return Ok();
+            return Ok(await AddTask(taskData));
         }
         [HttpPost("unload")]
         [Authorize]
@@ -109,10 +114,7 @@ namespace AGVSystem.Controllers
             {
                 return Unauthorized();
             }
-
-            TaskAllocator.AddTask(taskData);
-
-            return Ok();
+            return Ok(await AddTask(taskData));
         }
         [HttpPost("carry")]
         [Authorize]
@@ -122,10 +124,7 @@ namespace AGVSystem.Controllers
             {
                 return Unauthorized();
             }
-
-            TaskAllocator.AddTask(taskData);
-
-            return Ok();
+            return Ok(await AddTask(taskData));
         }
         [HttpPost("charge")]
         [Authorize]
@@ -135,12 +134,13 @@ namespace AGVSystem.Controllers
             {
                 return Unauthorized();
             }
-
-            TaskAllocator.AddTask(taskData);
-
-            return Ok();
+            return Ok(await AddTask(taskData));
         }
-
+        private async Task<object> AddTask(clsTaskDto taskData)
+        {
+            var result = await TaskAllocator.AddTask(taskData);
+            return new { confirm = result.Item1, message = result.Item2.ToString() };
+        }
         private bool UserValidation()
         {
             var identity = HttpContext.User.Identity as ClaimsIdentity;

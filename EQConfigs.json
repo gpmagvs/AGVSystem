@@ -1,0 +1,12 @@
+{
+  "EQ-1": {
+    "ConnOptions": {
+      "ConnMethod": 0,
+      "IP": "127.0.0.1",
+      "Port": 502,
+      "ComPort": "COM1"
+    },
+    "Name": "EQ-1",
+    "TagID": 1
+  }
+}
