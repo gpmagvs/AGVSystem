@@ -34,7 +34,7 @@ namespace AGVSystem.Models.Sys
             bool confirm = true;
             LOG.INFO($"User Try Swich RUN_MODE To {mode}");
 
-            bool isAnyTaskExecuting = TaskAllocator.InCompletedTaskList.Any(task => task.State == TASK_RUN_STATUS.NAVIGATING);
+            bool isAnyTaskExecuting = TaskManager.InCompletedTaskList.Any(task => task.State == TASK_RUN_STATUS.NAVIGATING);
 
             if (isAnyTaskExecuting)
             {

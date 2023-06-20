@@ -54,8 +54,8 @@ namespace AGVSystem.Controllers
 
                     websocket_client.ReceiveAsync(new ArraySegment<byte>(rev_buffer), CancellationToken.None);
 
-                    clsTaskDto[] incompleteds = TaskAllocator.InCompletedTaskList.ToArray();
-                    clsTaskDto[] completeds = TaskAllocator.CompletedTaskList.OrderByDescending(t => t.RecieveTime).Take(30).ToArray();
+                    clsTaskDto[] incompleteds = TaskManager.InCompletedTaskList.ToArray();
+                    clsTaskDto[] completeds = TaskManager.CompletedTaskList.OrderByDescending(t => t.RecieveTime).Take(30).ToArray();
                     var dto = new { incompleteds, completeds };
                     var _dtoJson = JsonConvert.SerializeObject(dto);
                     await websocket_client.SendAsync(new ArraySegment<byte>(Encoding.UTF8.GetBytes(_dtoJson)), System.Net.WebSockets.WebSocketMessageType.Text, true, CancellationToken.None);
@@ -76,7 +76,7 @@ namespace AGVSystem.Controllers
                 return Unauthorized();
             }
 
-            bool canceled = TaskAllocator.Cancel(task_name);
+            bool canceled = TaskManager.Cancel(task_name);
             return Ok(canceled);
         }
 
@@ -171,7 +171,7 @@ namespace AGVSystem.Controllers
         private async Task<object> AddTask(clsTaskDto taskData)
         {
             taskData.DispatcherName = "Web-USER";
-            var result = await TaskAllocator.AddTask(taskData, TaskAllocator.TASK_RECIEVE_SOURCE.MANUAL);
+            var result = await TaskManager.AddTask(taskData, TaskManager.TASK_RECIEVE_SOURCE.MANUAL);
             return new { confirm = result.Item1, message = result.Item2.ToString() };
         }
         private bool UserValidation()

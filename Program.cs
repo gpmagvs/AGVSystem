@@ -18,7 +18,8 @@ using System.Text;
 
 LOG.SetLogFolderName("AGVS LOG");
 LOG.INFO("AGVS System Start");
-TaskAllocator.Initialize();
+TaskManager.Initialize();
+EQTransferTaskManager.Initialize();
 AGVSMapManager.Initialize();
 StaEQPManagager.InitializeAsync(new clsEQManagementConfigs
 {
