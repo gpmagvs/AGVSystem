@@ -7,8 +7,9 @@ namespace AGVSystem.Models.Map
 {
     public class AGVSMapManager
     {
-        public static List<clsMapRegion> MapRegions = new List<clsMapRegion>() {
-            
+        public static List<clsMapRegion> MapRegions = new List<clsMapRegion>()
+        {
+
         };
 
         public static AGVSystemCommonNet6.MAP.Map CurrentMap;
@@ -103,6 +104,14 @@ namespace AGVSystem.Models.Map
                 distanceList.Add(distance);
             }
             return distanceList;
+        }
+
+        internal static string GetNameByTagStr(string currentLocation)
+        {
+            MapStation? point = CurrentMap.Points.Values.FirstOrDefault(pt => pt.TagNumber.ToString() == currentLocation);
+            if (point == null)
+                return currentLocation;
+            return point.Name;
         }
     }
 }

@@ -1,4 +1,6 @@
 ﻿
+using AGVSystem.Models.Map;
+using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.DATABASE;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -33,12 +35,17 @@ namespace AGVSystem.Controllers
                         Thread.Sleep(200);
 
                         byte[] rev_buffer = new byte[4096];
-
                         websocket_client.ReceiveAsync(new ArraySegment<byte>(rev_buffer), CancellationToken.None);
                         using (AGVStatusDBHelper dBHelper = new AGVStatusDBHelper())
                         {
-                            var data_db = dBHelper.GetALL().OrderBy(a => a.AGV_Name).ToList();
-                            await websocket_client.SendAsync(new ArraySegment<byte>(Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(data_db))), System.Net.WebSockets.WebSocketMessageType.Text, true, CancellationToken.None);
+                            clsAGVStateViewModel GenViewMode(clsAGVStateDto data)
+                            {
+                                var s = JsonConvert.DeserializeObject<clsAGVStateViewModel>(JsonConvert.SerializeObject(data));
+                                s.StationName = AGVSMapManager.GetNameByTagStr(data.CurrentLocation);
+                                return s;
+                            };
+                            var vmdata = dBHelper.GetALL().OrderBy(a => a.AGV_Name).ToList().Select(data => GenViewMode(data));
+                            await websocket_client.SendAsync(new ArraySegment<byte>(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(vmdata))), System.Net.WebSockets.WebSocketMessageType.Text, true, CancellationToken.None);
                         }
                     }
                 }
@@ -54,5 +61,10 @@ namespace AGVSystem.Controllers
             }
         }
 
+    }
+
+    public class clsAGVStateViewModel : clsAGVStateDto
+    {
+        public string StationName { get; set; } = "";
     }
 }

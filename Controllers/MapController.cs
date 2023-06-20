@@ -45,9 +45,9 @@ namespace AGVSystem.Controllers
             AGVSMapManager.CurrentMap = map_modified;
             AGVSMapManager.SyncEQRegionSetting(map_modified.Points.Values.ToList());
 
-            AGVSystemCommonNet6.Microservices.MapSync.SendReloadRequest();
+            AGVSystemCommonNet6.Microservices.MapSync.SendReloadRequest(AppSettings.MapFile);
 
-            
+
             return Ok();
         }
 

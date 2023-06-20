@@ -1,4 +1,5 @@
 ﻿using EquipmentManagment;
+using EquipmentManagment.Emu;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AGVSystem.Controllers
@@ -32,15 +33,46 @@ namespace AGVSystem.Controllers
         [HttpGet("Emu/State")]
         public async Task<IActionResult> AsBusyState(string EqName, string State)
         {
-            var outputs = new bool[8] { false, false, true, false, true, true, true, false };
-            if(State=="busy")
-                outputs = new bool[8] { false, false, true, false, true, true, true, false };
-            if(State == "load")
-                outputs = new bool[8] { true, false, false, false, true, true, true, false };
-            if(State == "unload")
-                outputs = new bool[8] { false, true, true, false, true, true, true, false };
-            bool confirm = StaEQPEmulatorsManagager.InputsChange(EqName, 0, outputs);
-            return Ok(confirm);
+            bool confirm = false;
+            string message = "";
+            try
+            {
+                if (StaEQPEmulatorsManagager.TryGetEQEmuByName(EqName, out clsDIOModuleEmu? EQ))
+                {
+                    if (State == "busy")
+                        confirm = EQ.SetStatusBUSY();
+                    if (State == "load")
+                        confirm = EQ.SetStatusLoadable();
+                    if (State == "unload")
+                        confirm = EQ.SetStatusUnloadable();
+                }
+                else
+                {
+                    message = $"{EqName} not exist.";
+                    confirm = false;
+                }
+            }
+            catch (Exception ex)
+            {
+                message = $"Exception:{ex.Message}";
+                confirm = false;
+            }
+
+            return Ok(new { confirm, message });
+        }
+
+        [HttpGet("Emu/AllBusy")]
+        public async Task<IActionResult> AllBusy()
+        {
+            StaEQPEmulatorsManagager.ALLBusy();
+            return Ok();
+        }
+
+        [HttpGet("Emu/AllLoad")]
+        public async Task<IActionResult> AllLoad()
+        {
+            StaEQPEmulatorsManagager.ALLLoad();
+            return Ok();
         }
     }
 }

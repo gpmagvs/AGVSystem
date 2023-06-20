@@ -1,6 +1,6 @@
 ﻿using EquipmentManagment;
 
-namespace AGVSystem.Models
+namespace AGVSystem.Models.Sys
 {
     public class clsAGVSConfigs
     {

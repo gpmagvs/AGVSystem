@@ -4,6 +4,7 @@ using AGVSystem.TaskManagers;
 using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.DATABASE;
+using AGVSystemCommonNet6.Log;
 using AGVSystemCommonNet6.Microservices;
 using AGVSystemCommonNet6.User;
 using EquipmentManagment;
@@ -15,6 +16,8 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
+LOG.SetLogFolderName("AGVS LOG");
+LOG.INFO("AGVS System Start");
 TaskAllocator.Initialize();
 AGVSMapManager.Initialize();
 StaEQPManagager.InitializeAsync(new clsEQManagementConfigs
