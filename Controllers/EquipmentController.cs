@@ -32,7 +32,7 @@ namespace AGVSystem.Controllers
                         var _newData = StaEQPManagager.GetEQStates();
                         var dataJson = JsonConvert.SerializeObject(_newData);
                         await websocket_client.SendAsync(new ArraySegment<byte>(Encoding.ASCII.GetBytes(dataJson)), System.Net.WebSockets.WebSocketMessageType.Text, true, CancellationToken.None);
-                       
+
                     }
                 }
                 catch (Exception ex)
@@ -58,7 +58,7 @@ namespace AGVSystem.Controllers
         [HttpGet("GetEQInfoByTag")]
         public async Task<IActionResult> GetEQInfoByTag(int Tag)
         {
-            var EQ = StaEQPManagager.EQOptions.Values.First(eq => eq.TagID == Tag);
+            var EQ = StaEQPManagager.EQOptions.Values.FirstOrDefault(eq => eq.TagID == Tag);
             return Ok(EQ);
         }
 

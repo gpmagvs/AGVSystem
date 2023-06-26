@@ -1,5 +1,6 @@
 ﻿
 using AGVSystem.Models.Map;
+using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.MAP;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -12,14 +13,16 @@ namespace AGVSystem.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class MapController : ControllerBase
+    public partial class MapController : ControllerBase
     {
-        internal string local_map_file_path => AppSettings.MapFile;
+        internal string local_map_file_path => AGVSConfigulator.SysConfigs.MapConfigs.MapFileFullName;
         private string tempMapFilePath = "";
+
+
         [HttpGet]
         public async Task<IActionResult> Get()
         {
-            return Ok(MapManager.LoadMapFromFile(local_map_file_path));
+            return Ok(MapManager.LoadMapFromFile());
 
         }
 
@@ -45,7 +48,7 @@ namespace AGVSystem.Controllers
             AGVSMapManager.CurrentMap = map_modified;
             AGVSMapManager.SyncEQRegionSetting(map_modified.Points.Values.ToList());
 
-            AGVSystemCommonNet6.Microservices.MapSync.SendReloadRequest(AppSettings.MapFile);
+            AGVSystemCommonNet6.Microservices.MapSync.SendReloadRequest(AGVSConfigulator.SysConfigs.MapConfigs.CurrentMapFileName);
 
 
             return Ok();
@@ -64,7 +67,7 @@ namespace AGVSystem.Controllers
         public async Task<IActionResult> PathPlan(int fromTag, int toTag)
         {
             PathFinder finder = new PathFinder();
-            var map = MapManager.LoadMapFromFile(local_map_file_path);
+            var map = MapManager.LoadMapFromFile();
             var pathInfo = finder.FindShortestPathByTagNumber(map.Points, fromTag, toTag);
             return Ok(pathInfo);
         }
@@ -73,7 +76,7 @@ namespace AGVSystem.Controllers
         [HttpGet("MapPointTemplate")]
         public async Task<IActionResult> MapPointTemplate()
         {
-            return Ok(new MapStation()
+            return Ok(new MapPoint()
             {
                 Enable = true,
                 StationType = AGVSystemCommonNet6.AGVDispatch.Messages.STATION_TYPE.Normal,

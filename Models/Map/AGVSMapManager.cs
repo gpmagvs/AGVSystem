@@ -1,4 +1,5 @@
 ﻿using AGVSystemCommonNet6;
+using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.MAP;
 using EquipmentManagment;
 using Newtonsoft.Json;
@@ -15,7 +16,7 @@ namespace AGVSystem.Models.Map
         public static AGVSystemCommonNet6.MAP.Map CurrentMap;
         public static void Initialize()
         {
-            CurrentMap = MapManager.LoadMapFromFile(AppSettings.MapFile);
+            CurrentMap = MapManager.LoadMapFromFile();
             _LoadMapRegionConfig();
         }
 
@@ -40,13 +41,13 @@ namespace AGVSystem.Models.Map
 
         private static void _SaveMapRegionConfig()
         {
-            File.WriteAllText(AppSettings.MapRegionConfigFile, JsonConvert.SerializeObject(MapRegions, Formatting.Indented));
+            File.WriteAllText(AGVSConfigulator.SysConfigs.MapConfigs.MapRegionConfigFile, JsonConvert.SerializeObject(MapRegions, Formatting.Indented));
         }
         private static void _LoadMapRegionConfig()
         {
-            if (File.Exists(AppSettings.MapRegionConfigFile))
+            if (File.Exists(AGVSConfigulator.SysConfigs.MapConfigs.MapRegionConfigFile))
             {
-                MapRegions = JsonConvert.DeserializeObject<List<clsMapRegion>>(File.ReadAllText(AppSettings.MapRegionConfigFile));
+                MapRegions = JsonConvert.DeserializeObject<List<clsMapRegion>>(File.ReadAllText(AGVSConfigulator.SysConfigs.MapConfigs.MapRegionConfigFile));
             }
             else
             {
@@ -54,10 +55,10 @@ namespace AGVSystem.Models.Map
             }
         }
 
-        internal static void SyncEQRegionSetting(List<MapStation> mapStations)
+        internal static void SyncEQRegionSetting(List<MapPoint> mapStations)
         {
 
-            foreach (MapStation point in mapStations)
+            foreach (MapPoint point in mapStations)
             {
                 try
                 {
@@ -85,20 +86,20 @@ namespace AGVSystem.Models.Map
             {
                 var tag = item.TagID;
 
-                KeyValuePair<int, MapStation> pt = CurrentMap.Points.First(pt => pt.Value.TagNumber == tag);
+                KeyValuePair<int, MapPoint> pt = CurrentMap.Points.First(pt => pt.Value.TagNumber == tag);
                 pt.Value.Region = item.Region;
 
             }
-            MapManager.SaveMapToFile(CurrentMap, AppSettings.MapFile);
+            MapManager.SaveMapToFile(CurrentMap, AGVSConfigulator.SysConfigs.MapConfigs.CurrentMapFileName);
         }
 
         internal static List<double> CalulateDistanseMap(int SourceTag, List<int> DestineTagList)
         {
-            MapStation sourcePoint = CurrentMap.Points.Values.First(pt => pt.TagNumber == SourceTag);
+            MapPoint sourcePoint = CurrentMap.Points.Values.First(pt => pt.TagNumber == SourceTag);
             List<double> distanceList = new List<double>();
             foreach (var tag in DestineTagList)
             {
-                MapStation point = CurrentMap.Points.Values.First(pt => pt.TagNumber == tag);
+                MapPoint point = CurrentMap.Points.Values.First(pt => pt.TagNumber == tag);
 
                 var distance = sourcePoint.CalculateDistance(point);
                 distanceList.Add(distance);
@@ -108,10 +109,16 @@ namespace AGVSystem.Models.Map
 
         internal static string GetNameByTagStr(string currentLocation)
         {
-            MapStation? point = CurrentMap.Points.Values.FirstOrDefault(pt => pt.TagNumber.ToString() == currentLocation);
+            MapPoint? point = CurrentMap.Points.Values.FirstOrDefault(pt => pt.TagNumber.ToString() == currentLocation);
             if (point == null)
                 return currentLocation;
             return point.Name;
+        }
+
+        internal static MapPoint GetMapPointByTag(int unloadStationTag)
+        {
+            MapPoint? point = CurrentMap.Points.Values.FirstOrDefault(pt => pt.TagNumber == unloadStationTag);
+            return point;
         }
     }
 }

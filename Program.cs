@@ -1,8 +1,8 @@
 using AGVSystem;
 using AGVSystem.Models.Map;
 using AGVSystem.TaskManagers;
-using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.Alarm;
+using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.Log;
 using AGVSystemCommonNet6.Microservices;
@@ -18,14 +18,15 @@ using System.Text;
 
 LOG.SetLogFolderName("AGVS LOG");
 LOG.INFO("AGVS System Start");
+AGVSConfigulator.Init();
 TaskManager.Initialize();
 EQTransferTaskManager.Initialize();
 AGVSMapManager.Initialize();
 StaEQPManagager.InitializeAsync(new clsEQManagementConfigs
 {
-    UseEqEmu = AppSettings.UseEQEmu,
-    EQConfigPath = $"{AppSettings.EquipmentManagementConfigFolder}//EQConfigs.json",
-    WIPConfigPath = $"{AppSettings.EquipmentManagementConfigFolder}//WIPConfigs.json",
+    UseEqEmu = AGVSConfigulator.SysConfigs.EQManagementConfigs.UseEQEmu,
+    EQConfigPath = $"{ AGVSConfigulator.SysConfigs.EQManagementConfigs.EquipmentManagementConfigFolder}//EQConfigs.json",
+    WIPConfigPath = $"{AGVSConfigulator.SysConfigs.EQManagementConfigs.EquipmentManagementConfigFolder}//WIPConfigs.json",
 });
 
 AGVSSocketHost agvs_host = new AGVSSocketHost();
@@ -34,7 +35,7 @@ agvs_host.Start();
 var builder = WebApplication.CreateBuilder(args);
 
 
-string DBConnection = Configs.DBConnection;
+string DBConnection = AGVSConfigulator.SysConfigs.DBConnection;
 Directory.CreateDirectory(Path.GetDirectoryName(DBConnection.Split('=')[1]));
 
 builder.Services.AddControllers();

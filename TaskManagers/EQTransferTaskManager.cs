@@ -41,6 +41,7 @@ namespace AGVSystem.TaskManagers
             }
         }
 
+
         private static void ClsEQ_OnEqUnloadRequesting(object? sender, clsEQ unloadReqEQ)
         {
             if (SystemModes.RunMode == RUN_MODE.MAINTAIN)
@@ -50,8 +51,18 @@ namespace AGVSystem.TaskManagers
             }
             Task.Run(async () =>
             {
+                if(!IsEQDataValid(unloadReqEQ,out int unloadStationTag, out ALARMS alarm_code))
+                {
+                    AlarmManagerCenter.AddAlarm(alarm_code);
+                    return;
+                }
 
-                int unloadStationTag = unloadReqEQ.EndPointOptions.TagID;
+                MapPoint point = AGVSMapManager.GetMapPointByTag(unloadStationTag);
+                if (point == null)
+                {
+                    AlarmManagerCenter.AddAlarm(ALARMS.EQ_UNLOAD_REQUEST_ON_BUT_TAG_NOT_EXIST_ON_MAP, level: ALARM_LEVEL.WARNING);
+                    return;
+                }
                 List<string> nextStationCandicates = unloadReqEQ.EndPointOptions.ValidDownStreamEndPointNames;
                 List<EndPointDeviceAbstract> eqCandicates = unloadReqEQ.DownstremEQ.FindAll(eq => (eq as clsEQ).Load_Request);
                 //找最近的
@@ -62,11 +73,15 @@ namespace AGVSystem.TaskManagers
                     return;
                 }
                 var distanceMap = AGVSMapManager.CalulateDistanseMap(unloadStationTag, eqCandicates.Select(eq => eq.EndPointOptions.TagID).ToList());
-                var index = distanceMap.IndexOf(distanceMap.Min());
+                EndPointDeviceAbstract destineEq = eqCandicates[distanceMap.IndexOf(distanceMap.Min())];
 
-                EndPointDeviceAbstract destineEq = eqCandicates[index];
+                if (!IsEQDataValid(destineEq, out int loadStationTag, out  alarm_code))
+                {
+                    AlarmManagerCenter.AddAlarm(alarm_code);
+                    return;
+                }
+
                 var region = AGVSMapManager.MapRegions.First(reg => reg.RegionName == unloadReqEQ.EndPointOptions.Region);
-
                 //
                 AGVStatusDBHelper agv_status_db = new AGVStatusDBHelper();
                 List<clsAGVStateDto> agvlist = agv_status_db.GetALL().FindAll(agv => region.AGVPriorty.Contains(agv.AGV_Name));
@@ -82,13 +97,13 @@ namespace AGVSystem.TaskManagers
                     else
                         LOG.WARN($"區域-{region.RegionName} 指派AGV({AGV.AGV_Name}) 執行任務");
                 }
-                await  TaskManager.AddTask(new clsTaskDto
+                await TaskManager.AddTask(new clsTaskDto
                 {
                     Action = ACTION_TYPE.Carry,
                     Carrier_ID = "123",
                     DesignatedAGVName = AGV.AGV_Name,
                     From_Station = unloadStationTag.ToString(),
-                    To_Station = destineEq.EndPointOptions.TagID.ToString(),
+                    To_Station = loadStationTag.ToString(),
                     TaskName = $"*Local-{DateTime.Now.ToString("yyyyMMddHHmmssfff")}",
                     DispatcherName = "Local_Auto",
                     From_Slot = "1",
@@ -104,7 +119,7 @@ namespace AGVSystem.TaskManagers
         private static Tuple<bool, ALARMS> CheckEQLDULDStatus(ACTION_TYPE action, int from_tag, int to_tag)
         {
             //TODO If To EQ Is WIP
-            KeyValuePair<int, MapStation> ToStation = AGVSMapManager.CurrentMap.Points.First(pt => pt.Value.TagNumber == to_tag);
+            KeyValuePair<int, MapPoint> ToStation = AGVSMapManager.CurrentMap.Points.First(pt => pt.Value.TagNumber == to_tag);
             EQStatusDIDto ToEQStatus = StaEQPManagager.GetEQStatesByTagID(to_tag);
             EQStatusDIDto FromEQStatus = StaEQPManagager.GetEQStatesByTagID(from_tag);
 
@@ -140,5 +155,23 @@ namespace AGVSystem.TaskManagers
             }
         }
 
+        private static bool IsEQDataValid(EndPointDeviceAbstract endpoint,out int unloadStationTag, out ALARMS alarm_code)
+        {
+            alarm_code = ALARMS.NONE;
+            unloadStationTag = endpoint.EndPointOptions.TagID;
+            MapPoint point = AGVSMapManager.GetMapPointByTag(unloadStationTag);
+            if (point == null)
+            {
+                alarm_code = ALARMS.EQ_UNLOAD_REQUEST_ON_BUT_TAG_NOT_EXIST_ON_MAP;
+                return false;
+            }
+            if (!point.IsEQLink)
+            {
+                alarm_code = ALARMS.EQ_UNLOAD_REQUEST_ON_BUT_STATION_TYPE_SETTING_IS_NOT_EQ;
+                return false;
+            }
+
+            return true;
+        }
     }
 }

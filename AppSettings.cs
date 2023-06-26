@@ -15,11 +15,5 @@ namespace AGVSystem
             }
         }
         public static bool Public => _config.GetValue<bool>($"{SYS_CONFIG_SECTION_KEY}:Public");
-        public static string VMSHost => _config.GetConnectionString("VMS_HOST");
-        public static string DBConnection => _config.GetConnectionString("DefaultConnection");
-        public static bool UseEQEmu => _config.GetValue<bool>($"{SYS_CONFIG_SECTION_KEY}:UseEQEmu");
-        public static string EquipmentManagementConfigFolder => _config.GetValue<string>($"{SYS_CONFIG_SECTION_KEY}:EquipmentManagementConfigFolder");
-        public static string MapFile => _config.GetValue<string>($"{SYS_CONFIG_SECTION_KEY}:MapFile");
-        public static string MapRegionConfigFile => _config.GetValue<string>($"{SYS_CONFIG_SECTION_KEY}:MapRegionConfigFile");
     }
 }

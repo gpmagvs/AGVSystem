@@ -1,6 +1,7 @@
 ﻿using AGVSystem.Models.TaskAllocation;
 using AGVSystem.TaskManagers;
 using AGVSystemCommonNet6.Alarm;
+using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.Log;
 using AGVSystemCommonNet6.TASK;
@@ -130,6 +131,16 @@ namespace AGVSystem.Controllers
             }
             return Ok(await AddTask(taskData));
         }
+        [HttpPost("park")]
+        [Authorize]
+        public async Task<IActionResult> ParkTask(clsTaskDto taskData)
+        {
+            if (!UserValidation())
+            {
+                return Unauthorized();
+            }
+            return Ok(await AddTask(taskData));
+        }
 
         /// <summary>
         /// Load/Unload完成回報
@@ -142,7 +153,7 @@ namespace AGVSystem.Controllers
         {
             LOG.INFO($"AGVC LDULD REPORT : {agv_name} Finish {(LDULD == 0 ? "Load" : "Unload")} (EQ TAG={EQTag})");
 
-            if (AppSettings.UseEQEmu)
+            if (AGVSConfigulator.SysConfigs.EQManagementConfigs.UseEQEmu)
             {
                 _ = Task.Run(() =>
                    {
