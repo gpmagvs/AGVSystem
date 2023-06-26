@@ -41,6 +41,7 @@ namespace AGVSystem.Models.Map
 
         private static void _SaveMapRegionConfig()
         {
+            Directory.CreateDirectory(Path.GetDirectoryName(AGVSConfigulator.SysConfigs.MapConfigs.MapRegionConfigFile));
             File.WriteAllText(AGVSConfigulator.SysConfigs.MapConfigs.MapRegionConfigFile, JsonConvert.SerializeObject(MapRegions, Formatting.Indented));
         }
         private static void _LoadMapRegionConfig()
