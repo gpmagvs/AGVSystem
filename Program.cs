@@ -1,6 +1,7 @@
 using AGVSystem;
 using AGVSystem.Models.Map;
 using AGVSystem.TaskManagers;
+using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.DATABASE;
@@ -25,7 +26,7 @@ AGVSMapManager.Initialize();
 StaEQPManagager.InitializeAsync(new clsEQManagementConfigs
 {
     UseEqEmu = AGVSConfigulator.SysConfigs.EQManagementConfigs.UseEQEmu,
-    EQConfigPath = $"{ AGVSConfigulator.SysConfigs.EQManagementConfigs.EquipmentManagementConfigFolder}//EQConfigs.json",
+    EQConfigPath = $"{AGVSConfigulator.SysConfigs.EQManagementConfigs.EquipmentManagementConfigFolder}//EQConfigs.json",
     WIPConfigPath = $"{AGVSConfigulator.SysConfigs.EQManagementConfigs.EquipmentManagementConfigFolder}//WIPConfigs.json",
 });
 
@@ -73,9 +74,13 @@ using (IServiceScope scope = app.Services.CreateScope())
 {
     using (AGVSDbContext dbContext = scope.ServiceProvider.GetRequiredService<AGVSDbContext>())
     {
+      
         dbContext.Database.EnsureCreated();
         dbContext.SaveChanges();
+        if (dbContext.Database.GetPendingMigrations().Any())
+        {
 
+        }
         using (var ttra = dbContext.Database.BeginTransaction())
         {
             UserEntity? existingUser = dbContext.Users.FirstOrDefault(u => u.UserName == "dev");
