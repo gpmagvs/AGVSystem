@@ -30,11 +30,10 @@ namespace AGVSystem.Controllers
                 var websocket_client = await HttpContext.WebSockets.AcceptWebSocketAsync();
                 try
                 {
+                    byte[] rev_buffer = new byte[4096];
                     while (websocket_client.State == System.Net.WebSockets.WebSocketState.Open)
                     {
-                        Thread.Sleep(200);
-
-                        byte[] rev_buffer = new byte[4096];
+                        await Task.Delay(100);
                         websocket_client.ReceiveAsync(new ArraySegment<byte>(rev_buffer), CancellationToken.None);
                         using (AGVStatusDBHelper dBHelper = new AGVStatusDBHelper())
                         {
