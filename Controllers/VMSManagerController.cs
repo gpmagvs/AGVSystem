@@ -25,39 +25,7 @@ namespace AGVSystem.Controllers
         [HttpGet("/ws/VMSStatus")]
         public async Task GetVMSStatus()
         {
-            if (HttpContext.WebSockets.IsWebSocketRequest)
-            {
-                var websocket_client = await HttpContext.WebSockets.AcceptWebSocketAsync();
-                try
-                {
-                    byte[] rev_buffer = new byte[4096];
-                    while (websocket_client.State == System.Net.WebSockets.WebSocketState.Open)
-                    {
-                        await Task.Delay(100);
-                        websocket_client.ReceiveAsync(new ArraySegment<byte>(rev_buffer), CancellationToken.None);
-                        using (AGVStatusDBHelper dBHelper = new AGVStatusDBHelper())
-                        {
-                            clsAGVStateViewModel GenViewMode(clsAGVStateDto data)
-                            {
-                                var s = JsonConvert.DeserializeObject<clsAGVStateViewModel>(JsonConvert.SerializeObject(data));
-                                s.StationName = AGVSMapManager.GetNameByTagStr(data.CurrentLocation);
-                                return s;
-                            };
-                            var vmdata = dBHelper.GetALL().OrderBy(a => a.AGV_Name).ToList().Select(data => GenViewMode(data));
-                            await websocket_client.SendAsync(new ArraySegment<byte>(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(vmdata))), System.Net.WebSockets.WebSocketMessageType.Text, true, CancellationToken.None);
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("Websocket Client Closed (/ws/VMSStatus):" + ex.Message);
-                }
-
-            }
-            else
-            {
-                HttpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
-            }
+            await WebsocketHandler.ClientRequest(HttpContext);
         }
 
     }

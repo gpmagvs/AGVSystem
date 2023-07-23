@@ -34,8 +34,6 @@ AGVSSocketHost agvs_host = new AGVSSocketHost();
 agvs_host.Start();
 
 var builder = WebApplication.CreateBuilder(args);
-
-
 string DBConnection = AGVSConfigulator.SysConfigs.DBConnection;
 Directory.CreateDirectory(Path.GetDirectoryName(DBConnection.Split('=')[1]));
 
@@ -74,7 +72,7 @@ using (IServiceScope scope = app.Services.CreateScope())
 {
     using (AGVSDbContext dbContext = scope.ServiceProvider.GetRequiredService<AGVSDbContext>())
     {
-      
+
         dbContext.Database.EnsureCreated();
         dbContext.SaveChanges();
         if (dbContext.Database.GetPendingMigrations().Any())
@@ -95,7 +93,6 @@ using (IServiceScope scope = app.Services.CreateScope())
 }
 
 AlarmManagerCenter.Initialize();
-
 AliveChecker.VMSAliveCheckWorker();
 
 // Configure the HTTP request pipeline.
@@ -114,12 +111,7 @@ app.UseDefaultFiles(new DefaultFilesOptions()
 });
 
 app.UseStaticFiles();
-
-//app.UseHttpsRedirection();
 app.UseCors(c => c.AllowAnyHeader().AllowAnyOrigin().AllowAnyMethod());
-
 app.UseAuthorization();
-
 app.MapControllers();
-
 app.Run();
