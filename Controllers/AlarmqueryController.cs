@@ -12,7 +12,7 @@ namespace AGVSystem.Controllers
     [ApiController]
     public class AlarmqueryController : ControllerBase
     {
-        [HttpGet("Query")]
+        [HttpGet("QueryAlarm")]
         public async Task<IActionResult> Query(int currentpage, string StartTime, string EndTime, string? AGV_Name = "ALL")
         {
             DateTime start = DateTime.Parse(StartTime);
