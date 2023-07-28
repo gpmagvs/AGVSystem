@@ -43,29 +43,7 @@ namespace AGVSystem.Controllers
         [HttpGet("/ws/TaskData")]
         public async Task GetNotFinishTaskListData()
         {
-            if (HttpContext.WebSockets.IsWebSocketRequest)
-            {
-                var websocket_client = await HttpContext.WebSockets.AcceptWebSocketAsync();
-                byte[] rev_buffer = new byte[4096];
-                int incomTaskTotalNum = -1;
-                int comTaskTotalNum = -1;
-                while (websocket_client.State == System.Net.WebSockets.WebSocketState.Open)
-                {
-                    Thread.Sleep(1000);
-
-                    websocket_client.ReceiveAsync(new ArraySegment<byte>(rev_buffer), CancellationToken.None);
-
-                    clsTaskDto[] incompleteds = TaskManager.InCompletedTaskList.ToArray();
-                    clsTaskDto[] completeds = TaskManager.CompletedTaskList.OrderByDescending(t => t.RecieveTime).Take(30).ToArray();
-                    var dto = new { incompleteds, completeds };
-                    var _dtoJson = JsonConvert.SerializeObject(dto);
-                    await websocket_client.SendAsync(new ArraySegment<byte>(Encoding.UTF8.GetBytes(_dtoJson)), System.Net.WebSockets.WebSocketMessageType.Text, true, CancellationToken.None);
-                }
-            }
-            else
-            {
-                HttpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
-            }
+            await WebsocketHandler.ClientRequest(HttpContext);
         }
 
         [HttpGet("Cancel")]

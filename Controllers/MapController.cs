@@ -26,6 +26,13 @@ namespace AGVSystem.Controllers
 
         }
 
+        [HttpGet("GeoMapJson")]
+        public async Task<IActionResult> GetGeoMapJson()
+        {
+            var map = MapManager.LoadMapFromFile();
+            return Ok(map.GetGeoMapData());
+        }
+
         [HttpGet("ReloadMap")]
         public async Task<IActionResult> ReloadMap()
         {

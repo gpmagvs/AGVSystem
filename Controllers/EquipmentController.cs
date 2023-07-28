@@ -16,35 +16,8 @@ namespace AGVSystem.Controllers
         [HttpGet("/ws/EQStatus")]
         public async Task EQStatus()
         {
-            if (HttpContext.WebSockets.IsWebSocketRequest)
-            {
-                var websocket_client = await HttpContext.WebSockets.AcceptWebSocketAsync();
-                try
-                {
+            await WebsocketHandler.ClientRequest(HttpContext);
 
-                    byte[] rev_buffer = new byte[4096];
-
-                    while (websocket_client.State == System.Net.WebSockets.WebSocketState.Open)
-                    {
-                        Thread.Sleep(200);
-
-                        websocket_client.ReceiveAsync(new ArraySegment<byte>(rev_buffer), CancellationToken.None);
-                        var _newData = StaEQPManagager.GetEQStates();
-                        var dataJson = JsonConvert.SerializeObject(_newData);
-                        await websocket_client.SendAsync(new ArraySegment<byte>(Encoding.ASCII.GetBytes(dataJson)), System.Net.WebSockets.WebSocketMessageType.Text, true, CancellationToken.None);
-
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("Websocket Client Closed (/ws/VMSStatus):" + ex.Message);
-                }
-
-            }
-            else
-            {
-                HttpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
-            }
         }
 
         [HttpPost("WriteOutputs")]
