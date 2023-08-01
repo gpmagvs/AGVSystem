@@ -17,8 +17,8 @@ namespace AGVSystem.Controllers
         {
             DateTime start = DateTime.Parse(StartTime);
             DateTime end = DateTime.Parse(EndTime);
-            AlarmManagerCenter.Query(out int count, currentpage,start, end, AGV_Name, out List<clsAlarmDto> ? alarms);
-            return Ok(new { count,alarms });
+            List<clsAlarmDto>? alarms = AlarmManagerCenter.Query(start, end, AGV_Name);
+            return Ok(new { count = alarms.Count, alarms });
         }
         public class Alarmquery_options
         {

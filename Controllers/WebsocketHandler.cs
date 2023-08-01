@@ -27,9 +27,6 @@ namespace AGVSystem.Controllers
             if (_HttpContext.WebSockets.IsWebSocketRequest)
             {
                 WebSocket webSocket = await _HttpContext.WebSockets.AcceptWebSocketAsync();
-                clients.TryAdd(path, new List<WebSocket>());
-                clients[path].Add(webSocket);
-
                 await SendMessagesAsync(webSocket, path);
             }
             else
@@ -62,7 +59,6 @@ namespace AGVSystem.Controllers
                     break;
                 }
             }
-            clients[path].Remove(webSocket);
 
         }
 
@@ -93,10 +89,10 @@ namespace AGVSystem.Controllers
             if (path == "/ws/TaskData")
             {
                 clsTaskDto[] incompleteds = TaskManager.InCompletedTaskList.ToArray();
-                clsTaskDto[] completeds = TaskManager.CompletedTaskList.OrderByDescending(t => t.RecieveTime).Take(20).ToArray();
+                clsTaskDto[] completeds = TaskManager.CompletedTaskList.ToArray();
                 return new { incompleteds, completeds };
             }
-            if (path== "/UncheckedAlarm")
+            if (path == "/UncheckedAlarm")
             {
                 return AlarmManagerCenter.uncheckedAlarms;
             }

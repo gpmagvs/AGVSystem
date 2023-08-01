@@ -20,7 +20,7 @@ namespace AGVSystem.TaskManagers
         public static List<clsTaskDto> TaskList => DatabaseHelper.GetALL();
 
         public static List<clsTaskDto> InCompletedTaskList => DatabaseHelper.GetALLInCompletedTask();
-        public static List<clsTaskDto> CompletedTaskList => DatabaseHelper.GetALLCompletedTask();
+        public static List<clsTaskDto> CompletedTaskList => DatabaseHelper.GetALLCompletedTask(20);
 
         public static TaskDatabaseHelper DatabaseHelper = new TaskDatabaseHelper();
 
@@ -59,12 +59,12 @@ namespace AGVSystem.TaskManagers
             }
         }
 
-        
+
         internal static bool Cancel(string task_name)
         {
             return DatabaseHelper.DeleteTask(task_name);
         }
 
-        
+
     }
 }
