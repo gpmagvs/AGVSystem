@@ -87,8 +87,9 @@ namespace AGVSystem.Models.Map
             {
                 var tag = item.TagID;
 
-                KeyValuePair<int, MapPoint> pt = CurrentMap.Points.First(pt => pt.Value.TagNumber == tag);
-                pt.Value.Region = item.Region;
+                KeyValuePair<int, MapPoint> pt = CurrentMap.Points.FirstOrDefault(pt => pt.Value.TagNumber == tag);
+                if (pt.Value != null)
+                    pt.Value.Region = item.Region;
 
             }
             MapManager.SaveMapToFile(CurrentMap, AGVSConfigulator.SysConfigs.MapConfigs.CurrentMapFileName);

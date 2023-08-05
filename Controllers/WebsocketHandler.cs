@@ -80,7 +80,7 @@ namespace AGVSystem.Controllers
             }
             if (path == "/ws/EQStatus")
             {
-                return StaEQPManagager.GetEQStates();
+                return new { EQPData = StaEQPManagager.GetEQStates(), ChargeStationData = StaEQPManagager.GetChargeStationStates() };
             }
             if (path == "/ws/VMSAliveCheck")
             {

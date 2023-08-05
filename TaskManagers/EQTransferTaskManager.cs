@@ -30,7 +30,7 @@ namespace AGVSystem.TaskManagers
         {
             LOG.WARN("Run Mode Start");
 
-            var unloadReqEQs = StaEQPManagager.EQPDevices.FindAll(eq => (eq as clsEQ).Unload_Request);
+            var unloadReqEQs = StaEQPManagager.EQList.FindAll(eq => (eq as clsEQ).Unload_Request);
             if (unloadReqEQs.Count == 0)
                 return;
             LOG.INFO($"{unloadReqEQs.Count} EQ Unload Task Will Run..");
@@ -51,7 +51,7 @@ namespace AGVSystem.TaskManagers
             }
             Task.Run(async () =>
             {
-                if(!IsEQDataValid(unloadReqEQ,out int unloadStationTag, out ALARMS alarm_code))
+                if (!IsEQDataValid(unloadReqEQ, out int unloadStationTag, out ALARMS alarm_code))
                 {
                     AlarmManagerCenter.AddAlarm(alarm_code);
                     return;
@@ -75,7 +75,7 @@ namespace AGVSystem.TaskManagers
                 var distanceMap = AGVSMapManager.CalulateDistanseMap(unloadStationTag, eqCandicates.Select(eq => eq.EndPointOptions.TagID).ToList());
                 EndPointDeviceAbstract destineEq = eqCandicates[distanceMap.IndexOf(distanceMap.Min())];
 
-                if (!IsEQDataValid(destineEq, out int loadStationTag, out  alarm_code))
+                if (!IsEQDataValid(destineEq, out int loadStationTag, out alarm_code))
                 {
                     AlarmManagerCenter.AddAlarm(alarm_code);
                     return;
@@ -155,7 +155,7 @@ namespace AGVSystem.TaskManagers
             }
         }
 
-        private static bool IsEQDataValid(EndPointDeviceAbstract endpoint,out int unloadStationTag, out ALARMS alarm_code)
+        private static bool IsEQDataValid(EndPointDeviceAbstract endpoint, out int unloadStationTag, out ALARMS alarm_code)
         {
             alarm_code = ALARMS.NONE;
             unloadStationTag = endpoint.EndPointOptions.TagID;
