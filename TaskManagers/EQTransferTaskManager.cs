@@ -41,6 +41,15 @@ namespace AGVSystem.TaskManagers
             }
         }
 
+        static void TransferTaskPairWorker()
+        {
+            while (SystemModes.RunMode == RUN_MODE.RUN)
+            {
+                Thread.Sleep(1);
+
+            }
+        }
+
 
         private static void ClsEQ_OnEqUnloadRequesting(object? sender, clsEQ unloadReqEQ)
         {
