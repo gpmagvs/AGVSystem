@@ -28,6 +28,12 @@ namespace AGVSystem.Controllers
             await WebsocketHandler.ClientRequest(HttpContext);
         }
 
+
+        [HttpGet("/ws/AGVLocationUpload")]
+        public async Task AGVLocationUpload()
+        {
+            await WebsocketHandler.ClientRequest(HttpContext);
+        }
     }
 
     public class clsAGVStateViewModel : clsAGVStateDto

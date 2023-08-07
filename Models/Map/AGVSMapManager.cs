@@ -8,6 +8,14 @@ namespace AGVSystem.Models.Map
 {
     public class AGVSMapManager
     {
+        public class clsAGVCoordinatinoUploadInfo
+        {
+            public int TagNumber { get; set; }
+            public double X { get; set; }
+            public double Y { get; set; }
+            public double Theta { get; set; }
+        }
+        public static Dictionary<int, clsAGVCoordinatinoUploadInfo> AGVUploadCoordinationStore = new Dictionary<int, clsAGVCoordinatinoUploadInfo>();
         public static List<clsMapRegion> MapRegions = new List<clsMapRegion>()
         {
 
@@ -121,6 +129,26 @@ namespace AGVSystem.Models.Map
         {
             MapPoint? point = CurrentMap.Points.Values.FirstOrDefault(pt => pt.TagNumber == unloadStationTag);
             return point;
+        }
+
+        internal static void StoreAGVLocationUpload(string AGVName, int tagNumber, double x, double y, double theta)
+        {
+            clsAGVCoordinatinoUploadInfo info = new clsAGVCoordinatinoUploadInfo
+            {
+                TagNumber = tagNumber,
+                Theta = theta,
+                X = x,
+                Y = y
+            };
+            if (AGVUploadCoordinationStore.Keys.Contains(tagNumber))
+            {
+                AGVUploadCoordinationStore[tagNumber] = info;
+            }
+            else
+            {
+                AGVUploadCoordinationStore.Add(tagNumber, info);
+            }
+
         }
     }
 }

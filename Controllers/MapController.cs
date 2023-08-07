@@ -26,6 +26,8 @@ namespace AGVSystem.Controllers
 
         }
 
+
+
         [HttpGet("GeoMapJson")]
         public async Task<IActionResult> GetGeoMapJson()
         {
@@ -103,7 +105,12 @@ namespace AGVSystem.Controllers
             var options = AGVSMapManager.MapRegions.Select(map => new { label = map.RegionName, value = map.RegionName }).ToList();
             return Ok(options);
         }
-
+        [HttpGet("UploadCoordination")]
+        public async Task<IActionResult> UploadCoordintaion(string AGVName, int tagNumber, double x, double y, double theta)
+        {
+            AGVSMapManager.StoreAGVLocationUpload(AGVName,tagNumber, x, y, theta);
+            return Ok(true);
+        }
         public class clsAGVInfoVM
         {
 

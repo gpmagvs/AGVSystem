@@ -97,6 +97,11 @@ namespace AGVSystem.Controllers
                 return AlarmManagerCenter.uncheckedAlarms;
             }
 
+            if (path == "/ws/AGVLocationUpload")
+            {
+                return AGVSMapManager.AGVUploadCoordinationStore;
+            }
+
             return "";
         }
 
