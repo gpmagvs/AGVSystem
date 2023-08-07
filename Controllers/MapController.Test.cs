@@ -24,5 +24,19 @@ namespace AGVSystem.Controllers
             }
             return Ok(new { yunTecMap, mapConverted });
         }
+
+
+        [HttpGet("test/ResetGraphXYUseCoordination")]
+        public async Task<IActionResult> ResetGraphXYUseCoordination(string mapFilePath)
+        {
+            Map map = MapManager.LoadMapFromFile(mapFilePath);
+            foreach (KeyValuePair<int, MapPoint> pt in map.Points)
+            {
+                pt.Value.Graph.X = Convert.ToInt32(Math.Round(pt.Value.X, 0) + "");
+                pt.Value.Graph.Y = Convert.ToInt32(Math.Round(pt.Value.Y, 0) + "");
+            }
+            return Ok(MapManager.SaveMapToFile(map, mapFilePath));
+        }
+
     }
 }
