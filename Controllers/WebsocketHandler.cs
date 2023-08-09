@@ -3,6 +3,7 @@ using AGVSystem.TaskManagers;
 using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.DATABASE;
+using AGVSystemCommonNet6.DATABASE.Helpers;
 using AGVSystemCommonNet6.TASK;
 using EquipmentManagment;
 using Newtonsoft.Json;
