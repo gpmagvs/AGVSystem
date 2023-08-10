@@ -25,6 +25,12 @@ namespace AGVSystem.TaskManagers
         internal static void SwitchToMaintainMode()
         {
             LOG.WARN("Maintain Mode Start");
+            //取消預約所有機台
+
+            StaEQPManagager.EQList.FindAll(eq => eq.CMD_Reserve_Low | eq.CMD_Reserve_Up).ForEach(eq =>
+            {
+                eq.CancelReserve();
+            });
         }
 
         internal static async void SwitchToRunMode()

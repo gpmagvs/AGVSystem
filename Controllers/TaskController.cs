@@ -130,14 +130,14 @@ namespace AGVSystem.Controllers
         public async Task<IActionResult> LDULDFinishFeedback(string agv_name, int EQTag, int LDULD)
         {
             LOG.INFO($"AGVC LDULD REPORT : {agv_name} Finish {(LDULD == 0 ? "Load" : "Unload")} (EQ TAG={EQTag})");
-
+            clsEQ eq = StaEQPManagager.GetEQByTag(EQTag);
+            eq.CancelReserve();
+            if (eq == null)
+                return Ok(new { confirm = false });
             if (AGVSConfigulator.SysConfigs.EQManagementConfigs.UseEQEmu)
             {
                 _ = Task.Run(() =>
                    {
-                       var eq = StaEQPManagager.GetEQByTag(EQTag);
-                       if (eq == null)
-                           return;
                        var eqEmu = StaEQPEmulatorsManagager.GetEQEmuByName(eq.EQName);
                        if (LDULD == 0)
                        {
