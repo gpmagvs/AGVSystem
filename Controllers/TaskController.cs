@@ -1,4 +1,5 @@
 ﻿using AGVSystem.Models.TaskAllocation;
+using AGVSystem.Models.TaskAllocation.HotRun;
 using AGVSystem.TaskManagers;
 using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.Configuration;
@@ -11,6 +12,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using NuGet.Configuration;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -42,6 +44,12 @@ namespace AGVSystem.Controllers
 
         [HttpGet("/ws/TaskData")]
         public async Task GetNotFinishTaskListData()
+        {
+            await WebsocketHandler.ClientRequest(HttpContext);
+        }
+
+        [HttpGet("/ws/HotRun")]
+        public async Task GetHotRunStates()
         {
             await WebsocketHandler.ClientRequest(HttpContext);
         }
@@ -156,7 +164,32 @@ namespace AGVSystem.Controllers
             return Ok(new { confirm = true });
         }
 
-
+        [HttpPost("HotRun")]
+        public async Task<IActionResult> SaveHotRun([FromBody] HotRunScript[] settings)
+        {
+            return Ok(new
+            {
+                result = HotRunScriptManager.Save(settings),
+                message = ""
+            });
+        }
+        [HttpGet("HotRun")]
+        public async Task<IActionResult> GetHotRunScripts()
+        {
+            return Ok(HotRunScriptManager.HotRunScripts);
+        }
+        [HttpGet("HotRun/Start")]
+        public async Task<IActionResult> StartHotRun(int no)
+        {
+            HotRunScriptManager.Run(no);
+            return Ok();
+        }
+        [HttpGet("HotRun/Stop")]
+        public async Task<IActionResult> StopHotRun(int no)
+        {
+            HotRunScriptManager.Stop(no);
+            return Ok();
+        }
         private async Task<object> AddTask(clsTaskDto taskData)
         {
             taskData.DispatcherName = "Web-USER";

@@ -1,4 +1,5 @@
 ﻿using AGVSystem.Models.Map;
+using AGVSystem.Models.TaskAllocation.HotRun;
 using AGVSystem.TaskManagers;
 using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.Alarm;
@@ -101,6 +102,10 @@ namespace AGVSystem.Controllers
             if (path == "/ws/AGVLocationUpload")
             {
                 return AGVSMapManager.AGVUploadCoordinationStore;
+            }
+            if (path == "/ws/HotRun")
+            {
+                return HotRunScriptManager.HotRunScripts;
             }
 
             return "";

@@ -1,5 +1,6 @@
 using AGVSystem;
 using AGVSystem.Models.Map;
+using AGVSystem.Models.TaskAllocation.HotRun;
 using AGVSystem.TaskManagers;
 using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.Alarm;
@@ -24,6 +25,8 @@ AGVSConfigulator.Init();
 TaskManager.Initialize();
 EQTransferTaskManager.Initialize();
 AGVSMapManager.Initialize();
+HotRunScriptManager.Initialize();
+
 StaEQPManagager.InitializeAsync(new clsEQManagementConfigs
 {
     UseEqEmu = AGVSConfigulator.SysConfigs.EQManagementConfigs.UseEQEmu,
