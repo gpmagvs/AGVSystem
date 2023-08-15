@@ -116,7 +116,10 @@ app.UseDefaultFiles(new DefaultFilesOptions()
 {
 });
 app.UseStaticFiles();
-var fileProvider = new PhysicalFileProvider(Path.Combine(builder.Environment.WebRootPath, "images"));
+
+var imageFolder = Path.Combine(builder.Environment.WebRootPath, "images");
+Directory.CreateDirectory(imageFolder);
+var fileProvider = new PhysicalFileProvider(imageFolder);
 var requestPath = "/MapFiles";
 
 // Enable displaying browser links.

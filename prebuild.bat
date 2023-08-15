@@ -1,0 +1,1 @@
+robocopy wwwroot bin\Debug\net6.0\wwwroot /MIR /MT:10
