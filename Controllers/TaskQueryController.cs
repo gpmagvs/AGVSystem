@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System.Composition;
 using System.Threading.Tasks;
 using AGVSystemCommonNet6.AGVDispatch.Model;
+using Microsoft.Build.Framework;
 
 namespace AGVSystem.Controllers
 {
@@ -20,8 +21,8 @@ namespace AGVSystem.Controllers
         {
             DateTime start = DateTime.Parse(StartTime);
             DateTime end = DateTime.Parse(EndTime);
-            TaskDatabaseHelper.TaskQuery(out int count, currentpage, start, end, AGV_Name, out List<clsTaskDto>? Task);
-            return Ok(new { count, Task });
+            TaskDatabaseHelper.TaskQuery(out int count, currentpage, start, end, AGV_Name, out List<clsTaskDto>? tasks);
+            return Ok(new { count, tasks });
         }
         public class Taskquery_options
         {

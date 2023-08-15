@@ -212,3 +212,4 @@ project.lock.json
 /VMS.db
 /*.db
 /Properties/PublishProfiles/*.pubxml
+/wwwroot
