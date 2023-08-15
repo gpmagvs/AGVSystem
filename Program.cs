@@ -117,7 +117,8 @@ app.UseDefaultFiles(new DefaultFilesOptions()
 });
 app.UseStaticFiles();
 
-var imageFolder = Path.Combine(builder.Environment.WebRootPath, "images");
+//var imageFolder = Path.Combine(builder.Environment.WebRootPath, "images");
+var imageFolder = @"C:\AGVS\Map";
 Directory.CreateDirectory(imageFolder);
 var fileProvider = new PhysicalFileProvider(imageFolder);
 var requestPath = "/MapFiles";
