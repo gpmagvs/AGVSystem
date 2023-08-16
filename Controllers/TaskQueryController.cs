@@ -47,9 +47,17 @@ namespace AGVSystem.Controllers
         [HttpGet("GetTrajectory")]
         public async Task<IActionResult> GetTrajectory(string taskID)
         {
-            TrajectoryDBStoreHelper helper = new TrajectoryDBStoreHelper();
-            List<clsTrajCoordination> coordinations = helper.GetTrajectory(taskID);
-            return Ok(new { task_id = taskID, coordinations = coordinations });
+            try
+            {
+                TrajectoryDBStoreHelper helper = new TrajectoryDBStoreHelper();
+                List<clsTrajCoordination> coordinations = helper.GetTrajectory(taskID);
+                return Ok(new { task_id = taskID, coordinations = coordinations });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+
 
         }
 
