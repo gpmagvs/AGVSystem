@@ -74,5 +74,39 @@ namespace AGVSystem.Controllers
             StaEQPEmulatorsManagager.ALLLoad();
             return Ok();
         }
+
+
+        [HttpGet("Emu/HsSignal")]
+        public async Task<IActionResult> HsSignal(string EqName, string SignalName, bool State)
+        {
+            bool confirm = false;
+            string message = "";
+            try
+            {
+                if (StaEQPEmulatorsManagager.TryGetEQEmuByName(EqName, out clsDIOModuleEmu? EQ))
+                {
+                    if (SignalName == "L_REQ")
+                        confirm = EQ.SetHS_L_REQ(State);
+                    if (SignalName == "U_REQ")
+                        confirm = EQ.SetHS_U_REQ(State);
+                    if (SignalName == "READY")
+                        confirm = EQ.SetHS_READY(State);
+                    if (SignalName == "BUSY")
+                        confirm = EQ.SetHS_BUSY(State);
+                }
+                else
+                {
+                    message = $"{EqName} not exist.";
+                    confirm = false;
+                }
+            }
+            catch (Exception ex)
+            {
+                message = $"Exception:{ex.Message}";
+                confirm = false;
+            }
+
+            return Ok(new { confirm, message });
+        }
     }
 }
