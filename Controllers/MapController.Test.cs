@@ -38,5 +38,19 @@ namespace AGVSystem.Controllers
             return Ok(MapManager.SaveMapToFile(map, mapFilePath));
         }
 
+
+        [HttpGet("test/ResetCoordinations")]
+        public async Task<IActionResult> ResetCoordinations(string mapFilePath,double ratio)
+        {
+            Map map = MapManager.LoadMapFromFile(mapFilePath);
+            foreach (KeyValuePair<int, MapPoint> pt in map.Points)
+            {
+                pt.Value.X = pt.Value.X / ratio;
+                pt.Value.Y = pt.Value.Y / ratio;
+                pt.Value.Graph.X = Convert.ToInt32(Math.Round(pt.Value.X, 0) + "");
+                pt.Value.Graph.Y = Convert.ToInt32(Math.Round(pt.Value.Y, 0) + "");
+            }
+            return Ok(MapManager.SaveMapToFile(map, mapFilePath));
+        }
     }
 }
