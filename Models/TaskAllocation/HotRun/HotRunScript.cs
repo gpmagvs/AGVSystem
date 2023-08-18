@@ -1,4 +1,4 @@
-﻿namespace AGVSystem.Models.TaskAllocation.HotRun
+namespace AGVSystem.Models.TaskAllocation.HotRun
 {
     public class HotRunScript
     {
@@ -18,5 +18,6 @@
         public string action { get; set; } = "move";
         public int source_tag { get; set; }
         public int destine_tag { get; set; }
+        public int destine_theta { get; set; }=-1;
     }
 }
