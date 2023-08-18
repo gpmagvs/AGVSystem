@@ -29,6 +29,10 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
             if (File.Exists(filename))
             {
                 HotRunScripts = JsonConvert.DeserializeObject<HotRunScript[]>(System.IO.File.ReadAllText(filename));
+                foreach (var script in HotRunScripts)
+                {
+                    script.state = "IDLE";
+                } 
             }
         }
         public static void Initialize()
@@ -49,7 +53,7 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
             var script = HotRunScripts.FirstOrDefault(script => script.no == no);
             if (script != null)
             {
-                script.cancellationTokenSource.Cancel();
+                script.cancellationTokenSource?.Cancel();
             }
         }
         private static void StartHotRun(HotRunScript script)

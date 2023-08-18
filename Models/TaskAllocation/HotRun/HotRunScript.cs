@@ -7,6 +7,7 @@
         public int loop_num { get; set; }
         public int finish_num { get; set; }
         public int action_num { get; set; }
+
         public string state { get; set; } = "IDLE";
         public List<HotRunAction> actions { get; set; } = new List<HotRunAction>();
         internal CancellationTokenSource cancellationTokenSource { get; set; }
