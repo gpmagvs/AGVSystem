@@ -136,6 +136,7 @@ app.UseDirectoryBrowser(new DirectoryBrowserOptions
     RequestPath = requestPath
 });
 
+app.UseVueRouterHistory();
 app.UseAuthorization();
 app.MapControllers();
 app.Run();
