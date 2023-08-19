@@ -139,9 +139,13 @@ namespace AGVSystem.Controllers
         {
             LOG.INFO($"AGVC LDULD REPORT : {agv_name} Finish {(LDULD == 0 ? "Load" : "Unload")} (EQ TAG={EQTag})");
             clsEQ eq = StaEQPManagager.GetEQByTag(EQTag);
-            eq.CancelReserve();
+            
             if (eq == null)
                 return Ok(new { confirm = false });
+            else
+            {
+                eq.CancelReserve();
+            }
             if (AGVSConfigulator.SysConfigs.EQManagementConfigs.UseEQEmu)
             {
                 _ = Task.Run(() =>

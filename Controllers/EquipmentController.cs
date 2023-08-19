@@ -1,6 +1,7 @@
 ﻿using AGVSystem.Models.Map;
 using AGVSystemCommonNet6.DATABASE;
 using EquipmentManagment;
+using EquipmentManagment.ChargeStation;
 using EquipmentManagment.Connection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -70,7 +71,43 @@ namespace AGVSystem.Controllers
             return Ok(new { Connected = connected });
         }
 
+        [HttpGet("ChargeStation/Settings")]
+        public async Task<IActionResult> ChargeStationCurveSetting(string EqName, string Item, double Value)
+        {
+            try
+            {
+                var charge_station = StaEQPManagager.EQPDevices.FirstOrDefault(eq => eq.EQName == EqName);
+                if (charge_station == null)
+                    return Ok(new { confirm = false, message = $"{EqName} is not exist" });
+                clsChargeStation chargeStation = charge_station as clsChargeStation;
 
+                var _item = Item.ToUpper();
+                bool success = false;
+                string message = "";
+                if (_item == "CC")
+                {
+                    success = chargeStation.SetCC(Value, out message);
+                }
+                if (_item == "CV")
+                {
+                    success = chargeStation.SetCV(Value, out message);
+                }
+                if (_item == "FV")
+                {
+                    success = chargeStation.SetFV(Value, out message);
+                }
+                if (_item == "TC")
+                {
+                    success = chargeStation.SetTC(Value, out message);
+                }
+                return Ok(new { confirm = success, message = message });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { confirm = false, message = ex.Message });
+
+            }
+        }
 
     }
 
