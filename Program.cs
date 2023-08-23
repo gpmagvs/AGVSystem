@@ -1,4 +1,5 @@
 using AGVSystem;
+using AGVSystem.Controllers;
 using AGVSystem.Models.Map;
 using AGVSystem.Models.TaskAllocation.HotRun;
 using AGVSystem.TaskManagers;
@@ -36,6 +37,8 @@ StaEQPManagager.InitializeAsync(new clsEQManagementConfigs
 
 AGVSSocketHost agvs_host = new AGVSSocketHost();
 agvs_host.Start();
+AlarmManagerCenter.Initialize();
+AliveChecker.VMSAliveCheckWorker();
 
 var builder = WebApplication.CreateBuilder(args);
 string DBConnection = AGVSConfigulator.SysConfigs.DBConnection;
@@ -96,9 +99,8 @@ using (IServiceScope scope = app.Services.CreateScope())
         }
     }
 }
+WebsocketHandler.StartCollectWebUIUsingDatas();
 
-AlarmManagerCenter.Initialize();
-AliveChecker.VMSAliveCheckWorker();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -116,6 +118,7 @@ app.UseDefaultFiles(new DefaultFilesOptions()
 {
 });
 app.UseStaticFiles();
+
 
 //var imageFolder = Path.Combine(builder.Environment.WebRootPath, "images");
 var imageFolder = @"C:\AGVS\Map";

@@ -37,6 +37,51 @@ namespace AGVSystem.Controllers
             }
         }
 
+        private static Dictionary<string, object> UIDatas = new Dictionary<string, object>()
+        {
+            {"/ws/EQStatus",  new object() },
+            {"/ws/VMSAliveCheck",new object()   },
+            {"/ws/VMSStatus", new object()  },
+            {"/UncheckedAlarm",  new object() },
+            {"/ws/AGVLocationUpload", new object()  },
+            {"/ws/HotRun", new object()  },
+            {"/ws/TaskData", new object()  },
+        };
+
+        internal static void StartCollectWebUIUsingDatas()
+        {
+            Thread thread = new Thread(() =>
+            {
+
+                while (true)
+                {
+                    Thread.Sleep(10);
+
+                    using (AGVStatusDBHelper dBHelper = new AGVStatusDBHelper())
+                    {
+                        clsAGVStateViewModel GenViewMode(clsAGVStateDto data)
+                        {
+                            var s = JsonConvert.DeserializeObject<clsAGVStateViewModel>(JsonConvert.SerializeObject(data));
+                            s.StationName = AGVSMapManager.GetNameByTagStr(data.CurrentLocation);
+                            return s;
+                        };
+                        UIDatas["/ws/VMSStatus"] = dBHelper.GetALL().OrderBy(a => a.AGV_Name).ToList().Select(data => GenViewMode(data));
+                    }
+
+                    UIDatas["/ws/EQStatus"] = new { EQPData = StaEQPManagager.GetEQStates(), ChargeStationData = StaEQPManagager.GetChargeStationStates() };
+                    UIDatas["/ws/VMSAliveCheck"] = true;
+                    UIDatas["/UncheckedAlarm"] = AlarmManagerCenter.uncheckedAlarms;
+                    UIDatas["/ws/AGVLocationUpload"] = AGVSMapManager.AGVUploadCoordinationStore;
+                    UIDatas["/ws/HotRun"] = HotRunScriptManager.HotRunScripts;
+                    UIDatas["/ws/TaskData"] = new { incompleteds = TaskManager.InCompletedTaskList.ToArray(), completeds = TaskManager.CompletedTaskList.ToArray() };
+
+                }
+
+            });
+            thread.Start();
+
+
+        }
         private static async Task SendMessagesAsync(WebSocket webSocket, string? path)
         {
             if (path == null)
@@ -52,8 +97,8 @@ namespace AGVSystem.Controllers
                     var viewmodel = GetDataByPath(path);
                     if (viewmodel == null)
                         continue;
-                    await webSocket.SendAsync(new ArraySegment<byte>(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(viewmodel))), System.Net.WebSockets.WebSocketMessageType.Text, true, CancellationToken.None);
 
+                    await webSocket.SendAsync(new ArraySegment<byte>(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(viewmodel))), System.Net.WebSockets.WebSocketMessageType.Text, true, CancellationToken.None);
                 }
                 catch (WebSocketException)
                 {
@@ -66,49 +111,11 @@ namespace AGVSystem.Controllers
 
         private static object GetDataByPath(string path)
         {
+            if (UIDatas.TryGetValue(path, out object viewdata))
+                return viewdata;
+            else
+                return null;
 
-            if (path == "/ws/VMSStatus")
-            {
-                using (AGVStatusDBHelper dBHelper = new AGVStatusDBHelper())
-                {
-                    clsAGVStateViewModel GenViewMode(clsAGVStateDto data)
-                    {
-                        var s = JsonConvert.DeserializeObject<clsAGVStateViewModel>(JsonConvert.SerializeObject(data));
-                        s.StationName = AGVSMapManager.GetNameByTagStr(data.CurrentLocation);
-                        return s;
-                    };
-                    return dBHelper.GetALL().OrderBy(a => a.AGV_Name).ToList().Select(data => GenViewMode(data));
-                }
-            }
-            if (path == "/ws/EQStatus")
-            {
-                return new { EQPData = StaEQPManagager.GetEQStates(), ChargeStationData = StaEQPManagager.GetChargeStationStates() };
-            }
-            if (path == "/ws/VMSAliveCheck")
-            {
-                return true;
-            }
-            if (path == "/ws/TaskData")
-            {
-                clsTaskDto[] incompleteds = TaskManager.InCompletedTaskList.ToArray();
-                clsTaskDto[] completeds = TaskManager.CompletedTaskList.ToArray();
-                return new { incompleteds, completeds };
-            }
-            if (path == "/UncheckedAlarm")
-            {
-                return AlarmManagerCenter.uncheckedAlarms;
-            }
-
-            if (path == "/ws/AGVLocationUpload")
-            {
-                return AGVSMapManager.AGVUploadCoordinationStore;
-            }
-            if (path == "/ws/HotRun")
-            {
-                return HotRunScriptManager.HotRunScripts;
-            }
-
-            return "";
         }
 
 
