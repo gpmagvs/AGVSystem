@@ -9,6 +9,7 @@ using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.Log;
 using AGVSystemCommonNet6.Microservices;
+using AGVSystemCommonNet6.Microservices.VMS;
 using AGVSystemCommonNet6.User;
 using EquipmentManagment;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -38,7 +39,7 @@ StaEQPManagager.InitializeAsync(new clsEQManagementConfigs
 AGVSSocketHost agvs_host = new AGVSSocketHost();
 agvs_host.Start();
 AlarmManagerCenter.Initialize();
-AliveChecker.VMSAliveCheckWorker();
+VMSSerivces.AliveCheckWorker();
 
 var builder = WebApplication.CreateBuilder(args);
 string DBConnection = AGVSConfigulator.SysConfigs.DBConnection;

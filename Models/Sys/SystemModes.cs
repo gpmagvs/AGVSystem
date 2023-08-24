@@ -1,5 +1,6 @@
 ﻿using AGVSystem.TaskManagers;
 using AGVSystemCommonNet6.AGVDispatch.Messages;
+using AGVSystemCommonNet6.AGVDispatch.RunMode;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.Log;
 

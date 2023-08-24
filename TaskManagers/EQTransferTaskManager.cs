@@ -10,6 +10,7 @@ using static AGVSystemCommonNet6.clsEnums;
 using AGVSystemCommonNet6.Log;
 using AGVSystemCommonNet6.MAP;
 using AGVSystemCommonNet6.DATABASE.Helpers;
+using AGVSystemCommonNet6.AGVDispatch.RunMode;
 
 namespace AGVSystem.TaskManagers
 {
