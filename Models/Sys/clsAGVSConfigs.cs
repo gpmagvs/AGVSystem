@@ -1,4 +1,4 @@
-﻿using EquipmentManagment;
+﻿using EquipmentManagment.MainEquipment;
 
 namespace AGVSystem.Models.Sys
 {

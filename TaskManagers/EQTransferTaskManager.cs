@@ -5,17 +5,20 @@ using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.TASK;
 using AGVSystemCommonNet6;
-using EquipmentManagment;
 using static AGVSystemCommonNet6.clsEnums;
 using AGVSystemCommonNet6.Log;
 using AGVSystemCommonNet6.MAP;
 using AGVSystemCommonNet6.DATABASE.Helpers;
 using AGVSystemCommonNet6.AGVDispatch.RunMode;
+using EquipmentManagment.MainEquipment;
+using EquipmentManagment.Device;
+using EquipmentManagment.Manager;
 
 namespace AGVSystem.TaskManagers
 {
     public class EQTransferTaskManager
     {
+        public static bool AutoRunning { get; private set; } = false;
         public static void Initialize()
         {
             //clsEQ.OnEqUnloadRequesting += ClsEQ_OnEqUnloadRequesting;
@@ -23,11 +26,14 @@ namespace AGVSystem.TaskManagers
             SystemModes.OnRunModeOFF += SwitchToMaintainMode;
         }
 
-        internal static void SwitchToMaintainMode()
+        internal static async void SwitchToMaintainMode()
         {
+            while (AutoRunning)
+            {
+                await Task.Delay(1);
+            }
             LOG.WARN("Maintain Mode Start");
             //取消預約所有機台
-
             StaEQPManagager.EQList.FindAll(eq => eq.CMD_Reserve_Low | eq.CMD_Reserve_Up).ForEach(eq =>
             {
                 eq.CancelReserve();
@@ -37,7 +43,7 @@ namespace AGVSystem.TaskManagers
         internal static async void SwitchToRunMode()
         {
             LOG.WARN("Run Mode Start");
-
+           
             _ = Task.Run(() => { TransferTaskPairWorker(); });
             //foreach (var eq in unloadReqEQs)
             //{
@@ -50,6 +56,7 @@ namespace AGVSystem.TaskManagers
         {
             while (SystemModes.RunMode == RUN_MODE.RUN)
             {
+                AutoRunning = true;
                 Thread.Sleep(1);
                 List<clsEQ> unload_req_eq_list = StaEQPManagager.EQList.FindAll(eq => eq.lduld_type == EQLDULD_TYPE.ULD | eq.lduld_type == EQLDULD_TYPE.LDULD)
                                       .FindAll(eq => eq.Unload_Request && eq.Eqp_Status_Down && !eq.CMD_Reserve_Low);
@@ -101,12 +108,17 @@ namespace AGVSystem.TaskManagers
                 }
 
             }
+            AutoRunning = false;
         }
 
-        public static Tuple<bool, ALARMS> CheckEQLDULDStatus(ACTION_TYPE action, int from_tag, int to_tag)
+        public static (bool confirm, ALARMS alarm_code) CheckEQLDULDStatus(ACTION_TYPE action, int from_tag, int to_tag)
         {
             //TODO If To EQ Is WIP
-            KeyValuePair<int, MapPoint> ToStation = AGVSMapManager.CurrentMap.Points.First(pt => pt.Value.TagNumber == to_tag);
+            KeyValuePair<int, MapPoint> ToStation = AGVSMapManager.CurrentMap.Points.FirstOrDefault(pt => pt.Value.TagNumber == to_tag);
+            if (ToStation.Value == null)
+            {
+                return new(false, ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP);
+            }
             EQStatusDIDto ToEQStatus = StaEQPManagager.GetEQStatesByTagID(to_tag);
             EQStatusDIDto FromEQStatus = StaEQPManagager.GetEQStatesByTagID(from_tag);
 

@@ -6,7 +6,7 @@ using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.DATABASE.Helpers;
 using AGVSystemCommonNet6.TASK;
-using EquipmentManagment;
+using EquipmentManagment.Manager;
 using Newtonsoft.Json;
 using System.Net.WebSockets;
 using System.Text;

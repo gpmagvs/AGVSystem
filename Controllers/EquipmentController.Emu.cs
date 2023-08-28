@@ -1,5 +1,5 @@
-﻿using EquipmentManagment;
-using EquipmentManagment.Emu;
+﻿using EquipmentManagment.Emu;
+using EquipmentManagment.Manager;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AGVSystem.Controllers

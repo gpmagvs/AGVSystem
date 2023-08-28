@@ -1,8 +1,10 @@
 ﻿using AGVSystem.Models.Map;
 using AGVSystemCommonNet6.DATABASE;
-using EquipmentManagment;
 using EquipmentManagment.ChargeStation;
 using EquipmentManagment.Connection;
+using EquipmentManagment.Device;
+using EquipmentManagment.MainEquipment;
+using EquipmentManagment.Manager;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;

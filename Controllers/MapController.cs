@@ -109,6 +109,8 @@ namespace AGVSystem.Controllers
         [HttpGet("UploadCoordination")]
         public async Task<IActionResult> UploadCoordintaion(string AGVName, int tagNumber, double x, double y, double theta)
         {
+            if (!AGVSMapManager.AGVUploadLocMode)
+                return Ok("AGV上報位置功能尚未開啟");
             AGVSMapManager.StoreAGVLocationUpload(AGVName, tagNumber, x, y, theta);
             return Ok(true);
         }

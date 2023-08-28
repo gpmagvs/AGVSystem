@@ -1,7 +1,8 @@
 ﻿using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.MAP;
-using EquipmentManagment;
+using EquipmentManagment.Device;
+using EquipmentManagment.Manager;
 using Newtonsoft.Json;
 
 namespace AGVSystem.Models.Map
