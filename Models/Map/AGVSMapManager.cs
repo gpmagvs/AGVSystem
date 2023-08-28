@@ -22,6 +22,9 @@ namespace AGVSystem.Models.Map
         };
 
         public static AGVSystemCommonNet6.MAP.Map CurrentMap;
+
+        public static bool AGVUploadLocMode { get; private set; }
+
         public static void Initialize()
         {
             CurrentMap = MapManager.LoadMapFromFile();
@@ -149,6 +152,13 @@ namespace AGVSystem.Models.Map
                 AGVUploadCoordinationStore.Add(tagNumber, info);
             }
 
+        }
+
+        internal static void SwitchAGVUploadLocFun(bool enabled)
+        {
+            AGVUploadLocMode = enabled;
+            if (!enabled)
+                AGVUploadCoordinationStore.Clear();
         }
     }
 }

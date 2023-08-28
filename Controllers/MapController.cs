@@ -2,6 +2,7 @@
 using AGVSystem.Models.Map;
 using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.MAP;
+using Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
@@ -108,8 +109,14 @@ namespace AGVSystem.Controllers
         [HttpGet("UploadCoordination")]
         public async Task<IActionResult> UploadCoordintaion(string AGVName, int tagNumber, double x, double y, double theta)
         {
-            AGVSMapManager.StoreAGVLocationUpload(AGVName,tagNumber, x, y, theta);
+            AGVSMapManager.StoreAGVLocationUpload(AGVName, tagNumber, x, y, theta);
             return Ok(true);
+        }
+        [HttpGet("SwitchAGVUploadLocFun")]
+        public async Task<IActionResult> SwitchAGVUploadLocFun(bool enabled)
+        {
+            AGVSMapManager.SwitchAGVUploadLocFun(enabled);
+            return Ok();
         }
         public class clsAGVInfoVM
         {
