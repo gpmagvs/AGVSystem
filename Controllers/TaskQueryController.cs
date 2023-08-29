@@ -17,12 +17,20 @@ namespace AGVSystem.Controllers
     public class TaskQueryController : ControllerBase
     {
         [HttpGet("TaskQuery")]
-        public async Task<IActionResult> TaskQuery(int currentpage, string StartTime, string EndTime, string? AGV_Name = "ALL")
+        public async Task<IActionResult> TaskQuery(int currentpage, string StartTime, string EndTime, string? AGV_Name = "ALL", string? TaskName = "ALL")
         {
             DateTime start = DateTime.Parse(StartTime);
             DateTime end = DateTime.Parse(EndTime);
-            TaskDatabaseHelper.TaskQuery(out int count, currentpage, start, end, AGV_Name, out List<clsTaskDto>? tasks);
+            TaskDatabaseHelper.TaskQuery(out int count, currentpage, start, end, AGV_Name, TaskName, out List<clsTaskDto>? tasks);
             return Ok(new { count, tasks });
+        }
+        [HttpGet("SaveTocsv")]
+        public async Task<IActionResult> SaveTocsv(string StartTime, string EndTime, string? TaskName = "ALL", string? AGV_Name = "ALL")
+        {
+            DateTime start = DateTime.Parse(StartTime);
+            DateTime end = DateTime.Parse(EndTime);
+            TaskDatabaseHelper.SaveTocsv(start, end, AGV_Name, TaskName);
+            return Ok();
         }
         public class Taskquery_options
         {

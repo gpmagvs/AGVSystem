@@ -21,6 +21,14 @@ namespace AGVSystem.Controllers
             AlarmManagerCenter.AlarmQuery(out int count,currentpage,start, end, AGV_Name, TaskName, out List<clsAlarmDto>? alarms);
             return Ok(new { count, alarms });
         }
+        [HttpGet("SaveTocsv")]
+        public async Task<IActionResult> SaveTocsv(string StartTime, string EndTime, string? TaskName = "ALL", string? AGV_Name = "ALL")
+        {
+            DateTime start = DateTime.Parse(StartTime);
+            DateTime end = DateTime.Parse(EndTime);
+            AlarmManagerCenter.SaveTocsv(start, end, AGV_Name, TaskName);
+            return Ok();
+        }
         public class Alarmquery_options
         {
             public DateTime StartTime { get; set; }
