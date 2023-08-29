@@ -10,6 +10,8 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
 
         public string state { get; set; } = "IDLE";
         public List<HotRunAction> actions { get; set; } = new List<HotRunAction>();
+
+        public string comment { get; set; } = "Description";
         internal CancellationTokenSource cancellationTokenSource { get; set; }
     }
     public class HotRunAction
@@ -18,6 +20,6 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
         public string action { get; set; } = "move";
         public int source_tag { get; set; }
         public int destine_tag { get; set; }
-        public int destine_theta { get; set; }=-1;
+        public int destine_theta { get; set; } = -1;
     }
 }
