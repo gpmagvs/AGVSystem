@@ -50,13 +50,11 @@ namespace AGVSystem.Controllers
 
         internal static void StartCollectWebUIUsingDatas()
         {
-            Thread thread = new Thread(() =>
+            Thread thread = new Thread(async() =>
             {
-
                 while (true)
                 {
-                    Thread.Sleep(10);
-
+                    await Task.Delay(100);
                     using (AGVStatusDBHelper dBHelper = new AGVStatusDBHelper())
                     {
                         clsAGVStateViewModel GenViewMode(clsAGVStateDto data)
@@ -87,7 +85,7 @@ namespace AGVSystem.Controllers
             if (path == null)
                 return;
 
-            var delay = TimeSpan.FromSeconds(.5);
+            var delay = TimeSpan.FromSeconds(GetPublishDelay(path));
             while (webSocket.State == WebSocketState.Open)
             {
                 await Task.Delay(delay);
@@ -108,7 +106,13 @@ namespace AGVSystem.Controllers
             }
 
         }
-
+        private static double GetPublishDelay(string path)
+        {
+            if (path == "/ws/HotRun" | path == "/ws/UncheckedAlarm" | path == "/ws/VMSAliveCheck" | path == "/ws/AGVLocationUpload")
+                return 1;
+            else
+                return 0.5;
+        }
         private static object GetDataByPath(string path)
         {
             if (UIDatas.TryGetValue(path, out object viewdata))
