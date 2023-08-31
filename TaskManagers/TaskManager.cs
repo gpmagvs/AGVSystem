@@ -9,7 +9,6 @@ namespace AGVSystem.TaskManagers
 {
     public class TaskManager
     {
-        public static List<clsTaskDto> TaskList => DatabaseHelper.GetALL();
 
         public static List<clsTaskDto> InCompletedTaskList => DatabaseHelper.GetALLInCompletedTask();
         public static List<clsTaskDto> CompletedTaskList => DatabaseHelper.GetALLCompletedTask(20);

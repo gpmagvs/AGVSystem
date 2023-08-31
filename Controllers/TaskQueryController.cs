@@ -21,8 +21,11 @@ namespace AGVSystem.Controllers
         {
             DateTime start = DateTime.Parse(StartTime);
             DateTime end = DateTime.Parse(EndTime);
-            TaskDatabaseHelper.TaskQuery(out int count, currentpage, start, end, AGV_Name, out List<clsTaskDto>? tasks);
-            return Ok(new { count, tasks });
+            using (var taskDb = new TaskDatabaseHelper())
+            {
+                taskDb.TaskQuery(out int count, currentpage, start, end, AGV_Name, out List<clsTaskDto>? tasks);
+                return Ok(new { count, tasks });
+            }
         }
         public class Taskquery_options
         {
