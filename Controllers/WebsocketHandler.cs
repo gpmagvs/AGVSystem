@@ -52,30 +52,25 @@ namespace AGVSystem.Controllers
         {
             Thread thread = new Thread(async () =>
             {
+                TaskDatabaseHelper taskDB = new TaskDatabaseHelper();
+                AGVStatusDBHelper dBHelper = new AGVStatusDBHelper();
                 while (true)
                 {
                     await Task.Delay(100);
-                    using (AGVStatusDBHelper dBHelper = new AGVStatusDBHelper())
+                    clsAGVStateViewModel GenViewMode(clsAGVStateDto data)
                     {
-                        clsAGVStateViewModel GenViewMode(clsAGVStateDto data)
-                        {
-                            var s = JsonConvert.DeserializeObject<clsAGVStateViewModel>(JsonConvert.SerializeObject(data));
-                            s.StationName = AGVSMapManager.GetNameByTagStr(data.CurrentLocation);
-                            return s;
-                        };
-                        UIDatas["/ws/VMSStatus"] = dBHelper.GetALL().OrderBy(a => a.AGV_Name).ToList().Select(data => GenViewMode(data));
-                    }
+                        var s = JsonConvert.DeserializeObject<clsAGVStateViewModel>(JsonConvert.SerializeObject(data));
+                        s.StationName = AGVSMapManager.GetNameByTagStr(data.CurrentLocation);
+                        return s;
+                    };
+                    UIDatas["/ws/VMSStatus"] = dBHelper.GetALL().OrderBy(a => a.AGV_Name).ToList().Select(data => GenViewMode(data));
 
                     UIDatas["/ws/EQStatus"] = new { EQPData = StaEQPManagager.GetEQStates(), ChargeStationData = StaEQPManagager.GetChargeStationStates() };
                     UIDatas["/ws/VMSAliveCheck"] = true;
                     UIDatas["/UncheckedAlarm"] = AlarmManagerCenter.uncheckedAlarms;
                     UIDatas["/ws/AGVLocationUpload"] = AGVSMapManager.AGVUploadCoordinationStore;
                     UIDatas["/ws/HotRun"] = HotRunScriptManager.HotRunScripts;
-
-                    using (TaskDatabaseHelper taskDB = new TaskDatabaseHelper())
-                    {
-                        UIDatas["/ws/TaskData"] = new { incompleteds = taskDB.GetALLInCompletedTask(true), completeds = taskDB.GetALLCompletedTask(20, true) };
-                    }
+                    UIDatas["/ws/TaskData"] = new { incompleteds = taskDB.GetALLInCompletedTask(true), completeds = taskDB.GetALLCompletedTask(20, true) };
 
                 }
 
