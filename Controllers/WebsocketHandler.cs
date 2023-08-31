@@ -50,7 +50,7 @@ namespace AGVSystem.Controllers
 
         internal static void StartCollectWebUIUsingDatas()
         {
-            Thread thread = new Thread(async() =>
+            Thread thread = new Thread(async () =>
             {
                 while (true)
                 {
@@ -71,7 +71,11 @@ namespace AGVSystem.Controllers
                     UIDatas["/UncheckedAlarm"] = AlarmManagerCenter.uncheckedAlarms;
                     UIDatas["/ws/AGVLocationUpload"] = AGVSMapManager.AGVUploadCoordinationStore;
                     UIDatas["/ws/HotRun"] = HotRunScriptManager.HotRunScripts;
-                    UIDatas["/ws/TaskData"] = new { incompleteds = TaskManager.InCompletedTaskList.ToArray(), completeds = TaskManager.CompletedTaskList.ToArray() };
+
+                    using (TaskDatabaseHelper taskDB = new TaskDatabaseHelper())
+                    {
+                        UIDatas["/ws/TaskData"] = new { incompleteds = taskDB.GetALLInCompletedTask(true), completeds = taskDB.GetALLCompletedTask(20, true) };
+                    }
 
                 }
 

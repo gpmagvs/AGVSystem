@@ -32,7 +32,7 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                 foreach (var script in HotRunScripts)
                 {
                     script.state = "IDLE";
-                } 
+                }
             }
         }
         public static void Initialize()
@@ -88,6 +88,7 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                                     break;
                             }
 
+                            var TaskName = $"Hot-RUN-{DateTime.Now.ToString("yyyyMMdd_HHmmss")}";
                             TaskDatabaseHelper dbH = new TaskDatabaseHelper();
                             dbH.Add(new AGVSystemCommonNet6.TASK.clsTaskDto
                             {
@@ -96,17 +97,17 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                                 To_Station = _action.destine_tag.ToString(),
                                 DispatcherName = "Hot_Run",
                                 Carrier_ID = "",
-                                TaskName = $"Hot-RUN-{DateTime.Now.ToString("yyyyMMdd_HHmmss")}",
+                                TaskName = TaskName,
                                 DesignatedAGVName = script.agv_name
                             });
 
-                            while (GetAGVState().MainStatus != clsEnums.MAIN_STATUS.RUN)
-                            {
-                                if (script.cancellationTokenSource.IsCancellationRequested)
-                                    break;
-                                Thread.Sleep(1000);
-                            }
-                            while (GetAGVState().MainStatus != clsEnums.MAIN_STATUS.IDLE)
+                            //while (dbH.GetTaskStateByID(TaskName) != TASK_RUN_STATUS.NAVIGATING)
+                            //{
+                            //    if (script.cancellationTokenSource.IsCancellationRequested)
+                            //        break;
+                            //    Thread.Sleep(1000);
+                            //}
+                            while (dbH.GetTaskStateByID(TaskName) != TASK_RUN_STATUS.ACTION_FINISH)
                             {
                                 if (script.cancellationTokenSource.IsCancellationRequested)
                                     break;
