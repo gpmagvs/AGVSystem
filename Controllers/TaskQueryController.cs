@@ -29,8 +29,19 @@ namespace AGVSystem.Controllers
         {
             DateTime start = DateTime.Parse(StartTime);
             DateTime end = DateTime.Parse(EndTime);
-            TaskDatabaseHelper.SaveTocsv(start, end, AGV_Name, TaskName);
-            return Ok();
+            //TaskDatabaseHelper.SaveTocsv(start, end, AGV_Name, TaskName);
+            //return Ok();
+            string FileName = TaskDatabaseHelper.SaveTocsv(start, end, AGV_Name, TaskName);
+            FileStream fileStream = new FileStream(FileName, FileMode.Open, FileAccess.Read);
+
+            // 設置回應的內容類型
+            var contentType = "application/octet-stream"; // 或根據檔案類型設置適當的內容類型
+            var fileContentResult = new FileStreamResult(fileStream, contentType);
+
+            // 設置下載檔案的名稱
+            fileContentResult.FileDownloadName = "filename.ext";
+
+            return fileContentResult;
         }
         public class Taskquery_options
         {

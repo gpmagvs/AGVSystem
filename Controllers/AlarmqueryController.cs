@@ -36,7 +36,7 @@ namespace AGVSystem.Controllers
 
             // 設置下載檔案的名稱
             fileContentResult.FileDownloadName = "filename.ext";
-
+            
             return fileContentResult;
         }
         public class Alarmquery_options
