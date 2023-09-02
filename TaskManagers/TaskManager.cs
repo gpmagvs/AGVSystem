@@ -4,6 +4,7 @@ using AGVSystemCommonNet6.AGVDispatch.RunMode;
 using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.DATABASE.Helpers;
+using AGVSystemCommonNet6.Log;
 using AGVSystemCommonNet6.TASK;
 
 namespace AGVSystem.TaskManagers
@@ -51,6 +52,7 @@ namespace AGVSystem.TaskManagers
             }
             catch (Exception ex)
             {
+                LOG.ERROR(ex);
                 AlarmManagerCenter.AddAlarm(ALARMS.Task_Add_To_Database_Fail, ALARM_SOURCE.AGVS);
                 return new(false, ALARMS.Task_Add_To_Database_Fail);
             }
