@@ -17,15 +17,31 @@ namespace AGVSystem.Controllers
     public class TaskQueryController : ControllerBase
     {
         [HttpGet("TaskQuery")]
-        public async Task<IActionResult> TaskQuery(int currentpage, string StartTime, string EndTime, string? AGV_Name = "ALL")
+        public async Task<IActionResult> TaskQuery(int currentpage, string StartTime, string EndTime, string? AGV_Name = "ALL", string? TaskName = "ALL")
         {
             DateTime start = DateTime.Parse(StartTime);
             DateTime end = DateTime.Parse(EndTime);
             using (var taskDb = new TaskDatabaseHelper())
             {
-                taskDb.TaskQuery(out int count, currentpage, start, end, AGV_Name, out List<clsTaskDto>? tasks);
+                taskDb.TaskQuery(out int count, currentpage, start, end, AGV_Name, TaskName, out List<clsTaskDto>? tasks);
                 return Ok(new { count, tasks });
             }
+        }
+        [HttpGet("SaveTocsv")]
+        public async Task<IActionResult> SaveTocsv(string StartTime, string EndTime, string? TaskName = "ALL", string? AGV_Name = "ALL")
+        {
+            DateTime start = DateTime.Parse(StartTime);
+            DateTime end = DateTime.Parse(EndTime);
+            //TaskDatabaseHelper.SaveTocsv(start, end, AGV_Name, TaskName);
+            //return Ok();
+            string FileName = TaskDatabaseHelper.SaveTocsv(start, end, AGV_Name, TaskName);
+            FileStream fileStream = new FileStream(FileName, FileMode.Open, FileAccess.Read);
+            // 設置回應的內容類型
+            var contentType = "application/octet-stream"; // 或根據檔案類型設置適當的內容類型
+            var fileContentResult = new FileStreamResult(fileStream, contentType);
+            // 設置下載檔案的名稱
+            fileContentResult.FileDownloadName = "filename.ext";
+            return fileContentResult;
         }
         public class Taskquery_options
         {
