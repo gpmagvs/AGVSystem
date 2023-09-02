@@ -2,11 +2,13 @@
 using AGVSystem.Models.TaskAllocation.HotRun;
 using AGVSystem.TaskManagers;
 using AGVSystemCommonNet6;
+using AGVSystemCommonNet6.AGVDispatch.Messages;
 using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.DATABASE.Helpers;
 using AGVSystemCommonNet6.TASK;
 using EquipmentManagment.Manager;
+using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using System.Net.WebSockets;
 using System.Text;
@@ -52,8 +54,7 @@ namespace AGVSystem.Controllers
         {
             Thread thread = new Thread(async () =>
             {
-                TaskDatabaseHelper taskDB = new TaskDatabaseHelper();
-                AGVStatusDBHelper dBHelper = new AGVStatusDBHelper();
+                var db = new AGVSDatabase();
                 while (true)
                 {
                     await Task.Delay(100);
@@ -63,14 +64,15 @@ namespace AGVSystem.Controllers
                         s.StationName = AGVSMapManager.GetNameByTagStr(data.CurrentLocation);
                         return s;
                     };
-                    UIDatas["/ws/VMSStatus"] = dBHelper.GetALL().OrderBy(a => a.AGV_Name).ToList().Select(data => GenViewMode(data));
-
+                    UIDatas["/ws/VMSStatus"] = db.tables.AgvStates.Where(stat => stat.Enabled).OrderBy(a => a.AGV_Name).AsNoTracking().ToList().Select(data => GenViewMode(data));
                     UIDatas["/ws/EQStatus"] = new { EQPData = StaEQPManagager.GetEQStates(), ChargeStationData = StaEQPManagager.GetChargeStationStates() };
                     UIDatas["/ws/VMSAliveCheck"] = true;
                     UIDatas["/UncheckedAlarm"] = AlarmManagerCenter.uncheckedAlarms;
                     UIDatas["/ws/AGVLocationUpload"] = AGVSMapManager.AGVUploadCoordinationStore;
                     UIDatas["/ws/HotRun"] = HotRunScriptManager.HotRunScripts;
-                    UIDatas["/ws/TaskData"] = new { incompleteds = taskDB.GetALLInCompletedTask(true), completeds = taskDB.GetALLCompletedTask(20, true) };
+                    var incompleted_tasks = db.tables.Tasks.Where(t => t.State == TASK_RUN_STATUS.WAIT | t.State == TASK_RUN_STATUS.NAVIGATING).AsNoTracking().ToList();
+                    var completed_tasks = db.tables.Tasks.Where(t => t.State != TASK_RUN_STATUS.WAIT && t.State != TASK_RUN_STATUS.NAVIGATING).OrderByDescending(t => t.RecieveTime).Take(20).AsNoTracking().ToList();
+                    UIDatas["/ws/TaskData"] = new { incompleteds = incompleted_tasks, completeds = completed_tasks };
 
                 }
 
@@ -107,10 +109,10 @@ namespace AGVSystem.Controllers
         }
         private static double GetPublishDelay(string path)
         {
-            if (path == "/ws/HotRun" | path == "/ws/UncheckedAlarm" | path == "/ws/VMSAliveCheck" | path == "/ws/AGVLocationUpload")
+            if (path == "/ws/HotRun" | path == "/ws/VMSAliveCheck" | path == "/ws/AGVLocationUpload")
                 return 1;
             else
-                return 0.5;
+                return 0.3;
         }
         private static object GetDataByPath(string path)
         {

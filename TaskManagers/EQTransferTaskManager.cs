@@ -96,7 +96,7 @@ namespace AGVSystem.TaskManagers
                             DesignatedAGVName = AGV.AGV_Name,
                             From_Station = sourceEQ.EndPointOptions.TagID.ToString(),
                             To_Station = destineEQ.EndPointOptions.TagID.ToString(),
-                            TaskName = $"*Local-{DateTime.Now.ToString("yyyyMMddHHmmssfff")}",
+                            TaskName = $"*Local-{DateTime.Now.ToString("yyyyMMddHHmmssffff")}",
                             DispatcherName = "Local_Auto",
                             From_Slot = "1",
                             To_Slot = "1"

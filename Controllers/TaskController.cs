@@ -64,7 +64,7 @@ namespace AGVSystem.Controllers
                 return Unauthorized();
             }
 
-            bool canceled = TaskManager.Cancel(task_name);
+            bool canceled = TaskManager.Cancel(task_name,$"User manual canceled");
             return Ok(canceled);
         }
 

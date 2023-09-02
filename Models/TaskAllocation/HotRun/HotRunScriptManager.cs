@@ -1,4 +1,5 @@
-﻿using AGVSystemCommonNet6;
+﻿using AGVSystem.TaskManagers;
+using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.AGVDispatch.Messages;
 using AGVSystemCommonNet6.DATABASE.Helpers;
 using Microsoft.AspNetCore.Mvc;
@@ -44,6 +45,7 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
             var script = HotRunScripts.FirstOrDefault(script => script.no == no);
             if (script != null)
             {
+                script.cancellationTokenSource = new CancellationTokenSource();
                 StartHotRun(script);
             }
         }
@@ -62,7 +64,7 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
             AGVStatusDBHelper agv_status_db = new AGVStatusDBHelper();
             clsAGVStateDto? agv = agv_status_db.GetALL().FirstOrDefault(agv => agv.AGV_Name == script.agv_name);
 
-            Task.Factory.StartNew(() =>
+            Task.Factory.StartNew(async () =>
             {
                 script.finish_num = 0;
                 clsAGVStateDto GetAGVState()
@@ -71,26 +73,34 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                 }
                 script.state = "Running";
                 UpdateScriptState(script);
-                script.cancellationTokenSource = new CancellationTokenSource();
+
+                //等待AGV可做任務
+                var agvstates = GetAGVState();
+                while (agvstates.OnlineStatus == clsEnums.ONLINE_STATE.OFFLINE | !agvstates.Connected | agvstates.MainStatus == clsEnums.MAIN_STATUS.DOWN | agvstates.MainStatus == clsEnums.MAIN_STATUS.RUN)
+                {
+                    await Task.Delay(100);
+                    if (script.cancellationTokenSource.IsCancellationRequested)
+                    {
+                        script.state = "IDLE";
+                        return;
+                    }
+                    agvstates = GetAGVState();
+                }
+
                 while (script.finish_num != script.loop_num)
                 {
-                    Thread.Sleep(1);
+                    await Task.Delay(1);
                     if (script.cancellationTokenSource.IsCancellationRequested)
-                        break;
+                    {
+                        script.state = "IDLE";
+                        return;
+                    }
                     if (agv != null)
                     {
                         foreach (HotRunAction _action in script.actions)
                         {
-                            while (GetAGVState().MainStatus != clsEnums.MAIN_STATUS.IDLE && GetAGVState().MainStatus != clsEnums.MAIN_STATUS.Charging)
-                            {
-                                Thread.Sleep(1);
-                                if (script.cancellationTokenSource.IsCancellationRequested)
-                                    break;
-                            }
-
-                            var TaskName = $"Hot-RUN-{DateTime.Now.ToString("yyyyMMdd_HHmmss")}";
-                            TaskDatabaseHelper dbH = new TaskDatabaseHelper();
-                            dbH.Add(new AGVSystemCommonNet6.TASK.clsTaskDto
+                            var TaskName = $"HR_{DateTime.Now.ToString("yyMMdd_HHmmssffff")}";
+                            await TaskManager.AddTask(new AGVSystemCommonNet6.TASK.clsTaskDto
                             {
                                 Action = GetActionByActionName(_action.action),
                                 From_Station = _action.source_tag.ToString(),
@@ -100,18 +110,36 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                                 TaskName = TaskName,
                                 DesignatedAGVName = script.agv_name
                             });
+                            TaskDatabaseHelper dbH = new TaskDatabaseHelper();
 
-                            //while (dbH.GetTaskStateByID(TaskName) != TASK_RUN_STATUS.NAVIGATING)
-                            //{
-                            //    if (script.cancellationTokenSource.IsCancellationRequested)
-                            //        break;
-                            //    Thread.Sleep(1000);
-                            //}
-                            while (dbH.GetTaskStateByID(TaskName) != TASK_RUN_STATUS.ACTION_FINISH)
+                            var status = await dbH.GetTaskStateByID(TaskName);
+
+                            while (status != TASK_RUN_STATUS.NAVIGATING)
                             {
+                                status = await dbH.GetTaskStateByID(TaskName);
                                 if (script.cancellationTokenSource.IsCancellationRequested)
+                                {
+                                    script.state = "IDLE";
+                                    return;
+                                }
+                                if (status != TASK_RUN_STATUS.WAIT)
                                     break;
-                                Thread.Sleep(1000);
+                                await Task.Delay(1000);
+                            }
+
+                            while (status != TASK_RUN_STATUS.ACTION_FINISH)
+                            {
+                                status = await dbH.GetTaskStateByID(TaskName);
+                                if (script.cancellationTokenSource.IsCancellationRequested)
+                                {
+                                    script.state = "IDLE";
+                                    return;
+                                }
+
+                                if (status != TASK_RUN_STATUS.NAVIGATING)
+                                    break;
+
+                                await Task.Delay(1000);
                             }
                         }
 

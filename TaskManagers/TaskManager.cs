@@ -2,6 +2,7 @@
 using AGVSystemCommonNet6.AGVDispatch.Messages;
 using AGVSystemCommonNet6.AGVDispatch.RunMode;
 using AGVSystemCommonNet6.Alarm;
+using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.DATABASE.Helpers;
 using AGVSystemCommonNet6.TASK;
 
@@ -39,25 +40,47 @@ namespace AGVSystem.TaskManagers
             }
             try
             {
-                //    clsExecuteTaskAck response = await Http.PostAsync<clsTaskDto, clsExecuteTaskAck>($"{AppSettings.VMSHost}/api/VmsManager/ExecuteTask", taskData);
-                //    taskData = response.taskData;
-                //    taskData.RecieveTime = DateTime.Now;
-                //    taskData.State = response.Confirm ? TASK_RUN_STATUS.WAIT : TASK_RUN_STATUS.FAILURE;
-                DatabaseHelper.Add(taskData);
+                taskData.RecieveTime = DateTime.Now;
+                await Task.Delay(200);
+                using (var db = new AGVSDatabase())
+                {
+                    db.tables.Tasks.Add(taskData);
+                    db.SaveChanges();
+                }
                 return new(true, ALARMS.NONE);
             }
-            catch (HttpRequestException ex)
+            catch (Exception ex)
             {
-                AlarmManagerCenter.AddAlarm(ALARMS.TRANSFER_TASK_TO_VMS_BUT_ERROR_OCCUR, ALARM_SOURCE.AGVS);
-                return new(false, ALARMS.TRANSFER_TASK_TO_VMS_BUT_ERROR_OCCUR);
-
+                AlarmManagerCenter.AddAlarm(ALARMS.Task_Add_To_Database_Fail, ALARM_SOURCE.AGVS);
+                return new(false, ALARMS.Task_Add_To_Database_Fail);
             }
         }
 
 
-        internal static bool Cancel(string task_name)
+        internal static bool Cancel(string task_name, string reason = "")
         {
-            return DatabaseHelper.DeleteTask(task_name);
+            try
+            {
+                using (var db = new AGVSDatabase())
+                {
+                    var task = db.tables.Tasks.Where(tk => tk.TaskName == task_name).FirstOrDefault();
+                    if (task != null)
+                    {
+                        task.FinishTime = DateTime.Now;
+                        task.FailureReason = reason;
+                        task.State = TASK_RUN_STATUS.CANCEL;
+                        db.SaveChanges();
+
+                    }
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                AlarmManagerCenter.AddAlarm(ALARMS.Task_Cancel_Fail);
+                return false;
+            }
+
         }
 
 
