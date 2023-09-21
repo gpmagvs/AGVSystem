@@ -41,7 +41,7 @@ namespace AGVSystem.Controllers
         [HttpGet("GetEQOptions")]
         public async Task<IActionResult> GetEQOptions()
         {
-            return Ok(StaEQPManagager.EQOptions.Values.ToArray());
+            return Ok(StaEQPManagager.EQList.Select(eq => eq.EndPointOptions).ToArray());
         }
         [HttpPost("SaveEQOptions")]
         public async Task<IActionResult> SaveEQOptions(List<clsEndPointOptions> datas)
