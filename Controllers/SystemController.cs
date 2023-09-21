@@ -1,6 +1,7 @@
 ﻿using AGVSystem.Models.Sys;
 using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.AGVDispatch.RunMode;
+using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.Log;
 using AGVSystemCommonNet6.Microservices.VMS;
 using Microsoft.AspNetCore.Http;
@@ -70,7 +71,7 @@ namespace AGVSystem.Controllers
         {
             var website_config = new
             {
-                AppSettings.Public,
+                AGVSConfigulator.SysConfigs.WebUserLogoutExipreTime
             };
             return Ok(website_config);
         }
