@@ -69,6 +69,7 @@ namespace AGVSystem.Controllers
         [HttpGet("Website")]
         public async Task<IActionResult> Get()
         {
+            AGVSConfigulator.LoadConfig();
             var website_config = new
             {
                 AGVSConfigulator.SysConfigs.WebUserLogoutExipreTime
