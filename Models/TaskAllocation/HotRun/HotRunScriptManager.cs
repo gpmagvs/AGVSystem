@@ -104,7 +104,7 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                             {
                                 Action = GetActionByActionName(_action.action),
                                 From_Station = _action.source_tag.ToString(),
-                                To_Station = _action.destine_tag.ToString(),
+                                To_Station = _action.action == "measure" ? _action.destine_name : _action.destine_tag.ToString(),
                                 DispatcherName = "Hot_Run",
                                 Carrier_ID = "",
                                 TaskName = TaskName,
@@ -172,6 +172,11 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                 return ACTION_TYPE.Unload;
             if (action == "carry")
                 return ACTION_TYPE.Carry;
+            if (action == "measure")
+                return ACTION_TYPE.Measure;
+
+            if (action == "exchange_battery")
+                return ACTION_TYPE.ExchangeBattery;
             else
                 return ACTION_TYPE.None;
         }
