@@ -1,4 +1,5 @@
-﻿using AGVSystem.Models.Sys;
+﻿using AGVSystem.Models.BayMeasure;
+using AGVSystem.Models.Sys;
 using AGVSystemCommonNet6.AGVDispatch.Messages;
 using AGVSystemCommonNet6.AGVDispatch.RunMode;
 using AGVSystemCommonNet6.Alarm;
@@ -11,6 +12,7 @@ namespace AGVSystem.TaskManagers
 {
     public class TaskManager
     {
+
 
         public static List<clsTaskDto> InCompletedTaskList => DatabaseHelper.GetALLInCompletedTask();
         public static List<clsTaskDto> CompletedTaskList => DatabaseHelper.GetALLCompletedTask(20);
@@ -25,8 +27,8 @@ namespace AGVSystem.TaskManagers
         }
         internal static void Initialize()
         {
-
         }
+
         public static async Task<(bool confirm, ALARMS alarm_code)> AddTask(clsTaskDto taskData, TASK_RECIEVE_SOURCE source = TASK_RECIEVE_SOURCE.LOCAL)
         {
             if (SystemModes.RunMode == RUN_MODE.RUN)

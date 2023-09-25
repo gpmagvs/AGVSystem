@@ -1,5 +1,6 @@
 ﻿using AGVSystem.Models.BayMeasure;
 using AGVSystem.Models.Map;
+using AGVSystem.TaskManagers;
 using AGVSystem.ViewModel;
 using AGVSystemCommonNet6.AGVDispatch.Model;
 using AGVSystemCommonNet6.DATABASE;
@@ -60,5 +61,24 @@ namespace AGVSystem.Controllers
             return Ok(baystable);
         }
 
+
+
+        [HttpGet("GetMeasureSchedules")]
+        public async Task<IActionResult> GetMeasureSchedules()
+        {
+            return Ok(ScheduleMeasureManager.ScheduleMeasureList);
+        }
+
+
+        [HttpPost("AddNewMeasureSchedule")]
+        public async Task<IActionResult> AddNewMeasureSchedule([FromBody] clsMeasureScript schedule)
+        {
+            bool add_success =ScheduleMeasureManager.AddNewSchedule(schedule);
+            return Ok(new
+            {
+                 result= add_success,
+                 message=""
+            });
+        }
     }
 }
