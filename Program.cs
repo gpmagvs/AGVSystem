@@ -29,6 +29,7 @@ TaskManager.Initialize();
 EQTransferTaskManager.Initialize();
 AGVSMapManager.Initialize();
 HotRunScriptManager.Initialize();
+ScheduleMeasureManager.Initialize();
 
 StaEQPManagager.InitializeAsync(new clsEQManagementConfigs
 {

@@ -118,6 +118,16 @@ namespace AGVSystem.Controllers
             }
             return Ok(await AddTask(taskData));
         }
+        [HttpPost("ExangeBattery")]
+        [Authorize]
+        public async Task<IActionResult> ExangeBattery(clsTaskDto taskData)
+        {
+            if (!UserValidation())
+            {
+                return Unauthorized();
+            }
+            return Ok(await AddTask(taskData));
+        }
         [HttpPost("park")]
         [Authorize]
         public async Task<IActionResult> ParkTask(clsTaskDto taskData)
