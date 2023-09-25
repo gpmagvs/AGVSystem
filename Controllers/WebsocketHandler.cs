@@ -64,16 +64,24 @@ namespace AGVSystem.Controllers
                         s.StationName = AGVSMapManager.GetNameByTagStr(data.CurrentLocation);
                         return s;
                     };
-                    UIDatas["/ws/VMSStatus"] = db.tables.AgvStates.Where(stat => stat.Enabled).OrderBy(a => a.AGV_Name).AsNoTracking().ToList().Select(data => GenViewMode(data));
-                    UIDatas["/ws/EQStatus"] = new { EQPData = StaEQPManagager.GetEQStates(), ChargeStationData = StaEQPManagager.GetChargeStationStates() };
-                    UIDatas["/ws/VMSAliveCheck"] = true;
-                    UIDatas["/UncheckedAlarm"] = AlarmManagerCenter.uncheckedAlarms;
-                    UIDatas["/ws/AGVLocationUpload"] = AGVSMapManager.AGVUploadCoordinationStore;
-                    UIDatas["/ws/HotRun"] = HotRunScriptManager.HotRunScripts;
-                    var incompleted_tasks = db.tables.Tasks.Where(t => t.State == TASK_RUN_STATUS.WAIT | t.State == TASK_RUN_STATUS.NAVIGATING).AsNoTracking().ToList();
-                    var completed_tasks = db.tables.Tasks.Where(t => t.State != TASK_RUN_STATUS.WAIT && t.State != TASK_RUN_STATUS.NAVIGATING).OrderByDescending(t => t.RecieveTime).Take(20).AsNoTracking().ToList();
-                    UIDatas["/ws/TaskData"] = new { incompleteds = incompleted_tasks, completeds = completed_tasks };
+                    try
+                    {
 
+                        UIDatas["/ws/VMSStatus"] = db.tables.AgvStates.Where(stat => stat.Enabled).OrderBy(a => a.AGV_Name).AsNoTracking().ToList().Select(data => GenViewMode(data));
+                        UIDatas["/ws/EQStatus"] = new { EQPData = StaEQPManagager.GetEQStates(), ChargeStationData = StaEQPManagager.GetChargeStationStates() };
+                        UIDatas["/ws/VMSAliveCheck"] = true;
+                        UIDatas["/UncheckedAlarm"] = AlarmManagerCenter.uncheckedAlarms;
+                        UIDatas["/ws/AGVLocationUpload"] = AGVSMapManager.AGVUploadCoordinationStore;
+                        UIDatas["/ws/HotRun"] = HotRunScriptManager.HotRunScripts;
+                        var incompleted_tasks = db.tables.Tasks.Where(t => t.State == TASK_RUN_STATUS.WAIT | t.State == TASK_RUN_STATUS.NAVIGATING).AsNoTracking().ToList();
+                        var completed_tasks = db.tables.Tasks.Where(t => t.State != TASK_RUN_STATUS.WAIT && t.State != TASK_RUN_STATUS.NAVIGATING).OrderByDescending(t => t.RecieveTime).Take(20).AsNoTracking().ToList();
+                        UIDatas["/ws/TaskData"] = new { incompleteds = incompleted_tasks, completeds = completed_tasks };
+
+                    }
+                    catch (Exception ex)
+                    {
+                        continue;
+                    }
                 }
 
             });

@@ -5,6 +5,7 @@ using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.Log;
+using AGVSystemCommonNet6.MAP;
 using AGVSystemCommonNet6.TASK;
 using AGVSystemCommonNet6.User;
 using EquipmentManagment.MainEquipment;
@@ -64,7 +65,7 @@ namespace AGVSystem.Controllers
                 return Unauthorized();
             }
 
-            bool canceled = TaskManager.Cancel(task_name,$"User manual canceled");
+            bool canceled = TaskManager.Cancel(task_name, $"User manual canceled");
             return Ok(canceled);
         }
 
@@ -77,6 +78,24 @@ namespace AGVSystem.Controllers
                 return Unauthorized();
             }
             return Ok(await AddTask(taskData));
+        }
+        [HttpPost("measure")]
+        [Authorize]
+        public async Task<IActionResult> MeasureTask(clsTaskDto taskData)
+        {
+            if (!UserValidation())
+            {
+                return Unauthorized();
+            }
+            Map map = MapManager.LoadMapFromFile();
+            if (map.Bays.TryGetValue(taskData.To_Station, out Bay bay))
+            {
+                taskData.To_Slot = string.Join(",", bay.Points);
+
+                return Ok(await AddTask(taskData));
+            }
+            else
+                return Ok(new { confirm = false, message = $"Bay - {taskData.To_Station} not found" });
         }
         [HttpPost("load")]
         [Authorize]
@@ -150,7 +169,7 @@ namespace AGVSystem.Controllers
         {
             LOG.INFO($"AGVC LDULD REPORT : {agv_name} Finish {(LDULD == 0 ? "Load" : "Unload")} (EQ TAG={EQTag})");
             clsEQ eq = StaEQPManagager.GetEQByTag(EQTag);
-            
+
             if (eq == null)
                 return Ok(new { confirm = false });
             else

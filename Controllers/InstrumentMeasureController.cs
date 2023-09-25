@@ -73,11 +73,31 @@ namespace AGVSystem.Controllers
         [HttpPost("AddNewMeasureSchedule")]
         public async Task<IActionResult> AddNewMeasureSchedule([FromBody] clsMeasureScript schedule)
         {
-            bool add_success =ScheduleMeasureManager.AddNewSchedule(schedule);
+            bool add_success = ScheduleMeasureManager.AddNewSchedule(schedule);
             return Ok(new
             {
-                 result= add_success,
-                 message=""
+                result = add_success,
+                message = ""
+            });
+        }
+        [HttpPost("ModifyMeasureSchedule")]
+        public async Task<IActionResult> ModifyMeasureSchedule(string time, string agv_name, [FromBody] clsMeasureScript new_schedule)
+        {
+            bool add_success = ScheduleMeasureManager.ModifySchedule(time, agv_name, new_schedule);
+            return Ok(new
+            {
+                result = add_success,
+                message = ""
+            });
+        }
+        [HttpDelete("DeleteSchedule")]
+        public async Task<IActionResult> DeleteSchedule(string time, string agv_name)
+        {
+            bool del_success = ScheduleMeasureManager.DeleteSchedule(time, agv_name);
+            return Ok(new
+            {
+                result = del_success,
+                message = ""
             });
         }
     }
