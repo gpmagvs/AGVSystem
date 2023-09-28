@@ -36,6 +36,7 @@ StaEQPManagager.InitializeAsync(new clsEQManagementConfigs
     UseEqEmu = AGVSConfigulator.SysConfigs.EQManagementConfigs.UseEQEmu,
     EQConfigPath = $"{AGVSConfigulator.SysConfigs.EQManagementConfigs.EquipmentManagementConfigFolder}//EQConfigs.json",
     WIPConfigPath = $"{AGVSConfigulator.SysConfigs.EQManagementConfigs.EquipmentManagementConfigFolder}//WIPConfigs.json",
+    ChargeStationConfigPath = $"{AGVSConfigulator.SysConfigs.EQManagementConfigs.EquipmentManagementConfigFolder}//ChargStationConfigs.json",
 });
 
 AGVSSocketHost agvs_host = new AGVSSocketHost();
