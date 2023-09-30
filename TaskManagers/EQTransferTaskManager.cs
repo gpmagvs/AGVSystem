@@ -129,13 +129,13 @@ namespace AGVSystem.TaskManagers
 
                 if (action == ACTION_TYPE.Load | action == ACTION_TYPE.LoadAndPark)
                 {
-                    return new(ToEQStatus.Load_Reuest, ALARMS.EQ_LOAD_REQUEST_IS_NOT_ON);
+                    return new(ToEQStatus.Load_Request, ALARMS.EQ_LOAD_REQUEST_IS_NOT_ON);
                 }
                 else if (action == ACTION_TYPE.Carry)
                 {
                     if (!FromEQStatus.Unload_Request)
                         return new(false, ALARMS.EQ_UNLOAD_REQUEST_IS_NOT_ON);
-                    if (!ToEQStatus.Load_Reuest)
+                    if (!ToEQStatus.Load_Request)
                         return new(false, ALARMS.EQ_LOAD_REQUEST_IS_NOT_ON);
 
                     return new(true, ALARMS.NONE);
