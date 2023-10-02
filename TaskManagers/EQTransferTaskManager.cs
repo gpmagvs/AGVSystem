@@ -43,7 +43,7 @@ namespace AGVSystem.TaskManagers
         internal static async void SwitchToRunMode()
         {
             LOG.WARN("Run Mode Start");
-           
+
             _ = Task.Run(() => { TransferTaskPairWorker(); });
             //foreach (var eq in unloadReqEQs)
             //{
@@ -77,7 +77,11 @@ namespace AGVSystem.TaskManagers
                         //
                         AGVStatusDBHelper agv_status_db = new AGVStatusDBHelper();
                         List<clsAGVStateDto> agvlist = agv_status_db.GetALL().FindAll(agv => region.AGVPriorty.Contains(agv.AGV_Name));
-
+                        if (agvlist.Count == 0)
+                        {
+                            AlarmManagerCenter.AddAlarm(ALARMS.Region_Has_No_Agv_To_Dispatch_Task, ALARM_SOURCE.AGVS);
+                            continue;
+                        }
                         var AGV = agvlist[agvlist.FindIndex(a => a.AGV_Name == region.AGVPriorty[0])];
                         //if (AGV.OnlineStatus != ONLINE_STATE.ONLINE | AGV.MainStatus == MAIN_STATUS.DOWN)
                         //{
