@@ -26,7 +26,6 @@ namespace AGVSystem.Controllers
         }
 
         [HttpGet("Users")]
-        [Authorize]
         public async Task<IActionResult> GetUsers()
         {
             return Ok(_userDbContext.Users.ToList());
@@ -96,6 +95,32 @@ namespace AGVSystem.Controllers
                     _userDbContext.Add(user);
                 }
             }
+            _userDbContext.SaveChanges();
+            return Ok(new { Success = true });
+        }
+
+        [HttpDelete("Delete")]
+        public async Task<IActionResult> DeleteUser(string user_name)
+        {
+            var user_ = _userDbContext.Users.FirstOrDefault(user => user.UserName == user_name);
+            if (user_ != null)
+            {
+                _userDbContext.Users.Remove(user_);
+                _userDbContext.SaveChanges();
+            }
+            return Ok(new { Success = true });
+        }
+
+        [HttpPost("Add")]
+        public async Task<IActionResult> AddUser(UserEntity new_user)
+        {
+            var user_ = _userDbContext.Users.FirstOrDefault(user => user.UserName == new_user.UserName);
+            if (user_ != null)
+            {
+                return Ok(new { Success = false, Message = $"使用者名稱:{new_user.UserName} 已經存在於用戶清單中" });
+            }
+
+            _userDbContext.Users.Add(new_user);
             _userDbContext.SaveChanges();
             return Ok(new { Success = true });
         }
