@@ -1,6 +1,7 @@
 ﻿using AGVSystem.TaskManagers;
 using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.AGVDispatch.Messages;
+using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.DATABASE.Helpers;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
@@ -40,14 +41,16 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
         {
             ReloadHotRunScripts();
         }
-        public static void Run(int no)
+        public static (bool, string) Run(int no)
         {
             var script = HotRunScripts.FirstOrDefault(script => script.no == no);
             if (script != null)
             {
                 script.cancellationTokenSource = new CancellationTokenSource();
-                StartHotRun(script);
+                return StartHotRun(script);
             }
+            else
+                return (false, "");
         }
 
         internal static void Stop(int no)
@@ -58,11 +61,22 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                 script.cancellationTokenSource?.Cancel();
             }
         }
-        private static void StartHotRun(HotRunScript script)
+        private static (bool, string) StartHotRun(HotRunScript script)
         {
-
             AGVStatusDBHelper agv_status_db = new AGVStatusDBHelper();
             clsAGVStateDto? agv = agv_status_db.GetALL().FirstOrDefault(agv => agv.AGV_Name == script.agv_name);
+            var firstAction = GetActionByActionName(script.actions.First().action);
+            if (firstAction == ACTION_TYPE.Load && agv.CurrentCarrierID == "")
+            {
+                AlarmManagerCenter.AddAlarm(ALARMS.CANNOT_DISPATCH_LOAD_TASK_WHEN_AGV_NO_CARGO);
+                return new(false, ALARMS.CANNOT_DISPATCH_LOAD_TASK_WHEN_AGV_NO_CARGO.ToString());
+            }
+            else if ((firstAction == ACTION_TYPE.Unload | firstAction == ACTION_TYPE.Carry) && agv.CurrentCarrierID != "")
+            {
+                var alarm_code = firstAction == ACTION_TYPE.Unload ? ALARMS.CANNOT_DISPATCH_UNLOAD_TASK_WHEN_AGV_HAS_CARGO : ALARMS.CANNOT_DISPATCH_CARRY_TASK_WHEN_AGV_HAS_CARGO;
+                AlarmManagerCenter.AddAlarm(alarm_code);
+                return new(false, alarm_code.ToString());
+            }
 
             Task.Factory.StartNew(async () =>
             {
@@ -99,7 +113,7 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                     {
                         foreach (HotRunAction _action in script.actions)
                         {
-                            var TaskName = $"HR_{DateTime.Now.ToString("yyMMdd_HHmmssffff")}";
+                            var TaskName = $"HR__{_action.action}_{DateTime.Now.ToString("yyMMdd_HHmmssffff")}";
                             await TaskManager.AddTask(new AGVSystemCommonNet6.TASK.clsTaskDto
                             {
                                 Action = GetActionByActionName(_action.action),
@@ -156,6 +170,7 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                 UpdateScriptState(script);
                 Console.WriteLine("Hot Run Finish.");
             });
+            return (true, "");
         }
 
         private static ACTION_TYPE GetActionByActionName(string action)

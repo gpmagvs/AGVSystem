@@ -215,8 +215,8 @@ namespace AGVSystem.Controllers
         [HttpGet("HotRun/Start")]
         public async Task<IActionResult> StartHotRun(int no)
         {
-            HotRunScriptManager.Run(no);
-            return Ok();
+            (bool confirm, string message) response = HotRunScriptManager.Run(no);
+            return Ok(new { confirm = response.confirm, message = response.message });
         }
         [HttpGet("HotRun/Stop")]
         public async Task<IActionResult> StopHotRun(int no)
