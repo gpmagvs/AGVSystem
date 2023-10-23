@@ -29,7 +29,7 @@ namespace AGVSystem.Controllers
         [HttpGet("test/ResetGraphXYUseCoordination")]
         public async Task<IActionResult> ResetGraphXYUseCoordination(string mapFilePath)
         {
-            Map map = MapManager.LoadMapFromFile(mapFilePath);
+            Map map = MapManager.LoadMapFromFile(mapFilePath,out string msg);
             foreach (KeyValuePair<int, MapPoint> pt in map.Points)
             {
                 pt.Value.Graph.X = Convert.ToInt32(Math.Round(pt.Value.X, 0) + "");
@@ -42,7 +42,7 @@ namespace AGVSystem.Controllers
         [HttpGet("test/ResetCoordinations")]
         public async Task<IActionResult> ResetCoordinations(string mapFilePath,double ratio)
         {
-            Map map = MapManager.LoadMapFromFile(mapFilePath);
+            Map map = MapManager.LoadMapFromFile(mapFilePath, out string msg);
             foreach (KeyValuePair<int, MapPoint> pt in map.Points)
             {
                 pt.Value.X = pt.Value.X / ratio;
