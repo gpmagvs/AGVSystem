@@ -94,26 +94,48 @@ namespace AGVSystem.Controllers
             if (path == null)
                 return;
 
-            var delay = TimeSpan.FromSeconds(GetPublishDelay(path));
-            while (webSocket.State == WebSocketState.Open)
+
+            var buff = new ArraySegment<byte>(new byte[10]);
+            bool closeFlag = false;
+            _ = Task.Factory.StartNew(async () =>
             {
-                await Task.Delay(delay);
+                while (!closeFlag)
+                {
+                    await Task.Delay(100);
+                    var data = GetDataByPath(path);
+                    if (data == null)
+                        continue;
+                    if (data != null)
+                    {
+                        try
+                        {
+
+                            await webSocket.SendAsync(new ArraySegment<byte>(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(data))), WebSocketMessageType.Text, true, CancellationToken.None);
+                            data = null;
+                        }
+                        catch (Exception)
+                        {
+                            return;
+                        }
+                    }
+                }
+            });
+
+            while (true)
+            {
                 try
                 {
-                    webSocket.ReceiveAsync(new ArraySegment<byte>(new byte[10]), CancellationToken.None);
-                    var viewmodel = GetDataByPath(path);
-                    if (viewmodel == null)
-                        continue;
-
-                    await webSocket.SendAsync(new ArraySegment<byte>(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(viewmodel))), System.Net.WebSockets.WebSocketMessageType.Text, true, CancellationToken.None);
+                    await Task.Delay(100);
+                    WebSocketReceiveResult result = await webSocket.ReceiveAsync(buff, CancellationToken.None);
                 }
-                catch (WebSocketException)
+                catch (Exception ex)
                 {
-                    // 客戶端已斷開連線，停止傳送訊息
                     break;
                 }
             }
-
+            closeFlag = true;
+            webSocket.Dispose();
+            GC.Collect();
         }
         private static double GetPublishDelay(string path)
         {
