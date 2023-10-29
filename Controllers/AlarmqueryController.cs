@@ -15,11 +15,11 @@ namespace AGVSystem.Controllers
     public class AlarmqueryController : ControllerBase
     {
         [HttpGet("QueryAlarm")]
-        public async Task<IActionResult> AlarmQuery(int currentpage, string StartTime, string EndTime, string? TaskName = "ALL", string? AGV_Name = "ALL" )
+        public async Task<IActionResult> AlarmQuery(int currentpage, string StartTime, string EndTime, string? TaskName = "ALL", string? AGV_Name = "ALL", string AlarmType = "ALL")
         {
             DateTime start = DateTime.Parse(StartTime);
             DateTime end = DateTime.Parse(EndTime);
-            AlarmManagerCenter.AlarmQuery(out int count,currentpage,start, end, AGV_Name, TaskName, out List<clsAlarmDto>? alarms);
+            AlarmManagerCenter.AlarmQuery(out int count, currentpage, start, end, AGV_Name, TaskName, out List<clsAlarmDto>? alarms, AlarmType);
             return Ok(new { count, alarms });
         }
         [HttpGet("SaveTocsv")]
@@ -36,7 +36,7 @@ namespace AGVSystem.Controllers
 
             // 設置下載檔案的名稱
             fileContentResult.FileDownloadName = "filename.ext";
-            
+
             return fileContentResult;
         }
         public class Alarmquery_options
