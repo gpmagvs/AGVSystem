@@ -4,6 +4,7 @@
     <TargetFramework>net6.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyVersion>10.29.2</AssemblyVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -28,4 +29,9 @@
     <Folder Include="wwwroot\images\" />
   </ItemGroup>
 
+  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+	<Exec Command="powershell.exe -ExecutionPolicy Bypass -File &quot;AutoVersionModify.ps1&quot;&#xD;&#xA;" />
+  </Target>
 </Project>
+
+
