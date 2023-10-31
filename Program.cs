@@ -1,6 +1,7 @@
 using AGVSystem;
 using AGVSystem.Controllers;
 using AGVSystem.Models.Map;
+using AGVSystem.Models.Sys;
 using AGVSystem.Models.TaskAllocation.HotRun;
 using AGVSystem.TaskManagers;
 using AGVSystemCommonNet6;
@@ -42,12 +43,13 @@ StaEQPManagager.InitializeAsync(new clsEQManagementConfigs
 AGVSSocketHost agvs_host = new AGVSSocketHost();
 agvs_host.Start();
 AlarmManagerCenter.Initialize();
+VMSSerivces.OnVMSReconnected += async (sender, e) => await VMSSerivces.RunModeSwitch(SystemModes.RunMode);
 VMSSerivces.AliveCheckWorker();
+VMSSerivces.RunModeSwitch(AGVSystemCommonNet6.AGVDispatch.RunMode.RUN_MODE.MAINTAIN);
 
 var builder = WebApplication.CreateBuilder(args);
 string DBConnection = AGVSConfigulator.SysConfigs.DBConnection;
 Directory.CreateDirectory(Path.GetDirectoryName(DBConnection.Split('=')[1]));
-
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

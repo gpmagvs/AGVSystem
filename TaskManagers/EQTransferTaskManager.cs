@@ -25,7 +25,7 @@ namespace AGVSystem.TaskManagers
             SystemModes.OnRunModeON += SwitchToRunMode;
             SystemModes.OnRunModeOFF += SwitchToMaintainMode;
         }
-
+        public static Dictionary<clsEQ, clsEQ> UnloadEQQueueing { get; private set; } = new Dictionary<clsEQ, clsEQ>();
         internal static async void SwitchToMaintainMode()
         {
             while (AutoRunning)
@@ -38,6 +38,7 @@ namespace AGVSystem.TaskManagers
             {
                 eq.CancelReserve();
             });
+            UnloadEQQueueing.Clear();
         }
 
         internal static async void SwitchToRunMode()
@@ -59,21 +60,24 @@ namespace AGVSystem.TaskManagers
                 AutoRunning = true;
                 Thread.Sleep(1);
                 List<clsEQ> unload_req_eq_list = StaEQPManagager.EQList.FindAll(eq => eq.lduld_type == EQLDULD_TYPE.ULD | eq.lduld_type == EQLDULD_TYPE.LDULD)
-                                      .FindAll(eq => eq.Unload_Request && eq.Eqp_Status_Down && !eq.CMD_Reserve_Low);
+                                      .FindAll(eq => eq.Unload_Request && eq.Eqp_Status_Down && !eq.CMD_Reserve_Low && !UnloadEQQueueing.TryGetValue(eq, out clsEQ _eq));
 
                 if (unload_req_eq_list.Count > 0)
                 {
                     foreach (clsEQ sourceEQ in unload_req_eq_list)
                     {
                         List<clsEQ> loadable_eqs = sourceEQ.DownstremEQ.FindAll(downstrem_eq => downstrem_eq.Load_Request && downstrem_eq.Eqp_Status_Down && !downstrem_eq.CMD_Reserve_Low);
-                        //依距離排序?
                         if (loadable_eqs.Count == 0)
                             continue;
                         clsEQ destineEQ = loadable_eqs.First();
-                        destineEQ.ReserveLow();
-                        sourceEQ.ReserveLow();
+                        UnloadEQQueueing.Add(sourceEQ, sourceEQ);;
 
-                        var region = AGVSMapManager.MapRegions.First(reg => reg.RegionName == sourceEQ.EndPointOptions.Region);
+                        var region = AGVSMapManager.MapRegions.FirstOrDefault(reg => reg.RegionName == sourceEQ.EndPointOptions.Region);
+                        if (region == null)
+                        {
+                            //TODO region issue!!
+                            continue;
+                        }
                         //
                         AGVStatusDBHelper agv_status_db = new AGVStatusDBHelper();
                         List<clsAGVStateDto> agvlist = agv_status_db.GetALL().FindAll(agv => region.AGVPriorty.Contains(agv.AGV_Name));
@@ -93,10 +97,10 @@ namespace AGVSystem.TaskManagers
                         //    else
                         //        LOG.WARN($"區域-{region.RegionName} 指派AGV({AGV.AGV_Name}) 執行任務");
                         //}
-                        await TaskManager.AddTask(new clsTaskDto
+
+                        var taskOrder = new clsTaskDto
                         {
                             Action = ACTION_TYPE.Carry,
-                            Carrier_ID = "123",
                             DesignatedAGVName = AGV.AGV_Name,
                             From_Station = sourceEQ.EndPointOptions.TagID.ToString(),
                             To_Station = destineEQ.EndPointOptions.TagID.ToString(),
@@ -104,9 +108,28 @@ namespace AGVSystem.TaskManagers
                             DispatcherName = "Local_Auto",
                             From_Slot = "1",
                             To_Slot = "1"
-                        });
-
-
+                        };
+                        var taskAddedResult = await TaskManager.AddTask(taskOrder);
+                        if (taskAddedResult.confirm)
+                        {
+                            LOG.INFO($"[Local Auto EQ Transfer] Task-{taskOrder.TaskName}-(From={taskOrder.From_Station} To={taskOrder.To_Station}>> Execute AGV={taskOrder.DesignatedAGVName}) is added.");
+                            clsLocalAutoTransferTaskMonitor taskMonitor = new clsLocalAutoTransferTaskMonitor(taskOrder, sourceEQ, destineEQ);
+                            taskMonitor.Start();
+                        }
+                        else
+                        {
+                            LOG.ERROR($"[Local Auto EQ Transfer] Task-{taskOrder.TaskName}-(From={taskOrder.From_Station} To={taskOrder.To_Station}>> Execute AGV={taskOrder.DesignatedAGVName}) add FAILURE,{taskAddedResult.alarm_code}");
+                            AlarmManagerCenter.AddAlarm(new clsAlarmDto
+                            {
+                                AlarmCode = (int)taskAddedResult.alarm_code,
+                                Description_Zh = taskAddedResult.alarm_code.ToString(),
+                                Description_En = taskAddedResult.alarm_code.ToString(),
+                                Level = ALARM_LEVEL.ALARM,
+                                Task_Name = taskOrder.TaskName,
+                                Source = ALARM_SOURCE.AGVS,
+                                Equipment_Name = taskOrder.DesignatedAGVName,
+                            });
+                        }
                     }
 
                 }
@@ -117,45 +140,54 @@ namespace AGVSystem.TaskManagers
 
         public static (bool confirm, ALARMS alarm_code) CheckEQLDULDStatus(ACTION_TYPE action, int from_tag, int to_tag)
         {
-            //TODO If To EQ Is WIP
-            KeyValuePair<int, MapPoint> ToStation = AGVSMapManager.CurrentMap.Points.FirstOrDefault(pt => pt.Value.TagNumber == to_tag);
-            if (ToStation.Value == null)
+            try
             {
-                return new(false, ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP);
-            }
-            EQStatusDIDto ToEQStatus = StaEQPManagager.GetEQStatesByTagID(to_tag);
-            EQStatusDIDto FromEQStatus = StaEQPManagager.GetEQStatesByTagID(from_tag);
-
-            if (ToEQStatus != null)
-            {
-                if (!ToEQStatus.IsConnected)
-                    return new(false, ALARMS.Endpoint_EQ_NOT_CONNECTED);
-
-                if (action == ACTION_TYPE.Load | action == ACTION_TYPE.LoadAndPark)
+                //TODO If To EQ Is WIP
+                KeyValuePair<int, MapPoint> ToStation = AGVSMapManager.CurrentMap.Points.FirstOrDefault(pt => pt.Value.TagNumber == to_tag);
+                if (ToStation.Value == null)
                 {
-                    return new(ToEQStatus.Load_Request, ALARMS.EQ_LOAD_REQUEST_IS_NOT_ON);
+                    return new(false, ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP);
                 }
-                else if (action == ACTION_TYPE.Carry)
-                {
-                    if (!FromEQStatus.Unload_Request)
-                        return new(false, ALARMS.EQ_UNLOAD_REQUEST_IS_NOT_ON);
-                    if (!ToEQStatus.Load_Request)
-                        return new(false, ALARMS.EQ_LOAD_REQUEST_IS_NOT_ON);
+                EQStatusDIDto ToEQStatus = StaEQPManagager.GetEQStatesByTagID(to_tag);
+                EQStatusDIDto FromEQStatus = StaEQPManagager.GetEQStatesByTagID(from_tag);
 
-                    return new(true, ALARMS.NONE);
+                if (ToEQStatus != null)
+                {
+                    if (!ToEQStatus.IsConnected)
+                        return new(false, ALARMS.Endpoint_EQ_NOT_CONNECTED);
+
+                    if (action == ACTION_TYPE.Load | action == ACTION_TYPE.LoadAndPark)
+                    {
+                        return new(ToEQStatus.Load_Request, ALARMS.EQ_LOAD_REQUEST_IS_NOT_ON);
+                    }
+                    else if (action == ACTION_TYPE.Carry)
+                    {
+                        if (!FromEQStatus.Unload_Request)
+                            return new(false, ALARMS.EQ_UNLOAD_REQUEST_IS_NOT_ON);
+                        if (!ToEQStatus.Load_Request)
+                            return new(false, ALARMS.EQ_LOAD_REQUEST_IS_NOT_ON);
+
+                        return new(true, ALARMS.NONE);
+                    }
+                    else
+                    {
+                        return new(ToEQStatus.Unload_Request, ALARMS.EQ_UNLOAD_REQUEST_IS_NOT_ON);
+                    }
                 }
                 else
                 {
-                    return new(ToEQStatus.Unload_Request, ALARMS.EQ_UNLOAD_REQUEST_IS_NOT_ON);
+                    if (ToStation.Value.StationType == STATION_TYPE.STK)
+                        return new(true, ALARMS.NONE);
+                    else
+                        return new(false, ALARMS.Endpoint_EQ_NOT_CONNECTED);
                 }
             }
-            else
+            catch (Exception ex)
             {
-                if (ToStation.Value.StationType == STATION_TYPE.STK)
-                    return new(true, ALARMS.NONE);
-                else
-                    return new(false, ALARMS.Endpoint_EQ_NOT_CONNECTED);
+                LOG.Critical(ex);
+                return new(false, ALARMS.SYSTEM_ERROR);
             }
+
         }
 
         private static bool IsEQDataValid(EndPointDeviceAbstract endpoint, out int unloadStationTag, out ALARMS alarm_code)

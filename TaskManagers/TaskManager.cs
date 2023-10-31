@@ -7,6 +7,7 @@ using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.DATABASE.Helpers;
 using AGVSystemCommonNet6.Log;
 using AGVSystemCommonNet6.TASK;
+using Microsoft.EntityFrameworkCore;
 
 namespace AGVSystem.TaskManagers
 {
@@ -36,17 +37,26 @@ namespace AGVSystem.TaskManagers
 
                 if (taskData.Action == ACTION_TYPE.Load | taskData.Action == ACTION_TYPE.LoadAndPark | taskData.Action == ACTION_TYPE.Unload | taskData.Action == ACTION_TYPE.Carry)
                 {
+
                     (bool confirm, ALARMS alarm_code) results = EQTransferTaskManager.CheckEQLDULDStatus(taskData.Action, int.Parse(taskData.From_Station), int.Parse(taskData.To_Station));
+
                     if (!results.confirm)
                         return results;
                 }
             }
+
             try
             {
                 taskData.RecieveTime = DateTime.Now;
                 await Task.Delay(200);
                 using (var db = new AGVSDatabase())
                 {
+
+                    if(db.tables.Tasks.AsNoTracking().Where(task=>task.State == TASK_RUN_STATUS.WAIT| task.State== TASK_RUN_STATUS.NAVIGATING).Any(task=>task.To_Station== taskData.To_Station))
+                    {
+                        AlarmManagerCenter.AddAlarm(ALARMS.Source_Eq_Already_Has_Task_To_Excute, ALARM_SOURCE.AGVS);
+                        return (false, ALARMS.Source_Eq_Already_Has_Task_To_Excute);
+                    }
                     db.tables.Tasks.Add(taskData);
                     db.SaveChanges();
                 }

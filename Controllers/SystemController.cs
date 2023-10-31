@@ -38,17 +38,21 @@ namespace AGVSystem.Controllers
         {
             var _previousMode = SystemModes.RunMode;
             SystemModes.RunMode = mode == RUN_MODE.MAINTAIN ? RUN_MODE.SWITCH_TO_MAITAIN_ING : RUN_MODE.SWITCH_TO_RUN_ING;
-            //Request VMS Switch Mode first
+            //AGVS先確認
+            bool agvs_confirm = SystemModes.RunModeSwitch(mode, out string message);
+            if (!agvs_confirm)
+            {
+                return Ok(new { confirm = false, message = message });
+            }
             LOG.INFO($"[Run Mode Switch] 等待VMS回覆 {mode}模式請求");
             (bool confirm, string message) vms_response = await VMSSerivces.RunModeSwitch(mode);
-            LOG.INFO($"[Run Mode Switch] VMS Response={vms_response.ToJson()}");
             if (!vms_response.confirm)
             {
                 SystemModes.RunMode = _previousMode;
                 return Ok(new { confirm = false, message = vms_response.message });
             }
-            bool confirm = SystemModes.RunModeSwitch(mode, out string message);
-            return Ok(new { confirm = confirm, message });
+            else
+                return Ok(new { confirm = true, message = "" });
         }
 
         [HttpPost("HostConn")]
