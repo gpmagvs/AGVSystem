@@ -30,19 +30,16 @@ namespace AGVSystem.TaskManagers
         {
         }
 
-        public static async Task<(bool confirm, ALARMS alarm_code)> AddTask(clsTaskDto taskData, TASK_RECIEVE_SOURCE source = TASK_RECIEVE_SOURCE.LOCAL)
+        public static async Task<(bool confirm, ALARMS alarm_code, string message)> AddTask(clsTaskDto taskData, TASK_RECIEVE_SOURCE source = TASK_RECIEVE_SOURCE.LOCAL)
         {
-            if (SystemModes.RunMode == RUN_MODE.RUN)
+
+            if (!taskData.bypass_eq_status_check && (taskData.Action == ACTION_TYPE.Load | taskData.Action == ACTION_TYPE.LoadAndPark | taskData.Action == ACTION_TYPE.Unload | taskData.Action == ACTION_TYPE.Carry))
             {
 
-                if (taskData.Action == ACTION_TYPE.Load | taskData.Action == ACTION_TYPE.LoadAndPark | taskData.Action == ACTION_TYPE.Unload | taskData.Action == ACTION_TYPE.Carry)
-                {
+                (bool confirm, ALARMS alarm_code, string message) results = EQTransferTaskManager.CheckEQLDULDStatus(taskData.Action, int.Parse(taskData.From_Station), int.Parse(taskData.To_Station));
 
-                    (bool confirm, ALARMS alarm_code) results = EQTransferTaskManager.CheckEQLDULDStatus(taskData.Action, int.Parse(taskData.From_Station), int.Parse(taskData.To_Station));
-
-                    if (!results.confirm)
-                        return results;
-                }
+                if (!results.confirm)
+                    return results;
             }
 
             try
@@ -52,26 +49,26 @@ namespace AGVSystem.TaskManagers
                 using (var db = new AGVSDatabase())
                 {
 
-                    if(db.tables.Tasks.AsNoTracking().Where(task=>task.State == TASK_RUN_STATUS.WAIT| task.State== TASK_RUN_STATUS.NAVIGATING).Any(task=>task.To_Station== taskData.To_Station))
+                    if (db.tables.Tasks.AsNoTracking().Where(task => task.To_Station != "-1" && task.State == TASK_RUN_STATUS.WAIT | task.State == TASK_RUN_STATUS.NAVIGATING).Any(task => task.To_Station == taskData.To_Station))
                     {
                         AlarmManagerCenter.AddAlarm(ALARMS.Source_Eq_Already_Has_Task_To_Excute, ALARM_SOURCE.AGVS);
-                        return (false, ALARMS.Source_Eq_Already_Has_Task_To_Excute);
+                        return (false, ALARMS.Source_Eq_Already_Has_Task_To_Excute, $"目的地設備已有搬運任務");
                     }
                     db.tables.Tasks.Add(taskData);
                     db.SaveChanges();
                 }
-                return new(true, ALARMS.NONE);
+                return new(true, ALARMS.NONE, "");
             }
             catch (Exception ex)
             {
                 LOG.ERROR(ex);
                 AlarmManagerCenter.AddAlarm(ALARMS.Task_Add_To_Database_Fail, ALARM_SOURCE.AGVS);
-                return new(false, ALARMS.Task_Add_To_Database_Fail);
+                return new(false, ALARMS.Task_Add_To_Database_Fail, ex.Message);
             }
         }
 
 
-        internal static bool Cancel(string task_name, string reason = "")
+        internal static bool Cancel(string task_name, string reason = "", TASK_RUN_STATUS status = TASK_RUN_STATUS.CANCEL)
         {
             try
             {
@@ -80,10 +77,22 @@ namespace AGVSystem.TaskManagers
                     var task = db.tables.Tasks.Where(tk => tk.TaskName == task_name).FirstOrDefault();
                     if (task != null)
                     {
+
+                        if (task.Action == ACTION_TYPE.Carry)
+                        {
+                            if (EQTransferTaskManager.MonitoringCarrerTasks.Remove(task_name, out clsLocalAutoTransferTaskMonitor monitor))
+                            {
+                                monitor.sourceEQ.CancelReserve();
+                                monitor.destineEQ.CancelReserve();
+                            }
+
+                        }
+
                         task.FinishTime = DateTime.Now;
                         task.FailureReason = reason;
-                        task.State = TASK_RUN_STATUS.CANCEL;
+                        task.State = status;
                         db.SaveChanges();
+
 
                     }
                 }
@@ -97,6 +106,31 @@ namespace AGVSystem.TaskManagers
 
         }
 
+
+        internal static bool TaskStatusChangeToWait(string task_name, string reason = "")
+        {
+            LOG.TRACE($"Change Task-{task_name} Status = Wait.[Reason:{reason}]");
+            try
+            {
+                using (var db = new AGVSDatabase())
+                {
+                    var task = db.tables.Tasks.Where(tk => tk.TaskName == task_name).FirstOrDefault();
+                    if (task != null)
+                    {
+                        task.FailureReason = "";
+                        task.State = TASK_RUN_STATUS.WAIT;
+                        db.SaveChanges();
+                    }
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LOG.Critical(ex);
+                return false;
+            }
+
+        }
 
     }
 }

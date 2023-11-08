@@ -22,5 +22,6 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
         public int destine_tag { get; set; }
         public string destine_name { get; set; } = "";
         public int destine_theta { get; set; } = -1;
+        public string cst_id { get; set; } = "";
     }
 }

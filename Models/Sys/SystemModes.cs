@@ -27,7 +27,7 @@ namespace AGVSystem.Models.Sys
             }
         }
         internal static HOST_CONN_MODE HostConnMode { get; set; }
-        internal static HOST_OPER_MODE HostOperMode { get; set; } 
+        internal static HOST_OPER_MODE HostOperMode { get; set; }
 
         public static bool RunModeSwitch(RUN_MODE mode, out string Message)
         {
@@ -35,7 +35,7 @@ namespace AGVSystem.Models.Sys
             bool confirm = true;
             LOG.INFO($"User Try Swich RUN_MODE To {mode}");
 
-            bool isAnyTaskExecuting = TaskManager.InCompletedTaskList.Any(task => task.State == TASK_RUN_STATUS.NAVIGATING);
+            bool isAnyTaskExecuting = TaskManager.InCompletedTaskList.Count() > 0;
 
             if (isAnyTaskExecuting)
             {

@@ -83,7 +83,7 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                 script.finish_num = 0;
                 clsAGVStateDto GetAGVState()
                 {
-                    return agv_status_db.GetAGVStateByName(script.agv_name);
+                    return agv_status_db.GetAGVStateByAGVName(script.agv_name);
                 }
                 script.state = "Running";
                 UpdateScriptState(script);
@@ -120,7 +120,7 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                                 From_Station = _action.source_tag.ToString(),
                                 To_Station = _action.action == "measure" ? _action.destine_name : _action.destine_tag.ToString(),
                                 DispatcherName = "Hot_Run",
-                                Carrier_ID = "",
+                                Carrier_ID = _action.cst_id,
                                 TaskName = TaskName,
                                 DesignatedAGVName = script.agv_name
                             });

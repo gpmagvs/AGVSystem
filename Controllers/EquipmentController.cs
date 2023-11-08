@@ -7,6 +7,7 @@ using EquipmentManagment.MainEquipment;
 using EquipmentManagment.Manager;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.CodeAnalysis.Options;
 using Newtonsoft.Json;
 using System.Text;
 
@@ -42,6 +43,33 @@ namespace AGVSystem.Controllers
         public async Task<IActionResult> GetEQOptions()
         {
             return Ok(StaEQPManagager.EQList.Select(eq => eq.EndPointOptions).ToArray());
+        }
+        [HttpGet("GetEQOptionByTag")]
+        public async Task<IActionResult> GetEQOptionByTag(int eq_tag)
+        {
+            var eqoptions = StaEQPManagager.EQList.Select(eq => eq.EndPointOptions);
+            var option = (eqoptions.FirstOrDefault(opt => opt.TagID == eq_tag));
+            if (option != null)
+            {
+                return Ok(new { Tag = option.TagID, EqName = option.Name, AGVModbusGatewayPort = option.ConnOptions.AGVModbusGatewayPort });
+            }
+            else
+            {
+                return BadRequest();
+            }
+        }
+        [HttpPost("GetEQOptionsByTags")]
+        public async Task<IActionResult> GetEQOptionsByTags([FromBody] int[] eq_tags)
+        {
+            var eqoptions = StaEQPManagager.EQList.Select(eq => eq.EndPointOptions);
+            var options = eqoptions.Where(opt => eq_tags.Contains(opt.TagID)).Select(option => new
+            {
+                Tag = option.TagID,
+                EqName = option.Name,
+                AGVModbusGatewayPort = option.ConnOptions.AGVModbusGatewayPort
+            }).ToList();
+            return Ok(options);
+
         }
         [HttpPost("SaveEQOptions")]
         public async Task<IActionResult> SaveEQOptions(List<clsEndPointOptions> datas)

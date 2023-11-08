@@ -4,9 +4,12 @@ using AGVSystem.TaskManagers;
 using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.AGVDispatch.Messages;
 using AGVSystemCommonNet6.Alarm;
+using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.DATABASE.Helpers;
+using AGVSystemCommonNet6.HttpTools;
 using AGVSystemCommonNet6.TASK;
+using AGVSystemCommonNet6.ViewModels;
 using EquipmentManagment.Manager;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
@@ -49,6 +52,21 @@ namespace AGVSystem.Controllers
             {"/ws/HotRun", new object()  },
             {"/ws/TaskData", new object()  },
         };
+        private static async Task<List<clsAGVStateViewModel>> GetAGV_StatesData_FromVMS()
+        {
+            HttpHelper httpHelper = new HttpHelper($"http://127.0.0.1:5036");
+            clsAGVStateDto[] data = await httpHelper.GetAsync<clsAGVStateDto[]>("/api/VmsManager/AGVStatus");
+            List<clsAGVStateViewModel> output = data.Select(d => GenViewMode(d)).ToList();
+            clsAGVStateViewModel GenViewMode(clsAGVStateDto d)
+            {
+                clsAGVStateViewModel vm = JsonConvert.DeserializeObject<clsAGVStateViewModel>(JsonConvert.SerializeObject(d));
+                vm.StationName = AGVSMapManager.GetNameByTagStr(vm.CurrentLocation);
+                return vm;
+            }
+            httpHelper.http_client.Dispose();
+            return output;
+        }
+
 
         internal static void StartCollectWebUIUsingDatas()
         {
@@ -57,17 +75,12 @@ namespace AGVSystem.Controllers
                 var db = new AGVSDatabase();
                 while (true)
                 {
-                    await Task.Delay(100);
-                    clsAGVStateViewModel GenViewMode(clsAGVStateDto data)
-                    {
-                        var s = JsonConvert.DeserializeObject<clsAGVStateViewModel>(JsonConvert.SerializeObject(data));
-                        s.StationName = AGVSMapManager.GetNameByTagStr(data.CurrentLocation);
-                        return s;
-                    };
+                    await Task.Delay(10);
+
                     try
                     {
-
-                        UIDatas["/ws/VMSStatus"] = db.tables.AgvStates.Where(stat => stat.Enabled).OrderBy(a => a.AGV_Name).AsNoTracking().ToList().Select(data => GenViewMode(data));
+                        //UIDatas["/ws/VMSStatus"] = db.tables.AgvStates.Where(stat => stat.Enabled).OrderBy(a => a.AGV_Name).AsNoTracking().ToList().Select(data => GenViewMode(data));
+                        UIDatas["/ws/VMSStatus"] = await GetAGV_StatesData_FromVMS();
                         UIDatas["/ws/EQStatus"] = new { EQPData = StaEQPManagager.GetEQStates(), ChargeStationData = StaEQPManagager.GetChargeStationStates() };
                         UIDatas["/ws/VMSAliveCheck"] = true;
                         UIDatas["/UncheckedAlarm"] = AlarmManagerCenter.uncheckedAlarms;
@@ -94,14 +107,13 @@ namespace AGVSystem.Controllers
             if (path == null)
                 return;
 
-
             var buff = new ArraySegment<byte>(new byte[10]);
             bool closeFlag = false;
             _ = Task.Factory.StartNew(async () =>
             {
                 while (!closeFlag)
                 {
-                    await Task.Delay(100);
+                    await Task.Delay(10);
                     var data = GetDataByPath(path);
                     if (data == null)
                         continue;
@@ -109,7 +121,6 @@ namespace AGVSystem.Controllers
                     {
                         try
                         {
-
                             await webSocket.SendAsync(new ArraySegment<byte>(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(data))), WebSocketMessageType.Text, true, CancellationToken.None);
                             data = null;
                         }
@@ -152,7 +163,6 @@ namespace AGVSystem.Controllers
                 return null;
 
         }
-
 
 
     }

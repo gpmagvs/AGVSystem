@@ -228,7 +228,7 @@ namespace AGVSystem.Controllers
         {
             taskData.DispatcherName = "Web-USER";
             var result = await TaskManager.AddTask(taskData, TaskManager.TASK_RECIEVE_SOURCE.MANUAL);
-            return new { confirm = result.Item1, message = result.Item2.ToString() };
+            return new { confirm = result.confirm, alarm_code = result.alarm_code, message = result.message };
         }
         private bool UserValidation()
         {
