@@ -71,17 +71,17 @@ namespace AGVSystem.Controllers
 
         [HttpPost("move")]
         [Authorize]
-        public async Task<IActionResult> MoveTask(clsTaskDto taskData)
+        public async Task<IActionResult> MoveTask([FromBody]clsTaskDto taskData,string user="")
         {
             if (!UserValidation())
             {
                 return Unauthorized();
             }
-            return Ok(await AddTask(taskData));
+            return Ok(await AddTask(taskData,user));
         }
         [HttpPost("measure")]
         [Authorize]
-        public async Task<IActionResult> MeasureTask(clsTaskDto taskData)
+        public async Task<IActionResult> MeasureTask([FromBody] clsTaskDto taskData, string user = "")
         {
             if (!UserValidation())
             {
@@ -92,70 +92,70 @@ namespace AGVSystem.Controllers
             {
                 taskData.To_Slot = string.Join(",", bay.Points);
 
-                return Ok(await AddTask(taskData));
+                return Ok(await AddTask(taskData,user));
             }
             else
                 return Ok(new { confirm = false, message = $"Bay - {taskData.To_Station} not found" });
         }
         [HttpPost("load")]
         [Authorize]
-        public async Task<IActionResult> LoadTask(clsTaskDto taskData)
+        public async Task<IActionResult> LoadTask([FromBody] clsTaskDto taskData, string user = "")
         {
             if (!UserValidation())
             {
                 return Unauthorized();
             }
-            return Ok(await AddTask(taskData));
+            return Ok(await AddTask(taskData,user));
         }
         [HttpPost("unload")]
         [Authorize]
-        public async Task<IActionResult> UnloadTask(clsTaskDto taskData)
+        public async Task<IActionResult> UnloadTask([FromBody] clsTaskDto taskData, string user = "")
         {
             if (!UserValidation())
             {
                 return Unauthorized();
             }
-            return Ok(await AddTask(taskData));
+            return Ok(await AddTask(taskData,user));
         }
         [HttpPost("carry")]
         [Authorize]
-        public async Task<IActionResult> CarryTask(clsTaskDto taskData)
+        public async Task<IActionResult> CarryTask([FromBody] clsTaskDto taskData, string user = "")
         {
             if (!UserValidation())
             {
                 return Unauthorized();
             }
-            return Ok(await AddTask(taskData));
+            return Ok(await AddTask(taskData,user));
         }
         [HttpPost("charge")]
         [Authorize]
-        public async Task<IActionResult> ChargeTask(clsTaskDto taskData)
+        public async Task<IActionResult> ChargeTask([FromBody] clsTaskDto taskData, string user = "")
         {
             if (!UserValidation())
             {
                 return Unauthorized();
             }
-            return Ok(await AddTask(taskData));
+            return Ok(await AddTask(taskData,user));
         }
         [HttpPost("ExangeBattery")]
         [Authorize]
-        public async Task<IActionResult> ExangeBattery(clsTaskDto taskData)
+        public async Task<IActionResult> ExangeBattery([FromBody] clsTaskDto taskData, string user = "")
         {
             if (!UserValidation())
             {
                 return Unauthorized();
             }
-            return Ok(await AddTask(taskData));
+            return Ok(await AddTask(taskData,user));
         }
         [HttpPost("park")]
         [Authorize]
-        public async Task<IActionResult> ParkTask(clsTaskDto taskData)
+        public async Task<IActionResult> ParkTask([FromBody] clsTaskDto taskData, string user = "")
         {
             if (!UserValidation())
             {
                 return Unauthorized();
             }
-            return Ok(await AddTask(taskData));
+            return Ok(await AddTask(taskData,user));
         }
 
         /// <summary>
@@ -224,9 +224,9 @@ namespace AGVSystem.Controllers
             HotRunScriptManager.Stop(no);
             return Ok();
         }
-        private async Task<object> AddTask(clsTaskDto taskData)
+        private async Task<object> AddTask(clsTaskDto taskData, string user="")
         {
-            taskData.DispatcherName = "Web-USER";
+            taskData.DispatcherName =user;
             var result = await TaskManager.AddTask(taskData, TaskManager.TASK_RECIEVE_SOURCE.MANUAL);
             return new { confirm = result.confirm, alarm_code = result.alarm_code, message = result.message };
         }

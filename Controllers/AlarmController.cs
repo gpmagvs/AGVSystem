@@ -26,7 +26,10 @@ namespace AGVSystem.Controllers
         [HttpGet("SystemAlarmReset")]
         public async Task<IActionResult> SystemAlarmReset()
         {
-            var sys_alarms = _dbContext.SystemAlarms.ToList().FindAll(alarm => alarm.Source == ALARM_SOURCE.AGVS && !alarm.Checked);
+            var sys_alarms = _dbContext.SystemAlarms.Where(alarm => alarm.Source == ALARM_SOURCE.AGVS && !alarm.Checked);
+            if (!sys_alarms.Any())
+                return Ok();
+
             foreach (var alarm in sys_alarms)
             {
                 alarm.Checked = true;

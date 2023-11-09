@@ -1,7 +1,7 @@
 {
   "Map": {
     "Version": 1,
-    "Name": "Map_UMTC_5F_SMK_OVEN_DEMO_4",
+    "Name": "Map_UMTC_5F_SMK_OVEN_DEMO_5",
     "Note": "v230821.1",
     "PointIndex": 80,
     "Map_Image_Size": [
@@ -33,9 +33,7 @@
         "IsAutoDoor": false,
         "IsExtinguishing": false,
         "InvolvePoint": "",
-        "RegistsPointIndexs": [
-          36
-        ],
+        "RegistsPointIndexs": [],
         "StationType": 0,
         "LsrMode": 1,
         "Speed": 1.0,
@@ -119,7 +117,7 @@
             "UltrasonicSensor": ""
           }
         },
-        "Region": "Postcure",
+        "Region": "",
         "RegistInfo": null
       },
       "2": {
@@ -274,7 +272,7 @@
             "UltrasonicSensor": ""
           }
         },
-        "Region": "Postcure",
+        "Region": "",
         "RegistInfo": null
       },
       "5": {
@@ -542,7 +540,7 @@
             "UltrasonicSensor": ""
           }
         },
-        "Region": "Postcure",
+        "Region": "",
         "RegistInfo": null
       },
       "17": {
@@ -1158,7 +1156,7 @@
             "UltrasonicSensor": ""
           }
         },
-        "Region": "Postcure",
+        "Region": "",
         "RegistInfo": null
       },
       "35": {

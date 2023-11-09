@@ -1,5 +1,6 @@
 using AGVSystem;
 using AGVSystem.Controllers;
+using AGVSystem.Models.EQDevices;
 using AGVSystem.Models.Map;
 using AGVSystem.Models.Sys;
 using AGVSystem.Models.TaskAllocation.HotRun;
@@ -12,6 +13,7 @@ using AGVSystemCommonNet6.Log;
 using AGVSystemCommonNet6.Microservices;
 using AGVSystemCommonNet6.Microservices.VMS;
 using AGVSystemCommonNet6.User;
+using EquipmentManagment.Device;
 using EquipmentManagment.MainEquipment;
 using EquipmentManagment.Manager;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -39,6 +41,8 @@ StaEQPManagager.InitializeAsync(new clsEQManagementConfigs
     WIPConfigPath = $"{AGVSConfigulator.SysConfigs.EQManagementConfigs.EquipmentManagementConfigFolder}//WIPConfigs.json",
     ChargeStationConfigPath = $"{AGVSConfigulator.SysConfigs.EQManagementConfigs.EquipmentManagementConfigFolder}//ChargStationConfigs.json",
 });
+EndPointDeviceAbstract.OnEQDisconnected += EQDeviceEventsHandler.HandleDeviceDisconnected;
+EndPointDeviceAbstract.OnEQConnected += EQDeviceEventsHandler.HandleDeviceReconnected;
 
 AGVSSocketHost agvs_host = new AGVSSocketHost();
 agvs_host.Start();

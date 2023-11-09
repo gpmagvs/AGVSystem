@@ -53,6 +53,28 @@ namespace AGVSystem.Controllers
         [HttpPost("SaveMap")]
         public async Task<IActionResult> SaveMap([FromBody] Map map_modified)
         {
+            //map_modified.Note = $"v{DateTime.Now.ToString("yyMMdd")}0821.1";
+            string[] note_splited = map_modified.Note.Split('.');
+            int lastModifyVersion = 0;
+            string todayDateTime_Str = DateTime.Now.ToString($"yyMMdd");
+            if (note_splited.Length == 2)
+            {
+                lastModifyVersion = Convert.ToInt16(note_splited[1]);
+                if (todayDateTime_Str == note_splited[0].Replace("v", ""))
+                {
+                    map_modified.Note = $"{note_splited[0]}.{lastModifyVersion + 1}";
+                }
+                else
+                {
+                    map_modified.Note = $"v{todayDateTime_Str}.1";
+                }
+
+            }
+            else
+            {
+
+            }
+
             MapManager.SaveMapToFile(map_modified, local_map_file_path);
 
             AGVSMapManager.CurrentMap = map_modified;
@@ -61,7 +83,7 @@ namespace AGVSystem.Controllers
             AGVSystemCommonNet6.Microservices.MapSync.SendReloadRequest(AGVSConfigulator.SysConfigs.MapConfigs.CurrentMapFileName);
 
 
-            return Ok();
+            return Ok(map_modified.Note);
         }
 
 
