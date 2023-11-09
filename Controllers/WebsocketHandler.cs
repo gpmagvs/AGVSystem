@@ -54,17 +54,25 @@ namespace AGVSystem.Controllers
         };
         private static async Task<List<clsAGVStateViewModel>> GetAGV_StatesData_FromVMS()
         {
-            HttpHelper httpHelper = new HttpHelper($"http://127.0.0.1:5036");
-            clsAGVStateDto[] data = await httpHelper.GetAsync<clsAGVStateDto[]>("/api/VmsManager/AGVStatus");
-            List<clsAGVStateViewModel> output = data.Select(d => GenViewMode(d)).ToList();
-            clsAGVStateViewModel GenViewMode(clsAGVStateDto d)
+            try
             {
-                clsAGVStateViewModel vm = JsonConvert.DeserializeObject<clsAGVStateViewModel>(JsonConvert.SerializeObject(d));
-                vm.StationName = AGVSMapManager.GetNameByTagStr(vm.CurrentLocation);
-                return vm;
+
+                HttpHelper httpHelper = new HttpHelper($"http://127.0.0.1:5036");
+                clsAGVStateDto[] data = await httpHelper.GetAsync<clsAGVStateDto[]>("/api/VmsManager/AGVStatus");
+                List<clsAGVStateViewModel> output = data.Select(d => GenViewMode(d)).ToList();
+                clsAGVStateViewModel GenViewMode(clsAGVStateDto d)
+                {
+                    clsAGVStateViewModel vm = JsonConvert.DeserializeObject<clsAGVStateViewModel>(JsonConvert.SerializeObject(d));
+                    vm.StationName = AGVSMapManager.GetNameByTagStr(vm.CurrentLocation);
+                    return vm;
+                }
+                httpHelper.http_client.Dispose();
+                return output;
             }
-            httpHelper.http_client.Dispose();
-            return output;
+            catch (Exception)
+            {
+                return null;
+            }
         }
 
 
@@ -80,7 +88,9 @@ namespace AGVSystem.Controllers
                     try
                     {
                         //UIDatas["/ws/VMSStatus"] = db.tables.AgvStates.Where(stat => stat.Enabled).OrderBy(a => a.AGV_Name).AsNoTracking().ToList().Select(data => GenViewMode(data));
-                        UIDatas["/ws/VMSStatus"] = await GetAGV_StatesData_FromVMS();
+                        var vmsData = await GetAGV_StatesData_FromVMS();
+                        if (vmsData != null)
+                            UIDatas["/ws/VMSStatus"] = vmsData;
                         UIDatas["/ws/EQStatus"] = new { EQPData = StaEQPManagager.GetEQStates(), ChargeStationData = StaEQPManagager.GetChargeStationStates() };
                         UIDatas["/ws/VMSAliveCheck"] = true;
                         UIDatas["/UncheckedAlarm"] = AlarmManagerCenter.uncheckedAlarms;
