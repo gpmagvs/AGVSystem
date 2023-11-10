@@ -39,5 +39,7 @@ namespace AGVSystem.Controllers
     public class clsAGVStateViewModel : clsAGVStateDto
     {
         public string StationName { get; set; } = "";
+        public string IP { get; set; } = "";
+        public int Port { get; set; } = 0;
     }
 }

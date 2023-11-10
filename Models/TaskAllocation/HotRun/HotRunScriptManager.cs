@@ -3,6 +3,7 @@ using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.AGVDispatch.Messages;
 using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.DATABASE.Helpers;
+using AGVSystemCommonNet6.Microservices.VMS;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using NuGet.Configuration;
@@ -83,7 +84,7 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                 script.finish_num = 0;
                 clsAGVStateDto GetAGVState()
                 {
-                    return agv_status_db.GetAGVStateByAGVName(script.agv_name);
+                    return VMSSerivces.AgvStatesData.FirstOrDefault(agv => agv.AGV_Name == script.agv_name);
                 }
                 script.state = "Running";
                 UpdateScriptState(script);
@@ -113,7 +114,7 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                     {
                         foreach (HotRunAction _action in script.actions)
                         {
-                            var TaskName = $"HR__{_action.action}_{DateTime.Now.ToString("yyMMdd_HHmmssffff")}";
+                            var TaskName = $"HR_{_action.action.ToUpper()}_{DateTime.Now.ToString("yMdHHmmss")}";
                             await TaskManager.AddTask(new AGVSystemCommonNet6.TASK.clsTaskDto
                             {
                                 Action = GetActionByActionName(_action.action),

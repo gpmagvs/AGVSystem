@@ -4,6 +4,7 @@ using AGVSystem.Models.EQDevices;
 using AGVSystem.Models.Map;
 using AGVSystem.Models.Sys;
 using AGVSystem.Models.TaskAllocation.HotRun;
+using AGVSystem.Static;
 using AGVSystem.TaskManagers;
 using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.Alarm;
@@ -47,7 +48,9 @@ EndPointDeviceAbstract.OnEQConnected += EQDeviceEventsHandler.HandleDeviceReconn
 AGVSSocketHost agvs_host = new AGVSSocketHost();
 agvs_host.Start();
 AlarmManagerCenter.Initialize();
+VMSDataStore.Initialize();
 VMSSerivces.OnVMSReconnected += async (sender, e) => await VMSSerivces.RunModeSwitch(SystemModes.RunMode);
+VMSSerivces.AgvStateFetchWorker();
 VMSSerivces.AliveCheckWorker();
 VMSSerivces.RunModeSwitch(AGVSystemCommonNet6.AGVDispatch.RunMode.RUN_MODE.MAINTAIN);
 

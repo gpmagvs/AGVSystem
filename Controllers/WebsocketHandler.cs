@@ -1,5 +1,6 @@
 ﻿using AGVSystem.Models.Map;
 using AGVSystem.Models.TaskAllocation.HotRun;
+using AGVSystem.Static;
 using AGVSystem.TaskManagers;
 using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.AGVDispatch.Messages;
@@ -8,6 +9,7 @@ using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.DATABASE.Helpers;
 using AGVSystemCommonNet6.HttpTools;
+using AGVSystemCommonNet6.Microservices.VMS;
 using AGVSystemCommonNet6.TASK;
 using AGVSystemCommonNet6.ViewModels;
 using EquipmentManagment.Manager;
@@ -56,17 +58,15 @@ namespace AGVSystem.Controllers
         {
             try
             {
-
-                HttpHelper httpHelper = new HttpHelper($"http://127.0.0.1:5036");
-                clsAGVStateDto[] data = await httpHelper.GetAsync<clsAGVStateDto[]>("/api/VmsManager/AGVStatus");
-                List<clsAGVStateViewModel> output = data.Select(d => GenViewMode(d)).ToList();
+                List<clsAGVStateViewModel> output = VMSSerivces.AgvStatesData.Select(d => GenViewMode(d)).ToList();
                 clsAGVStateViewModel GenViewMode(clsAGVStateDto d)
                 {
                     clsAGVStateViewModel vm = JsonConvert.DeserializeObject<clsAGVStateViewModel>(JsonConvert.SerializeObject(d));
                     vm.StationName = AGVSMapManager.GetNameByTagStr(vm.CurrentLocation);
+                    vm.IP = VMSDataStore.VehicleConfigs[vm.AGV_Name].HostIP;
+                    vm.Port = VMSDataStore.VehicleConfigs[vm.AGV_Name].HostPort;
                     return vm;
                 }
-                httpHelper.http_client.Dispose();
                 return output;
             }
             catch (Exception)
