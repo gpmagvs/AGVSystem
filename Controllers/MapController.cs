@@ -100,7 +100,7 @@ namespace AGVSystem.Controllers
         {
             PathFinder finder = new PathFinder();
             var map = MapManager.LoadMapFromFile();
-            var pathInfo = finder.FindShortestPathByTagNumber(map.Points, fromTag, toTag);
+            var pathInfo = finder.FindShortestPathByTagNumber(map, fromTag, toTag);
             return Ok(pathInfo);
         }
 
