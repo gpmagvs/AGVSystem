@@ -1,5 +1,7 @@
 ﻿
 using AGVSystem.Models.Map;
+using AGVSystemCommonNet6.AGVDispatch.Messages;
+using AGVSystemCommonNet6.AGVDispatch.Model;
 using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.MAP;
 using Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption;
@@ -95,13 +97,14 @@ namespace AGVSystem.Controllers
         }
 
 
-        [HttpGet("PathPlan")]
-        public async Task<IActionResult> PathPlan(int fromTag, int toTag)
+        [HttpGet("PreviewNavigationPath")]
+        public async Task<IActionResult> PreviewNavigationPath(int fromTag, int toTag, ACTION_TYPE action = ACTION_TYPE.None, string AGVName = "")
         {
             PathFinder finder = new PathFinder();
             var map = MapManager.LoadMapFromFile();
             var pathInfo = finder.FindShortestPathByTagNumber(map, fromTag, toTag);
-            return Ok(pathInfo);
+            var coordinates=pathInfo.stations.Select(pt => new clsCoordination(pt.X, pt.Y, 0));
+            return Ok(coordinates);
         }
 
 
