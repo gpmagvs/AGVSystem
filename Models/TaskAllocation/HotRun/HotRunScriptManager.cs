@@ -76,13 +76,13 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
             var firstAction = GetActionByActionName(script.actions.First().action);
             if (firstAction == ACTION_TYPE.Load && agv.CurrentCarrierID == "")
             {
-                AlarmManagerCenter.AddAlarm(ALARMS.CANNOT_DISPATCH_LOAD_TASK_WHEN_AGV_NO_CARGO);
+                AlarmManagerCenter.AddAlarmAsync(ALARMS.CANNOT_DISPATCH_LOAD_TASK_WHEN_AGV_NO_CARGO);
                 return new(false, ALARMS.CANNOT_DISPATCH_LOAD_TASK_WHEN_AGV_NO_CARGO.ToString());
             }
             else if ((firstAction == ACTION_TYPE.Unload | firstAction == ACTION_TYPE.Carry) && agv.CurrentCarrierID != "")
             {
                 var alarm_code = firstAction == ACTION_TYPE.Unload ? ALARMS.CANNOT_DISPATCH_UNLOAD_TASK_WHEN_AGV_HAS_CARGO : ALARMS.CANNOT_DISPATCH_CARRY_TASK_WHEN_AGV_HAS_CARGO;
-                AlarmManagerCenter.AddAlarm(alarm_code);
+                AlarmManagerCenter.AddAlarmAsync(alarm_code);
                 return new(false, alarm_code.ToString());
             }
 

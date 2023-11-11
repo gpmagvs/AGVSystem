@@ -29,18 +29,20 @@ namespace AGVSystem.Models.Sys
         internal static HOST_CONN_MODE HostConnMode { get; set; }
         internal static HOST_OPER_MODE HostOperMode { get; set; }
 
-        public static bool RunModeSwitch(RUN_MODE mode, out string Message)
+        public static bool RunModeSwitch(RUN_MODE mode, out string Message, bool forecing_change = false)
         {
             Message = "";
             bool confirm = true;
             LOG.INFO($"User Try Swich RUN_MODE To {mode}");
 
-            bool isAnyTaskExecuting = TaskManager.InCompletedTaskList.Count() > 0;
-
-            if (isAnyTaskExecuting)
+            if (!forecing_change)
             {
-                Message = "尚有任務在執行中";
-                confirm = false;
+                bool isAnyTaskExecuting = TaskManager.InCompletedTaskList.Count() > 0;
+                if (isAnyTaskExecuting)
+                {
+                    Message = "尚有任務在執行中";
+                    confirm = false;
+                }
             }
 
             if (confirm)

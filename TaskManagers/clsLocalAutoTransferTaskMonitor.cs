@@ -157,13 +157,13 @@ namespace AGVSystem.TaskManagers
 
                             if (EQStatusMonitoringResultAlarmCode == ALARMS.Source_Eq_Unload_Request_Off && agv_state.TransferProcess == TRANSFER_PROCESS.GO_TO_SOURCE_EQ) //前往取貨途中
                             {
-                                AlarmManagerCenter.AddAlarm(ALARMS.Source_Eq_Unload_Request_Off, level: ALARM_LEVEL.WARNING, Equipment_Name: sourceEQ.EQName, location: agv_state.CurrentLocation, taskName: taskOrder.TaskName);
+                                AlarmManagerCenter.AddAlarmAsync(ALARMS.Source_Eq_Unload_Request_Off, level: ALARM_LEVEL.WARNING, Equipment_Name: sourceEQ.EQName, location: agv_state.CurrentLocation, taskName: taskOrder.TaskName);
                                 TaskManager.Cancel(taskOrder.TaskName, $"Source EQ Unload_Request OFF", TASK_RUN_STATUS.FAILURE);
                                 break;
                             }
                             if (EQStatusMonitoringResultAlarmCode == ALARMS.Destine_Eq_Load_Request_Off)
                             {
-                                AlarmManagerCenter.AddAlarm(ALARMS.Destine_Eq_Load_Request_Off, level: ALARM_LEVEL.WARNING, Equipment_Name: sourceEQ.EQName, location: agv_state.CurrentLocation, taskName: taskOrder.TaskName);
+                                AlarmManagerCenter.AddAlarmAsync(ALARMS.Destine_Eq_Load_Request_Off, level: ALARM_LEVEL.WARNING, Equipment_Name: sourceEQ.EQName, location: agv_state.CurrentLocation, taskName: taskOrder.TaskName);
                                 TaskManager.Cancel(taskOrder.TaskName, $"Destine EQ Load_Request OFF", TASK_RUN_STATUS.FAILURE);
                                 break;
                             }
@@ -171,14 +171,14 @@ namespace AGVSystem.TaskManagers
                             {
                                 bool isSourceEQ = !sourceEQ.Eqp_Status_Down;
                                 string eqName = isSourceEQ ? sourceEQ.EQName : destineEQ.EQName;
-                                AlarmManagerCenter.AddAlarm(EQStatusMonitoringResultAlarmCode, level: ALARM_LEVEL.WARNING, Equipment_Name: eqName, location: agv_state.CurrentLocation, taskName: taskOrder.TaskName);
+                                AlarmManagerCenter.AddAlarmAsync(EQStatusMonitoringResultAlarmCode, level: ALARM_LEVEL.WARNING, Equipment_Name: eqName, location: agv_state.CurrentLocation, taskName: taskOrder.TaskName);
                                 TaskManager.Cancel(taskOrder.TaskName, isSourceEQ ? "Source EQ Status Down" : $"Destine EQ Status Down", TASK_RUN_STATUS.FAILURE);
                                 break;
                             }
                         }
                         catch (Exception ex)
                         {
-                            AlarmManagerCenter.AddAlarm(ALARMS.SYSTEM_ERROR, location: agv_state.CurrentLocation, taskName: taskOrder.TaskName);
+                            AlarmManagerCenter.AddAlarmAsync(ALARMS.SYSTEM_ERROR, location: agv_state.CurrentLocation, taskName: taskOrder.TaskName);
 
                         }
 
