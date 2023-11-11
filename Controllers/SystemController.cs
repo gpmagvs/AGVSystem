@@ -34,18 +34,18 @@ namespace AGVSystem.Controllers
         }
 
         [HttpPost("RunMode")]
-        public async Task<IActionResult> RunMode(RUN_MODE mode)
+        public async Task<IActionResult> RunMode(RUN_MODE mode, bool forecing_change = false)
         {
             var _previousMode = SystemModes.RunMode;
             SystemModes.RunMode = mode == RUN_MODE.MAINTAIN ? RUN_MODE.SWITCH_TO_MAITAIN_ING : RUN_MODE.SWITCH_TO_RUN_ING;
             //AGVS先確認
-            bool agvs_confirm = SystemModes.RunModeSwitch(mode, out string message);
+            bool agvs_confirm = SystemModes.RunModeSwitch(mode, out string message, forecing_change);
             if (!agvs_confirm)
             {
                 return Ok(new { confirm = false, message = message });
             }
             LOG.INFO($"[Run Mode Switch] 等待VMS回覆 {mode}模式請求");
-            (bool confirm, string message) vms_response = await VMSSerivces.RunModeSwitch(mode);
+            (bool confirm, string message) vms_response = await VMSSerivces.RunModeSwitch(mode, forecing_change);
             if (!vms_response.confirm)
             {
                 SystemModes.RunMode = _previousMode;

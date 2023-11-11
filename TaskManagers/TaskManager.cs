@@ -51,18 +51,31 @@ namespace AGVSystem.TaskManagers
 
                     if (db.tables.Tasks.AsNoTracking().Where(task => task.To_Station != "-1" && task.State == TASK_RUN_STATUS.WAIT | task.State == TASK_RUN_STATUS.NAVIGATING).Any(task => task.To_Station == taskData.To_Station))
                     {
-                        AlarmManagerCenter.AddAlarm(ALARMS.Source_Eq_Already_Has_Task_To_Excute, ALARM_SOURCE.AGVS);
-                        return (false, ALARMS.Source_Eq_Already_Has_Task_To_Excute, $"目的地設備已有搬運任務");
+                        if (taskData.Action == ACTION_TYPE.None)
+                        {
+                            AlarmManagerCenter.AddAlarmAsync(ALARMS.Destine_Normal_Station_Has_Task_To_Reach, ALARM_SOURCE.AGVS, level: ALARM_LEVEL.WARNING);
+                            return (false, ALARMS.Destine_Normal_Station_Has_Task_To_Reach, $"站點-{taskData.To_Station} 已存在移動任務");
+                        }
+                        else if (taskData.Action == ACTION_TYPE.Park| taskData.Action == ACTION_TYPE.LoadAndPark)
+                        {
+                            AlarmManagerCenter.AddAlarmAsync(ALARMS.Destine_Eq_Station_Has_Task_To_Park, ALARM_SOURCE.AGVS);
+                            return (false, ALARMS.Destine_Eq_Station_Has_Task_To_Park, $"目的地設備已有停車任務");
+                        }
+                        else
+                        {
+                            AlarmManagerCenter.AddAlarmAsync(ALARMS.Destine_Eq_Already_Has_Task_To_Excute, ALARM_SOURCE.AGVS);
+                            return (false, ALARMS.Destine_Eq_Already_Has_Task_To_Excute, $"目的地設備已有搬運任務");
+                        }
                     }
                     db.tables.Tasks.Add(taskData);
-                    db.SaveChanges();
+                    var added = await db.SaveChanges();
                 }
                 return new(true, ALARMS.NONE, "");
             }
             catch (Exception ex)
             {
                 LOG.ERROR(ex);
-                AlarmManagerCenter.AddAlarm(ALARMS.Task_Add_To_Database_Fail, ALARM_SOURCE.AGVS);
+                AlarmManagerCenter.AddAlarmAsync(ALARMS.Task_Add_To_Database_Fail, ALARM_SOURCE.AGVS);
                 return new(false, ALARMS.Task_Add_To_Database_Fail, ex.Message);
             }
         }
@@ -100,7 +113,7 @@ namespace AGVSystem.TaskManagers
             }
             catch (Exception ex)
             {
-                AlarmManagerCenter.AddAlarm(ALARMS.Task_Cancel_Fail);
+                AlarmManagerCenter.AddAlarmAsync(ALARMS.Task_Cancel_Fail);
                 return false;
             }
 

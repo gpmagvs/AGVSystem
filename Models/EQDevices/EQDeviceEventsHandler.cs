@@ -8,7 +8,7 @@ namespace AGVSystem.Models.EQDevices
     {
         internal static void HandleDeviceDisconnected(object? sender, EndPointDeviceAbstract device)
         {
-            AlarmManagerCenter.AddAlarm(ALARMS.EQ_Disconnect, source: ALARM_SOURCE.EQP, Equipment_Name: device.EQName);
+            AlarmManagerCenter.AddAlarmAsync(ALARMS.EQ_Disconnect, source: ALARM_SOURCE.EQP, Equipment_Name: device.EQName);
         }
 
         internal static async void HandleDeviceReconnected(object? sender, EndPointDeviceAbstract device)
