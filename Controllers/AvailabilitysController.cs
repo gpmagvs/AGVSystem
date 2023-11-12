@@ -46,5 +46,34 @@ namespace AGVSystem.Controllers
 
             return Ok(output);
         }
+
+        [HttpGet("Query")]
+        public async Task<IActionResult> Query(string AGVName, string StartDate, string EndDate)
+        {
+            var startDate = DateTime.Parse(StartDate);
+            var endDate = DateTime.Parse(EndDate);
+            endDate = endDate.AddDays(1);
+
+            using var db = new AGVSDatabase();
+            var datas = db.tables.Availabilitys.Where(dat => dat.AGVName == AGVName && dat.Time >= startDate && dat.Time <= endDate);
+            var idle_time = datas.Sum(d => d.IDLE_TIME);
+            var run_time = datas.Sum(d => d.RUN_TIME);
+            var down_time = datas.Sum(d => d.DOWN_TIME);
+            var charge_time = datas.Sum(d => d.CHARGE_TIME);
+            //['RUN', 'IDLE', 'DOWN', 'CHARGE', 'UNKNOWN']
+            var dataset =new
+            {
+                total = new double[] { run_time, idle_time, down_time, charge_time },
+                days = new
+                {
+                    dates = datas.Select(dat => dat.Time.ToString()).ToArray(),
+                    idle = datas.Select(dat => dat.IDLE_TIME).ToArray(),
+                    run = datas.Select(dat => dat.RUN_TIME).ToArray(),
+                    down = datas.Select(dat => dat.DOWN_TIME).ToArray(),
+                    charge = datas.Select(dat => dat.CHARGE_TIME).ToArray(),
+                }
+            };
+            return Ok(dataset);
+        }
     }
 }
