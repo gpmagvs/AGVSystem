@@ -44,6 +44,7 @@ StaEQPManagager.InitializeAsync(new clsEQManagementConfigs
 });
 EndPointDeviceAbstract.OnEQDisconnected += EQDeviceEventsHandler.HandleDeviceDisconnected;
 EndPointDeviceAbstract.OnEQConnected += EQDeviceEventsHandler.HandleDeviceReconnected;
+clsEQ.OnIOStateChanged += EQDeviceEventsHandler.HandleEQIOStateChanged;
 
 AGVSSocketHost agvs_host = new AGVSSocketHost();
 agvs_host.Start();

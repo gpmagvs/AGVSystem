@@ -122,7 +122,7 @@
             "UltrasonicSensor": ""
           }
         },
-        "Region": "all",
+        "Region": "Postcure",
         "RegistInfo": null
       },
       "2": {
@@ -277,7 +277,7 @@
             "UltrasonicSensor": ""
           }
         },
-        "Region": "",
+        "Region": "Postcure",
         "RegistInfo": null
       },
       "5": {
@@ -544,7 +544,7 @@
             "UltrasonicSensor": ""
           }
         },
-        "Region": "",
+        "Region": "Postcure",
         "RegistInfo": null
       },
       "17": {

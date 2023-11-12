@@ -3,6 +3,7 @@ using AGVSystemCommonNet6.DATABASE;
 using EquipmentManagment.ChargeStation;
 using EquipmentManagment.Connection;
 using EquipmentManagment.Device;
+using EquipmentManagment.Emu;
 using EquipmentManagment.MainEquipment;
 using EquipmentManagment.Manager;
 using Microsoft.AspNetCore.Http;
@@ -138,7 +139,40 @@ namespace AGVSystem.Controllers
 
             }
         }
+        [HttpPost("AgvHsSignal")]
+        public async Task<IActionResult> AgvHsSignal(string EqName, string SignalName, bool State)
+        {
+            bool confirm = false;
+            string message = "";
+            try
+            {
+                if (StaEQPManagager.TryGetEQByEqName(EqName, out clsEQ? EQ,out string errmsg))
+                {
+                    if (SignalName == "VALID")
+                        EQ.HS_AGV_VALID = State;
+                    if (SignalName == "TR_REQ")
+                        EQ.HS_AGV_TR_REQ = State;
+                    if (SignalName == "BUSY")
+                        EQ.HS_AGV_BUSY = State;
+                    if (SignalName == "READY")
+                        EQ.HS_AGV_READY = State;
+                    if (SignalName == "COMPT")
+                        EQ.HS_AGV_COMPT = State;
+                }
+                else
+                {
+                    message = $"{errmsg}";
+                    confirm = false;
+                }
+            }
+            catch (Exception ex)
+            {
+                message = $"Exception:{ex.Message}";
+                confirm = false;
+            }
 
+            return Ok(new { confirm, message });
+        }
     }
 
 }
