@@ -85,9 +85,9 @@ namespace AGVSystem.Controllers
 
             AGVSMapManager.SyncMapPointRegionSetting(StaEQPManagager.EQOptions);
 
-            StaEQPManagager.DisposeEQs();
+            //StaEQPManagager.DisposeEQs();
             StaEQPManagager.SaveEqConfigs();
-            StaEQPManagager.InitializeAsync();
+            //StaEQPManagager.InitializeAsync();
 
             return Ok(new { confirm = true, message = "" });
         }
