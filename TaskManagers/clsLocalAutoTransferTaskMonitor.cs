@@ -1,10 +1,11 @@
 ﻿using AGVSystemCommonNet6;
+using AGVSystemCommonNet6.AGVDispatch;
 using AGVSystemCommonNet6.AGVDispatch.Messages;
 using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.DATABASE.Helpers;
 using AGVSystemCommonNet6.Log;
-using AGVSystemCommonNet6.TASK;
+
 using EquipmentManagment.MainEquipment;
 using Newtonsoft.Json.Linq;
 using System.Xml.Linq;
@@ -191,7 +192,7 @@ namespace AGVSystem.TaskManagers
                     RaiseMonitorEndInvloke();
                 });
             });
-           
+
         }
         private ALARMS MonitorEQsStatusIO()
         {

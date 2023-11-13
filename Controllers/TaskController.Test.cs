@@ -1,6 +1,7 @@
-﻿using AGVSystemCommonNet6.DATABASE;
+﻿using AGVSystemCommonNet6.AGVDispatch;
+using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.DATABASE.Helpers;
-using AGVSystemCommonNet6.TASK;
+
 using Microsoft.AspNetCore.Mvc;
 
 namespace AGVSystem.Controllers
@@ -12,7 +13,7 @@ namespace AGVSystem.Controllers
         public async Task<IActionResult> Add(string taskname)
         {
 
-            db.Add(new AGVSystemCommonNet6.TASK.clsTaskDto()
+            db.Add(new clsTaskDto()
             {
                 TaskName = taskname
             });
@@ -22,12 +23,12 @@ namespace AGVSystem.Controllers
         [HttpGet("test/modify")]
         public async Task<IActionResult> modify(string taskname)
         {
-            clsTaskDto clsTaskDto = new clsTaskDto()
+            clsTaskDto taskDto = new clsTaskDto()
             {
                 TaskName = taskname,
                 FinishTime = DateTime.Now
             };
-            db.Update(clsTaskDto);
+            db.Update(taskDto);
             return Ok();
         }
     }

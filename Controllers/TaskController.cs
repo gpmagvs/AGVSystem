@@ -1,12 +1,13 @@
 ﻿using AGVSystem.Models.TaskAllocation;
 using AGVSystem.Models.TaskAllocation.HotRun;
 using AGVSystem.TaskManagers;
+using AGVSystemCommonNet6.AGVDispatch;
 using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.Log;
 using AGVSystemCommonNet6.MAP;
-using AGVSystemCommonNet6.TASK;
+
 using AGVSystemCommonNet6.User;
 using EquipmentManagment.MainEquipment;
 using EquipmentManagment.Manager;
@@ -71,13 +72,13 @@ namespace AGVSystem.Controllers
 
         [HttpPost("move")]
         [Authorize]
-        public async Task<IActionResult> MoveTask([FromBody]clsTaskDto taskData,string user="")
+        public async Task<IActionResult> MoveTask([FromBody] clsTaskDto taskData, string user = "")
         {
             if (!UserValidation())
             {
                 return Unauthorized();
             }
-            return Ok(await AddTask(taskData,user));
+            return Ok(await AddTask(taskData, user));
         }
         [HttpPost("measure")]
         [Authorize]
@@ -92,7 +93,7 @@ namespace AGVSystem.Controllers
             {
                 taskData.To_Slot = string.Join(",", bay.Points);
 
-                return Ok(await AddTask(taskData,user));
+                return Ok(await AddTask(taskData, user));
             }
             else
                 return Ok(new { confirm = false, message = $"Bay - {taskData.To_Station} not found" });
@@ -105,7 +106,7 @@ namespace AGVSystem.Controllers
             {
                 return Unauthorized();
             }
-            return Ok(await AddTask(taskData,user));
+            return Ok(await AddTask(taskData, user));
         }
         [HttpPost("unload")]
         [Authorize]
@@ -115,7 +116,7 @@ namespace AGVSystem.Controllers
             {
                 return Unauthorized();
             }
-            return Ok(await AddTask(taskData,user));
+            return Ok(await AddTask(taskData, user));
         }
         [HttpPost("carry")]
         [Authorize]
@@ -125,7 +126,7 @@ namespace AGVSystem.Controllers
             {
                 return Unauthorized();
             }
-            return Ok(await AddTask(taskData,user));
+            return Ok(await AddTask(taskData, user));
         }
         [HttpPost("charge")]
         [Authorize]
@@ -135,7 +136,7 @@ namespace AGVSystem.Controllers
             {
                 return Unauthorized();
             }
-            return Ok(await AddTask(taskData,user));
+            return Ok(await AddTask(taskData, user));
         }
         [HttpPost("ExangeBattery")]
         [Authorize]
@@ -145,7 +146,7 @@ namespace AGVSystem.Controllers
             {
                 return Unauthorized();
             }
-            return Ok(await AddTask(taskData,user));
+            return Ok(await AddTask(taskData, user));
         }
         [HttpPost("park")]
         [Authorize]
@@ -155,7 +156,7 @@ namespace AGVSystem.Controllers
             {
                 return Unauthorized();
             }
-            return Ok(await AddTask(taskData,user));
+            return Ok(await AddTask(taskData, user));
         }
 
         /// <summary>
@@ -224,9 +225,9 @@ namespace AGVSystem.Controllers
             HotRunScriptManager.Stop(no);
             return Ok();
         }
-        private async Task<object> AddTask(clsTaskDto taskData, string user="")
+        private async Task<object> AddTask(clsTaskDto taskData, string user = "")
         {
-            taskData.DispatcherName =user;
+            taskData.DispatcherName = user;
             var result = await TaskManager.AddTask(taskData, TaskManager.TASK_RECIEVE_SOURCE.MANUAL);
             return new { confirm = result.confirm, alarm_code = result.alarm_code, message = result.message };
         }

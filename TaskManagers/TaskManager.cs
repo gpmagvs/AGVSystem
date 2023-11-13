@@ -1,12 +1,13 @@
 ﻿using AGVSystem.Models.BayMeasure;
 using AGVSystem.Models.Sys;
+using AGVSystemCommonNet6.AGVDispatch;
 using AGVSystemCommonNet6.AGVDispatch.Messages;
 using AGVSystemCommonNet6.AGVDispatch.RunMode;
 using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.DATABASE.Helpers;
 using AGVSystemCommonNet6.Log;
-using AGVSystemCommonNet6.TASK;
+
 using Microsoft.EntityFrameworkCore;
 
 namespace AGVSystem.TaskManagers
@@ -56,7 +57,7 @@ namespace AGVSystem.TaskManagers
                             AlarmManagerCenter.AddAlarmAsync(ALARMS.Destine_Normal_Station_Has_Task_To_Reach, ALARM_SOURCE.AGVS, level: ALARM_LEVEL.WARNING);
                             return (false, ALARMS.Destine_Normal_Station_Has_Task_To_Reach, $"站點-{taskData.To_Station} 已存在移動任務");
                         }
-                        else if (taskData.Action == ACTION_TYPE.Park| taskData.Action == ACTION_TYPE.LoadAndPark)
+                        else if (taskData.Action == ACTION_TYPE.Park | taskData.Action == ACTION_TYPE.LoadAndPark)
                         {
                             AlarmManagerCenter.AddAlarmAsync(ALARMS.Destine_Eq_Station_Has_Task_To_Park, ALARM_SOURCE.AGVS);
                             return (false, ALARMS.Destine_Eq_Station_Has_Task_To_Park, $"目的地設備已有停車任務");
