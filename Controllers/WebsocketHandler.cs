@@ -10,7 +10,7 @@ using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.DATABASE.Helpers;
 using AGVSystemCommonNet6.HttpTools;
 using AGVSystemCommonNet6.Microservices.VMS;
-using AGVSystemCommonNet6.TASK;
+
 using AGVSystemCommonNet6.ViewModels;
 using EquipmentManagment.Manager;
 using Microsoft.EntityFrameworkCore;
@@ -96,7 +96,7 @@ namespace AGVSystem.Controllers
                         UIDatas["/UncheckedAlarm"] = AlarmManagerCenter.uncheckedAlarms;
                         UIDatas["/ws/AGVLocationUpload"] = AGVSMapManager.AGVUploadCoordinationStore;
                         UIDatas["/ws/HotRun"] = HotRunScriptManager.HotRunScripts;
-                        var incompleted_tasks = db.tables.Tasks.Where(t => t.State == TASK_RUN_STATUS.WAIT | t.State == TASK_RUN_STATUS.NAVIGATING).AsNoTracking().ToList();
+                        var incompleted_tasks = db.tables.Tasks.Where(t => t.State == TASK_RUN_STATUS.WAIT | t.State == TASK_RUN_STATUS.NAVIGATING).OrderByDescending(t => t.Priority).AsNoTracking().ToList();
                         var completed_tasks = db.tables.Tasks.Where(t => t.State != TASK_RUN_STATUS.WAIT && t.State != TASK_RUN_STATUS.NAVIGATING).OrderByDescending(t => t.RecieveTime).Take(20).AsNoTracking().ToList();
                         UIDatas["/ws/TaskData"] = new { incompleteds = incompleted_tasks, completeds = completed_tasks };
 

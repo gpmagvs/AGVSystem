@@ -1,4 +1,6 @@
 ﻿using AGVSystem.TaskManagers;
+using AGVSystemCommonNet6.AGVDispatch;
+using AGVSystemCommonNet6.AGVDispatch.Messages;
 using AGVSystemCommonNet6.AGVDispatch.Model;
 
 namespace AGVSystem.Models.BayMeasure
@@ -25,9 +27,9 @@ namespace AGVSystem.Models.BayMeasure
         {
             foreach (var bay in Bays)
             {
-                var taskDto = new AGVSystemCommonNet6.TASK.clsTaskDto
+                var taskDto = new clsTaskDto
                 {
-                    Action = AGVSystemCommonNet6.AGVDispatch.Messages.ACTION_TYPE.Measure,
+                    Action = ACTION_TYPE.Measure,
                     DispatcherName = $"排程",
                     DesignatedAGVName = AGVName,
                     To_Station = bay.BayName,
