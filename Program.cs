@@ -57,19 +57,13 @@ VMSSerivces.RunModeSwitch(AGVSystemCommonNet6.AGVDispatch.RunMode.RUN_MODE.MAINT
 
 var builder = WebApplication.CreateBuilder(args);
 string DBConnection = AGVSConfigulator.SysConfigs.DBConnection;
-Directory.CreateDirectory(Path.GetDirectoryName(DBConnection.Split('=')[1]));
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers().AddJsonOptions(options => options.JsonSerializerOptions.PropertyNamingPolicy = null);
 builder.Services.AddDirectoryBrowser();
 
-var connectionString = new SqliteConnectionStringBuilder(DBConnection)
-{
-    Mode = SqliteOpenMode.ReadWriteCreate,
-}.ToString();
-
-builder.Services.AddDbContext<AGVSDbContext>(options => options.UseSqlite(connectionString));
+builder.Services.AddDbContext<AGVSDbContext>(options => options.UseSqlServer(DBConnection));
 
 builder.Services.Configure<JsonOptions>(options =>
 {

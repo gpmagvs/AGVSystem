@@ -121,7 +121,7 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                             foreach (HotRunAction _action in script.actions)
                             {
                                 var TaskName = $"HR_{_action.action.ToUpper()}_{DateTime.Now.ToString("yMdHHmmss")}";
-                                await TaskManager.AddTask(new AGVSystemCommonNet6.TASK.clsTaskDto
+                                await TaskManager.AddTask(new clsTaskDto
                                 {
                                     Action = GetActionByActionName(_action.action),
                                     From_Station = _action.source_tag.ToString(),
@@ -180,7 +180,7 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                 catch (Exception ex)
                 {
                 }
-                
+
             });
             return (true, "");
         }

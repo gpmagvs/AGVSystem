@@ -7,7 +7,7 @@ using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.DATABASE.Helpers;
 using AGVSystemCommonNet6.Log;
-
+using AGVSystemCommonNet6.Microservices.VMS;
 using Microsoft.EntityFrameworkCore;
 
 namespace AGVSystem.TaskManagers
@@ -42,7 +42,18 @@ namespace AGVSystem.TaskManagers
                 if (!results.confirm)
                     return results;
             }
+            #region 充電任務確認
 
+            if (taskData.Action == ACTION_TYPE.Charge && taskData.DesignatedAGVName != "")
+            {
+                if (VMSSerivces.AgvStatesData.Where(agv => agv.AGV_Name != taskData.DesignatedAGVName).Any(agv => agv.CurrentLocation == taskData.To_Station))
+                {
+                    AlarmManagerCenter.AddAlarmAsync(ALARMS.Destine_Charge_Station_Has_AGV, ALARM_SOURCE.AGVS);
+                    return (false, ALARMS.Destine_Eq_Station_Has_Task_To_Park, $"目的充電站已有AGV停駐");
+                }
+            }
+
+            #endregion
             try
             {
                 taskData.RecieveTime = DateTime.Now;
@@ -82,7 +93,7 @@ namespace AGVSystem.TaskManagers
         }
 
 
-        internal static bool Cancel(string task_name, string reason = "", TASK_RUN_STATUS status = TASK_RUN_STATUS.CANCEL)
+        internal async static Task<bool> Cancel(string task_name, string reason = "", TASK_RUN_STATUS status = TASK_RUN_STATUS.CANCEL)
         {
             try
             {
@@ -105,7 +116,7 @@ namespace AGVSystem.TaskManagers
                         task.FinishTime = DateTime.Now;
                         task.FailureReason = reason;
                         task.State = status;
-                        db.SaveChanges();
+                        await db.SaveChanges();
 
 
                     }

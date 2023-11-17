@@ -67,7 +67,7 @@ namespace AGVSystem.TaskManagers
                     ALARMS EQStatusMonitoringResultAlarmCode = MonitorEQsStatusIO();
                     if (EQStatusMonitoringResultAlarmCode != ALARMS.NONE)
                     {
-                        bool canceled = TaskManager.Cancel(taskOrder.TaskName, EQStatusMonitoringResultAlarmCode.ToString());
+                        bool canceled = await TaskManager.Cancel(taskOrder.TaskName, EQStatusMonitoringResultAlarmCode.ToString());
                         LOG.WARN($"[LocalAutoTransferTaskMonitor] {taskOrder.TaskName} Monitor End: {EQStatusMonitoringResultAlarmCode}");
                         RaiseMonitorEndInvloke();
                         return;
@@ -81,7 +81,7 @@ namespace AGVSystem.TaskManagers
                 var agv_state = agvStatuDatabase.GetAGVStateByAGVName(_taskOrderInDB.DesignatedAGVName);
                 if (agv_state.TaskRunAction == ACTION_TYPE.Charge)
                 {
-                    bool canceled = TaskManager.Cancel(agv_state.TaskName, $"New Auto Transfer Task Request is rasised");
+                    bool canceled = await TaskManager.Cancel(agv_state.TaskName, $"New Auto Transfer Task Request is rasised");
                 }
                 //等待AGV開始執行此任務
                 LOG.WARN($"[LocalAutoTransferTaskMonitor] Waiting {_taskOrderInDB.DesignatedAGVName} Executing Task-{taskOrder.TaskName}");
@@ -93,7 +93,7 @@ namespace AGVSystem.TaskManagers
                     orderState = await taskDatabase.GetTaskStateByID(taskOrder.TaskName);
                     if (EQStatusMonitoringResultAlarmCode != ALARMS.NONE)
                     {
-                        bool canceled = TaskManager.Cancel(taskOrder.TaskName, EQStatusMonitoringResultAlarmCode.ToString());
+                        bool canceled = await TaskManager.Cancel(taskOrder.TaskName, EQStatusMonitoringResultAlarmCode.ToString());
                         LOG.WARN($"[LocalAutoTransferTaskMonitor] {taskOrder.TaskName} Monitor End: {EQStatusMonitoringResultAlarmCode}");
                         RaiseMonitorEndInvloke();
                         return;
@@ -114,7 +114,7 @@ namespace AGVSystem.TaskManagers
                     if (runningActionType == ACTION_TYPE.Charge)
                     {
                         LOG.INFO($"[LocalAutoTransferTaskMonitor] Detected AGV Charge Task is running!!");
-                        bool canceled = TaskManager.Cancel(agv_state.TaskName, $"New Auto Transfer Task Request is rasised");
+                        bool canceled = await TaskManager.Cancel(agv_state.TaskName, $"New Auto Transfer Task Request is rasised");
                         LOG.INFO($"[LocalAutoTransferTaskMonitor] {taskOrder.TaskName} cancel request is {(canceled ? "commited!" : "fail....")}");
                     }
                 }
@@ -159,13 +159,13 @@ namespace AGVSystem.TaskManagers
                             if (EQStatusMonitoringResultAlarmCode == ALARMS.Source_Eq_Unload_Request_Off && agv_state.TransferProcess == TRANSFER_PROCESS.GO_TO_SOURCE_EQ) //前往取貨途中
                             {
                                 AlarmManagerCenter.AddAlarmAsync(ALARMS.Source_Eq_Unload_Request_Off, level: ALARM_LEVEL.WARNING, Equipment_Name: sourceEQ.EQName, location: agv_state.CurrentLocation, taskName: taskOrder.TaskName);
-                                TaskManager.Cancel(taskOrder.TaskName, $"Source EQ Unload_Request OFF", TASK_RUN_STATUS.FAILURE);
+                                await TaskManager.Cancel(taskOrder.TaskName, $"Source EQ Unload_Request OFF", TASK_RUN_STATUS.FAILURE);
                                 break;
                             }
                             if (EQStatusMonitoringResultAlarmCode == ALARMS.Destine_Eq_Load_Request_Off)
                             {
                                 AlarmManagerCenter.AddAlarmAsync(ALARMS.Destine_Eq_Load_Request_Off, level: ALARM_LEVEL.WARNING, Equipment_Name: sourceEQ.EQName, location: agv_state.CurrentLocation, taskName: taskOrder.TaskName);
-                                TaskManager.Cancel(taskOrder.TaskName, $"Destine EQ Load_Request OFF", TASK_RUN_STATUS.FAILURE);
+                                await TaskManager.Cancel(taskOrder.TaskName, $"Destine EQ Load_Request OFF", TASK_RUN_STATUS.FAILURE);
                                 break;
                             }
                             if (EQStatusMonitoringResultAlarmCode == ALARMS.Destine_Eq_Status_Down | EQStatusMonitoringResultAlarmCode == ALARMS.Source_Eq_Status_Down)
@@ -173,7 +173,7 @@ namespace AGVSystem.TaskManagers
                                 bool isSourceEQ = !sourceEQ.Eqp_Status_Down;
                                 string eqName = isSourceEQ ? sourceEQ.EQName : destineEQ.EQName;
                                 AlarmManagerCenter.AddAlarmAsync(EQStatusMonitoringResultAlarmCode, level: ALARM_LEVEL.WARNING, Equipment_Name: eqName, location: agv_state.CurrentLocation, taskName: taskOrder.TaskName);
-                                TaskManager.Cancel(taskOrder.TaskName, isSourceEQ ? "Source EQ Status Down" : $"Destine EQ Status Down", TASK_RUN_STATUS.FAILURE);
+                                await TaskManager.Cancel(taskOrder.TaskName, isSourceEQ ? "Source EQ Status Down" : $"Destine EQ Status Down", TASK_RUN_STATUS.FAILURE);
                                 break;
                             }
                         }
