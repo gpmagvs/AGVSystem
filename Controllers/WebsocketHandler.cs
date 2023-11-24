@@ -83,7 +83,7 @@ namespace AGVSystem.Controllers
                 var db = new AGVSDatabase();
                 while (true)
                 {
-                    await Task.Delay(10);
+                    await Task.Delay(100);
 
                     try
                     {
