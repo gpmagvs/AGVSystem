@@ -1,4 +1,5 @@
 ﻿using AGVSystem.Models.Map;
+using AGVSystem.Models.WebsocketMiddleware;
 using AGVSystemCommonNet6.DATABASE;
 using EquipmentManagment.ChargeStation;
 using EquipmentManagment.Connection;
@@ -21,7 +22,7 @@ namespace AGVSystem.Controllers
         [HttpGet("/ws/EQStatus")]
         public async Task EQStatus()
         {
-            await WebsocketHandler.ClientRequest(HttpContext);
+            await WebsocketMiddleware.ClientRequest(HttpContext);
 
         }
 

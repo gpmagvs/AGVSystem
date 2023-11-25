@@ -1,5 +1,6 @@
 ﻿
 using AGVSystem.Models.Map;
+using AGVSystem.Models.WebsocketMiddleware;
 using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.DATABASE;
 using Microsoft.AspNetCore.Http;
@@ -25,14 +26,14 @@ namespace AGVSystem.Controllers
         [HttpGet("/ws/VMSStatus")]
         public async Task GetVMSStatus()
         {
-            await WebsocketHandler.ClientRequest(HttpContext);
+            await WebsocketMiddleware.ClientRequest(HttpContext);
         }
 
 
         [HttpGet("/ws/AGVLocationUpload")]
         public async Task AGVLocationUpload()
         {
-            await WebsocketHandler.ClientRequest(HttpContext);
+            await WebsocketMiddleware.ClientRequest(HttpContext);
         }
     }
 

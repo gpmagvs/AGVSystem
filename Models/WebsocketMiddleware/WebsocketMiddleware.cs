@@ -1,4 +1,5 @@
-﻿using AGVSystem.Models.Map;
+﻿using AGVSystem.Controllers;
+using AGVSystem.Models.Map;
 using AGVSystem.Models.TaskAllocation.HotRun;
 using AGVSystem.Static;
 using AGVSystem.TaskManagers;
@@ -18,9 +19,9 @@ using Newtonsoft.Json;
 using System.Net.WebSockets;
 using System.Text;
 
-namespace AGVSystem.Controllers
+namespace AGVSystem.Models.WebsocketMiddleware
 {
-    public class WebsocketHandler
+    public class WebsocketMiddleware
     {
         private static Dictionary<string, List<WebSocket>> clients = new Dictionary<string, List<WebSocket>>();
         public static async Task ClientRequest(HttpContext _HttpContext)
@@ -36,7 +37,9 @@ namespace AGVSystem.Controllers
             if (_HttpContext.WebSockets.IsWebSocketRequest)
             {
                 WebSocket webSocket = await _HttpContext.WebSockets.AcceptWebSocketAsync();
-                await SendMessagesAsync(webSocket, path);
+                clsWebsocktClientHandler clientHander = new clsWebsocktClientHandler(webSocket,path);
+                clientHander.OnDataFetching +=(path)=>{ return GetDataByPath(path); };
+                await clientHander.StartBrocast();
             }
             else
             {
@@ -91,14 +94,26 @@ namespace AGVSystem.Controllers
                         var vmsData = await GetAGV_StatesData_FromVMS();
                         if (vmsData != null)
                             UIDatas["/ws/VMSStatus"] = vmsData;
+
                         UIDatas["/ws/EQStatus"] = new { EQPData = StaEQPManagager.GetEQStates(), ChargeStationData = StaEQPManagager.GetChargeStationStates() };
                         UIDatas["/ws/VMSAliveCheck"] = true;
-                        UIDatas["/UncheckedAlarm"] = AlarmManagerCenter.uncheckedAlarms;
                         UIDatas["/ws/AGVLocationUpload"] = AGVSMapManager.AGVUploadCoordinationStore;
                         UIDatas["/ws/HotRun"] = HotRunScriptManager.HotRunScripts;
-                        var incompleted_tasks = db.tables.Tasks.Where(t => t.State == TASK_RUN_STATUS.WAIT | t.State == TASK_RUN_STATUS.NAVIGATING).OrderByDescending(t => t.Priority).AsNoTracking().ToList();
-                        var completed_tasks = db.tables.Tasks.Where(t => t.State != TASK_RUN_STATUS.WAIT && t.State != TASK_RUN_STATUS.NAVIGATING).OrderByDescending(t => t.RecieveTime).Take(20).AsNoTracking().ToList();
-                        UIDatas["/ws/TaskData"] = new { incompleteds = incompleted_tasks, completeds = completed_tasks };
+
+                        #region data fetched from database
+
+                        #endregion
+                        try
+                        {
+                            UIDatas["/UncheckedAlarm"] = AlarmManagerCenter.uncheckedAlarms;
+                            var incompleted_tasks = db.tables.Tasks.Where(t => t.State == TASK_RUN_STATUS.WAIT | t.State == TASK_RUN_STATUS.NAVIGATING).OrderByDescending(t => t.Priority).AsNoTracking().ToList();
+                            var completed_tasks = db.tables.Tasks.Where(t => t.State != TASK_RUN_STATUS.WAIT && t.State != TASK_RUN_STATUS.NAVIGATING).OrderByDescending(t => t.RecieveTime).Take(20).AsNoTracking().ToList();
+                            UIDatas["/ws/TaskData"] = new { incompleteds = incompleted_tasks, completeds = completed_tasks };
+                        }
+                        catch (Exception ex)
+                        {
+
+                        }
 
                     }
                     catch (Exception ex)
@@ -112,66 +127,12 @@ namespace AGVSystem.Controllers
 
 
         }
-        private static async Task SendMessagesAsync(WebSocket webSocket, string? path)
-        {
-            if (path == null)
-                return;
-
-            var buff = new ArraySegment<byte>(new byte[10]);
-            bool closeFlag = false;
-            _ = Task.Factory.StartNew(async () =>
-            {
-                while (!closeFlag)
-                {
-                    await Task.Delay(10);
-                    var data = GetDataByPath(path);
-                    if (data == null)
-                        continue;
-                    if (data != null)
-                    {
-                        try
-                        {
-                            await webSocket.SendAsync(new ArraySegment<byte>(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(data))), WebSocketMessageType.Text, true, CancellationToken.None);
-                            data = null;
-                        }
-                        catch (Exception)
-                        {
-                            return;
-                        }
-                    }
-                }
-            });
-
-            while (true)
-            {
-                try
-                {
-                    await Task.Delay(100);
-                    WebSocketReceiveResult result = await webSocket.ReceiveAsync(buff, CancellationToken.None);
-                }
-                catch (Exception ex)
-                {
-                    break;
-                }
-            }
-            closeFlag = true;
-            webSocket.Dispose();
-            GC.Collect();
-        }
-        private static double GetPublishDelay(string path)
-        {
-            if (path == "/ws/HotRun" | path == "/ws/VMSAliveCheck" | path == "/ws/AGVLocationUpload")
-                return 1;
-            else
-                return 0.3;
-        }
         private static object GetDataByPath(string path)
         {
             if (UIDatas.TryGetValue(path, out object viewdata))
                 return viewdata;
             else
                 return null;
-
         }
 
 

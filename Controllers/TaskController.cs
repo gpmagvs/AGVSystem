@@ -1,5 +1,6 @@
 ﻿using AGVSystem.Models.TaskAllocation;
 using AGVSystem.Models.TaskAllocation.HotRun;
+using AGVSystem.Models.WebsocketMiddleware;
 using AGVSystem.TaskManagers;
 using AGVSystemCommonNet6.AGVDispatch;
 using AGVSystemCommonNet6.Alarm;
@@ -48,13 +49,13 @@ namespace AGVSystem.Controllers
         [HttpGet("/ws/TaskData")]
         public async Task GetNotFinishTaskListData()
         {
-            await WebsocketHandler.ClientRequest(HttpContext);
+            await WebsocketMiddleware.ClientRequest(HttpContext);
         }
 
         [HttpGet("/ws/HotRun")]
         public async Task GetHotRunStates()
         {
-            await WebsocketHandler.ClientRequest(HttpContext);
+            await WebsocketMiddleware.ClientRequest(HttpContext);
         }
 
         [HttpGet("Cancel")]

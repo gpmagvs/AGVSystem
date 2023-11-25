@@ -1,4 +1,5 @@
 ﻿using AGVSystem.Models.Sys;
+using AGVSystem.Models.WebsocketMiddleware;
 using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.AGVDispatch.RunMode;
 using AGVSystemCommonNet6.Configuration;
@@ -84,7 +85,7 @@ namespace AGVSystem.Controllers
         [HttpGet("/ws/VMSAliveCheck")]
         public async Task AliveCheck()
         {
-            await WebsocketHandler.ClientRequest(HttpContext);
+            await WebsocketMiddleware.ClientRequest(HttpContext);
         }
 
 

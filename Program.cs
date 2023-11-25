@@ -1,15 +1,16 @@
 using AGVSystem;
-using AGVSystem.Controllers;
 using AGVSystem.Models.EQDevices;
 using AGVSystem.Models.Map;
 using AGVSystem.Models.Sys;
 using AGVSystem.Models.TaskAllocation.HotRun;
+using AGVSystem.Models.WebsocketMiddleware;
 using AGVSystem.Static;
 using AGVSystem.TaskManagers;
 using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.DATABASE;
+using AGVSystemCommonNet6.HttpTools;
 using AGVSystemCommonNet6.Log;
 using AGVSystemCommonNet6.Microservices;
 using AGVSystemCommonNet6.Microservices.VMS;
@@ -86,28 +87,35 @@ var app = builder.Build();
 
 using (IServiceScope scope = app.Services.CreateScope())
 {
-    using (AGVSDbContext dbContext = scope.ServiceProvider.GetRequiredService<AGVSDbContext>())
+    try
     {
-
-        dbContext.Database.EnsureCreated();
-        dbContext.SaveChanges();
-        if (dbContext.Database.GetPendingMigrations().Any())
+        using (AGVSDbContext dbContext = scope.ServiceProvider.GetRequiredService<AGVSDbContext>())
         {
-
-        }
-        using (var ttra = dbContext.Database.BeginTransaction())
-        {
-            UserEntity? existingUser = dbContext.Users.FirstOrDefault(u => u.UserName == "dev");
-            if (existingUser == null)
+            dbContext.Database.EnsureCreated();
+            dbContext.SaveChanges();
+            if (dbContext.Database.GetPendingMigrations().Any())
             {
-                dbContext.Users.Add(new UserEntity { UserName = "dev", Password = "12345678", Role = ERole.Developer });
-                dbContext.SaveChanges();
+
             }
-            ttra.Commit();
+            using (var ttra = dbContext.Database.BeginTransaction())
+            {
+                UserEntity? existingUser = dbContext.Users.FirstOrDefault(u => u.UserName == "dev");
+                if (existingUser == null)
+                {
+                    dbContext.Users.Add(new UserEntity { UserName = "dev", Password = "12345678", Role = ERole.Developer });
+                    dbContext.SaveChanges();
+                }
+                ttra.Commit();
+            }
         }
     }
+    catch (Exception ex)
+    {
+        LOG.ERROR(ex);
+    }
+   
 }
-WebsocketHandler.StartCollectWebUIUsingDatas();
+WebsocketMiddleware.StartCollectWebUIUsingDatas();
 
 
 // Configure the HTTP request pipeline.

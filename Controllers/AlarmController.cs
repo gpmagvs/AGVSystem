@@ -1,4 +1,5 @@
-﻿using AGVSystemCommonNet6.Alarm;
+﻿using AGVSystem.Models.WebsocketMiddleware;
+using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.DATABASE;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -21,7 +22,7 @@ namespace AGVSystem.Controllers
         [HttpGet("/UncheckedAlarm")]
         public async Task Alarms()
         {
-            await WebsocketHandler.ClientRequest(HttpContext);
+            await WebsocketMiddleware.ClientRequest(HttpContext);
         }
         [HttpGet("SystemAlarmReset")]
         public async Task<IActionResult> SystemAlarmReset()
