@@ -1,12 +1,5 @@
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using SQLite;
 using AGVSystemCommonNet6.Alarm;
-using AGVSystemCommonNet6.DATABASE;
-using System.Collections.Generic;
-using AGVSystemCommonNet6.Alarm.VMS_ALARM;
-using System.Net;
+using Microsoft.AspNetCore.Mvc;
 
 namespace AGVSystem.Controllers
 {

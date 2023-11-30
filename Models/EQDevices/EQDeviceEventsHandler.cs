@@ -1,5 +1,4 @@
 ﻿using AGVSystemCommonNet6.Alarm;
-using AGVSystemCommonNet6.Alarm.VMS_ALARM;
 using AGVSystemCommonNet6.Log;
 using EquipmentManagment.Device;
 
