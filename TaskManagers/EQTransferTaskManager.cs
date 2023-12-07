@@ -15,6 +15,8 @@ using EquipmentManagment.Device;
 using EquipmentManagment.Manager;
 using AGVSystemCommonNet6.AGVDispatch;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.CodeAnalysis.Emit;
 
 namespace AGVSystem.TaskManagers
 {
@@ -70,15 +72,15 @@ namespace AGVSystem.TaskManagers
                     foreach (clsEQ sourceEQ in unload_req_eq_list)
                     {
                         List<clsEQ> loadable_eqs = sourceEQ.DownstremEQ.FindAll(downstrem_eq => downstrem_eq.Load_Request && downstrem_eq.Eqp_Status_Down && !downstrem_eq.CMD_Reserve_Low);
-                        if (loadable_eqs.Count == 0)
-                            continue;
+                        
 
                         using (var db = new AGVSDatabase())
                         {
                             var TaskToStationId = db.tables.Tasks.AsNoTracking().Where(task => task.To_Station != "-1" && task.State == TASK_RUN_STATUS.WAIT | task.State == TASK_RUN_STATUS.NAVIGATING).Select(task => task.To_Station).ToList();
                             loadable_eqs = loadable_eqs.Where(item => !TaskToStationId.Contains(item.EndPointOptions.TagID.ToString())).ToList();
                         }
-                            
+                        if (loadable_eqs.Count == 0)
+                            continue;
                         clsEQ destineEQ = loadable_eqs.First();
                         UnloadEQQueueing.Add(sourceEQ, sourceEQ); ;
 
