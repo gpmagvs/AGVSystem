@@ -46,10 +46,17 @@ namespace AGVSystem.TaskManagers
 
             if (taskData.Action == ACTION_TYPE.Charge && taskData.DesignatedAGVName != "")
             {
-                if (VMSSerivces.AgvStatesData.Where(agv => agv.AGV_Name != taskData.DesignatedAGVName).Any(agv => agv.CurrentLocation == taskData.To_Station))
+                try
                 {
-                    AlarmManagerCenter.AddAlarmAsync(ALARMS.Destine_Charge_Station_Has_AGV, ALARM_SOURCE.AGVS);
-                    return (false, ALARMS.Destine_Eq_Station_Has_Task_To_Park, $"目的充電站已有AGV停駐");
+                    if (VMSSerivces.AgvStatesData.Where(agv => agv.AGV_Name != taskData.DesignatedAGVName).Any(agv => agv.CurrentLocation == taskData.To_Station))
+                    {
+                        AlarmManagerCenter.AddAlarmAsync(ALARMS.Destine_Charge_Station_Has_AGV, ALARM_SOURCE.AGVS);
+                        return (false, ALARMS.Destine_Eq_Station_Has_Task_To_Park, $"目的充電站已有AGV停駐");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LOG.Critical(ex);
                 }
             }
 
