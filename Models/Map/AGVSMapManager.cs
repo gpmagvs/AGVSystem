@@ -126,7 +126,7 @@ namespace AGVSystem.Models.Map
             MapPoint? point = CurrentMap.Points.Values.FirstOrDefault(pt => pt.TagNumber.ToString() == currentLocation);
             if (point == null)
                 return currentLocation;
-            return point.Name;
+            return point.Graph.Display;
         }
 
         internal static MapPoint GetMapPointByTag(int unloadStationTag)
