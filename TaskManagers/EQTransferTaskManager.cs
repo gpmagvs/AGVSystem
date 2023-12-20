@@ -120,7 +120,8 @@ namespace AGVSystem.TaskManagers
                             DispatcherName = "Local_Auto",
                             From_Slot = "1",
                             To_Slot = "1",
-                            Priority = 80
+                            Priority = 80,
+                            Height = destineEQ.EndPointOptions.Height
                         };
                         var taskAddedResult = await TaskManager.AddTask(taskOrder);
                         if (taskAddedResult.confirm)
