@@ -108,7 +108,7 @@ namespace AGVSystem.Controllers
         {
             try
             {
-                var charge_station = StaEQPManagager.EQPDevices.FirstOrDefault(eq => eq.EQName == EqName);
+                var charge_station = StaEQPManagager.ChargeStations.FirstOrDefault(eq => eq.EQName == EqName);
                 if (charge_station == null)
                     return Ok(new { confirm = false, message = $"{EqName} is not exist" });
                 clsChargeStation chargeStation = charge_station as clsChargeStation;
@@ -147,7 +147,7 @@ namespace AGVSystem.Controllers
             string message = "";
             try
             {
-                if (StaEQPManagager.TryGetEQByEqName(EqName, out clsEQ? EQ,out string errmsg))
+                if (StaEQPManagager.TryGetEQByEqName(EqName, out clsEQ? EQ, out string errmsg))
                 {
                     if (SignalName == "VALID")
                         EQ.HS_AGV_VALID = State;
