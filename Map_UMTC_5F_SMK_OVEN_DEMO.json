@@ -1,8 +1,8 @@
 {
   "Map": {
     "Version": 1,
-    "Name": "Map_UMTC_5F_SMK_OVEN_DEMO_4",
-    "Note": "v231111.30",
+    "Name": "Map_UMTC_5F_SMK_OVEN_DEMO_5",
+    "Note": "v231110.2",
     "PointIndex": 80,
     "Map_Image_Size": [
       400,
@@ -33,11 +33,9 @@
         "IsAutoDoor": false,
         "IsExtinguishing": false,
         "InvolvePoint": "",
-        "RegistsPointIndexs": [
-          11
-        ],
+        "RegistsPointIndexs": [],
         "StationType": 0,
-        "LsrMode": 1,
+        "LsrMode": 3,
         "Speed": 1.0,
         "Bay": "",
         "Graph": {
@@ -50,11 +48,8 @@
         "Target": {
           "1": 1.0,
           "5": 1.0,
-          "11": 1.0,
-          "23": 1.0,
-          "27": 1.0,
-          "28": 1.0,
-          "31": 1.0
+          "32": 1.0,
+          "36": 1.0
         },
         "DodgeMode": 0,
         "SpinMode": 0,
@@ -70,8 +65,7 @@
             "UltrasonicSensor": ""
           }
         },
-        "Region": "",
-        "RegistInfo": null
+        "Region": ""
       },
       "1": {
         "X": 0.506,
@@ -85,7 +79,7 @@
         "IsStandbyPoint": false,
         "IsSegment": false,
         "IsOverlap": false,
-        "IsParking": false,
+        "IsParking": true,
         "IsAvoid": false,
         "IsVirtualPoint": false,
         "IsAutoDoor": false,
@@ -122,8 +116,7 @@
             "UltrasonicSensor": ""
           }
         },
-        "Region": "Postcure",
-        "RegistInfo": null
+        "Region": ""
       },
       "2": {
         "X": 4.853,
@@ -175,8 +168,7 @@
             "UltrasonicSensor": ""
           }
         },
-        "Region": "",
-        "RegistInfo": null
+        "Region": ""
       },
       "3": {
         "X": 0.015,
@@ -225,12 +217,11 @@
             "UltrasonicSensor": ""
           }
         },
-        "Region": "",
-        "RegistInfo": null
+        "Region": ""
       },
       "4": {
-        "X": 4.831043630601417,
-        "Y": 7.492211967051706,
+        "X": 4.8,
+        "Y": 7.54,
         "Name": "LD#1",
         "TagNumber": 4,
         "Direction": 90,
@@ -277,15 +268,14 @@
             "UltrasonicSensor": ""
           }
         },
-        "Region": "Postcure",
-        "RegistInfo": null
+        "Region": ""
       },
       "5": {
-        "X": 2.653,
-        "Y": 6.213,
+        "X": 2.633,
+        "Y": 6.168,
         "Name": "5",
         "TagNumber": 5,
-        "Direction": -90,
+        "Direction": 180,
         "Direction_Secondary_Point": 0,
         "AGV_Alarm": false,
         "Enable": true,
@@ -316,7 +306,8 @@
           "7": 1.0,
           "11": 1.0,
           "14": 1.0,
-          "30": 1.0
+          "35": 1.0,
+          "44": 1.0
         },
         "DodgeMode": 0,
         "SpinMode": 0,
@@ -332,8 +323,7 @@
             "UltrasonicSensor": ""
           }
         },
-        "Region": "",
-        "RegistInfo": null
+        "Region": ""
       },
       "6": {
         "X": 5.799,
@@ -384,12 +374,11 @@
             "UltrasonicSensor": ""
           }
         },
-        "Region": "",
-        "RegistInfo": null
+        "Region": ""
       },
       "7": {
-        "X": 2.6229999999999984,
-        "Y": 3.255017852480253,
+        "X": 2.623,
+        "Y": 3.17,
         "Name": "7",
         "TagNumber": 7,
         "Direction": 0,
@@ -407,7 +396,7 @@
         "InvolvePoint": "",
         "RegistsPointIndexs": [],
         "StationType": 0,
-        "LsrMode": 1,
+        "LsrMode": 3,
         "Speed": 1.0,
         "Bay": "",
         "Graph": {
@@ -437,8 +426,7 @@
             "UltrasonicSensor": ""
           }
         },
-        "Region": "",
-        "RegistInfo": null
+        "Region": ""
       },
       "9": {
         "X": 2.615,
@@ -460,7 +448,7 @@
         "InvolvePoint": "",
         "RegistsPointIndexs": [],
         "StationType": 0,
-        "LsrMode": 1,
+        "LsrMode": 3,
         "Speed": 1.0,
         "Bay": "",
         "Graph": {
@@ -476,9 +464,12 @@
           "12": 1.0,
           "17": 1.0,
           "21": 1.0,
-          "22": 1.0
+          "22": 1.0,
+          "30": 1.0,
+          "41": 1.0,
+          "47": 1.0
         },
-        "DodgeMode": 0,
+        "DodgeMode": 10,
         "SpinMode": 0,
         "SubMap": "",
         "AutoDoor": {
@@ -492,13 +483,12 @@
             "UltrasonicSensor": ""
           }
         },
-        "Region": "",
-        "RegistInfo": null
+        "Region": ""
       },
       "10": {
-        "X": 4.239296197435688,
-        "Y": 3.2087633893601897,
-        "Name": "POVEN#1",
+        "X": 3.995,
+        "Y": 3.145,
+        "Name": "Posture_OVEN#1",
         "TagNumber": 8,
         "Direction": 0,
         "Direction_Secondary_Point": 0,
@@ -544,8 +534,7 @@
             "UltrasonicSensor": ""
           }
         },
-        "Region": "Postcure",
-        "RegistInfo": null
+        "Region": ""
       },
       "17": {
         "X": 5.517,
@@ -595,23 +584,22 @@
             "UltrasonicSensor": ""
           }
         },
-        "Region": "",
-        "RegistInfo": null
+        "Region": ""
       },
       "18": {
-        "X": 5.946307198544237,
-        "Y": 3.296037109375,
+        "X": 5.966396044126893,
+        "Y": 3.135338031069539,
         "Name": "103",
         "TagNumber": 103,
         "Direction": 87,
         "Direction_Secondary_Point": 0,
         "AGV_Alarm": false,
-        "Enable": true,
+        "Enable": false,
         "IsStandbyPoint": false,
         "IsSegment": false,
         "IsOverlap": false,
         "IsParking": false,
-        "IsAvoid": true,
+        "IsAvoid": false,
         "IsVirtualPoint": true,
         "IsAutoDoor": false,
         "IsExtinguishing": false,
@@ -632,7 +620,8 @@
           "2": 1.0,
           "17": 1.0,
           "20": 1.0,
-          "21": 1.0
+          "21": 1.0,
+          "41": 1.0
         },
         "DodgeMode": 0,
         "SpinMode": 0,
@@ -648,8 +637,7 @@
             "UltrasonicSensor": ""
           }
         },
-        "Region": "",
-        "RegistInfo": null
+        "Region": ""
       },
       "21": {
         "X": 5.076717127422871,
@@ -659,12 +647,12 @@
         "Direction": 0,
         "Direction_Secondary_Point": 0,
         "AGV_Alarm": false,
-        "Enable": true,
+        "Enable": false,
         "IsStandbyPoint": false,
         "IsSegment": false,
         "IsOverlap": false,
         "IsParking": false,
-        "IsAvoid": true,
+        "IsAvoid": false,
         "IsVirtualPoint": true,
         "IsAutoDoor": false,
         "IsExtinguishing": false,
@@ -700,8 +688,58 @@
             "UltrasonicSensor": ""
           }
         },
-        "Region": "",
-        "RegistInfo": null
+        "Region": ""
+      },
+      "22": {
+        "X": 0.670189103097877,
+        "Y": -0.0028409812535538093,
+        "Name": "106",
+        "TagNumber": 106,
+        "Direction": 90,
+        "Direction_Secondary_Point": 0,
+        "AGV_Alarm": false,
+        "Enable": true,
+        "IsStandbyPoint": false,
+        "IsSegment": false,
+        "IsOverlap": false,
+        "IsParking": false,
+        "IsAvoid": false,
+        "IsVirtualPoint": true,
+        "IsAutoDoor": false,
+        "IsExtinguishing": false,
+        "InvolvePoint": "",
+        "RegistsPointIndexs": [],
+        "StationType": 0,
+        "LsrMode": 0,
+        "Speed": 1.0,
+        "Bay": "",
+        "Graph": {
+          "Display": "",
+          "X": 5,
+          "Y": -73,
+          "IsBezierCurvePoint": false,
+          "BezierCurveID": ""
+        },
+        "Target": {
+          "9": 1.0,
+          "23": 1.0,
+          "25": 1.0
+        },
+        "DodgeMode": 0,
+        "SpinMode": 0,
+        "SubMap": "",
+        "AutoDoor": {
+          "KeyName": "",
+          "KeyPassword": ""
+        },
+        "MotionInfo": {
+          "ControlBypass": {
+            "GroundHoleCCD": "",
+            "GroundHoleSensor": "",
+            "UltrasonicSensor": ""
+          }
+        },
+        "Region": ""
       },
       "23": {
         "X": 0.186,
@@ -751,8 +789,7 @@
             "UltrasonicSensor": ""
           }
         },
-        "Region": "",
-        "RegistInfo": null
+        "Region": ""
       },
       "25": {
         "X": 0.17,
@@ -762,7 +799,7 @@
         "Direction": 180,
         "Direction_Secondary_Point": 0,
         "AGV_Alarm": false,
-        "Enable": true,
+        "Enable": false,
         "IsStandbyPoint": true,
         "IsSegment": false,
         "IsOverlap": false,
@@ -785,6 +822,7 @@
           "BezierCurveID": ""
         },
         "Target": {
+          "22": 1.0,
           "27": 1.0
         },
         "DodgeMode": 0,
@@ -801,22 +839,21 @@
             "UltrasonicSensor": ""
           }
         },
-        "Region": "",
-        "RegistInfo": null
+        "Region": ""
       },
       "27": {
         "X": 0.116,
         "Y": 3.993,
         "Name": "21-鋁板測試點",
         "TagNumber": 21,
-        "Direction": 180,
-        "Direction_Secondary_Point": 0,
+        "Direction": -90,
+        "Direction_Secondary_Point": -90,
         "AGV_Alarm": false,
         "Enable": true,
-        "IsStandbyPoint": true,
+        "IsStandbyPoint": false,
         "IsSegment": false,
         "IsOverlap": false,
-        "IsParking": false,
+        "IsParking": true,
         "IsAvoid": false,
         "IsVirtualPoint": false,
         "IsAutoDoor": false,
@@ -824,7 +861,7 @@
         "InvolvePoint": "",
         "RegistsPointIndexs": [],
         "StationType": 0,
-        "LsrMode": 1,
+        "LsrMode": 0,
         "Speed": 1.0,
         "Bay": "",
         "Graph": {
@@ -835,10 +872,57 @@
           "BezierCurveID": ""
         },
         "Target": {
-          "0": 1.0,
           "25": 1.0,
-          "28": 1.0,
-          "31": 1.0
+          "36": 1.0
+        },
+        "DodgeMode": 5,
+        "SpinMode": 0,
+        "SubMap": "",
+        "AutoDoor": {
+          "KeyName": "",
+          "KeyPassword": ""
+        },
+        "MotionInfo": {
+          "ControlBypass": {
+            "GroundHoleCCD": "",
+            "GroundHoleSensor": "",
+            "UltrasonicSensor": ""
+          }
+        },
+        "Region": ""
+      },
+      "30": {
+        "X": 3.9053127939512464,
+        "Y": 0.7103551793412954,
+        "Name": "30",
+        "TagNumber": 30,
+        "Direction": 0,
+        "Direction_Secondary_Point": 0,
+        "AGV_Alarm": false,
+        "Enable": true,
+        "IsStandbyPoint": false,
+        "IsSegment": false,
+        "IsOverlap": false,
+        "IsParking": false,
+        "IsAvoid": false,
+        "IsVirtualPoint": true,
+        "IsAutoDoor": false,
+        "IsExtinguishing": false,
+        "InvolvePoint": "",
+        "RegistsPointIndexs": [],
+        "StationType": 0,
+        "LsrMode": 0,
+        "Speed": 1.0,
+        "Bay": "",
+        "Graph": {
+          "Display": "",
+          "X": 4,
+          "Y": 1,
+          "IsBezierCurvePoint": false,
+          "BezierCurveID": ""
+        },
+        "Target": {
+          "9": 1.0
         },
         "DodgeMode": 0,
         "SpinMode": 0,
@@ -854,20 +938,71 @@
             "UltrasonicSensor": ""
           }
         },
-        "Region": "",
-        "RegistInfo": null
+        "Region": ""
       },
-      "28": {
-        "X": -2.772,
-        "Y": 6.255,
-        "Name": "35",
-        "TagNumber": 35,
-        "Direction": 90,
+      "32": {
+        "X": -0.509,
+        "Y": 6.166,
+        "Name": "147",
+        "TagNumber": 147,
+        "Direction": 140,
         "Direction_Secondary_Point": 0,
         "AGV_Alarm": false,
         "Enable": true,
         "IsStandbyPoint": false,
-        "IsSegment": true,
+        "IsSegment": false,
+        "IsOverlap": false,
+        "IsParking": false,
+        "IsAvoid": false,
+        "IsVirtualPoint": true,
+        "IsAutoDoor": false,
+        "IsExtinguishing": false,
+        "InvolvePoint": "",
+        "RegistsPointIndexs": [],
+        "StationType": 0,
+        "LsrMode": 3,
+        "Speed": 1.0,
+        "Bay": "",
+        "Graph": {
+          "Display": "",
+          "X": -1,
+          "Y": 6,
+          "IsBezierCurvePoint": false,
+          "BezierCurveID": ""
+        },
+        "Target": {
+          "0": 1.0,
+          "33": 1.0,
+          "36": 1.0,
+          "43": 1.0
+        },
+        "DodgeMode": 0,
+        "SpinMode": 0,
+        "SubMap": "",
+        "AutoDoor": {
+          "KeyName": "",
+          "KeyPassword": ""
+        },
+        "MotionInfo": {
+          "ControlBypass": {
+            "GroundHoleCCD": "",
+            "GroundHoleSensor": "",
+            "UltrasonicSensor": ""
+          }
+        },
+        "Region": ""
+      },
+      "33": {
+        "X": -1.743,
+        "Y": 7.491,
+        "Name": "53",
+        "TagNumber": 53,
+        "Direction": 180,
+        "Direction_Secondary_Point": 0,
+        "AGV_Alarm": false,
+        "Enable": true,
+        "IsStandbyPoint": false,
+        "IsSegment": false,
         "IsOverlap": false,
         "IsParking": false,
         "IsAvoid": false,
@@ -882,17 +1017,16 @@
         "Bay": "",
         "Graph": {
           "Display": "",
-          "X": -3,
-          "Y": 6,
-          "IsBezierCurvePoint": true,
-          "BezierCurveID": "25-35"
+          "X": -2,
+          "Y": 7,
+          "IsBezierCurvePoint": false,
+          "BezierCurveID": ""
         },
         "Target": {
-          "0": 1.0,
-          "27": 1.0,
-          "29": 1.0
+          "32": 1.0,
+          "37": 1.0
         },
-        "DodgeMode": 0,
+        "DodgeMode": 9,
         "SpinMode": 0,
         "SubMap": "",
         "AutoDoor": {
@@ -906,16 +1040,15 @@
             "UltrasonicSensor": ""
           }
         },
-        "Region": "",
-        "RegistInfo": null
+        "Region": ""
       },
-      "29": {
-        "X": -4.072931650516289,
-        "Y": 6.235646721580491,
-        "Name": "25",
-        "TagNumber": 25,
-        "Direction": 90,
-        "Direction_Secondary_Point": -135,
+      "34": {
+        "X": -4.946,
+        "Y": 3.067,
+        "Name": "55",
+        "TagNumber": 55,
+        "Direction": -90,
+        "Direction_Secondary_Point": 180,
         "AGV_Alarm": false,
         "Enable": true,
         "IsStandbyPoint": false,
@@ -934,13 +1067,114 @@
         "Bay": "",
         "Graph": {
           "Display": "",
-          "X": -4,
-          "Y": 6,
-          "IsBezierCurvePoint": true,
-          "BezierCurveID": "25-35"
+          "X": -5,
+          "Y": 3,
+          "IsBezierCurvePoint": false,
+          "BezierCurveID": ""
         },
         "Target": {
-          "28": 1.0
+          "37": 1.0
+        },
+        "DodgeMode": 11,
+        "SpinMode": 0,
+        "SubMap": "",
+        "AutoDoor": {
+          "KeyName": "",
+          "KeyPassword": ""
+        },
+        "MotionInfo": {
+          "ControlBypass": {
+            "GroundHoleCCD": "",
+            "GroundHoleSensor": "",
+            "UltrasonicSensor": ""
+          }
+        },
+        "Region": ""
+      },
+      "36": {
+        "X": 0.125,
+        "Y": 5.03,
+        "Name": "61",
+        "TagNumber": 61,
+        "Direction": -90,
+        "Direction_Secondary_Point": 0,
+        "AGV_Alarm": false,
+        "Enable": true,
+        "IsStandbyPoint": false,
+        "IsSegment": false,
+        "IsOverlap": false,
+        "IsParking": false,
+        "IsAvoid": false,
+        "IsVirtualPoint": false,
+        "IsAutoDoor": false,
+        "IsExtinguishing": false,
+        "InvolvePoint": "",
+        "RegistsPointIndexs": [],
+        "StationType": 0,
+        "LsrMode": 0,
+        "Speed": 1.0,
+        "Bay": "",
+        "Graph": {
+          "Display": "",
+          "X": 0,
+          "Y": 5,
+          "IsBezierCurvePoint": false,
+          "BezierCurveID": ""
+        },
+        "Target": {
+          "0": 1.0,
+          "27": 1.0,
+          "32": 1.0
+        },
+        "DodgeMode": 5,
+        "SpinMode": 0,
+        "SubMap": "",
+        "AutoDoor": {
+          "KeyName": "",
+          "KeyPassword": ""
+        },
+        "MotionInfo": {
+          "ControlBypass": {
+            "GroundHoleCCD": "",
+            "GroundHoleSensor": "",
+            "UltrasonicSensor": ""
+          }
+        },
+        "Region": ""
+      },
+      "37": {
+        "X": -3.788,
+        "Y": 7.5,
+        "Name": "57",
+        "TagNumber": 57,
+        "Direction": 180,
+        "Direction_Secondary_Point": 180,
+        "AGV_Alarm": false,
+        "Enable": true,
+        "IsStandbyPoint": false,
+        "IsSegment": true,
+        "IsOverlap": false,
+        "IsParking": true,
+        "IsAvoid": false,
+        "IsVirtualPoint": false,
+        "IsAutoDoor": false,
+        "IsExtinguishing": false,
+        "InvolvePoint": "",
+        "RegistsPointIndexs": [],
+        "StationType": 1,
+        "LsrMode": 0,
+        "Speed": 1.0,
+        "Bay": "",
+        "Graph": {
+          "Display": "",
+          "X": -4,
+          "Y": 8,
+          "IsBezierCurvePoint": false,
+          "BezierCurveID": ""
+        },
+        "Target": {
+          "33": 1.0,
+          "34": 1.0
         },
         "DodgeMode": 0,
         "SpinMode": 0,
@@ -956,14 +1190,13 @@
             "UltrasonicSensor": ""
           }
         },
-        "Region": "",
-        "RegistInfo": null
+        "Region": ""
       },
-      "30": {
-        "X": 3.1514728198643915,
-        "Y": 8.945743011336702,
-        "Name": "30",
-        "TagNumber": 30,
+      "38": {
+        "X": -3.452,
+        "Y": 5.083,
+        "Name": "AAAA59",
+        "TagNumber": 59,
         "Direction": 0,
         "Direction_Secondary_Point": 0,
         "AGV_Alarm": false,
@@ -984,14 +1217,14 @@
         "Bay": "",
         "Graph": {
           "Display": "",
-          "X": 3,
-          "Y": 9,
+          "X": -3,
+          "Y": 5,
           "IsBezierCurvePoint": false,
           "BezierCurveID": ""
         },
         "Target": {
-          "5": 1.0,
-          "31": 1.0
+          "40": 1.0,
+          "43": 1.0
         },
         "DodgeMode": 0,
         "SpinMode": 0,
@@ -1007,14 +1240,13 @@
             "UltrasonicSensor": ""
           }
         },
-        "Region": "",
-        "RegistInfo": null
+        "Region": ""
       },
-      "31": {
-        "X": 4.979640837298263,
-        "Y": 9.95508478093075,
-        "Name": "31",
-        "TagNumber": 31,
+      "41": {
+        "X": 5.43,
+        "Y": 0.75,
+        "Name": "73",
+        "TagNumber": 73,
         "Direction": 0,
         "Direction_Secondary_Point": 0,
         "AGV_Alarm": false,
@@ -1036,13 +1268,13 @@
         "Graph": {
           "Display": "",
           "X": 5,
-          "Y": 10,
+          "Y": 1,
           "IsBezierCurvePoint": false,
           "BezierCurveID": ""
         },
         "Target": {
-          "30": 1.0,
-          "32": 1.0
+          "9": 1.0,
+          "18": 1.0
         },
         "DodgeMode": 0,
         "SpinMode": 0,
@@ -1058,14 +1290,13 @@
             "UltrasonicSensor": ""
           }
         },
-        "Region": "",
-        "RegistInfo": null
+        "Region": ""
       },
-      "32": {
-        "X": 7.107955842669028,
-        "Y": 10.20060034650768,
-        "Name": "32",
-        "TagNumber": 32,
+      "42": {
+        "X": 7.95,
+        "Y": 5.75,
+        "Name": "維修點-11",
+        "TagNumber": 11,
         "Direction": 0,
         "Direction_Secondary_Point": 0,
         "AGV_Alarm": false,
@@ -1080,20 +1311,18 @@
         "IsExtinguishing": false,
         "InvolvePoint": "",
         "RegistsPointIndexs": [],
-        "StationType": 0,
+        "StationType": 110,
         "LsrMode": 0,
         "Speed": 1.0,
         "Bay": "",
         "Graph": {
           "Display": "",
-          "X": 7,
-          "Y": 10,
+          "X": 8,
+          "Y": 6,
           "IsBezierCurvePoint": false,
           "BezierCurveID": ""
         },
-        "Target": {
-          "31": 1.0
-        },
+        "Target": {},
         "DodgeMode": 0,
         "SpinMode": 0,
         "SubMap": "",
@@ -1108,8 +1337,57 @@
             "UltrasonicSensor": ""
           }
         },
-        "Region": "",
-        "RegistInfo": null
+        "Region": ""
+      },
+      "43": {
+        "X": -3.2046874997353636,
+        "Y": 5.169961017977761,
+        "Name": "143",
+        "TagNumber": 143,
+        "Direction": 0,
+        "Direction_Secondary_Point": 0,
+        "AGV_Alarm": false,
+        "Enable": true,
+        "IsStandbyPoint": false,
+        "IsSegment": false,
+        "IsOverlap": false,
+        "IsParking": false,
+        "IsAvoid": false,
+        "IsVirtualPoint": true,
+        "IsAutoDoor": false,
+        "IsExtinguishing": false,
+        "InvolvePoint": "",
+        "RegistsPointIndexs": [],
+        "StationType": 0,
+        "LsrMode": 3,
+        "Speed": 1.0,
+        "Bay": "",
+        "Graph": {
+          "Display": "",
+          "X": -3,
+          "Y": 5,
+          "IsBezierCurvePoint": false,
+          "BezierCurveID": ""
+        },
+        "Target": {
+          "32": 1.0,
+          "38": 1.0
+        },
+        "DodgeMode": 10,
+        "SpinMode": 0,
+        "SubMap": "",
+        "AutoDoor": {
+          "KeyName": "",
+          "KeyPassword": ""
+        },
+        "MotionInfo": {
+          "ControlBypass": {
+            "GroundHoleCCD": "",
+            "GroundHoleSensor": "",
+            "UltrasonicSensor": ""
+          }
+        },
+        "Region": ""
       }
     },
     "BezierCurves": {
@@ -1124,90 +1402,6 @@
     },
     "Segments": [
       {
-        "StartPtIndex": 29,
-        "EndPtIndex": 28,
-        "StartCoordination": [
-          -4.072931650516289,
-          6.235646721580491
-        ],
-        "EndCoordination": [
-          -2.772,
-          6.255
-        ],
-        "PathID": "29_28",
-        "IsEQLink": true,
-        "IsSingleCar": false,
-        "IsPassable": false,
-        "IsExtinguishingPath": false,
-        "Speed": 1.0,
-        "LsrMode": 0,
-        "DodgeMode": 0,
-        "SpinMode": 0
-      },
-      {
-        "StartPtIndex": 28,
-        "EndPtIndex": 29,
-        "StartCoordination": [
-          -2.772,
-          6.255
-        ],
-        "EndCoordination": [
-          -4.072931650516289,
-          6.235646721580491
-        ],
-        "PathID": "28_29",
-        "IsEQLink": true,
-        "IsSingleCar": false,
-        "IsPassable": false,
-        "IsExtinguishingPath": false,
-        "Speed": 1.0,
-        "LsrMode": 0,
-        "DodgeMode": 0,
-        "SpinMode": 0
-      },
-      {
-        "StartPtIndex": 28,
-        "EndPtIndex": 0,
-        "StartCoordination": [
-          -2.772,
-          6.255
-        ],
-        "EndCoordination": [
-          0.531,
-          6.217
-        ],
-        "PathID": "28_0",
-        "IsEQLink": false,
-        "IsSingleCar": false,
-        "IsPassable": false,
-        "IsExtinguishingPath": false,
-        "Speed": 1.0,
-        "LsrMode": 0,
-        "DodgeMode": 0,
-        "SpinMode": 0
-      },
-      {
-        "StartPtIndex": 0,
-        "EndPtIndex": 28,
-        "StartCoordination": [
-          0.531,
-          6.217
-        ],
-        "EndCoordination": [
-          -2.772,
-          6.255
-        ],
-        "PathID": "0_28",
-        "IsEQLink": false,
-        "IsSingleCar": false,
-        "IsPassable": false,
-        "IsExtinguishingPath": false,
-        "Speed": 1.0,
-        "LsrMode": 0,
-        "DodgeMode": 0,
-        "SpinMode": 0
-      },
-      {
         "StartPtIndex": 0,
         "EndPtIndex": 1,
         "StartCoordination": [
@@ -1221,7 +1415,74 @@
         "PathID": "0_1",
         "IsEQLink": true,
         "IsSingleCar": false,
-        "IsPassable": false,
+        "IsRotationable": true,
+        "IsPassable": true,
+        "IsExtinguishingPath": false,
+        "Speed": 1.0,
+        "LsrMode": 0,
+        "DodgeMode": 0,
+        "SpinMode": 0
+      },
+      {
+        "StartPtIndex": 0,
+        "EndPtIndex": 5,
+        "StartCoordination": [
+          0.531,
+          6.217
+        ],
+        "EndCoordination": [
+          2.633,
+          6.168
+        ],
+        "PathID": "0_5",
+        "IsEQLink": false,
+        "IsSingleCar": false,
+        "IsRotationable": true,
+        "IsPassable": true,
+        "IsExtinguishingPath": false,
+        "Speed": 1.0,
+        "LsrMode": 0,
+        "DodgeMode": 0,
+        "SpinMode": 0
+      },
+      {
+        "StartPtIndex": 0,
+        "EndPtIndex": 32,
+        "StartCoordination": [
+          0.531,
+          6.217
+        ],
+        "EndCoordination": [
+          -0.509,
+          6.166
+        ],
+        "PathID": "0_32",
+        "IsEQLink": false,
+        "IsSingleCar": false,
+        "IsRotationable": true,
+        "IsPassable": true,
+        "IsExtinguishingPath": false,
+        "Speed": 1.0,
+        "LsrMode": 0,
+        "DodgeMode": 0,
+        "SpinMode": 0
+      },
+      {
+        "StartPtIndex": 0,
+        "EndPtIndex": 36,
+        "StartCoordination": [
+          0.531,
+          6.217
+        ],
+        "EndCoordination": [
+          0.125,
+          5.03
+        ],
+        "PathID": "0_36",
+        "IsEQLink": false,
+        "IsSingleCar": false,
+        "IsRotationable": true,
+        "IsPassable": true,
         "IsExtinguishingPath": false,
         "Speed": 1.0,
         "LsrMode": 0,
@@ -1242,7 +1503,8 @@
         "PathID": "1_0",
         "IsEQLink": true,
         "IsSingleCar": false,
-        "IsPassable": false,
+        "IsRotationable": true,
+        "IsPassable": true,
         "IsExtinguishingPath": false,
         "Speed": 1.0,
         "LsrMode": 0,
@@ -1250,41 +1512,43 @@
         "SpinMode": 0
       },
       {
-        "StartPtIndex": 0,
-        "EndPtIndex": 5,
+        "StartPtIndex": 2,
+        "EndPtIndex": 4,
         "StartCoordination": [
-          0.531,
-          6.217
-        ],
-        "EndCoordination": [
-          2.653,
-          6.213
-        ],
-        "PathID": "0_5",
-        "IsEQLink": false,
-        "IsSingleCar": false,
-        "IsPassable": false,
-        "IsExtinguishingPath": false,
-        "Speed": 1.0,
-        "LsrMode": 0,
-        "DodgeMode": 0,
-        "SpinMode": 0
-      },
-      {
-        "StartPtIndex": 5,
-        "EndPtIndex": 2,
-        "StartCoordination": [
-          2.653,
-          6.213
-        ],
-        "EndCoordination": [
           4.853,
           6.216
         ],
-        "PathID": "5_2",
+        "EndCoordination": [
+          4.8,
+          7.54
+        ],
+        "PathID": "2_4",
+        "IsEQLink": true,
+        "IsSingleCar": false,
+        "IsRotationable": true,
+        "IsPassable": true,
+        "IsExtinguishingPath": false,
+        "Speed": 1.0,
+        "LsrMode": 0,
+        "DodgeMode": 0,
+        "SpinMode": 0
+      },
+      {
+        "StartPtIndex": 2,
+        "EndPtIndex": 5,
+        "StartCoordination": [
+          4.853,
+          6.216
+        ],
+        "EndCoordination": [
+          2.633,
+          6.168
+        ],
+        "PathID": "2_5",
         "IsEQLink": false,
         "IsSingleCar": false,
-        "IsPassable": false,
+        "IsRotationable": true,
+        "IsPassable": true,
         "IsExtinguishingPath": false,
         "Speed": 1.0,
         "LsrMode": 0,
@@ -1305,28 +1569,8 @@
         "PathID": "2_6",
         "IsEQLink": true,
         "IsSingleCar": false,
-        "IsPassable": false,
-        "IsExtinguishingPath": false,
-        "Speed": 1.0,
-        "LsrMode": 0,
-        "DodgeMode": 0,
-        "SpinMode": 0
-      },
-      {
-        "StartPtIndex": 6,
-        "EndPtIndex": 2,
-        "StartCoordination": [
-          5.799,
-          6.199
-        ],
-        "EndCoordination": [
-          4.853,
-          6.216
-        ],
-        "PathID": "6_2",
-        "IsEQLink": true,
-        "IsSingleCar": false,
-        "IsPassable": false,
+        "IsRotationable": true,
+        "IsPassable": true,
         "IsExtinguishingPath": false,
         "Speed": 1.0,
         "LsrMode": 0,
@@ -1335,187 +1579,20 @@
       },
       {
         "StartPtIndex": 2,
-        "EndPtIndex": 5,
+        "EndPtIndex": 18,
         "StartCoordination": [
           4.853,
           6.216
         ],
         "EndCoordination": [
-          2.653,
-          6.213
+          5.966396044126893,
+          3.135338031069539
         ],
-        "PathID": "2_5",
+        "PathID": "2_18",
         "IsEQLink": false,
         "IsSingleCar": false,
-        "IsPassable": false,
-        "IsExtinguishingPath": false,
-        "Speed": 1.0,
-        "LsrMode": 0,
-        "DodgeMode": 0,
-        "SpinMode": 0
-      },
-      {
-        "StartPtIndex": 5,
-        "EndPtIndex": 0,
-        "StartCoordination": [
-          2.653,
-          6.213
-        ],
-        "EndCoordination": [
-          0.531,
-          6.217
-        ],
-        "PathID": "5_0",
-        "IsEQLink": false,
-        "IsSingleCar": false,
-        "IsPassable": false,
-        "IsExtinguishingPath": false,
-        "Speed": 1.0,
-        "LsrMode": 0,
-        "DodgeMode": 0,
-        "SpinMode": 0
-      },
-      {
-        "StartPtIndex": 2,
-        "EndPtIndex": 4,
-        "StartCoordination": [
-          4.853,
-          6.216
-        ],
-        "EndCoordination": [
-          4.831043630601417,
-          7.492211967051706
-        ],
-        "PathID": "2_4",
-        "IsEQLink": true,
-        "IsSingleCar": false,
-        "IsPassable": false,
-        "IsExtinguishingPath": false,
-        "Speed": 1.0,
-        "LsrMode": 0,
-        "DodgeMode": 0,
-        "SpinMode": 0
-      },
-      {
-        "StartPtIndex": 4,
-        "EndPtIndex": 2,
-        "StartCoordination": [
-          4.831043630601417,
-          7.492211967051706
-        ],
-        "EndCoordination": [
-          4.853,
-          6.216
-        ],
-        "PathID": "4_2",
-        "IsEQLink": true,
-        "IsSingleCar": false,
-        "IsPassable": false,
-        "IsExtinguishingPath": false,
-        "Speed": 1.0,
-        "LsrMode": 0,
-        "DodgeMode": 0,
-        "SpinMode": 0
-      },
-      {
-        "StartPtIndex": 5,
-        "EndPtIndex": 7,
-        "StartCoordination": [
-          2.653,
-          6.213
-        ],
-        "EndCoordination": [
-          2.6229999999999984,
-          3.255017852480253
-        ],
-        "PathID": "5_7",
-        "IsEQLink": false,
-        "IsSingleCar": false,
-        "IsPassable": false,
-        "IsExtinguishingPath": false,
-        "Speed": 1.0,
-        "LsrMode": 0,
-        "DodgeMode": 0,
-        "SpinMode": 0
-      },
-      {
-        "StartPtIndex": 7,
-        "EndPtIndex": 9,
-        "StartCoordination": [
-          2.6229999999999984,
-          3.255017852480253
-        ],
-        "EndCoordination": [
-          2.615,
-          0.026
-        ],
-        "PathID": "7_9",
-        "IsEQLink": false,
-        "IsSingleCar": false,
-        "IsPassable": false,
-        "IsExtinguishingPath": false,
-        "Speed": 1.0,
-        "LsrMode": 0,
-        "DodgeMode": 0,
-        "SpinMode": 0
-      },
-      {
-        "StartPtIndex": 9,
-        "EndPtIndex": 7,
-        "StartCoordination": [
-          2.615,
-          0.026
-        ],
-        "EndCoordination": [
-          2.6229999999999984,
-          3.255017852480253
-        ],
-        "PathID": "9_7",
-        "IsEQLink": false,
-        "IsSingleCar": false,
-        "IsPassable": false,
-        "IsExtinguishingPath": false,
-        "Speed": 1.0,
-        "LsrMode": 0,
-        "DodgeMode": 0,
-        "SpinMode": 0
-      },
-      {
-        "StartPtIndex": 7,
-        "EndPtIndex": 5,
-        "StartCoordination": [
-          2.6229999999999984,
-          3.255017852480253
-        ],
-        "EndCoordination": [
-          2.653,
-          6.213
-        ],
-        "PathID": "7_5",
-        "IsEQLink": false,
-        "IsSingleCar": false,
-        "IsPassable": false,
-        "IsExtinguishingPath": false,
-        "Speed": 1.0,
-        "LsrMode": 0,
-        "DodgeMode": 0,
-        "SpinMode": 0
-      },
-      {
-        "StartPtIndex": 9,
-        "EndPtIndex": 3,
-        "StartCoordination": [
-          2.615,
-          0.026
-        ],
-        "EndCoordination": [
-          0.015,
-          0.0
-        ],
-        "PathID": "9_3",
-        "IsEQLink": true,
-        "IsSingleCar": false,
-        "IsPassable": false,
+        "IsRotationable": true,
+        "IsPassable": true,
         "IsExtinguishingPath": false,
         "Speed": 1.0,
         "LsrMode": 0,
@@ -1536,7 +1613,118 @@
         "PathID": "3_9",
         "IsEQLink": true,
         "IsSingleCar": false,
-        "IsPassable": false,
+        "IsRotationable": true,
+        "IsPassable": true,
+        "IsExtinguishingPath": false,
+        "Speed": 1.0,
+        "LsrMode": 0,
+        "DodgeMode": 0,
+        "SpinMode": 0
+      },
+      {
+        "StartPtIndex": 4,
+        "EndPtIndex": 2,
+        "StartCoordination": [
+          4.8,
+          7.54
+        ],
+        "EndCoordination": [
+          4.853,
+          6.216
+        ],
+        "PathID": "4_2",
+        "IsEQLink": true,
+        "IsSingleCar": false,
+        "IsRotationable": true,
+        "IsPassable": true,
+        "IsExtinguishingPath": false,
+        "Speed": 1.0,
+        "LsrMode": 0,
+        "DodgeMode": 0,
+        "SpinMode": 0
+      },
+      {
+        "StartPtIndex": 5,
+        "EndPtIndex": 0,
+        "StartCoordination": [
+          2.633,
+          6.168
+        ],
+        "EndCoordination": [
+          0.531,
+          6.217
+        ],
+        "PathID": "5_0",
+        "IsEQLink": false,
+        "IsSingleCar": false,
+        "IsRotationable": true,
+        "IsPassable": true,
+        "IsExtinguishingPath": false,
+        "Speed": 1.0,
+        "LsrMode": 0,
+        "DodgeMode": 0,
+        "SpinMode": 0
+      },
+      {
+        "StartPtIndex": 5,
+        "EndPtIndex": 2,
+        "StartCoordination": [
+          2.633,
+          6.168
+        ],
+        "EndCoordination": [
+          4.853,
+          6.216
+        ],
+        "PathID": "5_2",
+        "IsEQLink": false,
+        "IsSingleCar": false,
+        "IsRotationable": true,
+        "IsPassable": true,
+        "IsExtinguishingPath": false,
+        "Speed": 1.0,
+        "LsrMode": 0,
+        "DodgeMode": 0,
+        "SpinMode": 0
+      },
+      {
+        "StartPtIndex": 6,
+        "EndPtIndex": 2,
+        "StartCoordination": [
+          5.799,
+          6.199
+        ],
+        "EndCoordination": [
+          4.853,
+          6.216
+        ],
+        "PathID": "6_2",
+        "IsEQLink": true,
+        "IsSingleCar": false,
+        "IsRotationable": true,
+        "IsPassable": true,
+        "IsExtinguishingPath": false,
+        "Speed": 1.0,
+        "LsrMode": 0,
+        "DodgeMode": 0,
+        "SpinMode": 0
+      },
+      {
+        "StartPtIndex": 7,
+        "EndPtIndex": 9,
+        "StartCoordination": [
+          2.623,
+          3.17
+        ],
+        "EndCoordination": [
+          2.615,
+          0.026
+        ],
+        "PathID": "7_9",
+        "IsEQLink": false,
+        "IsSingleCar": false,
+        "IsRotationable": true,
+        "IsPassable": true,
         "IsExtinguishingPath": false,
         "Speed": 1.0,
         "LsrMode": 0,
@@ -1547,38 +1735,18 @@
         "StartPtIndex": 7,
         "EndPtIndex": 10,
         "StartCoordination": [
-          2.6229999999999984,
-          3.255017852480253
+          2.623,
+          3.17
         ],
         "EndCoordination": [
-          4.239296197435688,
-          3.2087633893601897
+          3.995,
+          3.145
         ],
         "PathID": "7_10",
         "IsEQLink": true,
         "IsSingleCar": false,
-        "IsPassable": false,
-        "IsExtinguishingPath": false,
-        "Speed": 1.0,
-        "LsrMode": 0,
-        "DodgeMode": 0,
-        "SpinMode": 0
-      },
-      {
-        "StartPtIndex": 10,
-        "EndPtIndex": 7,
-        "StartCoordination": [
-          4.239296197435688,
-          3.2087633893601897
-        ],
-        "EndCoordination": [
-          2.6229999999999984,
-          3.255017852480253
-        ],
-        "PathID": "10_7",
-        "IsEQLink": true,
-        "IsSingleCar": false,
-        "IsPassable": false,
+        "IsRotationable": true,
+        "IsPassable": true,
         "IsExtinguishingPath": false,
         "Speed": 1.0,
         "LsrMode": 0,
@@ -1587,19 +1755,20 @@
       },
       {
         "StartPtIndex": 9,
-        "EndPtIndex": 21,
+        "EndPtIndex": 3,
         "StartCoordination": [
           2.615,
           0.026
         ],
         "EndCoordination": [
-          5.076717127422871,
-          0.8897351222927958
+          0.015,
+          0.0
         ],
-        "PathID": "9_21",
-        "IsEQLink": false,
+        "PathID": "9_3",
+        "IsEQLink": true,
         "IsSingleCar": false,
-        "IsPassable": false,
+        "IsRotationable": true,
+        "IsPassable": true,
         "IsExtinguishingPath": false,
         "Speed": 1.0,
         "LsrMode": 0,
@@ -1607,125 +1776,21 @@
         "SpinMode": 0
       },
       {
-        "StartPtIndex": 21,
-        "EndPtIndex": 18,
+        "StartPtIndex": 9,
+        "EndPtIndex": 7,
         "StartCoordination": [
-          5.076717127422871,
-          0.8897351222927958
-        ],
-        "EndCoordination": [
-          5.946307198544237,
-          3.296037109375
-        ],
-        "PathID": "21_18",
-        "IsEQLink": false,
-        "IsSingleCar": false,
-        "IsPassable": false,
-        "IsExtinguishingPath": false,
-        "Speed": 1.0,
-        "LsrMode": 0,
-        "DodgeMode": 0,
-        "SpinMode": 0
-      },
-      {
-        "StartPtIndex": 18,
-        "EndPtIndex": 2,
-        "StartCoordination": [
-          5.946307198544237,
-          3.296037109375
-        ],
-        "EndCoordination": [
-          4.853,
-          6.216
-        ],
-        "PathID": "18_2",
-        "IsEQLink": false,
-        "IsSingleCar": false,
-        "IsPassable": false,
-        "IsExtinguishingPath": false,
-        "Speed": 1.0,
-        "LsrMode": 0,
-        "DodgeMode": 0,
-        "SpinMode": 0
-      },
-      {
-        "StartPtIndex": 2,
-        "EndPtIndex": 18,
-        "StartCoordination": [
-          4.853,
-          6.216
-        ],
-        "EndCoordination": [
-          5.946307198544237,
-          3.296037109375
-        ],
-        "PathID": "2_18",
-        "IsEQLink": false,
-        "IsSingleCar": false,
-        "IsPassable": false,
-        "IsExtinguishingPath": false,
-        "Speed": 1.0,
-        "LsrMode": 0,
-        "DodgeMode": 0,
-        "SpinMode": 0
-      },
-      {
-        "StartPtIndex": 18,
-        "EndPtIndex": 21,
-        "StartCoordination": [
-          5.946307198544237,
-          3.296037109375
-        ],
-        "EndCoordination": [
-          5.076717127422871,
-          0.8897351222927958
-        ],
-        "PathID": "18_21",
-        "IsEQLink": false,
-        "IsSingleCar": false,
-        "IsPassable": false,
-        "IsExtinguishingPath": false,
-        "Speed": 1.0,
-        "LsrMode": 0,
-        "DodgeMode": 0,
-        "SpinMode": 0
-      },
-      {
-        "StartPtIndex": 21,
-        "EndPtIndex": 9,
-        "StartCoordination": [
-          5.076717127422871,
-          0.8897351222927958
-        ],
-        "EndCoordination": [
           2.615,
           0.026
         ],
-        "PathID": "21_9",
-        "IsEQLink": false,
-        "IsSingleCar": false,
-        "IsPassable": false,
-        "IsExtinguishingPath": false,
-        "Speed": 1.0,
-        "LsrMode": 0,
-        "DodgeMode": 0,
-        "SpinMode": 0
-      },
-      {
-        "StartPtIndex": 17,
-        "EndPtIndex": 9,
-        "StartCoordination": [
-          5.517,
-          0.23
-        ],
         "EndCoordination": [
-          2.615,
-          0.026
+          2.623,
+          3.17
         ],
-        "PathID": "17_9",
+        "PathID": "9_7",
         "IsEQLink": false,
         "IsSingleCar": false,
-        "IsPassable": false,
+        "IsRotationable": true,
+        "IsPassable": true,
         "IsExtinguishingPath": false,
         "Speed": 1.0,
         "LsrMode": 0,
@@ -1746,7 +1811,8 @@
         "PathID": "9_17",
         "IsEQLink": false,
         "IsSingleCar": false,
-        "IsPassable": false,
+        "IsRotationable": true,
+        "IsPassable": true,
         "IsExtinguishingPath": false,
         "Speed": 1.0,
         "LsrMode": 0,
@@ -1754,20 +1820,21 @@
         "SpinMode": 0
       },
       {
-        "StartPtIndex": 0,
-        "EndPtIndex": 27,
+        "StartPtIndex": 9,
+        "EndPtIndex": 21,
         "StartCoordination": [
-          0.531,
-          6.217
+          2.615,
+          0.026
         ],
         "EndCoordination": [
-          0.116,
-          3.993
+          5.076717127422871,
+          0.8897351222927958
         ],
-        "PathID": "0_27",
+        "PathID": "9_21",
         "IsEQLink": false,
         "IsSingleCar": false,
-        "IsPassable": false,
+        "IsRotationable": true,
+        "IsPassable": true,
         "IsExtinguishingPath": false,
         "Speed": 1.0,
         "LsrMode": 0,
@@ -1775,20 +1842,395 @@
         "SpinMode": 0
       },
       {
-        "StartPtIndex": 27,
+        "StartPtIndex": 9,
+        "EndPtIndex": 22,
+        "StartCoordination": [
+          2.615,
+          0.026
+        ],
+        "EndCoordination": [
+          0.670189103097877,
+          -0.0028409812535538093
+        ],
+        "PathID": "9_22",
+        "IsEQLink": false,
+        "IsSingleCar": false,
+        "IsRotationable": true,
+        "IsPassable": true,
+        "IsExtinguishingPath": false,
+        "Speed": 1.0,
+        "LsrMode": 0,
+        "DodgeMode": 0,
+        "SpinMode": 0
+      },
+      {
+        "StartPtIndex": 9,
+        "EndPtIndex": 30,
+        "StartCoordination": [
+          2.615,
+          0.026
+        ],
+        "EndCoordination": [
+          3.9053127939512464,
+          0.7103551793412954
+        ],
+        "PathID": "9_30",
+        "IsEQLink": false,
+        "IsSingleCar": false,
+        "IsRotationable": true,
+        "IsPassable": true,
+        "IsExtinguishingPath": false,
+        "Speed": 1.0,
+        "LsrMode": 0,
+        "DodgeMode": 0,
+        "SpinMode": 0
+      },
+      {
+        "StartPtIndex": 9,
+        "EndPtIndex": 41,
+        "StartCoordination": [
+          2.615,
+          0.026
+        ],
+        "EndCoordination": [
+          5.43,
+          0.75
+        ],
+        "PathID": "9_41",
+        "IsEQLink": false,
+        "IsSingleCar": false,
+        "IsRotationable": true,
+        "IsPassable": true,
+        "IsExtinguishingPath": false,
+        "Speed": 1.0,
+        "LsrMode": 0,
+        "DodgeMode": 0,
+        "SpinMode": 0
+      },
+      {
+        "StartPtIndex": 10,
+        "EndPtIndex": 7,
+        "StartCoordination": [
+          3.995,
+          3.145
+        ],
+        "EndCoordination": [
+          2.623,
+          3.17
+        ],
+        "PathID": "10_7",
+        "IsEQLink": true,
+        "IsSingleCar": false,
+        "IsRotationable": true,
+        "IsPassable": true,
+        "IsExtinguishingPath": false,
+        "Speed": 1.0,
+        "LsrMode": 0,
+        "DodgeMode": 0,
+        "SpinMode": 0
+      },
+      {
+        "StartPtIndex": 17,
+        "EndPtIndex": 9,
+        "StartCoordination": [
+          5.517,
+          0.23
+        ],
+        "EndCoordination": [
+          2.615,
+          0.026
+        ],
+        "PathID": "17_9",
+        "IsEQLink": false,
+        "IsSingleCar": false,
+        "IsRotationable": true,
+        "IsPassable": true,
+        "IsExtinguishingPath": false,
+        "Speed": 1.0,
+        "LsrMode": 0,
+        "DodgeMode": 0,
+        "SpinMode": 0
+      },
+      {
+        "StartPtIndex": 17,
+        "EndPtIndex": 18,
+        "StartCoordination": [
+          5.517,
+          0.23
+        ],
+        "EndCoordination": [
+          5.966396044126893,
+          3.135338031069539
+        ],
+        "PathID": "17_18",
+        "IsEQLink": false,
+        "IsSingleCar": false,
+        "IsRotationable": true,
+        "IsPassable": true,
+        "IsExtinguishingPath": false,
+        "Speed": 1.0,
+        "LsrMode": 0,
+        "DodgeMode": 0,
+        "SpinMode": 0
+      },
+      {
+        "StartPtIndex": 18,
+        "EndPtIndex": 2,
+        "StartCoordination": [
+          5.966396044126893,
+          3.135338031069539
+        ],
+        "EndCoordination": [
+          4.853,
+          6.216
+        ],
+        "PathID": "18_2",
+        "IsEQLink": false,
+        "IsSingleCar": false,
+        "IsRotationable": true,
+        "IsPassable": true,
+        "IsExtinguishingPath": false,
+        "Speed": 1.0,
+        "LsrMode": 0,
+        "DodgeMode": 0,
+        "SpinMode": 0
+      },
+      {
+        "StartPtIndex": 18,
+        "EndPtIndex": 17,
+        "StartCoordination": [
+          5.966396044126893,
+          3.135338031069539
+        ],
+        "EndCoordination": [
+          5.517,
+          0.23
+        ],
+        "PathID": "18_17",
+        "IsEQLink": false,
+        "IsSingleCar": false,
+        "IsRotationable": true,
+        "IsPassable": true,
+        "IsExtinguishingPath": false,
+        "Speed": 1.0,
+        "LsrMode": 0,
+        "DodgeMode": 0,
+        "SpinMode": 0
+      },
+      {
+        "StartPtIndex": 18,
+        "EndPtIndex": 21,
+        "StartCoordination": [
+          5.966396044126893,
+          3.135338031069539
+        ],
+        "EndCoordination": [
+          5.076717127422871,
+          0.8897351222927958
+        ],
+        "PathID": "18_21",
+        "IsEQLink": false,
+        "IsSingleCar": false,
+        "IsRotationable": true,
+        "IsPassable": true,
+        "IsExtinguishingPath": false,
+        "Speed": 1.0,
+        "LsrMode": 0,
+        "DodgeMode": 0,
+        "SpinMode": 0
+      },
+      {
+        "StartPtIndex": 18,
+        "EndPtIndex": 41,
+        "StartCoordination": [
+          5.966396044126893,
+          3.135338031069539
+        ],
+        "EndCoordination": [
+          5.43,
+          0.75
+        ],
+        "PathID": "18_41",
+        "IsEQLink": false,
+        "IsSingleCar": false,
+        "IsRotationable": true,
+        "IsPassable": true,
+        "IsExtinguishingPath": false,
+        "Speed": 1.0,
+        "LsrMode": 0,
+        "DodgeMode": 0,
+        "SpinMode": 0
+      },
+      {
+        "StartPtIndex": 21,
+        "EndPtIndex": 9,
+        "StartCoordination": [
+          5.076717127422871,
+          0.8897351222927958
+        ],
+        "EndCoordination": [
+          2.615,
+          0.026
+        ],
+        "PathID": "21_9",
+        "IsEQLink": false,
+        "IsSingleCar": false,
+        "IsRotationable": true,
+        "IsPassable": true,
+        "IsExtinguishingPath": false,
+        "Speed": 1.0,
+        "LsrMode": 0,
+        "DodgeMode": 0,
+        "SpinMode": 0
+      },
+      {
+        "StartPtIndex": 21,
+        "EndPtIndex": 18,
+        "StartCoordination": [
+          5.076717127422871,
+          0.8897351222927958
+        ],
+        "EndCoordination": [
+          5.966396044126893,
+          3.135338031069539
+        ],
+        "PathID": "21_18",
+        "IsEQLink": false,
+        "IsSingleCar": false,
+        "IsRotationable": true,
+        "IsPassable": true,
+        "IsExtinguishingPath": false,
+        "Speed": 1.0,
+        "LsrMode": 0,
+        "DodgeMode": 0,
+        "SpinMode": 0
+      },
+      {
+        "StartPtIndex": 22,
+        "EndPtIndex": 9,
+        "StartCoordination": [
+          0.670189103097877,
+          -0.0028409812535538093
+        ],
+        "EndCoordination": [
+          2.615,
+          0.026
+        ],
+        "PathID": "22_9",
+        "IsEQLink": false,
+        "IsSingleCar": false,
+        "IsRotationable": true,
+        "IsPassable": true,
+        "IsExtinguishingPath": false,
+        "Speed": 1.0,
+        "LsrMode": 0,
+        "DodgeMode": 0,
+        "SpinMode": 0
+      },
+      {
+        "StartPtIndex": 22,
+        "EndPtIndex": 23,
+        "StartCoordination": [
+          0.670189103097877,
+          -0.0028409812535538093
+        ],
+        "EndCoordination": [
+          0.186,
+          3.1750821060109673
+        ],
+        "PathID": "22_23",
+        "IsEQLink": false,
+        "IsSingleCar": false,
+        "IsRotationable": true,
+        "IsPassable": true,
+        "IsExtinguishingPath": false,
+        "Speed": 1.0,
+        "LsrMode": 0,
+        "DodgeMode": 0,
+        "SpinMode": 0
+      },
+      {
+        "StartPtIndex": 22,
         "EndPtIndex": 25,
         "StartCoordination": [
-          0.116,
-          3.993
+          0.670189103097877,
+          -0.0028409812535538093
         ],
         "EndCoordination": [
           0.17,
           2.693
         ],
-        "PathID": "27_25",
+        "PathID": "22_25",
         "IsEQLink": false,
         "IsSingleCar": false,
-        "IsPassable": false,
+        "IsRotationable": true,
+        "IsPassable": true,
+        "IsExtinguishingPath": false,
+        "Speed": 1.0,
+        "LsrMode": 0,
+        "DodgeMode": 0,
+        "SpinMode": 0
+      },
+      {
+        "StartPtIndex": 23,
+        "EndPtIndex": 0,
+        "StartCoordination": [
+          0.186,
+          3.1750821060109673
+        ],
+        "EndCoordination": [
+          0.531,
+          6.217
+        ],
+        "PathID": "23_0",
+        "IsEQLink": false,
+        "IsSingleCar": false,
+        "IsRotationable": true,
+        "IsPassable": true,
+        "IsExtinguishingPath": false,
+        "Speed": 1.0,
+        "LsrMode": 0,
+        "DodgeMode": 0,
+        "SpinMode": 0
+      },
+      {
+        "StartPtIndex": 23,
+        "EndPtIndex": 22,
+        "StartCoordination": [
+          0.186,
+          3.1750821060109673
+        ],
+        "EndCoordination": [
+          0.670189103097877,
+          -0.0028409812535538093
+        ],
+        "PathID": "23_22",
+        "IsEQLink": false,
+        "IsSingleCar": false,
+        "IsRotationable": true,
+        "IsPassable": true,
+        "IsExtinguishingPath": false,
+        "Speed": 1.0,
+        "LsrMode": 0,
+        "DodgeMode": 0,
+        "SpinMode": 0
+      },
+      {
+        "StartPtIndex": 25,
+        "EndPtIndex": 22,
+        "StartCoordination": [
+          0.17,
+          2.693
+        ],
+        "EndCoordination": [
+          0.670189103097877,
+          -0.0028409812535538093
+        ],
+        "PathID": "25_22",
+        "IsEQLink": false,
+        "IsSingleCar": false,
+        "IsRotationable": true,
+        "IsPassable": true,
         "IsExtinguishingPath": false,
         "Speed": 1.0,
         "LsrMode": 0,
@@ -1807,9 +2249,10 @@
           3.993
         ],
         "PathID": "25_27",
-        "IsEQLink": false,
+        "IsEQLink": true,
         "IsSingleCar": false,
-        "IsPassable": false,
+        "IsRotationable": true,
+        "IsPassable": true,
         "IsExtinguishingPath": false,
         "Speed": 1.0,
         "LsrMode": 0,
@@ -1818,18 +2261,437 @@
       },
       {
         "StartPtIndex": 27,
-        "EndPtIndex": 0,
+        "EndPtIndex": 25,
         "StartCoordination": [
           0.116,
           3.993
         ],
         "EndCoordination": [
+          0.17,
+          2.693
+        ],
+        "PathID": "27_25",
+        "IsEQLink": true,
+        "IsSingleCar": false,
+        "IsRotationable": true,
+        "IsPassable": true,
+        "IsExtinguishingPath": false,
+        "Speed": 1.0,
+        "LsrMode": 0,
+        "DodgeMode": 0,
+        "SpinMode": 0
+      },
+      {
+        "StartPtIndex": 27,
+        "EndPtIndex": 36,
+        "StartCoordination": [
+          0.116,
+          3.993
+        ],
+        "EndCoordination": [
+          0.125,
+          5.03
+        ],
+        "PathID": "27_36",
+        "IsEQLink": true,
+        "IsSingleCar": false,
+        "IsRotationable": true,
+        "IsPassable": true,
+        "IsExtinguishingPath": false,
+        "Speed": 1.0,
+        "LsrMode": 0,
+        "DodgeMode": 0,
+        "SpinMode": 0
+      },
+      {
+        "StartPtIndex": 30,
+        "EndPtIndex": 9,
+        "StartCoordination": [
+          3.9053127939512464,
+          0.7103551793412954
+        ],
+        "EndCoordination": [
+          2.615,
+          0.026
+        ],
+        "PathID": "30_9",
+        "IsEQLink": false,
+        "IsSingleCar": false,
+        "IsRotationable": true,
+        "IsPassable": true,
+        "IsExtinguishingPath": false,
+        "Speed": 1.0,
+        "LsrMode": 0,
+        "DodgeMode": 0,
+        "SpinMode": 0
+      },
+      {
+        "StartPtIndex": 32,
+        "EndPtIndex": 0,
+        "StartCoordination": [
+          -0.509,
+          6.166
+        ],
+        "EndCoordination": [
           0.531,
           6.217
         ],
-        "PathID": "27_0",
+        "PathID": "32_0",
         "IsEQLink": false,
         "IsSingleCar": false,
+        "IsRotationable": true,
+        "IsPassable": true,
+        "IsExtinguishingPath": false,
+        "Speed": 1.0,
+        "LsrMode": 0,
+        "DodgeMode": 0,
+        "SpinMode": 0
+      },
+      {
+        "StartPtIndex": 32,
+        "EndPtIndex": 33,
+        "StartCoordination": [
+          -0.509,
+          6.166
+        ],
+        "EndCoordination": [
+          -1.743,
+          7.491
+        ],
+        "PathID": "32_33",
+        "IsEQLink": false,
+        "IsSingleCar": false,
+        "IsRotationable": true,
+        "IsPassable": true,
+        "IsExtinguishingPath": false,
+        "Speed": 1.0,
+        "LsrMode": 0,
+        "DodgeMode": 0,
+        "SpinMode": 0
+      },
+      {
+        "StartPtIndex": 32,
+        "EndPtIndex": 36,
+        "StartCoordination": [
+          -0.509,
+          6.166
+        ],
+        "EndCoordination": [
+          0.125,
+          5.03
+        ],
+        "PathID": "32_36",
+        "IsEQLink": false,
+        "IsSingleCar": false,
+        "IsRotationable": true,
+        "IsPassable": true,
+        "IsExtinguishingPath": false,
+        "Speed": 1.0,
+        "LsrMode": 0,
+        "DodgeMode": 0,
+        "SpinMode": 0
+      },
+      {
+        "StartPtIndex": 33,
+        "EndPtIndex": 32,
+        "StartCoordination": [
+          -1.743,
+          7.491
+        ],
+        "EndCoordination": [
+          -0.509,
+          6.166
+        ],
+        "PathID": "33_32",
+        "IsEQLink": false,
+        "IsSingleCar": false,
+        "IsRotationable": true,
+        "IsPassable": true,
+        "IsExtinguishingPath": false,
+        "Speed": 1.0,
+        "LsrMode": 0,
+        "DodgeMode": 0,
+        "SpinMode": 0
+      },
+      {
+        "StartPtIndex": 33,
+        "EndPtIndex": 37,
+        "StartCoordination": [
+          -1.743,
+          7.491
+        ],
+        "EndCoordination": [
+          -3.788,
+          7.5
+        ],
+        "PathID": "33_37",
+        "IsEQLink": true,
+        "IsSingleCar": false,
+        "IsRotationable": true,
+        "IsPassable": true,
+        "IsExtinguishingPath": false,
+        "Speed": 1.0,
+        "LsrMode": 0,
+        "DodgeMode": 0,
+        "SpinMode": 0
+      },
+      {
+        "StartPtIndex": 34,
+        "EndPtIndex": 37,
+        "StartCoordination": [
+          -4.946,
+          3.067
+        ],
+        "EndCoordination": [
+          -3.788,
+          7.5
+        ],
+        "PathID": "34_37",
+        "IsEQLink": true,
+        "IsSingleCar": false,
+        "IsRotationable": true,
+        "IsPassable": true,
+        "IsExtinguishingPath": false,
+        "Speed": 1.0,
+        "LsrMode": 0,
+        "DodgeMode": 0,
+        "SpinMode": 0
+      },
+      {
+        "StartPtIndex": 36,
+        "EndPtIndex": 0,
+        "StartCoordination": [
+          0.125,
+          5.03
+        ],
+        "EndCoordination": [
+          0.531,
+          6.217
+        ],
+        "PathID": "36_0",
+        "IsEQLink": false,
+        "IsSingleCar": false,
+        "IsRotationable": true,
+        "IsPassable": true,
+        "IsExtinguishingPath": false,
+        "Speed": 1.0,
+        "LsrMode": 0,
+        "DodgeMode": 0,
+        "SpinMode": 0
+      },
+      {
+        "StartPtIndex": 36,
+        "EndPtIndex": 27,
+        "StartCoordination": [
+          0.125,
+          5.03
+        ],
+        "EndCoordination": [
+          0.116,
+          3.993
+        ],
+        "PathID": "36_27",
+        "IsEQLink": true,
+        "IsSingleCar": false,
+        "IsRotationable": true,
+        "IsPassable": true,
+        "IsExtinguishingPath": false,
+        "Speed": 1.0,
+        "LsrMode": 0,
+        "DodgeMode": 0,
+        "SpinMode": 0
+      },
+      {
+        "StartPtIndex": 36,
+        "EndPtIndex": 32,
+        "StartCoordination": [
+          0.125,
+          5.03
+        ],
+        "EndCoordination": [
+          -0.509,
+          6.166
+        ],
+        "PathID": "36_32",
+        "IsEQLink": false,
+        "IsSingleCar": false,
+        "IsRotationable": true,
+        "IsPassable": true,
+        "IsExtinguishingPath": false,
+        "Speed": 1.0,
+        "LsrMode": 0,
+        "DodgeMode": 0,
+        "SpinMode": 0
+      },
+      {
+        "StartPtIndex": 37,
+        "EndPtIndex": 33,
+        "StartCoordination": [
+          -3.788,
+          7.5
+        ],
+        "EndCoordination": [
+          -1.743,
+          7.491
+        ],
+        "PathID": "37_33",
+        "IsEQLink": true,
+        "IsSingleCar": false,
+        "IsRotationable": true,
+        "IsPassable": true,
+        "IsExtinguishingPath": false,
+        "Speed": 1.0,
+        "LsrMode": 0,
+        "DodgeMode": 0,
+        "SpinMode": 0
+      },
+      {
+        "StartPtIndex": 37,
+        "EndPtIndex": 34,
+        "StartCoordination": [
+          -3.788,
+          7.5
+        ],
+        "EndCoordination": [
+          -4.946,
+          3.067
+        ],
+        "PathID": "37_34",
+        "IsEQLink": true,
+        "IsSingleCar": false,
+        "IsRotationable": true,
+        "IsPassable": true,
+        "IsExtinguishingPath": false,
+        "Speed": 1.0,
+        "LsrMode": 0,
+        "DodgeMode": 0,
+        "SpinMode": 0
+      },
+      {
+        "StartPtIndex": 41,
+        "EndPtIndex": 9,
+        "StartCoordination": [
+          5.43,
+          0.75
+        ],
+        "EndCoordination": [
+          2.615,
+          0.026
+        ],
+        "PathID": "41_9",
+        "IsEQLink": false,
+        "IsSingleCar": false,
+        "IsRotationable": true,
+        "IsPassable": true,
+        "IsExtinguishingPath": false,
+        "Speed": 1.0,
+        "LsrMode": 0,
+        "DodgeMode": 0,
+        "SpinMode": 0
+      },
+      {
+        "StartPtIndex": 41,
+        "EndPtIndex": 18,
+        "StartCoordination": [
+          5.43,
+          0.75
+        ],
+        "EndCoordination": [
+          5.966396044126893,
+          3.135338031069539
+        ],
+        "PathID": "41_18",
+        "IsEQLink": false,
+        "IsSingleCar": false,
+        "IsRotationable": true,
+        "IsPassable": true,
+        "IsExtinguishingPath": false,
+        "Speed": 1.0,
+        "LsrMode": 0,
+        "DodgeMode": 0,
+        "SpinMode": 0
+      },
+      {
+        "StartPtIndex": 32,
+        "EndPtIndex": 43,
+        "StartCoordination": [
+          -0.509,
+          6.166
+        ],
+        "EndCoordination": [
+          -2.7346057706184035,
+          5.300404702889516
+        ],
+        "PathID": "32_43",
+        "IsEQLink": false,
+        "IsSingleCar": false,
+        "IsRotationable": true,
+        "IsPassable": false,
+        "IsExtinguishingPath": false,
+        "Speed": 1.0,
+        "LsrMode": 0,
+        "DodgeMode": 0,
+        "SpinMode": 0
+      },
+      {
+        "StartPtIndex": 43,
+        "EndPtIndex": 38,
+        "StartCoordination": [
+          -2.7346057706184035,
+          5.300404702889516
+        ],
+        "EndCoordination": [
+          -3.452,
+          5.083
+        ],
+        "PathID": "43_38",
+        "IsEQLink": false,
+        "IsSingleCar": false,
+        "IsRotationable": true,
+        "IsPassable": false,
+        "IsExtinguishingPath": false,
+        "Speed": 1.0,
+        "LsrMode": 0,
+        "DodgeMode": 0,
+        "SpinMode": 0
+      },
+      {
+        "StartPtIndex": 38,
+        "EndPtIndex": 43,
+        "StartCoordination": [
+          -3.452,
+          5.083
+        ],
+        "EndCoordination": [
+          -2.7346057706184035,
+          5.300404702889516
+        ],
+        "PathID": "38_43",
+        "IsEQLink": false,
+        "IsSingleCar": false,
+        "IsRotationable": true,
+        "IsPassable": false,
+        "IsExtinguishingPath": false,
+        "Speed": 1.0,
+        "LsrMode": 0,
+        "DodgeMode": 0,
+        "SpinMode": 0
+      },
+      {
+        "StartPtIndex": 43,
+        "EndPtIndex": 32,
+        "StartCoordination": [
+          -2.7346057706184035,
+          5.300404702889516
+        ],
+        "EndCoordination": [
+          -0.509,
+          6.166
+        ],
+        "PathID": "43_32",
+        "IsEQLink": false,
+        "IsSingleCar": false,
+        "IsRotationable": true,
         "IsPassable": false,
         "IsExtinguishingPath": false,
         "Speed": 1.0,
@@ -1839,18 +2701,19 @@
       },
       {
         "StartPtIndex": 5,
-        "EndPtIndex": 30,
+        "EndPtIndex": 7,
         "StartCoordination": [
-          2.653,
-          6.213
+          2.633,
+          6.168
         ],
         "EndCoordination": [
-          3.1514728198643915,
-          8.945743011336702
+          2.623,
+          3.17
         ],
-        "PathID": "5_30",
+        "PathID": "5_7",
         "IsEQLink": false,
         "IsSingleCar": false,
+        "IsRotationable": true,
         "IsPassable": false,
         "IsExtinguishingPath": false,
         "Speed": 1.0,
@@ -1859,103 +2722,20 @@
         "SpinMode": 0
       },
       {
-        "StartPtIndex": 30,
-        "EndPtIndex": 31,
-        "StartCoordination": [
-          3.1514728198643915,
-          8.945743011336702
-        ],
-        "EndCoordination": [
-          4.979640837298263,
-          9.95508478093075
-        ],
-        "PathID": "30_31",
-        "IsEQLink": false,
-        "IsSingleCar": false,
-        "IsPassable": false,
-        "IsExtinguishingPath": false,
-        "Speed": 1.0,
-        "LsrMode": 0,
-        "DodgeMode": 0,
-        "SpinMode": 0
-      },
-      {
-        "StartPtIndex": 31,
-        "EndPtIndex": 32,
-        "StartCoordination": [
-          4.979640837298263,
-          9.95508478093075
-        ],
-        "EndCoordination": [
-          7.107955842669028,
-          10.20060034650768
-        ],
-        "PathID": "31_32",
-        "IsEQLink": false,
-        "IsSingleCar": false,
-        "IsPassable": false,
-        "IsExtinguishingPath": false,
-        "Speed": 1.0,
-        "LsrMode": 0,
-        "DodgeMode": 0,
-        "SpinMode": 0
-      },
-      {
-        "StartPtIndex": 32,
-        "EndPtIndex": 31,
-        "StartCoordination": [
-          7.107955842669028,
-          10.20060034650768
-        ],
-        "EndCoordination": [
-          4.979640837298263,
-          9.95508478093075
-        ],
-        "PathID": "32_31",
-        "IsEQLink": false,
-        "IsSingleCar": false,
-        "IsPassable": false,
-        "IsExtinguishingPath": false,
-        "Speed": 1.0,
-        "LsrMode": 0,
-        "DodgeMode": 0,
-        "SpinMode": 0
-      },
-      {
-        "StartPtIndex": 31,
-        "EndPtIndex": 30,
-        "StartCoordination": [
-          4.979640837298263,
-          9.95508478093075
-        ],
-        "EndCoordination": [
-          3.1514728198643915,
-          8.945743011336702
-        ],
-        "PathID": "31_30",
-        "IsEQLink": false,
-        "IsSingleCar": false,
-        "IsPassable": false,
-        "IsExtinguishingPath": false,
-        "Speed": 1.0,
-        "LsrMode": 0,
-        "DodgeMode": 0,
-        "SpinMode": 0
-      },
-      {
-        "StartPtIndex": 30,
+        "StartPtIndex": 7,
         "EndPtIndex": 5,
         "StartCoordination": [
-          3.1514728198643915,
-          8.945743011336702
+          2.623,
+          3.17
         ],
         "EndCoordination": [
-          2.653,
-          6.213
+          2.633,
+          6.168
         ],
-        "PathID": "30_5",
+        "PathID": "7_5",
         "IsEQLink": false,
         "IsSingleCar": false,
+        "IsRotationable": true,
         "IsPassable": false,
         "IsExtinguishingPath": false,
         "Speed": 1.0,
@@ -1964,6 +2744,25 @@
         "SpinMode": 0
       }
     ],
-    "Bays": {}
+    "Bays": {
+      "Bay1": {
+        "Points": [
+          "AAAA72",
+          "AAAA73",
+          "AAAA59"
+        ],
+        "InPoint": "1",
+        "OutPoint": "1"
+      },
+      "Bay2": {
+        "Points": [
+          "AAAA72",
+          "AAAA73",
+          "AAAA59"
+        ],
+        "InPoint": "1",
+        "OutPoint": "1"
+      }
+    }
   }
 }
