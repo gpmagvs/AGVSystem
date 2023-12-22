@@ -62,8 +62,13 @@ namespace AGVSystem.TaskManagers
         {
             while (SystemModes.RunMode == RUN_MODE.RUN)
             {
-                AutoRunning = true;
                 Thread.Sleep(1);
+                if (SystemModes.TransferTaskMode == TRANSFER_MODE.MANUAL)
+                {
+                    AutoRunning = false;
+                    continue;
+                }
+                AutoRunning = true;
                 List<clsEQ> unload_req_eq_list = StaEQPManagager.EQList.FindAll(eq => eq.lduld_type == EQLDULD_TYPE.ULD | eq.lduld_type == EQLDULD_TYPE.LDULD)
                                       .FindAll(eq => eq.Unload_Request && eq.Eqp_Status_Down && !eq.CMD_Reserve_Low && !UnloadEQQueueing.TryGetValue(eq, out clsEQ _eq));
 
@@ -72,7 +77,7 @@ namespace AGVSystem.TaskManagers
                     foreach (clsEQ sourceEQ in unload_req_eq_list)
                     {
                         List<clsEQ> loadable_eqs = sourceEQ.DownstremEQ.FindAll(downstrem_eq => downstrem_eq.Load_Request && downstrem_eq.Eqp_Status_Down && !downstrem_eq.CMD_Reserve_Low);
-                        
+
 
                         using (var db = new AGVSDatabase())
                         {
@@ -83,33 +88,6 @@ namespace AGVSystem.TaskManagers
                             continue;
                         clsEQ destineEQ = loadable_eqs.First();
                         UnloadEQQueueing.Add(sourceEQ, sourceEQ); ;
-
-                        //var region = AGVSMapManager.MapRegions.FirstOrDefault(reg => reg.RegionName == sourceEQ.EndPointOptions.Region);
-                        //if (region == null)
-                        //{
-                        //    //TODO region issue!!
-                        //    continue;
-                        //}
-                        ////
-                        //AGVStatusDBHelper agv_status_db = new AGVStatusDBHelper();
-                        //List<clsAGVStateDto> agvlist = agv_status_db.GetALL().FindAll(agv => region.AGVPriorty.Contains(agv.AGV_Name));
-                        //if (agvlist.Count == 0)
-                        //{
-                        //    AlarmManagerCenter.AddAlarm(ALARMS.Region_Has_No_Agv_To_Dispatch_Task, ALARM_SOURCE.AGVS);
-                        //    continue;
-                        //}
-                        //var AGV = agvlist[agvlist.FindIndex(a => a.AGV_Name == region.AGVPriorty[0])];
-                        ////if (AGV.OnlineStatus != ONLINE_STATE.ONLINE | AGV.MainStatus == MAIN_STATUS.DOWN)
-                        ////{
-                        ////    LOG.WARN($"區域-{region.RegionName} 優先指派的AGV({AGV.AGV_Name}) 目前無法執行任務");
-                        ////    agvlist.Remove(AGV);
-                        ////    AGV = agvlist.FirstOrDefault(agv => agv.MainStatus != MAIN_STATUS.DOWN);
-                        ////    if (AGV == null)
-                        ////        LOG.WARN($"區域-{region.RegionName} 沒有AGV可執行任務");
-                        ////    else
-                        ////        LOG.WARN($"區域-{region.RegionName} 指派AGV({AGV.AGV_Name}) 執行任務");
-                        ////}
-
                         var taskOrder = new clsTaskDto
                         {
                             Action = ACTION_TYPE.Carry,

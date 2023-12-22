@@ -11,6 +11,8 @@ namespace AGVSystem.Models.Sys
         internal static Action OnRunModeON;
         internal static Action OnRunModeOFF;
         private static RUN_MODE _RunMode = RUN_MODE.MAINTAIN;
+        private static TRANSFER_MODE _TransferTaskMode = TRANSFER_MODE.MANUAL;
+
         internal static RUN_MODE RunMode
         {
             get => _RunMode;
@@ -22,13 +24,28 @@ namespace AGVSystem.Models.Sys
                     if (_RunMode == RUN_MODE.RUN)
                         OnRunModeON();
                     else
+                    {
                         OnRunModeOFF();
+                        TransferTaskMode = TRANSFER_MODE.MANUAL;
+                    }
                 }
             }
         }
         internal static HOST_CONN_MODE HostConnMode { get; set; }
         internal static HOST_OPER_MODE HostOperMode { get; set; }
 
+        internal static TRANSFER_MODE TransferTaskMode
+        {
+            get => _TransferTaskMode;
+            set
+            {
+                if (_TransferTaskMode != value)
+                {
+                    _TransferTaskMode = value;
+                    LOG.INFO($"Transfer Mode Changed to {_TransferTaskMode}");
+                }
+            }
+        }
         public static bool RunModeSwitch(RUN_MODE mode, out string Message, bool forecing_change = false)
         {
             Message = "";

@@ -24,7 +24,8 @@ namespace AGVSystem.Controllers
             {
                 system_run_mode = SystemModes.RunMode,
                 host_online_mode = SystemModes.HostConnMode,
-                host_remote_mode = SystemModes.HostOperMode
+                host_remote_mode = SystemModes.HostOperMode,
+                transfer_mode = SystemModes.TransferTaskMode
             });
         }
 
@@ -50,10 +51,14 @@ namespace AGVSystem.Controllers
             if (!vms_response.confirm)
             {
                 SystemModes.RunMode = _previousMode;
+
                 return Ok(new { confirm = false, message = vms_response.message });
             }
             else
+            {
+
                 return Ok(new { confirm = true, message = "" });
+            }
         }
 
         [HttpPost("HostConn")]
@@ -71,6 +76,13 @@ namespace AGVSystem.Controllers
             return Ok(new { confirm = true, message = "" });
         }
 
+
+        [HttpPost("TransferMode")]
+        public async Task<IActionResult> TransferMode(TRANSFER_MODE mode)
+        {
+            SystemModes.TransferTaskMode = mode;
+            return Ok(new { confirm = true, message = "" });
+        }
         [HttpGet("Website")]
         public async Task<IActionResult> Get()
         {
