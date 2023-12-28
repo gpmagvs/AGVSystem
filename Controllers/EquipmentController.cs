@@ -149,6 +149,11 @@ namespace AGVSystem.Controllers
             {
                 if (StaEQPManagager.TryGetEQByEqName(EqName, out clsEQ? EQ, out string errmsg))
                 {
+
+                    if (SignalName == "To_EQ_Up")
+                        EQ.To_EQ_Up = State;
+                    if (SignalName == "To_EQ_Low")
+                        EQ.To_EQ_Low= State;
                     if (SignalName == "VALID")
                         EQ.HS_AGV_VALID = State;
                     if (SignalName == "TR_REQ")
@@ -159,6 +164,7 @@ namespace AGVSystem.Controllers
                         EQ.HS_AGV_READY = State;
                     if (SignalName == "COMPT")
                         EQ.HS_AGV_COMPT = State;
+                    confirm = true;
                 }
                 else
                 {

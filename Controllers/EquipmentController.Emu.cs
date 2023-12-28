@@ -91,6 +91,10 @@ namespace AGVSystem.Controllers
                         confirm = EQ.SetHS_U_REQ(State);
                     if (SignalName == "READY")
                         confirm = EQ.SetHS_READY(State);
+                    if (SignalName == "UP_READY")
+                        confirm = EQ.SetHS_UP_READY(State);
+                    if (SignalName == "LOW_READY")
+                        confirm = EQ.SetHS_LOW_READY(State);
                     if (SignalName == "BUSY")
                         confirm = EQ.SetHS_BUSY(State);
                 }
