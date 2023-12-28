@@ -18,7 +18,7 @@ namespace AGVSystem.Models.EQDevices
 
         internal static void HandleEQIOStateChanged(object? sender, EndPointDeviceAbstract.IOChangedEventArgs e)
         {
-            LOG.TRACE($"EQ-{e.Device.EQName}|IO-{e.IOName} Changed To {e.IOState}");
+            LOG.INFO($"EQ-{e.Device.EQName}|IO-{e.IOName} Changed To {e.IOState}");
         }
     }
 
