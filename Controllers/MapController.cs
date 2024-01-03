@@ -73,8 +73,18 @@ namespace AGVSystem.Controllers
 
             }
             else
-            {
+            { }
 
+            var list_exist_point = map_modified.Points.Keys.ToList();
+            foreach (var note in map_modified.Points)
+            {
+                foreach (var point in note.Value.Target)
+                {
+                    if (!list_exist_point.Contains(point.Key))
+                    {
+                        note.Value.Target.Remove(point.Key);
+                    }
+                }
             }
 
             MapManager.SaveMapToFile(map_modified, local_map_file_path);
@@ -103,7 +113,7 @@ namespace AGVSystem.Controllers
             PathFinder finder = new PathFinder();
             var map = MapManager.LoadMapFromFile();
             var pathInfo = finder.FindShortestPathByTagNumber(map, fromTag, toTag);
-            var coordinates=pathInfo.stations.Select(pt => new clsCoordination(pt.X, pt.Y, 0));
+            var coordinates = pathInfo.stations.Select(pt => new clsCoordination(pt.X, pt.Y, 0));
             return Ok(coordinates);
         }
 
