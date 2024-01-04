@@ -1,4 +1,5 @@
-﻿using AGVSystemCommonNet6.DATABASE;
+﻿using AGVSystem.Models.WebsocketMiddleware;
+using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.User;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection.KeyManagement;
@@ -125,6 +126,21 @@ namespace AGVSystem.Controllers
             return Ok(new { Success = true });
         }
 
+        [HttpGet("UserRouteChange")]
+        public async Task<IActionResult> UserRouteChange(string userID, string current_route)
+        {
+            WebsocketMiddleware.UserChangeRoute(userID, current_route);
+            if (current_route == "/map")
+            {
+                var userEdidingMap= WebsocketMiddleware.EditMapUsers.Where(id => id != userID).ToList();
+
+                return Ok(new { isOtherUserEditingMap = userEdidingMap .Count!=0,
+                                userEditing= userEdidingMap
+                });
+            }
+            else
+                return Ok();
+        }
         private string GenerateJwtToken(string username, string password, ERole role)
         {
             // TODO: 根據需要生成 JWT Token

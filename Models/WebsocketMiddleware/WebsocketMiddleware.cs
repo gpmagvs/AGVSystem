@@ -10,6 +10,7 @@ using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.DATABASE.Helpers;
 using AGVSystemCommonNet6.HttpTools;
+using AGVSystemCommonNet6.Log;
 using AGVSystemCommonNet6.Microservices.VMS;
 
 using AGVSystemCommonNet6.ViewModels;
@@ -24,7 +25,15 @@ namespace AGVSystem.Models.WebsocketMiddleware
     public class WebsocketMiddleware
     {
         private static Dictionary<string, List<WebSocket>> clients = new Dictionary<string, List<WebSocket>>();
-        public static async Task ClientRequest(HttpContext _HttpContext)
+        internal static Dictionary<string, string> UsersRouter = new Dictionary<string, string>();
+        internal static List<string> EditMapUsers
+        {
+            get
+            {
+                return UsersRouter.Where(user => user.Value == "/map").Select(user => user.Key).ToList();
+            }
+        }
+        public static async Task ClientRequest(HttpContext _HttpContext, string user_id = "")
         {
             string path = _HttpContext.Request.Path.Value;
             if (path == null)
@@ -37,8 +46,9 @@ namespace AGVSystem.Models.WebsocketMiddleware
             if (_HttpContext.WebSockets.IsWebSocketRequest)
             {
                 WebSocket webSocket = await _HttpContext.WebSockets.AcceptWebSocketAsync();
-                clsWebsocktClientHandler clientHander = new clsWebsocktClientHandler(webSocket,path);
-                clientHander.OnDataFetching +=(path)=>{ return GetDataByPath(path); };
+                clsWebsocktClientHandler clientHander = new clsWebsocktClientHandler(webSocket, path, user_id);
+                clientHander.OnDataFetching += (path) => { return GetDataByPath(path); };
+                clientHander.OnClientLeve += (obj, user_id) => { UserLeave(user_id); };
                 await clientHander.StartBrocast();
             }
             else
@@ -134,8 +144,29 @@ namespace AGVSystem.Models.WebsocketMiddleware
             else
                 return null;
         }
+        internal static void UserJoin(string user_id)
+        {
+            if (UsersRouter.TryAdd(user_id, "/"))
+            {
+                LOG.TRACE($"User-{user_id} 從瀏覽器開始使用系統");
+            }
+        }
+        internal static void UserLeave(string user_id)
+        {
+            if (UsersRouter.Remove(user_id))
+            {
+                LOG.TRACE($"User-{user_id} leave website.");
+            }
 
+        }
 
+        internal static void UserChangeRoute(string userID, string current_route)
+        {
+            if (UsersRouter.TryGetValue(userID, out var _))
+            {
+                UsersRouter[userID] = current_route;
+            }
+        }
     }
 
 }

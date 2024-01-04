@@ -3,6 +3,7 @@ using AGVSystem.Models.Map;
 using AGVSystem.Models.WebsocketMiddleware;
 using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.DATABASE;
+using AGVSystemCommonNet6.Log;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -24,9 +25,10 @@ namespace AGVSystem.Controllers
 
 
         [HttpGet("/ws/VMSStatus")]
-        public async Task GetVMSStatus()
+        public async Task GetVMSStatus(string? user_id ="")
         {
-            await WebsocketMiddleware.ClientRequest(HttpContext);
+            WebsocketMiddleware.UserJoin(user_id);
+            await WebsocketMiddleware.ClientRequest(HttpContext, user_id);
         }
 
 

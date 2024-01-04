@@ -136,7 +136,7 @@ namespace AGVSystem.TaskManagers
                             }
                             if (taskOrder.TaskName != agv_state.TaskName)
                                 continue;
-
+                            destineEQ.ToEQLow();
                             destineEQ.ReserveLow();
                             sourceEQ.ReserveLow();
                             LOG.INFO($"Reserved {sourceEQ.EQName} and {destineEQ.EQName}");

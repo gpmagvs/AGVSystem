@@ -177,6 +177,7 @@ namespace AGVSystem.Controllers
             else
             {
                 eq.CancelReserve();
+                eq.ToEQLow();
             }
             if (AGVSConfigulator.SysConfigs.EQManagementConfigs.UseEQEmu)
             {
