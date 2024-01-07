@@ -67,7 +67,7 @@ namespace AGVSystem.Models.WebsocketMiddleware
             {"/ws/HotRun", new object()  },
             {"/ws/TaskData", new object()  },
         };
-        private static async Task<List<clsAGVStateViewModel>> GetAGV_StatesData_FromVMS()
+        private static async Task<List<clsAGVStateViewModel>> GetAGV_StatesData_FromVMS(DbSet<AGVSystemCommonNet6.AGVDispatch.clsTaskDto> tasks)
         {
             try
             {
@@ -76,8 +76,24 @@ namespace AGVSystem.Models.WebsocketMiddleware
                 {
                     clsAGVStateViewModel vm = JsonConvert.DeserializeObject<clsAGVStateViewModel>(JsonConvert.SerializeObject(d));
                     vm.StationName = AGVSMapManager.GetNameByTagStr(vm.CurrentLocation);
+
                     vm.IP = VMSDataStore.VehicleConfigs[vm.AGV_Name].HostIP;
                     vm.Port = VMSDataStore.VehicleConfigs[vm.AGV_Name].HostPort;
+
+                    if (vm.TaskName == "")
+                    {
+                        vm.TaskSourceStationName = vm.TaskDestineStationName = "";
+                    }
+                    else
+                    {
+                        var task_ = tasks.FirstOrDefault(tk => tk.TaskName == vm.TaskName);
+                        if (task_ != null)
+                        {
+                            vm.TaskSourceStationName = task_.Action != ACTION_TYPE.Carry ? vm.StationName : AGVSMapManager.GetNameByTagStr(task_.From_Station);
+                            vm.TaskDestineStationName = AGVSMapManager.GetNameByTagStr(task_.To_Station);
+                        }
+                    }
+
                     return vm;
                 }
                 return output;
@@ -96,14 +112,12 @@ namespace AGVSystem.Models.WebsocketMiddleware
                 var db = new AGVSDatabase();
                 while (true)
                 {
-                    await Task.Delay(100);
+                    Thread.Sleep(100);
 
                     try
                     {
                         //UIDatas["/ws/VMSStatus"] = db.tables.AgvStates.Where(stat => stat.Enabled).OrderBy(a => a.AGV_Name).AsNoTracking().ToList().Select(data => GenViewMode(data));
-                        var vmsData = await GetAGV_StatesData_FromVMS();
-                        if (vmsData != null)
-                            UIDatas["/ws/VMSStatus"] = vmsData;
+
 
                         UIDatas["/ws/EQStatus"] = new { EQPData = StaEQPManagager.GetEQStates(), ChargeStationData = StaEQPManagager.GetChargeStationStates() };
                         UIDatas["/ws/VMSAliveCheck"] = true;
@@ -119,6 +133,10 @@ namespace AGVSystem.Models.WebsocketMiddleware
                             var incompleted_tasks = db.tables.Tasks.Where(t => t.State == TASK_RUN_STATUS.WAIT | t.State == TASK_RUN_STATUS.NAVIGATING).OrderByDescending(t => t.Priority).AsNoTracking().ToList();
                             var completed_tasks = db.tables.Tasks.Where(t => t.State != TASK_RUN_STATUS.WAIT && t.State != TASK_RUN_STATUS.NAVIGATING).OrderByDescending(t => t.RecieveTime).Take(20).AsNoTracking().ToList();
                             UIDatas["/ws/TaskData"] = new { incompleteds = incompleted_tasks, completeds = completed_tasks };
+
+                            var vmsData = await GetAGV_StatesData_FromVMS(db.tables.Tasks);
+                            if (vmsData != null)
+                                UIDatas["/ws/VMSStatus"] = vmsData;
                         }
                         catch (Exception ex)
                         {

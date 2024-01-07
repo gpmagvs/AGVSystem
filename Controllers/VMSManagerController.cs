@@ -25,7 +25,7 @@ namespace AGVSystem.Controllers
 
 
         [HttpGet("/ws/VMSStatus")]
-        public async Task GetVMSStatus(string? user_id ="")
+        public async Task GetVMSStatus(string? user_id = "")
         {
             WebsocketMiddleware.UserJoin(user_id);
             await WebsocketMiddleware.ClientRequest(HttpContext, user_id);
@@ -42,6 +42,8 @@ namespace AGVSystem.Controllers
     public class clsAGVStateViewModel : clsAGVStateDto
     {
         public string StationName { get; set; } = "";
+        public string TaskSourceStationName { get; set; } = "AS";
+        public string TaskDestineStationName { get; set; } = "BB";
         public string IP { get; set; } = "";
         public int Port { get; set; } = 0;
     }
