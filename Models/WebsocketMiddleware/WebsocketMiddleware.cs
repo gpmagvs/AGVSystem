@@ -26,6 +26,38 @@ namespace AGVSystem.Models.WebsocketMiddleware
     {
         private static Dictionary<string, List<WebSocket>> clients = new Dictionary<string, List<WebSocket>>();
         internal static Dictionary<string, string> UsersRouter = new Dictionary<string, string>();
+        public enum WEBSOCKET_CHANNELS
+        {
+            EQ_STATUS,
+            VMS_ALIVE_CHECK,
+            VMS_STATUS,
+            UNCHECKED_ALARM,
+            AGV_LOCATION_UPLOAD,
+            HOTRUN,
+            TASK_DATA,
+            SYSTEM_STATUS
+        }
+        public class clsChannelModel
+        {
+            public clsChannelModel(string route_name)
+            {
+                this.route_name = route_name;
+            }
+            public string route_name { get; }
+            public object data { get; set; }
+        }
+
+        public static Dictionary<WEBSOCKET_CHANNELS, clsChannelModel> websocket_api_routes = new Dictionary<WEBSOCKET_CHANNELS, clsChannelModel>
+        {
+            { WEBSOCKET_CHANNELS.EQ_STATUS,new clsChannelModel("/ws/EQStatus")},
+            { WEBSOCKET_CHANNELS.VMS_ALIVE_CHECK,new clsChannelModel("/ws/VMSAliveCheck") },
+            { WEBSOCKET_CHANNELS.VMS_STATUS,new clsChannelModel("/ws/VMSStatus") },
+            { WEBSOCKET_CHANNELS.UNCHECKED_ALARM,new clsChannelModel("/UncheckedAlarm") },
+            { WEBSOCKET_CHANNELS.AGV_LOCATION_UPLOAD,new clsChannelModel("/ws/AGVLocationUpload") },
+            { WEBSOCKET_CHANNELS.HOTRUN,new clsChannelModel("/ws/HotRun") },
+            { WEBSOCKET_CHANNELS.TASK_DATA,new clsChannelModel("/ws/TaskData") },
+            { WEBSOCKET_CHANNELS.SYSTEM_STATUS,new clsChannelModel("/ws/SystemStatus") },
+        };
         internal static List<string> EditMapUsers
         {
             get
@@ -57,16 +89,7 @@ namespace AGVSystem.Models.WebsocketMiddleware
             }
         }
 
-        private static Dictionary<string, object> UIDatas = new Dictionary<string, object>()
-        {
-            {"/ws/EQStatus",  new object() },
-            {"/ws/VMSAliveCheck",new object()   },
-            {"/ws/VMSStatus", new object()  },
-            {"/UncheckedAlarm",  new object() },
-            {"/ws/AGVLocationUpload", new object()  },
-            {"/ws/HotRun", new object()  },
-            {"/ws/TaskData", new object()  },
-        };
+
         private static async Task<List<clsAGVStateViewModel>> GetAGV_StatesData_FromVMS(DbSet<AGVSystemCommonNet6.AGVDispatch.clsTaskDto> tasks)
         {
             try
@@ -113,36 +136,26 @@ namespace AGVSystem.Models.WebsocketMiddleware
                 while (true)
                 {
                     Thread.Sleep(100);
-
                     try
                     {
-                        //UIDatas["/ws/VMSStatus"] = db.tables.AgvStates.Where(stat => stat.Enabled).OrderBy(a => a.AGV_Name).AsNoTracking().ToList().Select(data => GenViewMode(data));
-
-
-                        UIDatas["/ws/EQStatus"] = new { EQPData = StaEQPManagager.GetEQStates(), ChargeStationData = StaEQPManagager.GetChargeStationStates() };
-                        UIDatas["/ws/VMSAliveCheck"] = true;
-                        UIDatas["/ws/AGVLocationUpload"] = AGVSMapManager.AGVUploadCoordinationStore;
-                        UIDatas["/ws/HotRun"] = HotRunScriptManager.HotRunScripts;
-
-                        #region data fetched from database
-
-                        #endregion
+                        websocket_api_routes[WEBSOCKET_CHANNELS.EQ_STATUS].data = new { EQPData = StaEQPManagager.GetEQStates(), ChargeStationData = StaEQPManagager.GetChargeStationStates() };
+                        websocket_api_routes[WEBSOCKET_CHANNELS.VMS_ALIVE_CHECK].data =true;
+                        websocket_api_routes[WEBSOCKET_CHANNELS.AGV_LOCATION_UPLOAD].data = AGVSMapManager.AGVUploadCoordinationStore;
+                        websocket_api_routes[WEBSOCKET_CHANNELS.HOTRUN].data = HotRunScriptManager.HotRunScripts;
                         try
                         {
-                            UIDatas["/UncheckedAlarm"] = AlarmManagerCenter.uncheckedAlarms;
+                            websocket_api_routes[WEBSOCKET_CHANNELS.UNCHECKED_ALARM].data = AlarmManagerCenter.uncheckedAlarms;
                             var incompleted_tasks = db.tables.Tasks.Where(t => t.State == TASK_RUN_STATUS.WAIT | t.State == TASK_RUN_STATUS.NAVIGATING).OrderByDescending(t => t.Priority).AsNoTracking().ToList();
                             var completed_tasks = db.tables.Tasks.Where(t => t.State != TASK_RUN_STATUS.WAIT && t.State != TASK_RUN_STATUS.NAVIGATING).OrderByDescending(t => t.RecieveTime).Take(20).AsNoTracking().ToList();
-                            UIDatas["/ws/TaskData"] = new { incompleteds = incompleted_tasks, completeds = completed_tasks };
+                            websocket_api_routes[WEBSOCKET_CHANNELS.TASK_DATA].data = new { incompleteds = incompleted_tasks, completeds = completed_tasks };
 
                             var vmsData = await GetAGV_StatesData_FromVMS(db.tables.Tasks);
                             if (vmsData != null)
-                                UIDatas["/ws/VMSStatus"] = vmsData;
+                                websocket_api_routes[WEBSOCKET_CHANNELS.VMS_STATUS].data = vmsData;
                         }
                         catch (Exception ex)
                         {
-
                         }
-
                     }
                     catch (Exception ex)
                     {
@@ -157,10 +170,10 @@ namespace AGVSystem.Models.WebsocketMiddleware
         }
         private static object GetDataByPath(string path)
         {
-            if (UIDatas.TryGetValue(path, out object viewdata))
-                return viewdata;
-            else
+            var _ws = websocket_api_routes.Values.FirstOrDefault(r => r.route_name == path);
+            if(_ws== null)
                 return null;
+            return _ws.data;
         }
         internal static void UserJoin(string user_id)
         {
