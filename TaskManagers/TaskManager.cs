@@ -1,4 +1,5 @@
-﻿using AGVSystem.Models.BayMeasure;
+﻿using AGVSystem.Controllers;
+using AGVSystem.Models.BayMeasure;
 using AGVSystem.Models.Sys;
 using AGVSystemCommonNet6.AGVDispatch;
 using AGVSystemCommonNet6.AGVDispatch.Messages;
@@ -42,6 +43,19 @@ namespace AGVSystem.TaskManagers
                 if (!results.confirm)
                     return results;
             }
+
+            #region 若起點設定是AGV,則起點要設為
+
+            if (taskData.From_Station.Contains("AGV")&&taskData.Action== ACTION_TYPE.Carry)
+            {
+                var agv_name = taskData.From_Station;
+                taskData.DesignatedAGVName = agv_name;
+                var agv = VMSSerivces.AgvStatesData.FirstOrDefault(d => d.AGV_Name == agv_name);
+                taskData.From_Station = agv.CurrentLocation;
+            }
+
+            #endregion
+
             #region 充電任務確認
 
             if (taskData.Action == ACTION_TYPE.Charge && taskData.DesignatedAGVName != "")

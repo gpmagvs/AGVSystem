@@ -2,6 +2,7 @@
 using AGVSystem.Models.Map;
 using AGVSystem.Models.WebsocketMiddleware;
 using AGVSystemCommonNet6;
+using AGVSystemCommonNet6.AGVDispatch.Messages;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.Log;
 using Microsoft.AspNetCore.Http;
@@ -44,6 +45,7 @@ namespace AGVSystem.Controllers
         public string StationName { get; set; } = "";
         public string TaskSourceStationName { get; set; } = "AS";
         public string TaskDestineStationName { get; set; } = "BB";
+        public ACTION_TYPE OrderAction { get; set; } = ACTION_TYPE.None;
         public string IP { get; set; } = "";
         public int Port { get; set; } = 0;
     }
