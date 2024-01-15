@@ -3,6 +3,7 @@ using AGVSystem.Models.TaskAllocation.HotRun;
 using AGVSystem.Models.WebsocketMiddleware;
 using AGVSystem.TaskManagers;
 using AGVSystemCommonNet6.AGVDispatch;
+using AGVSystemCommonNet6.AGVDispatch.Messages;
 using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.DATABASE;
@@ -201,6 +202,32 @@ namespace AGVSystem.Controllers
             return Ok(new { confirm = true });
         }
 
+        [HttpGet("LoadUnloadTaskStart")]
+        public async Task<string> LoadUnloadTaskStart(int tag, ACTION_TYPE action)
+        {
+            if (action != ACTION_TYPE.Load && action != ACTION_TYPE.Unload)
+                return "Action should equal Load or Unlaod";
+            clsEQ? eq = StaEQPManagager.EQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == tag);
+            if (eq == null)
+                return  $"找不到Tag為{tag}的設備";
+            eq.ToEQUp();
+
+            LOG.INFO($"Get AGV LD.ULD Task Start At Tag {tag}-Action={action}. TO Eq Up DO ON",color: ConsoleColor.Green);
+            return  $"{eq.EQName} ToEQUp DO ON";
+        }
+        [HttpGet("LoadUnloadTaskFinish")]
+        public async Task<string> LoadUnloadTaskFinish(int tag, ACTION_TYPE action)
+        {
+            if (action != ACTION_TYPE.Load && action != ACTION_TYPE.Unload)
+                return "Action should equal Load or Unlaod";
+            clsEQ? eq = StaEQPManagager.EQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == tag);
+            if (eq == null)
+                return $"找不到Tag為{tag}的設備";
+            eq.CancelToEQUpAndLow();
+            LOG.INFO($"Get AGV LD.ULD Task Finish At Tag {tag}-Action={action}. TO Eq DO ALL OFF", color: ConsoleColor.Green);
+            return $"{eq.EQName} ToEQUp DO OFF";
+        }
+
         [HttpPost("HotRun")]
         public async Task<IActionResult> SaveHotRun([FromBody] HotRunScript[] settings)
         {
@@ -251,5 +278,6 @@ namespace AGVSystem.Controllers
             else
                 return false;
         }
+
     }
 }
