@@ -34,19 +34,39 @@ namespace AGVSystem.TaskManagers
 
         public static async Task<(bool confirm, ALARMS alarm_code, string message)> AddTask(clsTaskDto taskData, TASK_RECIEVE_SOURCE source = TASK_RECIEVE_SOURCE.LOCAL)
         {
-
-            if (!taskData.bypass_eq_status_check && (taskData.Action == ACTION_TYPE.Load | taskData.Action == ACTION_TYPE.LoadAndPark | taskData.Action == ACTION_TYPE.Unload | taskData.Action == ACTION_TYPE.Carry))
+            var _order_action = taskData.Action;
+            var source_station_tag = int.Parse(taskData.From_Station);
+            var destine_station_tag = int.Parse(taskData.To_Station);
+            if (!taskData.bypass_eq_status_check && (_order_action == ACTION_TYPE.Load || _order_action == ACTION_TYPE.LoadAndPark
+                                                   || _order_action == ACTION_TYPE.Unload || _order_action == ACTION_TYPE.Carry))
             {
-
-                (bool confirm, ALARMS alarm_code, string message) results = EQTransferTaskManager.CheckEQLDULDStatus(taskData.Action, int.Parse(taskData.From_Station), int.Parse(taskData.To_Station));
-
-                if (!results.confirm)
-                    return results;
+                (bool confirm, ALARMS alarm_code, string message) results = (false, ALARMS.NONE, "");
+                if (_order_action == ACTION_TYPE.Unload)
+                {
+                    results = EQTransferTaskManager.CheckUnloadStationStatus(destine_station_tag);
+                    if (!results.confirm)
+                        return results;
+                }
+                else if (_order_action == ACTION_TYPE.Load)
+                {
+                    results = EQTransferTaskManager.CheckLoadStationStatus(destine_station_tag);
+                    if (!results.confirm)
+                        return results;
+                }
+                else if (_order_action == ACTION_TYPE.Carry)
+                {
+                    results = EQTransferTaskManager.CheckUnloadStationStatus(source_station_tag);
+                    if (!results.confirm)
+                        return results;
+                    results = EQTransferTaskManager.CheckLoadStationStatus(destine_station_tag);
+                    if (!results.confirm)
+                        return results;
+                }
             }
 
             #region 若起點設定是AGV,則起點要設為
 
-            if (taskData.From_Station.Contains("AGV")&&taskData.Action== ACTION_TYPE.Carry)
+            if (taskData.From_Station.Contains("AGV") && _order_action == ACTION_TYPE.Carry)
             {
                 var agv_name = taskData.From_Station;
                 taskData.DesignatedAGVName = agv_name;
@@ -82,14 +102,14 @@ namespace AGVSystem.TaskManagers
                 using (var db = new AGVSDatabase())
                 {
 
-                    if (db.tables.Tasks.AsNoTracking().Where(task => task.To_Station != "-1" && task.State == TASK_RUN_STATUS.WAIT | task.State == TASK_RUN_STATUS.NAVIGATING).Any(task => task.To_Station == taskData.To_Station))
+                    if (db.tables.Tasks.AsNoTracking().Where(task => task.To_Station != "-1" && task.State == TASK_RUN_STATUS.WAIT || task.State == TASK_RUN_STATUS.NAVIGATING).Any(task => task.To_Station == taskData.To_Station))
                     {
-                        if (taskData.Action == ACTION_TYPE.None)
+                        if (_order_action == ACTION_TYPE.None)
                         {
                             AlarmManagerCenter.AddAlarmAsync(ALARMS.Destine_Normal_Station_Has_Task_To_Reach, ALARM_SOURCE.AGVS, level: ALARM_LEVEL.WARNING);
                             return (false, ALARMS.Destine_Normal_Station_Has_Task_To_Reach, $"站點-{taskData.To_Station} 已存在移動任務");
                         }
-                        else if (taskData.Action == ACTION_TYPE.Park | taskData.Action == ACTION_TYPE.LoadAndPark)
+                        else if (_order_action == ACTION_TYPE.Park || _order_action == ACTION_TYPE.LoadAndPark)
                         {
                             AlarmManagerCenter.AddAlarmAsync(ALARMS.Destine_Eq_Station_Has_Task_To_Park, ALARM_SOURCE.AGVS);
                             return (false, ALARMS.Destine_Eq_Station_Has_Task_To_Park, $"目的地設備已有停車任務");

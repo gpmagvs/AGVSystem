@@ -138,7 +138,52 @@ namespace AGVSystem.TaskManagers
             }
             AutoRunning = false;
         }
+        public static (bool confirm, ALARMS alarm_code, string message) CheckUnloadStationStatus(int station_tag, bool check_rack_move_out_is_empty_or_full = true)
+        {
+            bool _eq_exist = TryGetStationEQDIStatus(station_tag, out clsEQ equipment);
+            if (!_eq_exist)
+                return new(false, ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, $"設備站點TAG-{station_tag} 不存在於當前地圖");
+            if (!equipment.IsConnected)
+                return new(false, ALARMS.Endpoint_EQ_NOT_CONNECTED, $"設備[{equipment.EQName}] 尚未連線,無法確認狀態");
+            if (!equipment.Unload_Request)
+                return new(false, ALARMS.EQ_LOAD_REQUEST_IS_NOT_ON, $"設備[{equipment.EQName}] 沒有[出料]請求");
+            if (!equipment.Port_Exist)
+                return new(false, ALARMS.EQ_UNLOAD_REQUEST_ON_BUT_NO_CARGO, $"設備[{equipment.EQName}] PORT內無貨物，無法載出");
+            if (check_rack_move_out_is_empty_or_full && equipment.Is_RACK_HAS_TRAY_OR_NOT_TO_LDULD_Unknown)
+                return new(false, ALARMS.EQ_UNLOAD_REQ_BUT_RACK_FULL_OR_EMPTY_IS_UNKNOWN, $"設備[{equipment.EQName}] 無法確定要載出空框或實框");
 
+            return new(true, ALARMS.NONE, "");
+        }
+        public static (bool confirm, ALARMS alarm_code, string message) CheckLoadStationStatus(int station_tag, bool check_rack_move_out_is_empty_or_full = true)
+        {
+
+            bool _eq_exist = TryGetStationEQDIStatus(station_tag, out clsEQ equipment);
+            if (!_eq_exist)
+                return new(false, ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, $"設備站點TAG-{station_tag} 不存在於當前地圖");
+            if (!equipment.IsConnected)
+                return new(false, ALARMS.Endpoint_EQ_NOT_CONNECTED, $"設備[{equipment.EQName}] 尚未連線,無法確認狀態");
+            if (!equipment.Load_Request)
+                return new(false, ALARMS.EQ_LOAD_REQUEST_IS_NOT_ON, $"設備[{equipment.EQName}] 沒有[入料]請求");
+            if (equipment.Port_Exist)
+                return new(false, ALARMS.EQ_LOAD_REQUEST_ON_BUT_HAS_CARGO, $"設備[{equipment.EQName}] 內有貨物，無法載入");
+            if (check_rack_move_out_is_empty_or_full && equipment.Is_RACK_HAS_TRAY_OR_NOT_TO_LDULD_Unknown)
+                return new(false, ALARMS.EQ_LOAD_REQ_BUT_RACK_FULL_OR_EMPTY_IS_UNKNOWN, $"設備[{equipment.EQName}] 無法確定要載入空框或實框");
+
+            return new(true, ALARMS.NONE,"");
+
+        }
+
+        public static bool TryGetStationEQDIStatus(int station_tag, out clsEQ equipment)
+        {
+            equipment = null;
+            KeyValuePair<int, MapPoint> StationOnMap = AGVSMapManager.CurrentMap.Points.FirstOrDefault(pt => pt.Value.TagNumber == station_tag);
+            if (StationOnMap.Value == null)
+            {
+                return false;
+            }
+            equipment = StaEQPManagager.GetEQByTag(station_tag);
+            return equipment != null;
+        }
         public static (bool confirm, ALARMS alarm_code, string message) CheckEQLDULDStatus(ACTION_TYPE action, int from_tag, int to_tag)
         {
             try

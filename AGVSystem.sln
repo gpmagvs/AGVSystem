@@ -13,6 +13,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RosBridgeClient", "..\RosBr
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VMSystem", "..\VMSystem\VMSystem.csproj", "{B6150AF2-FE2D-48C2-83E5-2F879CFB2104}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "車載", "車載", "{DC35FF39-3061-45BE-A143-816C7171ECD6}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GPMVehicleControlSystem", "..\GPMVehicleControlSystem\GPMVehicleControlSystem\GPMVehicleControlSystem.csproj", "{02D2C708-9C5F-41B0-AE46-7871E14F781F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,9 +43,16 @@ Global
 		{B6150AF2-FE2D-48C2-83E5-2F879CFB2104}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B6150AF2-FE2D-48C2-83E5-2F879CFB2104}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B6150AF2-FE2D-48C2-83E5-2F879CFB2104}.Release|Any CPU.Build.0 = Release|Any CPU
+		{02D2C708-9C5F-41B0-AE46-7871E14F781F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{02D2C708-9C5F-41B0-AE46-7871E14F781F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{02D2C708-9C5F-41B0-AE46-7871E14F781F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{02D2C708-9C5F-41B0-AE46-7871E14F781F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{02D2C708-9C5F-41B0-AE46-7871E14F781F} = {DC35FF39-3061-45BE-A143-816C7171ECD6}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {37452D20-4ECD-4EFD-91CE-41D615DF4038}
