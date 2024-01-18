@@ -2,6 +2,7 @@
 using AGVSystem.Models.TaskAllocation.HotRun;
 using AGVSystem.Models.WebsocketMiddleware;
 using AGVSystem.TaskManagers;
+using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.AGVDispatch;
 using AGVSystemCommonNet6.AGVDispatch.Messages;
 using AGVSystemCommonNet6.Alarm;
@@ -209,12 +210,42 @@ namespace AGVSystem.Controllers
                 return "Action should equal Load or Unlaod";
             clsEQ? eq = StaEQPManagager.EQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == tag);
             if (eq == null)
-                return  $"找不到Tag為{tag}的設備";
+                return $"找不到Tag為{tag}的設備";
             eq.ToEQUp();
 
-            LOG.INFO($"Get AGV LD.ULD Task Start At Tag {tag}-Action={action}. TO Eq Up DO ON",color: ConsoleColor.Green);
-            return  $"{eq.EQName} ToEQUp DO ON";
+            LOG.INFO($"Get AGV LD.ULD Task Start At Tag {tag}-Action={action}. TO Eq Up DO ON", color: ConsoleColor.Green);
+            return $"{eq.EQName} ToEQUp DO ON";
         }
+
+        [HttpGet("StartTransferCargoReport")]
+        public async Task<string> StartTransferCargoReport(string AGVName, int SourceTag, int DestineTag)
+        {
+            var _response = new { confirm = false, message = "" };
+
+            clsEQ? destineEQ = StaEQPManagager.EQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == DestineTag);
+            clsEQ sourceEQ = null;
+            if (destineEQ == null)
+            {
+                return (new { confirm = false, message = $"找不到Tag為{DestineTag}的終點設備" }).ToJson();
+            }
+            else
+            {
+                sourceEQ = StaEQPManagager.EQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == SourceTag);
+                if (sourceEQ == null)
+                {
+                    return (new { confirm = false, message = $"找不到Tag為{SourceTag}的起點設備" }).ToJson();
+                }
+                else
+                {
+                    RACK_CONTENT_STATE rack_content_state = StaEQPManagager.CargoStartTransferToDestineHandler(sourceEQ, destineEQ);
+                    if (rack_content_state == RACK_CONTENT_STATE.UNKNOWN)
+                        return (new { confirm = false, message = "Task Abort_起點設備RACK空框/實框狀態未知" }).ToJson();
+                    else
+                        return (new { confirm = true, message = "" }).ToJson();
+                }
+            }
+        }
+
         [HttpGet("LoadUnloadTaskFinish")]
         public async Task<string> LoadUnloadTaskFinish(int tag, ACTION_TYPE action)
         {
