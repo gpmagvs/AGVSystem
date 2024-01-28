@@ -211,8 +211,14 @@ namespace AGVSystem.Controllers
             clsEQ? eq = StaEQPManagager.EQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == tag);
             if (eq == null)
                 return $"找不到Tag為{tag}的設備";
-            eq.ToEQUp();
-
+            try
+            {
+                eq.ToEQUp();
+            }
+            catch (Exception ex)
+            {
+                return $"{eq.EQName} ToEQUp DO ON的過程中發生錯誤:{ex.Message}";
+            }
             LOG.INFO($"Get AGV LD.ULD Task Start At Tag {tag}-Action={action}. TO Eq Up DO ON", color: ConsoleColor.Green);
             return $"{eq.EQName} ToEQUp DO ON";
         }

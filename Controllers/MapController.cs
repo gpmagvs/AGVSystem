@@ -3,11 +3,13 @@ using AGVSystem.Models.Map;
 using AGVSystemCommonNet6.AGVDispatch.Messages;
 using AGVSystemCommonNet6.AGVDispatch.Model;
 using AGVSystemCommonNet6.Configuration;
+using AGVSystemCommonNet6.Log;
 using AGVSystemCommonNet6.MAP;
 using Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using System.Diagnostics;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Text.Json.Serialization;
@@ -26,7 +28,6 @@ namespace AGVSystem.Controllers
         public async Task<IActionResult> Get()
         {
             return Ok(MapManager.LoadMapFromFile());
-
         }
 
 
@@ -155,6 +156,69 @@ namespace AGVSystem.Controllers
             AGVSMapManager.SwitchAGVUploadLocFun(enabled);
             return Ok();
         }
+
+        [HttpPost("IconUpload")]
+        [DisableRequestSizeLimit]
+        public async Task<IActionResult> IconUpload()
+        {
+            var file = Request.Form.Files[0];
+            if (file.Length > 100 * 1024 * 1024) // 100MB
+            {
+                return BadRequest("檔案大小超過 100MB。");
+            }
+
+            if (file.Length > 0)
+            {
+                var fileName = $"/images/{file.FileName}";
+                var imageFolder = Path.Combine(Environment.CurrentDirectory, "wwwroot/images");
+                var filePath = Path.Combine(imageFolder, file.FileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+
+                if (Debugger.IsAttached)
+                {
+                    try
+                    {
+                        var _imageFolder = @"D:\GPM_Work\AGV\Codes\AGVSystem\AGVS_UI\public\images";
+                        var _filePath = Path.Combine(_imageFolder, file.FileName);
+                        using (var stream = new FileStream(_filePath, FileMode.Create))
+                        {
+                            await file.CopyToAsync(stream);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+
+                    }
+                }
+                var currentMap = MapManager.LoadMapFromFile(false, false);
+                currentMap.Options.EQIcons.Add(fileName);
+                currentMap.Options.EQIcons = currentMap.Options.EQIcons.Distinct().ToList();
+                MapManager.SaveMapToFile(currentMap, AGVSConfigulator.SysConfigs.MapConfigs.MapFileFullName);
+                return Ok(new { filename = fileName });
+            }
+
+            return BadRequest("未接收到任何檔案。");
+        }
+
+        [HttpDelete("DeleteIcon")]
+        public async Task<IActionResult> DeleteIcon(string filePath)
+        {
+            var fileFullPath = Path.Combine(Environment.CurrentDirectory, "wwwroot" + filePath);
+            if (System.IO.File.Exists(fileFullPath))
+            {
+                System.IO.File.Delete(fileFullPath);
+               
+            }
+            var _map = MapManager.LoadMapFromFile(false, false);
+            _map.Options.EQIcons.Remove(filePath);
+            MapManager.SaveMapToFile(_map, AGVSConfigulator.SysConfigs.MapConfigs.MapFileFullName);
+            return Ok("ok");
+        }
+
         public class clsAGVInfoVM
         {
 

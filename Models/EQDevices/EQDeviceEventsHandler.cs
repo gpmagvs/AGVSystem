@@ -6,21 +6,28 @@ namespace AGVSystem.Models.EQDevices
 {
     public class EQDeviceEventsHandler
     {
+
         internal static void HandleDeviceDisconnected(object? sender, EndPointDeviceAbstract device)
         {
-            LOG.ERROR($"EQ-{device.EQName} 連線中斷({device.EndPointOptions.ConnOptions.IP}-{device.EndPointOptions.ConnOptions.ConnMethod})");
+            _Log($"EQ-{device.EQName} 連線中斷({device.EndPointOptions.ConnOptions.IP}-{device.EndPointOptions.ConnOptions.ConnMethod})", device.EQName);
             AlarmManagerCenter.AddAlarmAsync(ALARMS.EQ_Disconnect, source: ALARM_SOURCE.EQP, Equipment_Name: device.EQName);
         }
 
         internal static async void HandleDeviceReconnected(object? sender, EndPointDeviceAbstract device)
         {
-            LOG.INFO($"EQ-{device.EQName} 已連線({device.EndPointOptions.ConnOptions.IP}-{device.EndPointOptions.ConnOptions.ConnMethod})", color: ConsoleColor.Green);
+            _Log($"EQ-{device.EQName} 已連線({device.EndPointOptions.ConnOptions.IP}-{device.EndPointOptions.ConnOptions.ConnMethod})", device.EQName);
             await AlarmManagerCenter.SetAlarmCheckedAsync(device.EQName, ALARMS.EQ_Disconnect, "SystemAuto");
         }
 
-        internal static void HandleEQIOStateChanged(object? sender, EndPointDeviceAbstract.IOChangedEventArgs e)
+        internal static void HandleEQIOStateChanged(object? sender, EndPointDeviceAbstract.IOChangedEventArgs device)
         {
-            LOG.TRACE($"EQ-{e.Device.EQName}|IO-{e.IOName} Changed To {(e.IOState ? "1" : "0")}");
+            _Log($"[{device.Device.EQName}] IO-{device.IOName} Changed To {(device.IOState ? "1" : "0")}", device.Device.EQName);
+        }
+
+        private static void _Log(string logMessage, string eqName)
+        {
+            using LogBase _logger = new LogBase(@$"AGVS LOG\EquipmentManager\{eqName}");
+            _logger.WriteLog(new LogItem(LogLevel.Information, logMessage, true));
         }
     }
 
