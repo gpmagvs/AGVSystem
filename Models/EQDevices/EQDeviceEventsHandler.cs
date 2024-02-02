@@ -10,13 +10,19 @@ namespace AGVSystem.Models.EQDevices
         internal static void HandleDeviceDisconnected(object? sender, EndPointDeviceAbstract device)
         {
             _Log($"EQ-{device.EQName} 連線中斷({device.EndPointOptions.ConnOptions.IP}-{device.EndPointOptions.ConnOptions.ConnMethod})", device.EQName);
-            AlarmManagerCenter.AddAlarmAsync(ALARMS.EQ_Disconnect, source: ALARM_SOURCE.EQP, Equipment_Name: device.EQName);
+            _ = Task.Factory.StartNew(async () =>
+            {
+                await AlarmManagerCenter.AddAlarmAsync(ALARMS.EQ_Disconnect, source: ALARM_SOURCE.EQP, Equipment_Name: device.EQName);
+            });
         }
 
-        internal static async void HandleDeviceReconnected(object? sender, EndPointDeviceAbstract device)
+        internal static  void HandleDeviceReconnected(object? sender, EndPointDeviceAbstract device)
         {
             _Log($"EQ-{device.EQName} 已連線({device.EndPointOptions.ConnOptions.IP}-{device.EndPointOptions.ConnOptions.ConnMethod})", device.EQName);
-            await AlarmManagerCenter.SetAlarmCheckedAsync(device.EQName, ALARMS.EQ_Disconnect, "SystemAuto");
+            _ = Task.Factory.StartNew(async () =>
+            {
+                await AlarmManagerCenter.SetAlarmCheckedAsync(device.EQName, ALARMS.EQ_Disconnect, "SystemAuto");
+            });
         }
 
         internal static void HandleEQIOStateChanged(object? sender, EndPointDeviceAbstract.IOChangedEventArgs device)
@@ -27,7 +33,9 @@ namespace AGVSystem.Models.EQDevices
         private static void _Log(string logMessage, string eqName)
         {
             using LogBase _logger = new LogBase(@$"AGVS LOG\EquipmentManager\{eqName}");
-            _logger.WriteLog(new LogItem(LogLevel.Information, logMessage, true));
+            _logger.WriteLog(new LogItem(LogLevel.Information, logMessage, true)
+            {
+            });
         }
     }
 

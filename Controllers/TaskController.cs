@@ -208,7 +208,7 @@ namespace AGVSystem.Controllers
         {
             if (action != ACTION_TYPE.Load && action != ACTION_TYPE.Unload)
                 return "Action should equal Load or Unlaod";
-            clsEQ? eq = StaEQPManagager.EQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == tag);
+            clsEQ? eq = StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == tag);
             if (eq == null)
                 return $"找不到Tag為{tag}的設備";
             try
@@ -228,7 +228,7 @@ namespace AGVSystem.Controllers
         {
             var _response = new { confirm = false, message = "" };
 
-            clsEQ? destineEQ = StaEQPManagager.EQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == DestineTag);
+            clsEQ? destineEQ = StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == DestineTag);
             clsEQ sourceEQ = null;
             if (destineEQ == null)
             {
@@ -236,7 +236,7 @@ namespace AGVSystem.Controllers
             }
             else
             {
-                sourceEQ = StaEQPManagager.EQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == SourceTag);
+                sourceEQ = StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == SourceTag);
                 if (sourceEQ == null)
                 {
                     return (new { confirm = false, message = $"找不到Tag為{SourceTag}的起點設備" }).ToJson();
@@ -257,7 +257,7 @@ namespace AGVSystem.Controllers
         {
             if (action != ACTION_TYPE.Load && action != ACTION_TYPE.Unload)
                 return "Action should equal Load or Unlaod";
-            clsEQ? eq = StaEQPManagager.EQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == tag);
+            clsEQ? eq = StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == tag);
             if (eq == null)
                 return $"找不到Tag為{tag}的設備";
             eq.CancelToEQUpAndLow();

@@ -138,8 +138,13 @@ namespace AGVSystem.Models.WebsocketMiddleware
                     Thread.Sleep(100);
                     try
                     {
-                        websocket_api_routes[WEBSOCKET_CHANNELS.EQ_STATUS].data = new { EQPData = StaEQPManagager.GetEQStates(), ChargeStationData = StaEQPManagager.GetChargeStationStates() };
-                        websocket_api_routes[WEBSOCKET_CHANNELS.VMS_ALIVE_CHECK].data =true;
+                        websocket_api_routes[WEBSOCKET_CHANNELS.EQ_STATUS].data = new
+                        {
+                            EQPData = StaEQPManagager.GetEQStates(),
+                            ChargeStationData = StaEQPManagager.GetChargeStationStates(),
+                            WIPsData = GetWIPDataViewModels()
+                        };
+                        websocket_api_routes[WEBSOCKET_CHANNELS.VMS_ALIVE_CHECK].data = true;
                         websocket_api_routes[WEBSOCKET_CHANNELS.AGV_LOCATION_UPLOAD].data = AGVSMapManager.AGVUploadCoordinationStore;
                         websocket_api_routes[WEBSOCKET_CHANNELS.HOTRUN].data = HotRunScriptManager.HotRunScripts;
                         try
@@ -165,13 +170,23 @@ namespace AGVSystem.Models.WebsocketMiddleware
 
             });
             thread.Start();
-
-
         }
+
+        private static List<ViewModel.WIPDataViewModel> GetWIPDataViewModels()
+        {
+            return StaEQPManagager.WIPList.Select(wip => new ViewModel.WIPDataViewModel()
+            {
+                WIPName = wip.EQName,
+                Columns = wip.RackOption.Columns,
+                Rows = wip.RackOption.Rows,
+                Ports = wip.PortsStatus.ToList()
+            }).ToList();
+        }
+
         private static object GetDataByPath(string path)
         {
             var _ws = websocket_api_routes.Values.FirstOrDefault(r => r.route_name == path);
-            if(_ws== null)
+            if (_ws == null)
                 return null;
             return _ws.data;
         }

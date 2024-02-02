@@ -27,6 +27,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
+LOG.ShowClassName = false;
 LOG.SetLogFolderName("AGVS LOG");
 LOG.INFO("AGVS System Start");
 AGVSConfigulator.Init();
@@ -36,7 +37,7 @@ AGVSMapManager.Initialize();
 HotRunScriptManager.Initialize();
 ScheduleMeasureManager.Initialize();
 
-StaEQPManagager.InitializeAsync(new clsEQManagementConfigs
+_ = StaEQPManagager.InitializeAsync(new clsEQManagementConfigs
 {
     UseEqEmu = AGVSConfigulator.SysConfigs.EQManagementConfigs.UseEQEmu,
     EQConfigPath = $"{AGVSConfigulator.SysConfigs.EQManagementConfigs.EquipmentManagementConfigFolder}//EQConfigs.json",
@@ -113,7 +114,7 @@ using (IServiceScope scope = app.Services.CreateScope())
     {
         LOG.ERROR(ex);
     }
-   
+
 }
 WebsocketMiddleware.StartCollectWebUIUsingDatas();
 

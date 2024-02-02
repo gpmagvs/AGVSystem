@@ -3,7 +3,7 @@ using AGVSystem.Models.WebsocketMiddleware;
 using AGVSystemCommonNet6.DATABASE;
 using EquipmentManagment.ChargeStation;
 using EquipmentManagment.Connection;
-using EquipmentManagment.Device;
+using EquipmentManagment.Device.Options;
 using EquipmentManagment.Emu;
 using EquipmentManagment.MainEquipment;
 using EquipmentManagment.Manager;
@@ -44,12 +44,19 @@ namespace AGVSystem.Controllers
         [HttpGet("GetEQOptions")]
         public async Task<IActionResult> GetEQOptions()
         {
-            return Ok(StaEQPManagager.EQList.Select(eq => eq.EndPointOptions).ToArray());
+            clsEndPointOptions[] MainEQs = StaEQPManagager.MainEQList.Select(eq => eq.EndPointOptions).ToArray();
+            return Ok(MainEQs);
+        }
+        [HttpGet("GetWIPOptions")]
+        public async Task<IActionResult> GetWIPOptions()
+        {
+            clsEndPointOptions[] WIPs = StaEQPManagager.WIPList.Select(wip => wip.EndPointOptions).ToArray();
+            return Ok(WIPs);
         }
         [HttpGet("GetEQOptionByTag")]
         public async Task<IActionResult> GetEQOptionByTag(int eq_tag)
         {
-            var eqoptions = StaEQPManagager.EQList.Select(eq => eq.EndPointOptions);
+            var eqoptions = StaEQPManagager.MainEQList.Select(eq => eq.EndPointOptions);
             var option = (eqoptions.FirstOrDefault(opt => opt.TagID == eq_tag));
             if (option != null)
             {
@@ -63,7 +70,7 @@ namespace AGVSystem.Controllers
         [HttpPost("GetEQOptionsByTags")]
         public async Task<IActionResult> GetEQOptionsByTags([FromBody] int[] eq_tags)
         {
-            var eqoptions = StaEQPManagager.EQList.Select(eq => eq.EndPointOptions);
+            var eqoptions = StaEQPManagager.MainEQList.Select(eq => eq.EndPointOptions);
             var options = eqoptions.Where(opt => eq_tags.Contains(opt.TagID)).Select(option => new
             {
                 Tag = option.TagID,
@@ -153,7 +160,7 @@ namespace AGVSystem.Controllers
                     if (SignalName == "To_EQ_Up")
                         EQ.To_EQ_Up = State;
                     if (SignalName == "To_EQ_Low")
-                        EQ.To_EQ_Low= State;
+                        EQ.To_EQ_Low = State;
                     if (SignalName == "VALID")
                         EQ.HS_AGV_VALID = State;
                     if (SignalName == "TR_REQ")

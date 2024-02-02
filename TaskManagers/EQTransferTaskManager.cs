@@ -39,7 +39,7 @@ namespace AGVSystem.TaskManagers
             }
             LOG.WARN("Maintain Mode Start");
             //取消預約所有機台
-            StaEQPManagager.EQList.FindAll(eq => eq.CMD_Reserve_Low | eq.CMD_Reserve_Up).ForEach(eq =>
+            StaEQPManagager.MainEQList.FindAll(eq => eq.CMD_Reserve_Low | eq.CMD_Reserve_Up).ForEach(eq =>
             {
                 eq.CancelReserve();
             });
@@ -69,7 +69,7 @@ namespace AGVSystem.TaskManagers
                     continue;
                 }
                 AutoRunning = true;
-                List<clsEQ> unload_req_eq_list = StaEQPManagager.EQList.FindAll(eq => eq.lduld_type == EQLDULD_TYPE.ULD | eq.lduld_type == EQLDULD_TYPE.LDULD)
+                List<clsEQ> unload_req_eq_list = StaEQPManagager.MainEQList.FindAll(eq => eq.lduld_type == EQLDULD_TYPE.ULD | eq.lduld_type == EQLDULD_TYPE.LDULD)
                                       .FindAll(eq => eq.Unload_Request && eq.Eqp_Status_Down && !eq.CMD_Reserve_Low && !UnloadEQQueueing.TryGetValue(eq, out clsEQ _eq));
 
                 if (unload_req_eq_list.Count > 0)
