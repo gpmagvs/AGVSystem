@@ -26,7 +26,7 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-
+Console.Title = "GPM-AGV¨t²Î(AGVs)";
 LOG.ShowClassName = false;
 LOG.SetLogFolderName("AGVS LOG");
 LOG.INFO("AGVS System Start");
