@@ -31,19 +31,12 @@ LOG.ShowClassName = false;
 LOG.SetLogFolderName("AGVS LOG");
 LOG.INFO("AGVS System Start");
 AGVSConfigulator.Init();
-TaskManager.Initialize();
+AGVSDatabase.Initialize();
 EQTransferTaskManager.Initialize();
 AGVSMapManager.Initialize();
 HotRunScriptManager.Initialize();
 ScheduleMeasureManager.Initialize();
 
-_ = StaEQPManagager.InitializeAsync(new clsEQManagementConfigs
-{
-    UseEqEmu = AGVSConfigulator.SysConfigs.EQManagementConfigs.UseEQEmu,
-    EQConfigPath = $"{AGVSConfigulator.SysConfigs.EQManagementConfigs.EquipmentManagementConfigFolder}//EQConfigs.json",
-    WIPConfigPath = $"{AGVSConfigulator.SysConfigs.EQManagementConfigs.EquipmentManagementConfigFolder}//WIPConfigs.json",
-    ChargeStationConfigPath = $"{AGVSConfigulator.SysConfigs.EQManagementConfigs.EquipmentManagementConfigFolder}//ChargStationConfigs.json",
-});
 EndPointDeviceAbstract.OnEQDisconnected += EQDeviceEventsHandler.HandleDeviceDisconnected;
 EndPointDeviceAbstract.OnEQConnected += EQDeviceEventsHandler.HandleDeviceReconnected;
 clsEQ.OnIOStateChanged += EQDeviceEventsHandler.HandleEQIOStateChanged;
@@ -57,15 +50,15 @@ VMSSerivces.AgvStateFetchWorker();
 VMSSerivces.AliveCheckWorker();
 VMSSerivces.RunModeSwitch(AGVSystemCommonNet6.AGVDispatch.RunMode.RUN_MODE.MAINTAIN);
 
+
 var builder = WebApplication.CreateBuilder(args);
-string DBConnection = AGVSConfigulator.SysConfigs.DBConnection;
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers().AddJsonOptions(options => options.JsonSerializerOptions.PropertyNamingPolicy = null);
 builder.Services.AddDirectoryBrowser();
 
-builder.Services.AddDbContext<AGVSDbContext>(options => options.UseSqlServer(DBConnection));
 
 builder.Services.Configure<JsonOptions>(options =>
 {
@@ -84,56 +77,31 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("secret_keysecret_keysecret_key11"))
         }
     );
+builder.Services.AddDbContext<AGVSDbContext>(options => options.UseSqlServer(AGVSConfigulator.SysConfigs.DBConnection));
+
 var app = builder.Build();
 
-using (IServiceScope scope = app.Services.CreateScope())
+_ = Task.Run(async () =>
 {
-    try
+    await Task.Delay(3000);
+    StaEQPManagager.InitializeAsync(new clsEQManagementConfigs
     {
-        using (AGVSDbContext dbContext = scope.ServiceProvider.GetRequiredService<AGVSDbContext>())
-        {
-            dbContext.Database.EnsureCreated();
-            dbContext.SaveChanges();
-            if (dbContext.Database.GetPendingMigrations().Any())
-            {
+        UseEqEmu = AGVSConfigulator.SysConfigs.EQManagementConfigs.UseEQEmu,
+        EQConfigPath = $"{AGVSConfigulator.SysConfigs.EQManagementConfigs.EquipmentManagementConfigFolder}//EQConfigs.json",
+        WIPConfigPath = $"{AGVSConfigulator.SysConfigs.EQManagementConfigs.EquipmentManagementConfigFolder}//WIPConfigs.json",
+        ChargeStationConfigPath = $"{AGVSConfigulator.SysConfigs.EQManagementConfigs.EquipmentManagementConfigFolder}//ChargStationConfigs.json",
+    });
+});
 
-            }
-            using (var ttra = dbContext.Database.BeginTransaction())
-            {
-                UserEntity? existingUser = dbContext.Users.FirstOrDefault(u => u.UserName == "dev");
-                if (existingUser == null)
-                {
-                    dbContext.Users.Add(new UserEntity { UserName = "dev", Password = "12345678", Role = ERole.Developer });
-                    dbContext.SaveChanges();
-                }
-                ttra.Commit();
-            }
-        }
-    }
-    catch (Exception ex)
-    {
-        LOG.ERROR(ex);
-    }
-
-}
 WebsocketMiddleware.StartCollectWebUIUsingDatas();
 
-
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
 app.UseAuthentication();
 app.UseSwagger();
 app.UseSwaggerUI();
 app.UseCors(c => c.AllowAnyHeader().AllowAnyOrigin().AllowAnyMethod());
 app.UseWebSockets(new WebSocketOptions { KeepAliveInterval = TimeSpan.FromSeconds(1) });
 
-app.UseDefaultFiles(new DefaultFilesOptions()
-{
-});
+app.UseDefaultFiles(new DefaultFilesOptions());
 app.UseStaticFiles();
 
 
