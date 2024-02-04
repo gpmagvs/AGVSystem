@@ -28,9 +28,6 @@ namespace AGVSystem.TaskManagers
             MANUAL,
             REMOTE,
         }
-        internal static void Initialize()
-        {
-        }
 
         public static async Task<(bool confirm, ALARMS alarm_code, string message)> AddTask(clsTaskDto taskData, TASK_RECIEVE_SOURCE source = TASK_RECIEVE_SOURCE.LOCAL)
         {
