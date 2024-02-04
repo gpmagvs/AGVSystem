@@ -7,6 +7,6 @@ namespace AGVSystem.ViewModel
         public string WIPName { get; set; } = "WEE~~";
         public int Columns { get; set; } = 1;
         public int Rows { get; set; } = 1;
-        public List<clsWIPPort> Ports { get; set; } = new List<clsWIPPort>();
+        public List<clsPortOfRack> Ports { get; set; } = new List<clsPortOfRack>();
     }
 }

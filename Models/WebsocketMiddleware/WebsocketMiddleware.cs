@@ -174,7 +174,7 @@ namespace AGVSystem.Models.WebsocketMiddleware
 
         private static List<ViewModel.WIPDataViewModel> GetWIPDataViewModels()
         {
-            return StaEQPManagager.WIPList.Select(wip => new ViewModel.WIPDataViewModel()
+            return StaEQPManagager.RacksList.Select(wip => new ViewModel.WIPDataViewModel()
             {
                 WIPName = wip.EQName,
                 Columns = wip.RackOption.Columns,

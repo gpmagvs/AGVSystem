@@ -50,7 +50,7 @@ namespace AGVSystem.Controllers
         [HttpGet("GetWIPOptions")]
         public async Task<IActionResult> GetWIPOptions()
         {
-            clsEndPointOptions[] WIPs = StaEQPManagager.WIPList.Select(wip => wip.EndPointOptions).ToArray();
+            clsEndPointOptions[] WIPs = StaEQPManagager.RacksList.Select(wip => wip.EndPointOptions).ToArray();
             return Ok(WIPs);
         }
         [HttpGet("GetEQOptionByTag")]
