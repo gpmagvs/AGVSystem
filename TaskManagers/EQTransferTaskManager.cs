@@ -249,14 +249,18 @@ namespace AGVSystem.TaskManagers
             clsEQ source_equipment = StaEQPManagager.GetEQByTag(taskData.From_Station_Tag);
             clsEQ destine_equipment = StaEQPManagager.GetEQByTag(taskData.To_Station_Tag);
 
-            EquipmentManagment.Device.Options.AGV_TYPE source_eq_accept_agv_model = source_equipment.EndPointOptions.Accept_AGV_Type;
-            EquipmentManagment.Device.Options.AGV_TYPE destine_eq_accept_agv_model = destine_equipment.EndPointOptions.Accept_AGV_Type;
-
-            if (source_eq_accept_agv_model != EquipmentManagment.Device.Options.AGV_TYPE.ALL && source_eq_accept_agv_model != model)
-                return (false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Source_Equipment, $"來源設備不允許{model}車種進行任務");
-
-            if (destine_eq_accept_agv_model != EquipmentManagment.Device.Options.AGV_TYPE.ALL && destine_eq_accept_agv_model != model)
-                return (false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Destine_Equipment, $"終點設備不允許{model}車種進行任務");
+            if (source_equipment != null)
+            {
+                EquipmentManagment.Device.Options.AGV_TYPE source_eq_accept_agv_model = source_equipment.EndPointOptions.Accept_AGV_Type;
+                if (source_eq_accept_agv_model != EquipmentManagment.Device.Options.AGV_TYPE.ALL && source_eq_accept_agv_model != model)
+                    return (false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Source_Equipment, $"來源設備不允許{model}車種進行任務");
+            }
+            if (destine_equipment != null)
+            {
+                EquipmentManagment.Device.Options.AGV_TYPE destine_eq_accept_agv_model = destine_equipment.EndPointOptions.Accept_AGV_Type;
+                if (destine_eq_accept_agv_model != EquipmentManagment.Device.Options.AGV_TYPE.ALL && destine_eq_accept_agv_model != model)
+                    return (false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Destine_Equipment, $"終點設備不允許{model}車種進行任務");
+            }
 
             return new(true, ALARMS.NONE, "");
         }
