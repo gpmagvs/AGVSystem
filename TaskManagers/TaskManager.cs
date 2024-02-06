@@ -94,6 +94,13 @@ namespace AGVSystem.TaskManagers
             #endregion
             try
             {
+                #region AGV車款與設備允許車款確認
+                (bool confirm, ALARMS alarm_code, string message) agv_type_check_result = EQTransferTaskManager.CheckEQAcceptAGVType(taskData);
+                if (!agv_type_check_result.confirm)
+                    return agv_type_check_result;
+                #endregion
+
+
                 taskData.RecieveTime = DateTime.Now;
                 await Task.Delay(200);
                 using (var db = new AGVSDatabase())

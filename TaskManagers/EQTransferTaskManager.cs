@@ -17,6 +17,7 @@ using AGVSystemCommonNet6.AGVDispatch;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.CodeAnalysis.Emit;
+using AGVSystemCommonNet6.Microservices.VMS;
 
 namespace AGVSystem.TaskManagers
 {
@@ -169,7 +170,7 @@ namespace AGVSystem.TaskManagers
             if (check_rack_move_out_is_empty_or_full && equipment.Is_RACK_HAS_TRAY_OR_NOT_TO_LDULD_Unknown)
                 return new(false, ALARMS.EQ_LOAD_REQ_BUT_RACK_FULL_OR_EMPTY_IS_UNKNOWN, $"設備[{equipment.EQName}] 無法確定要載入空框或實框");
 
-            return new(true, ALARMS.NONE,"");
+            return new(true, ALARMS.NONE, "");
 
         }
 
@@ -236,6 +237,29 @@ namespace AGVSystem.TaskManagers
 
         }
 
+        public static (bool confirm, ALARMS alarm_code, string message) CheckEQAcceptAGVType(clsTaskDto taskData)
+        {
+            string _agv_name = taskData.DesignatedAGVName;
+            if (_agv_name == "" || _agv_name == null)
+                return new(true, ALARMS.NONE, "");
+
+            clsAGVStateDto? _agv_assigned = VMSSerivces.AgvStatesData.FirstOrDefault(agv_dat => agv_dat.AGV_Name == _agv_name);
+            EquipmentManagment.Device.Options.AGV_TYPE model = _agv_assigned.Model.ConvertToEQAcceptAGVTYPE();
+
+            clsEQ source_equipment = StaEQPManagager.GetEQByTag(taskData.From_Station_Tag);
+            clsEQ destine_equipment = StaEQPManagager.GetEQByTag(taskData.To_Station_Tag);
+
+            EquipmentManagment.Device.Options.AGV_TYPE source_eq_accept_agv_model = source_equipment.EndPointOptions.Accept_AGV_Type;
+            EquipmentManagment.Device.Options.AGV_TYPE destine_eq_accept_agv_model = destine_equipment.EndPointOptions.Accept_AGV_Type;
+
+            if (source_eq_accept_agv_model != EquipmentManagment.Device.Options.AGV_TYPE.ALL && source_eq_accept_agv_model != model)
+                return (false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Source_Equipment, $"來源設備不允許{model}車種進行任務");
+
+            if (destine_eq_accept_agv_model != EquipmentManagment.Device.Options.AGV_TYPE.ALL && destine_eq_accept_agv_model != model)
+                return (false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Destine_Equipment, $"終點設備不允許{model}車種進行任務");
+
+            return new(true, ALARMS.NONE, "");
+        }
         private static bool IsEQDataValid(EndPointDeviceAbstract endpoint, out int unloadStationTag, out ALARMS alarm_code)
         {
             alarm_code = ALARMS.NONE;
@@ -254,5 +278,6 @@ namespace AGVSystem.TaskManagers
 
             return true;
         }
+
     }
 }
