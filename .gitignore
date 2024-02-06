@@ -200,7 +200,6 @@ project.lock.json
 
 # Output folder used by Webpack or other FE stuff
 **/node_modules/*
-**/wwwroot/*
 
 # SpecFlow specific
 *.feature.cs
@@ -212,7 +211,6 @@ project.lock.json
 /VMS.db
 /*.db
 /Properties/PublishProfiles/*.pubxml
-/wwwroot
 /SaveLog
 /Maptest.json
 /Map_UMTC_5F_SMK_OVEN.json
