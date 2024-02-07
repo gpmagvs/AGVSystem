@@ -37,8 +37,8 @@ AGVSMapManager.Initialize();
 HotRunScriptManager.Initialize();
 ScheduleMeasureManager.Initialize();
 
-EndPointDeviceAbstract.OnEQDisconnected += EQDeviceEventsHandler.HandleDeviceDisconnected;
-EndPointDeviceAbstract.OnEQConnected += EQDeviceEventsHandler.HandleDeviceReconnected;
+EQDeviceEventsHandler.Initialize();
+
 clsEQ.OnIOStateChanged += EQDeviceEventsHandler.HandleEQIOStateChanged;
 
 AGVSSocketHost agvs_host = new AGVSSocketHost();

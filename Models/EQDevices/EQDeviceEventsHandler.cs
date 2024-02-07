@@ -7,6 +7,23 @@ namespace AGVSystem.Models.EQDevices
     public class EQDeviceEventsHandler
     {
 
+        internal static void Initialize()
+        {
+            EndPointDeviceAbstract.OnEQDisconnected += HandleDeviceDisconnected;
+            EndPointDeviceAbstract.OnEQConnected += HandleDeviceReconnected;
+            EndPointDeviceAbstract.OnEQInputDataSizeNotEnough += HandleEQInputDataSizeNotEnough;
+
+        }
+
+        private static void HandleEQInputDataSizeNotEnough(object? sender, EndPointDeviceAbstract device)
+        {
+            _ = Task.Factory.StartNew(async () =>
+            {
+                await AlarmManagerCenter.ResetAlarmAsync(new clsAlarmDto() { AlarmCode = (int)ALARMS.EQ_Input_Data_Not_Enough }, false);
+                await AlarmManagerCenter.AddAlarmAsync(ALARMS.EQ_Input_Data_Not_Enough, source: ALARM_SOURCE.EQP, Equipment_Name: device.EQName);
+            });
+        }
+
         internal static void HandleDeviceDisconnected(object? sender, EndPointDeviceAbstract device)
         {
             _Log($"EQ-{device.EQName} 連線中斷({device.EndPointOptions.ConnOptions.IP}-{device.EndPointOptions.ConnOptions.ConnMethod})", device.EQName);
@@ -16,7 +33,7 @@ namespace AGVSystem.Models.EQDevices
             });
         }
 
-        internal static  void HandleDeviceReconnected(object? sender, EndPointDeviceAbstract device)
+        internal static void HandleDeviceReconnected(object? sender, EndPointDeviceAbstract device)
         {
             _Log($"EQ-{device.EQName} 已連線({device.EndPointOptions.ConnOptions.IP}-{device.EndPointOptions.ConnOptions.ConnMethod})", device.EQName);
             _ = Task.Factory.StartNew(async () =>
@@ -29,6 +46,7 @@ namespace AGVSystem.Models.EQDevices
         {
             _Log($"[{device.Device.EQName}] IO-{device.IOName} Changed To {(device.IOState ? "1" : "0")}", device.Device.EQName);
         }
+
 
         private static void _Log(string logMessage, string eqName)
         {
