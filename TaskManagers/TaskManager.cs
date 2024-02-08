@@ -161,7 +161,7 @@ namespace AGVSystem.TaskManagers
 
             if (!isUnspecified) //有指定充電站
             {
-                bool isChargeStationHasTask = chargeTasks.Where(_task => _task.DesignatedAGVName != agv_name).Any(tk => tk.To_Station_Tag == assign_charge_station_tag);
+                bool isChargeStationHasTask = chargeTasks.Count() == 0 ? false : chargeTasks.Where(_task => _task.DesignatedAGVName != agv_name).Any(tk => tk.To_Station_Tag == assign_charge_station_tag);
                 bool isAnyAGVInTheChargeStation = database.tables.AgvStates.Where(agv => agv.AGV_Name != agv_name).Any(agv => agv.CurrentLocation == assign_charge_station_tag + "");
 
                 if (isChargeStationHasTask)
