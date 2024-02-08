@@ -150,7 +150,7 @@ namespace AGVSystem.TaskManagers
                 return new(false, ALARMS.EQ_LOAD_REQUEST_IS_NOT_ON, $"設備[{equipment.EQName}] 沒有[出料]請求");
             if (!equipment.Port_Exist)
                 return new(false, ALARMS.EQ_UNLOAD_REQUEST_ON_BUT_NO_CARGO, $"設備[{equipment.EQName}] PORT內無貨物，無法載出");
-            if (check_rack_move_out_is_empty_or_full && equipment.Is_RACK_HAS_TRAY_OR_NOT_TO_LDULD_Unknown)
+            if (check_rack_move_out_is_empty_or_full && equipment.EndPointOptions.CheckRackContentStateIOSignal && equipment.Is_RACK_HAS_TRAY_OR_NOT_TO_LDULD_Unknown)
                 return new(false, ALARMS.EQ_UNLOAD_REQ_BUT_RACK_FULL_OR_EMPTY_IS_UNKNOWN, $"設備[{equipment.EQName}] 無法確定要載出空框或實框");
 
             return new(true, ALARMS.NONE, "");
@@ -167,7 +167,7 @@ namespace AGVSystem.TaskManagers
                 return new(false, ALARMS.EQ_LOAD_REQUEST_IS_NOT_ON, $"設備[{equipment.EQName}] 沒有[入料]請求");
             if (equipment.Port_Exist)
                 return new(false, ALARMS.EQ_LOAD_REQUEST_ON_BUT_HAS_CARGO, $"設備[{equipment.EQName}] 內有貨物，無法載入");
-            if (check_rack_move_out_is_empty_or_full && equipment.Is_RACK_HAS_TRAY_OR_NOT_TO_LDULD_Unknown)
+            if (check_rack_move_out_is_empty_or_full && equipment.EndPointOptions.CheckRackContentStateIOSignal && equipment.Is_RACK_HAS_TRAY_OR_NOT_TO_LDULD_Unknown)
                 return new(false, ALARMS.EQ_LOAD_REQ_BUT_RACK_FULL_OR_EMPTY_IS_UNKNOWN, $"設備[{equipment.EQName}] 無法確定要載入空框或實框");
 
             return new(true, ALARMS.NONE, "");
