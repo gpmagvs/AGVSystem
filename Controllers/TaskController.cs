@@ -12,6 +12,7 @@ using AGVSystemCommonNet6.Log;
 using AGVSystemCommonNet6.MAP;
 
 using AGVSystemCommonNet6.User;
+using AGVSystemCommonNet6.Vehicle_Control.VCS_ALARM;
 using EquipmentManagment.MainEquipment;
 using EquipmentManagment.Manager;
 using Microsoft.AspNetCore.Authorization;
@@ -139,8 +140,24 @@ namespace AGVSystem.Controllers
             {
                 return Unauthorized();
             }
+            (bool confirm, ALARMS alarm_code, string message) check_result = TaskManager.CheckChargeTask(taskData.DesignatedAGVName, taskData.To_Station_Tag);
+            if (!check_result.confirm)
+                return Ok(new { confirm = check_result.confirm, alarm_code = check_result.alarm_code, message = check_result.message });
             return Ok(await AddTask(taskData, user));
         }
+
+        [HttpGet("CancelChargeTask")]
+        public async Task<IActionResult> CancelChargeTask(string agv_name)
+        {
+            if (!UserValidation())
+            {
+                return Unauthorized();
+            }
+            var result = await TaskManager.CancelChargeTaskByAGVAsync(agv_name);
+            return Ok(new { confirm= result.confirm,message= result.message});
+        }
+
+
         [HttpPost("ExangeBattery")]
         [Authorize]
         public async Task<IActionResult> ExangeBattery([FromBody] clsTaskDto taskData, string user = "")
