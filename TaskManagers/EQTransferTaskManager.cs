@@ -123,6 +123,7 @@ namespace AGVSystem.TaskManagers
                             LOG.ERROR($"[Local Auto EQ Transfer] Task-{taskOrder.TaskName}-(From={taskOrder.From_Station} To={taskOrder.To_Station}>> Execute AGV={taskOrder.DesignatedAGVName}) add FAILURE,{taskAddedResult.alarm_code}");
                             AlarmManagerCenter.AddAlarmAsync(new clsAlarmDto
                             {
+                                Time = DateTime.Now,
                                 AlarmCode = (int)taskAddedResult.alarm_code,
                                 Description_Zh = taskAddedResult.alarm_code.ToString(),
                                 Description_En = taskAddedResult.alarm_code.ToString(),
