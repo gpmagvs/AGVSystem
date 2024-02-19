@@ -140,7 +140,7 @@ namespace AGVSystem.TaskManagers
                             destineEQ.ReserveLow();
                             sourceEQ.ReserveLow();
                             LOG.INFO($"Reserved {sourceEQ.EQName} and {destineEQ.EQName}");
-                            if (agv_state.TransferProcess == TRANSFER_PROCESS.GO_TO_SOURCE_EQ | agv_state.TransferProcess == TRANSFER_PROCESS.GO_TO_DESTINE_EQ) //移動途中
+                            if (agv_state.TransferProcess == VehicleMovementStage.Traveling_To_Source || agv_state.TransferProcess == VehicleMovementStage.Traveling_To_Destine) //移動途中
                             {
                                 if (agv_state.MainStatus == clsEnums.MAIN_STATUS.DOWN)
                                 {
@@ -156,7 +156,7 @@ namespace AGVSystem.TaskManagers
                             }
                             ALARMS EQStatusMonitoringResultAlarmCode = MonitorEQsStatusIO();
 
-                            if (EQStatusMonitoringResultAlarmCode == ALARMS.Source_Eq_Unload_Request_Off && agv_state.TransferProcess == TRANSFER_PROCESS.GO_TO_SOURCE_EQ) //前往取貨途中
+                            if (EQStatusMonitoringResultAlarmCode == ALARMS.Source_Eq_Unload_Request_Off && agv_state.TransferProcess == VehicleMovementStage.Traveling_To_Source) //前往取貨途中
                             {
                                 AlarmManagerCenter.AddAlarmAsync(ALARMS.Source_Eq_Unload_Request_Off, level: ALARM_LEVEL.WARNING, Equipment_Name: sourceEQ.EQName, location: agv_state.CurrentLocation, taskName: taskOrder.TaskName);
                                 await TaskManager.Cancel(taskOrder.TaskName, $"Source EQ Unload_Request OFF", TASK_RUN_STATUS.FAILURE);

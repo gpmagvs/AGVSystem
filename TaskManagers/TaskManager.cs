@@ -39,6 +39,15 @@ namespace AGVSystem.TaskManagers
             var _order_action = taskData.Action;
             var source_station_tag = int.Parse(taskData.From_Station);
             var destine_station_tag = int.Parse(taskData.To_Station);
+
+            bool source_station_disabled = source_station_tag == -1 ? false : !AGVSMapManager.GetMapPointByTag(source_station_tag).Enable;
+            bool destine_station_disabled = destine_station_tag == -1 ? false : !AGVSMapManager.GetMapPointByTag(destine_station_tag).Enable;
+
+            if (source_station_disabled)
+                return (false, ALARMS.Station_Disabled, "來源站點未啟用，無法指派任務");
+            if (destine_station_disabled)
+                return (false, ALARMS.Station_Disabled, "目標站點未啟用，無法指派任務");
+
             if (!taskData.bypass_eq_status_check && (_order_action == ACTION_TYPE.Load || _order_action == ACTION_TYPE.LoadAndPark
                                                    || _order_action == ACTION_TYPE.Unload || _order_action == ACTION_TYPE.Carry))
             {
@@ -236,6 +245,7 @@ namespace AGVSystem.TaskManagers
 
                     }
                 }
+                await VMSSerivces.TaskCancel(task_name);
                 return true;
             }
             catch (Exception ex)
