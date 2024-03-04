@@ -21,12 +21,21 @@ namespace AGVSystem.Models.Sys
                 if (_RunMode != value)
                 {
                     _RunMode = value;
-                    if (_RunMode == RUN_MODE.RUN)
-                        OnRunModeON();
-                    else
+                    switch (_RunMode)
                     {
-                        OnRunModeOFF();
-                        TransferTaskMode = TRANSFER_MODE.MANUAL;
+                        case RUN_MODE.MAINTAIN:
+                            OnRunModeOFF();
+                            TransferTaskMode = TRANSFER_MODE.MANUAL;
+                            break;
+                        case RUN_MODE.RUN:
+                            OnRunModeON();
+                            break;
+                        case RUN_MODE.SWITCH_TO_MAITAIN_ING:
+                            break;
+                        case RUN_MODE.SWITCH_TO_RUN_ING:
+                            break;
+                        default:
+                            break;
                     }
                 }
             }
