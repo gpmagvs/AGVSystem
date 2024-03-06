@@ -27,17 +27,5 @@ call git checkout master
 call git pull origin master 
 cd ../
 
-cd GPMVehicleControlSystem
-call git fetch
-call git checkout master
-call git pull origin master 
-cd ../
-
-cd vmsystem
-call git fetch
-call git checkout master
-call git pull origin master 
-cd ../
-
 
 pause
