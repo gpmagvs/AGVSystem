@@ -204,7 +204,7 @@ namespace AGVSystem.TaskManagers
                 if (!hasChargeStationUse)
                     return (false, ALARMS.NO_AVAILABLE_CHARGE_PILE, "沒有空閒的充電站可以使用");
 
-                bool isAllChargeStationsHasTask = chargeTasks.Count() == usableChargeStationTags.Count();
+                bool isAllChargeStationsHasTask = chargeTasks.Where(tk => tk.DesignatedAGVName == agv_name).Count() == usableChargeStationTags.Count();
                 if (isAllChargeStationsHasTask)
                     return (false, ALARMS.NO_AVAILABLE_CHARGE_PILE, "沒有空閒的充電站可以使用");
 
