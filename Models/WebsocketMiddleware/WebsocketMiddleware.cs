@@ -128,48 +128,46 @@ namespace AGVSystem.Models.WebsocketMiddleware
         }
 
 
-        internal static void StartCollectWebUIUsingDatas()
+        internal static async Task StartCollectWebUIUsingDatas()
         {
-            Thread thread = new Thread(async () =>
+
+            await Task.Delay(100);
+            var db = new AGVSDatabase();
+            while (true)
             {
-                var db = new AGVSDatabase();
-                while (true)
+                await Task.Delay(100);
+                try
                 {
-                    Thread.Sleep(100);
+                    websocket_api_routes[WEBSOCKET_CHANNELS.EQ_STATUS].data = new
+                    {
+                        EQPData = StaEQPManagager.GetEQStates(),
+                        ChargeStationData = StaEQPManagager.GetChargeStationStates(),
+                        WIPsData = GetWIPDataViewModels()
+                    };
+                    websocket_api_routes[WEBSOCKET_CHANNELS.VMS_ALIVE_CHECK].data = true;
+                    websocket_api_routes[WEBSOCKET_CHANNELS.AGV_LOCATION_UPLOAD].data = AGVSMapManager.AGVUploadCoordinationStore;
+                    websocket_api_routes[WEBSOCKET_CHANNELS.HOTRUN].data = HotRunScriptManager.HotRunScripts;
                     try
                     {
-                        websocket_api_routes[WEBSOCKET_CHANNELS.EQ_STATUS].data = new
-                        {
-                            EQPData = StaEQPManagager.GetEQStates(),
-                            ChargeStationData = StaEQPManagager.GetChargeStationStates(),
-                            WIPsData = GetWIPDataViewModels()
-                        };
-                        websocket_api_routes[WEBSOCKET_CHANNELS.VMS_ALIVE_CHECK].data = true;
-                        websocket_api_routes[WEBSOCKET_CHANNELS.AGV_LOCATION_UPLOAD].data = AGVSMapManager.AGVUploadCoordinationStore;
-                        websocket_api_routes[WEBSOCKET_CHANNELS.HOTRUN].data = HotRunScriptManager.HotRunScripts;
-                        try
-                        {
-                            websocket_api_routes[WEBSOCKET_CHANNELS.UNCHECKED_ALARM].data = AlarmManagerCenter.uncheckedAlarms;
-                            var incompleted_tasks = db.tables.Tasks.Where(t => t.State == TASK_RUN_STATUS.WAIT | t.State == TASK_RUN_STATUS.NAVIGATING).OrderByDescending(t => t.Priority).AsNoTracking().ToList();
-                            var completed_tasks = db.tables.Tasks.Where(t => t.State != TASK_RUN_STATUS.WAIT && t.State != TASK_RUN_STATUS.NAVIGATING).OrderByDescending(t => t.FinishTime).Take(20).AsNoTracking().ToList();
-                            websocket_api_routes[WEBSOCKET_CHANNELS.TASK_DATA].data = new { incompleteds = incompleted_tasks, completeds = completed_tasks };
+                        websocket_api_routes[WEBSOCKET_CHANNELS.UNCHECKED_ALARM].data = AlarmManagerCenter.uncheckedAlarms;
+                        var incompleted_tasks = db.tables.Tasks.Where(t => t.State == TASK_RUN_STATUS.WAIT | t.State == TASK_RUN_STATUS.NAVIGATING).OrderByDescending(t => t.Priority).AsNoTracking().ToList();
+                        var completed_tasks = db.tables.Tasks.Where(t => t.State != TASK_RUN_STATUS.WAIT && t.State != TASK_RUN_STATUS.NAVIGATING).OrderByDescending(t => t.FinishTime).Take(20).AsNoTracking().ToList();
+                        websocket_api_routes[WEBSOCKET_CHANNELS.TASK_DATA].data = new { incompleteds = incompleted_tasks, completeds = completed_tasks };
 
-                            var vmsData = await GetAGV_StatesData_FromVMS(db.tables.Tasks);
-                            if (vmsData != null)
-                                websocket_api_routes[WEBSOCKET_CHANNELS.VMS_STATUS].data = vmsData;
-                        }
-                        catch (Exception ex)
-                        {
-                        }
+                        var vmsData = await GetAGV_StatesData_FromVMS(db.tables.Tasks);
+                        if (vmsData != null)
+                            websocket_api_routes[WEBSOCKET_CHANNELS.VMS_STATUS].data = vmsData;
                     }
                     catch (Exception ex)
                     {
-                        continue;
                     }
                 }
+                catch (Exception ex)
+                {
+                    continue;
+                }
+            }
 
-            });
-            thread.Start();
         }
 
         private static List<ViewModel.WIPDataViewModel> GetWIPDataViewModels()
