@@ -43,14 +43,6 @@ namespace AGVSystem.TaskManagers
             bool source_station_disabled = source_station_tag == -1 ? false : !AGVSMapManager.GetMapPointByTag(source_station_tag).Enable;
             bool destine_station_disabled = destine_station_tag == -1 ? false : !AGVSMapManager.GetMapPointByTag(destine_station_tag).Enable;
 
-            bool destine_station_isequipment = destine_station_tag == -1 ? false : AGVSMapManager.GetMapPointByTag(destine_station_tag).IsEquipment;
-            if (destine_station_isequipment == true)
-            {
-                if (_order_action == ACTION_TYPE.None)
-                    return (false, ALARMS.Station_Disabled, "目標站點為設備，無法指派移動任務");
-                else if (_order_action == ACTION_TYPE.Park)
-                    return (false, ALARMS.Station_Disabled, "目標站點為設備，無法指派停車任務");
-            }
             if (source_station_disabled)
                 return (false, ALARMS.Station_Disabled, "來源站點未啟用，無法指派任務");
             if (destine_station_disabled)
