@@ -51,7 +51,7 @@ namespace AGVSystem.Models.EQDevices
         private static void _Log(string logMessage, string eqName)
         {
             using LogBase _logger = new LogBase(@$"AGVS LOG\EquipmentManager\{eqName}");
-            _logger.WriteLog(new LogItem(LogLevel.Information, logMessage, true)
+            _logger.WriteLogAsync(new LogItem(LogLevel.Information, logMessage, true)
             {
             });
         }
