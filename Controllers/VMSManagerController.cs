@@ -28,15 +28,14 @@ namespace AGVSystem.Controllers
         [HttpGet("/ws/VMSStatus")]
         public async Task GetVMSStatus(string? user_id = "")
         {
-            WebsocketMiddleware.UserJoin(user_id);
-            await WebsocketMiddleware.ClientRequest(HttpContext, user_id);
+            await AGVSWebsocketServerMiddleware.Middleware.HandleWebsocketClientConnectIn(HttpContext, user_id);
         }
 
 
         [HttpGet("/ws/AGVLocationUpload")]
         public async Task AGVLocationUpload()
         {
-            await WebsocketMiddleware.ClientRequest(HttpContext);
+            await AGVSWebsocketServerMiddleware.Middleware.HandleWebsocketClientConnectIn(HttpContext);
         }
     }
 

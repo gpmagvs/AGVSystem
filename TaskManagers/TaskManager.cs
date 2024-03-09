@@ -43,7 +43,7 @@ namespace AGVSystem.TaskManagers
             bool source_station_disabled = source_station_tag == -1 ? false : !AGVSMapManager.GetMapPointByTag(source_station_tag).Enable;
             bool destine_station_disabled = destine_station_tag == -1 ? false : !AGVSMapManager.GetMapPointByTag(destine_station_tag).Enable;
 
-            bool destine_station_isequipment = AGVSMapManager.GetMapPointByTag(destine_station_tag).IsEquipment;
+            bool destine_station_isequipment = destine_station_tag == -1 ? false : AGVSMapManager.GetMapPointByTag(destine_station_tag).IsEquipment;
             if (destine_station_isequipment == true)
             {
                 if (_order_action == ACTION_TYPE.None)

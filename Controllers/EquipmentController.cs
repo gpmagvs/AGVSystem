@@ -22,7 +22,8 @@ namespace AGVSystem.Controllers
         [HttpGet("/ws/EQStatus")]
         public async Task EQStatus()
         {
-            await WebsocketMiddleware.ClientRequest(HttpContext);
+            await AGVSWebsocketServerMiddleware.Middleware.HandleWebsocketClientConnectIn(HttpContext);
+
 
         }
 

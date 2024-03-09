@@ -97,7 +97,8 @@ namespace AGVSystem.Controllers
         [HttpGet("/ws/VMSAliveCheck")]
         public async Task AliveCheck()
         {
-            await WebsocketMiddleware.ClientRequest(HttpContext);
+            await AGVSWebsocketServerMiddleware.Middleware.HandleWebsocketClientConnectIn(HttpContext);
+
         }
 
 

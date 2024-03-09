@@ -92,8 +92,7 @@ _ = Task.Run(async () =>
     });
 });
 
-WebsocketMiddleware.StartCollectWebUIUsingDatas();
-
+AGVSWebsocketServerMiddleware.Middleware.Initialize();
 app.UseAuthentication();
 app.UseSwagger();
 app.UseSwaggerUI();

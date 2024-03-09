@@ -22,7 +22,7 @@ namespace AGVSystem.Controllers
         [HttpGet("/UncheckedAlarm")]
         public async Task Alarms()
         {
-            await WebsocketMiddleware.ClientRequest(HttpContext);
+            await AGVSWebsocketServerMiddleware.Middleware.HandleWebsocketClientConnectIn(HttpContext);
         }
         [HttpGet("SystemAlarmReset")]
         public async Task<IActionResult> SystemAlarmReset()

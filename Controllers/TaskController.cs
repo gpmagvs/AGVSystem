@@ -52,13 +52,15 @@ namespace AGVSystem.Controllers
         [HttpGet("/ws/TaskData")]
         public async Task GetNotFinishTaskListData()
         {
-            await WebsocketMiddleware.ClientRequest(HttpContext);
+            await AGVSWebsocketServerMiddleware.Middleware.HandleWebsocketClientConnectIn(HttpContext);
+
         }
 
         [HttpGet("/ws/HotRun")]
         public async Task GetHotRunStates()
         {
-            await WebsocketMiddleware.ClientRequest(HttpContext);
+            await AGVSWebsocketServerMiddleware.Middleware.HandleWebsocketClientConnectIn(HttpContext);
+
         }
 
         [HttpGet("Cancel")]

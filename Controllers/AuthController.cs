@@ -129,16 +129,16 @@ namespace AGVSystem.Controllers
         [HttpGet("UserRouteChange")]
         public async Task<IActionResult> UserRouteChange(string userID, string current_route)
         {
-            WebsocketMiddleware.UserChangeRoute(userID, current_route);
-            if (current_route == "/map")
-            {
-                var userEdidingMap= WebsocketMiddleware.EditMapUsers.Where(id => id != userID).ToList();
+            //WebsocketMiddleware.UserChangeRoute(userID, current_route);
+            //if (current_route == "/map")
+            //{
+            //    var userEdidingMap= WebsocketMiddleware.EditMapUsers.Where(id => id != userID).ToList();
 
-                return Ok(new { isOtherUserEditingMap = userEdidingMap .Count!=0,
-                                userEditing= userEdidingMap
-                });
-            }
-            else
+            //    return Ok(new { isOtherUserEditingMap = userEdidingMap .Count!=0,
+            //                    userEditing= userEdidingMap
+            //    });
+            //}
+            //else
                 return Ok();
         }
         private string GenerateJwtToken(string username, string password, ERole role)
