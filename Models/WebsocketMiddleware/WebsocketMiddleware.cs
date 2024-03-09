@@ -150,7 +150,7 @@ namespace AGVSystem.Models.WebsocketMiddleware
                     try
                     {
                         websocket_api_routes[WEBSOCKET_CHANNELS.UNCHECKED_ALARM].data = AlarmManagerCenter.uncheckedAlarms;
-                        var incompleted_tasks = db.tables.Tasks.Where(t => t.State == TASK_RUN_STATUS.WAIT | t.State == TASK_RUN_STATUS.NAVIGATING).OrderByDescending(t => t.Priority).AsNoTracking().ToList();
+                        var incompleted_tasks = db.tables.Tasks.Where(t => t.State == TASK_RUN_STATUS.WAIT || t.State == TASK_RUN_STATUS.NAVIGATING).OrderByDescending(t => t.Priority).AsNoTracking().ToList();
                         var completed_tasks = db.tables.Tasks.Where(t => t.State != TASK_RUN_STATUS.WAIT && t.State != TASK_RUN_STATUS.NAVIGATING).OrderByDescending(t => t.FinishTime).Take(20).AsNoTracking().ToList();
                         websocket_api_routes[WEBSOCKET_CHANNELS.TASK_DATA].data = new { incompleteds = incompleted_tasks, completeds = completed_tasks };
 
