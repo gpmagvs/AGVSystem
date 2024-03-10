@@ -49,19 +49,7 @@ namespace AGVSystem.Controllers
             return Ok();
         }
 
-        [HttpGet("/ws/TaskData")]
-        public async Task GetNotFinishTaskListData()
-        {
-            await AGVSWebsocketServerMiddleware.Middleware.HandleWebsocketClientConnectIn(HttpContext);
-
-        }
-
-        [HttpGet("/ws/HotRun")]
-        public async Task GetHotRunStates()
-        {
-            await AGVSWebsocketServerMiddleware.Middleware.HandleWebsocketClientConnectIn(HttpContext);
-
-        }
+        
 
         [HttpGet("Cancel")]
         [Authorize]

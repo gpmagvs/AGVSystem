@@ -3,6 +3,7 @@ using AGVSystem.Models.Map;
 using AGVSystemCommonNet6.AGVDispatch.Messages;
 using AGVSystemCommonNet6.AGVDispatch.Model;
 using AGVSystemCommonNet6.Configuration;
+using AGVSystemCommonNet6.GPMRosMessageNet.Messages;
 using AGVSystemCommonNet6.Log;
 using AGVSystemCommonNet6.MAP;
 using Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption;
@@ -157,6 +158,34 @@ namespace AGVSystem.Controllers
             return Ok();
         }
 
+        [HttpPost("AGVIconUpload")]
+        public async Task<IActionResult> AGVIconUpload(string AGVName)
+        {
+            var file = Request.Form.Files[0];
+            if (file.Length > 100 * 1024 * 1024) // 100MB
+            {
+                return BadRequest("檔案大小超過 100MB。");
+            }
+
+            if (file.Length > 0)
+            {
+                var fileName = $@"\images\AGVDisplayImage\{AGVName}-Icon.png";
+                var imageFolder = Path.Combine(Environment.CurrentDirectory, "wwwroot");
+                var filePath = imageFolder+ fileName;
+
+                Directory.CreateDirectory(Path.GetDirectoryName(filePath));
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+                LOG.TRACE($"User Upload ICON Image For {AGVName}({filePath})");
+                return Ok(new { filename = fileName });
+            }
+
+            return BadRequest("未接收到任何檔案。");
+        }
+
         [HttpPost("IconUpload")]
         [DisableRequestSizeLimit]
         public async Task<IActionResult> IconUpload()
@@ -211,7 +240,7 @@ namespace AGVSystem.Controllers
             if (System.IO.File.Exists(fileFullPath))
             {
                 System.IO.File.Delete(fileFullPath);
-               
+
             }
             var _map = MapManager.LoadMapFromFile(false, false);
             _map.Options.EQIcons.Remove(filePath);

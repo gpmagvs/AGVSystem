@@ -19,13 +19,6 @@ namespace AGVSystem.Controllers
     [ApiController]
     public partial class EquipmentController : ControllerBase
     {
-        [HttpGet("/ws/EQStatus")]
-        public async Task EQStatus()
-        {
-            await AGVSWebsocketServerMiddleware.Middleware.HandleWebsocketClientConnectIn(HttpContext);
-
-
-        }
 
         [HttpPost("WriteOutputs")]
         public async Task<IActionResult> WriteOutPuts(string EqName, ushort start, bool[] value)

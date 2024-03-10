@@ -9,6 +9,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="wwwroot\images\AGVDisplayImages - 複製\**" />
+    <Content Remove="wwwroot\images\AGVDisplayImages - 複製\**" />
+    <EmbeddedResource Remove="wwwroot\images\AGVDisplayImages - 複製\**" />
+    <None Remove="wwwroot\images\AGVDisplayImages - 複製\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Include="favicon.ico" />
   </ItemGroup>
 
@@ -28,10 +35,6 @@
   <ItemGroup>
     <ProjectReference Include="..\AGVSystemCommonNet6\AGVSystemCommonNet6.csproj" />
     <ProjectReference Include="..\EquipmentManagment\EquipmentManagment.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="wwwroot\images\" />
   </ItemGroup>
 
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">

@@ -16,6 +16,12 @@ namespace AGVSystem.Controllers
     [ApiController]
     public class SystemController : ControllerBase
     {
+        [HttpGet("/ws")]
+        public async Task WebsocketClient(string user_id)
+        {
+            await AGVSWebsocketServerMiddleware.Middleware.HandleWebsocketClientConnectIn(HttpContext, user_id);
+
+        }
 
         [HttpGet("OperationStates")]
         public async Task<IActionResult> OperationStates()
@@ -93,14 +99,6 @@ namespace AGVSystem.Controllers
             };
             return Ok(website_config);
         }
-
-        [HttpGet("/ws/VMSAliveCheck")]
-        public async Task AliveCheck()
-        {
-            await AGVSWebsocketServerMiddleware.Middleware.HandleWebsocketClientConnectIn(HttpContext);
-
-        }
-
 
     }
 }

@@ -25,6 +25,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using System.Security.Policy;
 using System.Text;
 Console.Title = "GPM-AGV¨t²Î(AGVs)";
 LOG.SetLogFolderName("AGVS LOG");
@@ -108,6 +109,9 @@ var imageFolder = @"C:\AGVS\Map";
 Directory.CreateDirectory(imageFolder);
 var fileProvider = new PhysicalFileProvider(imageFolder);
 var requestPath = "/MapFiles";
+
+var agvDisplayImageFolder = Path.Combine(app.Environment.WebRootPath, @"images\AGVDisplayImages");
+Directory.CreateDirectory(agvDisplayImageFolder);
 
 // Enable displaying browser links.
 app.UseStaticFiles(new StaticFileOptions

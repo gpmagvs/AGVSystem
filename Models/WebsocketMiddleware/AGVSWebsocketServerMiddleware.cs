@@ -11,16 +11,18 @@ using EquipmentManagment.Manager;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using AGVSystemCommonNet6.DATABASE;
+using System.Net.NetworkInformation;
 
 namespace AGVSystem.Models.WebsocketMiddleware
 {
     public class AGVSWebsocketServerMiddleware : WebsocketServerMiddleware
     {
         public static AGVSWebsocketServerMiddleware Middleware { get; set; } = new AGVSWebsocketServerMiddleware();
-       
+
         AGVSDatabase db = new AGVSDatabase();
-        public override List<string> channelMaps { get;set; }= new List<string>()
+        public override List<string> channelMaps { get; set; } = new List<string>()
         {
+            "/ws",
             "/ws/EQStatus",
             "/ws/VMSAliveCheck",
             "/ws/VMSStatus",
@@ -33,26 +35,25 @@ namespace AGVSystem.Models.WebsocketMiddleware
 
         protected override async Task CollectViewModelData()
         {
-            CurrentViewModelDataOfAllChannel["/ws/EQStatus"] = new
-            {
-                EQPData = StaEQPManagager.GetEQStates(),
-                ChargeStationData = StaEQPManagager.GetChargeStationStates(),
-                WIPsData = GetWIPDataViewModels()
-            };
-
-            CurrentViewModelDataOfAllChannel["/ws/VMSAliveCheck"] = true;
-            CurrentViewModelDataOfAllChannel["/ws/AGVLocationUpload"] = AGVSMapManager.AGVUploadCoordinationStore;
-            CurrentViewModelDataOfAllChannel["/ws/HotRun"] = HotRunScriptManager.HotRunScripts;
-            CurrentViewModelDataOfAllChannel["/UncheckedAlarm"] = AlarmManagerCenter.uncheckedAlarms;
-
             var vmsData = await GetAGV_StatesData_FromVMS(db.tables.Tasks);
-            if (vmsData != null)
-                CurrentViewModelDataOfAllChannel["/ws/VMSStatus"] = vmsData;
-
             var incompleted_tasks = db.tables.Tasks.Where(t => t.State == TASK_RUN_STATUS.WAIT || t.State == TASK_RUN_STATUS.NAVIGATING).OrderByDescending(t => t.Priority).AsNoTracking().ToList();
             var completed_tasks = db.tables.Tasks.Where(t => t.State != TASK_RUN_STATUS.WAIT && t.State != TASK_RUN_STATUS.NAVIGATING).OrderByDescending(t => t.FinishTime).Take(20).AsNoTracking().ToList();
-            CurrentViewModelDataOfAllChannel["/ws/TaskData"] = new { incompleteds = incompleted_tasks, completeds = completed_tasks };
 
+            CurrentViewModelDataOfAllChannel["/ws"] = new
+            {
+                EQStatus = new
+                {
+                    EQPData = StaEQPManagager.GetEQStates(),
+                    ChargeStationData = StaEQPManagager.GetChargeStationStates(),
+                    WIPsData = GetWIPDataViewModels()
+                },
+                VMSAliveCheck = VMSSerivces.IsAlive,
+                AGVLocationUpload = AGVSMapManager.AGVUploadCoordinationStore,
+                HotRun = HotRunScriptManager.HotRunScripts,
+                UncheckedAlarm = AlarmManagerCenter.uncheckedAlarms,
+                VMSStatus = vmsData,
+                TaskData = new { incompleteds = incompleted_tasks, completeds = completed_tasks }
+            };
         }
 
         private static async Task<List<clsAGVStateViewModel>> GetAGV_StatesData_FromVMS(DbSet<AGVSystemCommonNet6.AGVDispatch.clsTaskDto> tasks)

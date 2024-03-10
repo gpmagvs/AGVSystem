@@ -19,11 +19,6 @@ namespace AGVSystem.Controllers
             _dbContext = dbContext;
         }
 
-        [HttpGet("/UncheckedAlarm")]
-        public async Task Alarms()
-        {
-            await AGVSWebsocketServerMiddleware.Middleware.HandleWebsocketClientConnectIn(HttpContext);
-        }
         [HttpGet("SystemAlarmReset")]
         public async Task<IActionResult> SystemAlarmReset()
         {

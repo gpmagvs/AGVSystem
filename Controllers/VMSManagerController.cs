@@ -25,18 +25,7 @@ namespace AGVSystem.Controllers
         }
 
 
-        [HttpGet("/ws/VMSStatus")]
-        public async Task GetVMSStatus(string? user_id = "")
-        {
-            await AGVSWebsocketServerMiddleware.Middleware.HandleWebsocketClientConnectIn(HttpContext, user_id);
-        }
-
-
-        [HttpGet("/ws/AGVLocationUpload")]
-        public async Task AGVLocationUpload()
-        {
-            await AGVSWebsocketServerMiddleware.Middleware.HandleWebsocketClientConnectIn(HttpContext);
-        }
+       
     }
 
     public class clsAGVStateViewModel : clsAGVStateDto
