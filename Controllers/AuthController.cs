@@ -26,12 +26,21 @@ namespace AGVSystem.Controllers
             _userDbContext = dbContext;
         }
 
+        /// <summary>
+        /// 取得用戶列表
+        /// </summary>
+        /// <returns>用戶列表</returns>
         [HttpGet("Users")]
         public async Task<IActionResult> GetUsers()
         {
             return Ok(_userDbContext.Users.ToList());
         }
 
+        /// <summary>
+        /// 註冊新用戶
+        /// </summary>
+        /// <param name="request">用戶註冊請求</param>
+        /// <returns>註冊結果</returns>
         [HttpPost("register")]
         public async Task<IActionResult> Register(UserLoginRequest request)
         {
@@ -52,7 +61,11 @@ namespace AGVSystem.Controllers
             return Ok(new { Success = true });
         }
 
-
+        /// <summary>
+        /// 用戶登入
+        /// </summary>
+        /// <param name="request">用戶登入請求</param>
+        /// <returns>登入結果及 JWT Token</returns>
         [HttpPost("login")]
         [AllowAnonymous]
         public async Task<IActionResult> Login(UserLoginRequest request)
@@ -76,6 +89,11 @@ namespace AGVSystem.Controllers
             return Ok(new { Success = true, token = token, Role = user.Role, UserName = request.Username });
         }
 
+        /// <summary>
+        /// 修改用戶設定
+        /// </summary>
+        /// <param name="usersData">用戶資料</param>
+        /// <returns>修改結果</returns>
         [HttpPost("modify")]
         [Authorize]
         public async Task<IActionResult> SaveUserSettings(List<UserEntity> usersData)
@@ -100,6 +118,11 @@ namespace AGVSystem.Controllers
             return Ok(new { Success = true });
         }
 
+        /// <summary>
+        /// 刪除用戶
+        /// </summary>
+        /// <param name="user_name">用戶名稱</param>
+        /// <returns>刪除結果</returns>
         [HttpDelete("Delete")]
         public async Task<IActionResult> DeleteUser(string user_name)
         {
@@ -112,6 +135,11 @@ namespace AGVSystem.Controllers
             return Ok(new { Success = true });
         }
 
+        /// <summary>
+        /// 新增用戶
+        /// </summary>
+        /// <param name="new_user">新用戶</param>
+        /// <returns>新增結果</returns>
         [HttpPost("Add")]
         public async Task<IActionResult> AddUser(UserEntity new_user)
         {
@@ -126,6 +154,12 @@ namespace AGVSystem.Controllers
             return Ok(new { Success = true });
         }
 
+        /// <summary>
+        /// 用戶路由變更
+        /// </summary>
+        /// <param name="userID">用戶ID</param>
+        /// <param name="current_route">當前路由</param>
+        /// <returns>路由變更結果</returns>
         [HttpGet("UserRouteChange")]
         public async Task<IActionResult> UserRouteChange(string userID, string current_route)
         {
@@ -139,8 +173,9 @@ namespace AGVSystem.Controllers
             //    });
             //}
             //else
-                return Ok();
+            return Ok();
         }
+
         private string GenerateJwtToken(string username, string password, ERole role)
         {
             // TODO: 根據需要生成 JWT Token
@@ -150,10 +185,10 @@ namespace AGVSystem.Controllers
             {
                 Subject = new ClaimsIdentity(new[]
                 {
-                    new Claim(ClaimTypes.Name, username),
-                    new Claim("Password",password),
-                    new Claim("Role",role.ToString())
-                }),
+            new Claim(ClaimTypes.Name, username),
+            new Claim("Password",password),
+            new Claim("Role",role.ToString())
+        }),
                 Expires = DateTime.UtcNow.AddDays(1),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
