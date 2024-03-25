@@ -112,26 +112,58 @@ namespace AGVSystem.Controllers
                 var charge_station = StaEQPManagager.ChargeStations.FirstOrDefault(eq => eq.EQName == EqName);
                 if (charge_station == null)
                     return Ok(new { confirm = false, message = $"{EqName} is not exist" });
+
                 clsChargeStation chargeStation = charge_station as clsChargeStation;
+                bool isGy7601 = (chargeStation.EndPointOptions as clsChargeStationOptions).chip_brand == 2;
 
                 var _item = Item.ToUpper();
                 bool success = false;
                 string message = "";
                 if (_item == "CC")
                 {
-                    success = chargeStation.SetCC(Value, out message);
+                    if (isGy7601)
+                    {
+                        var result = (await (chargeStation as clsChargeStationGY7601Base).SetCCAsync(Value));
+                        success = result.Item1;
+                        message = result.Item2;
+                    }
+                    else
+                    {
+                        success = chargeStation.SetCCAsync(Value, out message);
+                    }
                 }
                 if (_item == "CV")
                 {
-                    success = chargeStation.SetCV(Value, out message);
+                    if (isGy7601)
+                    {
+                        var result = (await (chargeStation as clsChargeStationGY7601Base).SetCVAsync(Value));
+                        success = result.Item1;
+                        message = result.Item2;
+                    }
+                    else
+                        success = chargeStation.SetCVAsync(Value, out message);
                 }
                 if (_item == "FV")
                 {
-                    success = chargeStation.SetFV(Value, out message);
+                    if (isGy7601)
+                    {
+                        var result = (await (chargeStation as clsChargeStationGY7601Base).SetFV(Value));
+                        success = result.Item1;
+                        message = result.Item2;
+                    }
+                    else
+                        success = chargeStation.SetFV(Value, out message);
                 }
                 if (_item == "TC")
                 {
-                    success = chargeStation.SetTC(Value, out message);
+                    if (isGy7601)
+                    {
+                        var result = (await (chargeStation as clsChargeStationGY7601Base).SetTCAsync(Value));
+                        success = result.Item1;
+                        message = result.Item2;
+                    }
+                    else
+                        success = chargeStation.SetTCAsync(Value, out message);
                 }
                 return Ok(new { confirm = success, message = message });
             }
