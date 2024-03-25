@@ -85,7 +85,7 @@ namespace AGVSystem.Models.WebsocketMiddleware
 
                     return vm;
                 }
-                return output;
+                return output.OrderBy(agv=>agv.AGV_Name).ToList();
             }
             catch (Exception)
             {
