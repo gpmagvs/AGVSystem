@@ -40,9 +40,12 @@ namespace AGVSystem.TaskManagers
             var source_station_tag = int.Parse(taskData.From_Station);
             var destine_station_tag = int.Parse(taskData.To_Station);
 
-            bool source_station_disabled = source_station_tag == -1 ? false : !AGVSMapManager.GetMapPointByTag(source_station_tag).Enable;
-            bool destine_station_disabled = destine_station_tag == -1 ? false : !AGVSMapManager.GetMapPointByTag(destine_station_tag).Enable;
-            bool destine_station_isequipment = destine_station_tag == -1 ? false : AGVSMapManager.GetMapPointByTag(destine_station_tag).IsEquipment;
+            AGVSystemCommonNet6.MAP.MapPoint sourcePoint = AGVSMapManager.GetMapPointByTag(source_station_tag);
+            AGVSystemCommonNet6.MAP.MapPoint destinePoint = AGVSMapManager.GetMapPointByTag(destine_station_tag);
+
+            bool source_station_disabled = sourcePoint == null || source_station_tag == -1 ? false : !sourcePoint.Enable;
+            bool destine_station_disabled = destinePoint == null || destine_station_tag == -1 ? false : !destinePoint.Enable;
+            bool destine_station_isequipment = destinePoint == null || destine_station_tag == -1 ? false : destinePoint.IsEquipment;
             if (destine_station_isequipment == true)
             {
                 if (_order_action == ACTION_TYPE.None)

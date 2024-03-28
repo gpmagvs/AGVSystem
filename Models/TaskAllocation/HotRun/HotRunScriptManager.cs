@@ -97,7 +97,7 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
 
                     //等待AGV可做任務
                     var agvstates = GetAGVState();
-                    while (agvstates.OnlineStatus == clsEnums.ONLINE_STATE.OFFLINE | !agvstates.Connected | agvstates.MainStatus == clsEnums.MAIN_STATUS.DOWN | agvstates.MainStatus == clsEnums.MAIN_STATUS.RUN)
+                    while (agvstates.OnlineStatus == clsEnums.ONLINE_STATE.OFFLINE || !agvstates.Connected || agvstates.MainStatus == clsEnums.MAIN_STATUS.DOWN || agvstates.MainStatus == clsEnums.MAIN_STATUS.RUN)
                     {
                         await Task.Delay(100);
                         if (script.cancellationTokenSource.IsCancellationRequested)
@@ -179,6 +179,8 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                 }
                 catch (Exception ex)
                 {
+                    script.state = "IDLE";
+                    UpdateScriptState(script);
                 }
 
             });
