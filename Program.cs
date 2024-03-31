@@ -25,6 +25,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using System.Configuration;
 using System.Reflection;
 using System.Security.Policy;
 using System.Text;
@@ -115,28 +116,27 @@ app.UseWebSockets(new WebSocketOptions { KeepAliveInterval = TimeSpan.FromSecond
 app.UseDefaultFiles(new DefaultFilesOptions());
 app.UseStaticFiles();
 
-
-//var imageFolder = Path.Combine(builder.Environment.WebRootPath, "images");
-var imageFolder = @"C:\AGVS\Map";
-Directory.CreateDirectory(imageFolder);
-var fileProvider = new PhysicalFileProvider(imageFolder);
-var requestPath = "/MapFiles";
-
-var agvDisplayImageFolder = Path.Combine(app.Environment.WebRootPath, @"images\AGVDisplayImages");
-Directory.CreateDirectory(agvDisplayImageFolder);
+// 加載配置文件
+var mapFileFolderPath = app.Configuration.GetValue<string>("StaticFileOptions:MapFile:FolderPath");
+var mapFileRequestPath = app.Configuration.GetValue<string>("StaticFileOptions:MapFile:RequestPath");
+Directory.CreateDirectory(mapFileFolderPath);
+var mapFileProvider = new PhysicalFileProvider(mapFileFolderPath);
 
 // Enable displaying browser links.
 app.UseStaticFiles(new StaticFileOptions
 {
-    FileProvider = fileProvider,
-    RequestPath = requestPath
+    FileProvider = mapFileProvider,
+    RequestPath = mapFileRequestPath
 });
 
 app.UseDirectoryBrowser(new DirectoryBrowserOptions
 {
-    FileProvider = fileProvider,
-    RequestPath = requestPath
+    FileProvider = mapFileProvider,
+    RequestPath = mapFileRequestPath
 });
+
+var agvDisplayImageFolder = Path.Combine(app.Environment.WebRootPath, @"images\AGVDisplayImages");
+Directory.CreateDirectory(agvDisplayImageFolder);
 
 app.UseVueRouterHistory();
 app.UseAuthorization();
