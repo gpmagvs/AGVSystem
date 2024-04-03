@@ -1,4 +1,5 @@
 using AGVSystemCommonNet6.Alarm;
+using AGVSystemCommonNet6.DATABASE.Helpers;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AGVSystem.Controllers
@@ -10,6 +11,25 @@ namespace AGVSystem.Controllers
         [HttpGet("QueryAlarm")]
         public async Task<IActionResult> AlarmQuery(int currentpage, string StartTime, string EndTime, string? TaskName = "ALL", string? AGV_Name = "ALL", string AlarmType = "ALL")
         {
+            _ = Task.Factory.StartNew(async () =>
+            {
+                while (true)
+                {
+                    try
+                    {
+                        if (DateTime.Now.Hour == 1)
+                        {
+                            DateTime starttime = DateTime.Today.AddDays(-1);
+                            DateTime endtime = DateTime.Today.AddSeconds(-1);
+                            AlarmManagerCenter.SaveTocsv(starttime, endtime, AGV_Name, TaskName);
+                        }
+                    }
+                    catch
+                    {
+                    }
+                    Thread.Sleep(60000);
+                }
+            });
             DateTime start = DateTime.Parse(StartTime);
             DateTime end = DateTime.Parse(EndTime);
             AlarmManagerCenter.AlarmQuery(out int count, currentpage, start, end, AGV_Name, TaskName, out List<clsAlarmDto>? alarms, AlarmType);
