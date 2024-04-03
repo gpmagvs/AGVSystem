@@ -23,8 +23,12 @@ namespace AGVSystem.Controllers
     {
         internal string local_map_file_path => AGVSConfigulator.SysConfigs.MapConfigs.MapFileFullName;
         private string tempMapFilePath = "";
-
-
+        private IConfiguration configuration;
+        private string mapFileFolder => configuration.GetValue<string>("StaticFileOptions:MapFile:FolderPath");
+        public MapController(IConfiguration configuration)
+        {
+            this.configuration = configuration;
+        }
         [HttpGet]
         public async Task<IActionResult> Get()
         {
@@ -54,6 +58,26 @@ namespace AGVSystem.Controllers
             else
                 return Ok(null);
         }
+
+        [HttpPost("ResetGraphXYAsCoordinations")]
+        public async Task<IActionResult> ResetGraphXYAsCoordinations()
+        {
+            try
+            {
+                foreach (var point in AGVSMapManager.CurrentMap.Points.Values)
+                {
+                    point.Graph.X = point.X;
+                    point.Graph.Y = point.Y;
+                }
+                MapManager.SaveMapToFile(AGVSMapManager.CurrentMap, local_map_file_path);
+                return Ok(new { confirm = true });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { confirm = false,message=ex.Message});
+            }
+        }
+
         [HttpPost("SaveMap")]
         public async Task<IActionResult> SaveMap([FromBody] Map map_modified)
         {
@@ -171,7 +195,7 @@ namespace AGVSystem.Controllers
             {
                 var fileName = $@"\images\AGVDisplayImage\{AGVName}-Icon.png";
                 var imageFolder = Path.Combine(Environment.CurrentDirectory, "wwwroot");
-                var filePath = imageFolder+ fileName;
+                var filePath = imageFolder + fileName;
 
                 Directory.CreateDirectory(Path.GetDirectoryName(filePath));
 
@@ -246,6 +270,30 @@ namespace AGVSystem.Controllers
             _map.Options.EQIcons.Remove(filePath);
             MapManager.SaveMapToFile(_map, AGVSConfigulator.SysConfigs.MapConfigs.MapFileFullName);
             return Ok("ok");
+        }
+
+
+
+        [HttpPost("MapImageUpload")]
+        [DisableRequestSizeLimit]
+        public async Task<IActionResult> MapImageUpload()
+        {
+            var file = Request.Form.Files[0];
+            if (file.Length > 0)
+            {
+                var fileName = Path.Combine(mapFileFolder, file.FileName);
+                //var imageFolder = Path.Combine(Environment.CurrentDirectory, "wwwroot");
+                //var filePath = imageFolder + fileName;
+                //Directory.CreateDirectory(Path.GetDirectoryName(filePath));
+                using (var stream = new FileStream(fileName, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+                //LOG.TRACE($"User Upload ICON Image For {AGVName}({filePath})");
+                return Ok(fileName);
+            }
+
+            return BadRequest("未接收到任何檔案。");
         }
 
         public class clsAGVInfoVM

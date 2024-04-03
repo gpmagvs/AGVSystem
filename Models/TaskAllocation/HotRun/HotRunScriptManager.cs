@@ -203,8 +203,7 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                 return ACTION_TYPE.Carry;
             if (action == "measure")
                 return ACTION_TYPE.Measure;
-
-            if (action == "exchange_battery")
+            if (action == "exchange_battery" || action == "exchangebattery")
                 return ACTION_TYPE.ExchangeBattery;
             else
                 return ACTION_TYPE.None;

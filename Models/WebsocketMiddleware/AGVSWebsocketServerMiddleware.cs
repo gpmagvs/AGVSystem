@@ -66,9 +66,6 @@ namespace AGVSystem.Models.WebsocketMiddleware
                     clsAGVStateViewModel vm = JsonConvert.DeserializeObject<clsAGVStateViewModel>(JsonConvert.SerializeObject(d));
                     vm.StationName = AGVSMapManager.GetNameByTagStr(vm.CurrentLocation);
 
-                    vm.IP = VMSDataStore.VehicleConfigs[vm.AGV_Name].HostIP;
-                    vm.Port = VMSDataStore.VehicleConfigs[vm.AGV_Name].HostPort;
-
                     if (vm.TaskName == "")
                     {
                         vm.TaskSourceStationName = vm.TaskDestineStationName = "";
