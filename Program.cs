@@ -1,4 +1,5 @@
 using AGVSystem;
+using AGVSystem.Models.Automation;
 using AGVSystem.Models.EQDevices;
 using AGVSystem.Models.Map;
 using AGVSystem.Models.Sys;
@@ -33,7 +34,7 @@ Console.Title = "GPM-AGV¨t²Î(AGVs)";
 LOG.SetLogFolderName("AGVS LOG");
 LOG.INFO("AGVS System Start");
 AGVSConfigulator.Init();
-AGVSDatabase.Initialize();
+AGVSDatabase.Initialize().GetAwaiter().GetResult();
 EQTransferTaskManager.Initialize();
 AGVSMapManager.Initialize();
 HotRunScriptManager.Initialize();
@@ -107,6 +108,8 @@ _ = Task.Run(async () =>
 });
 
 AGVSWebsocketServerMiddleware.Middleware.Initialize();
+AutomationManager.InitialzeDefaultTasks();
+AutomationManager.StartAllAutomationTasks();
 app.UseAuthentication();
 app.UseSwagger();
 app.UseSwaggerUI();

@@ -19,25 +19,6 @@ namespace AGVSystem.Controllers
         [HttpGet("TaskQuery")]
         public async Task<IActionResult> TaskQuery(int currentpage, string StartTime, string EndTime, string? AGV_Name = "ALL", string? TaskName = "ALL", string Result = "ALL", string ActionType = "ALL")
         {
-            _ = Task.Factory.StartNew(async () =>
-            {
-                while (true)
-                {
-                    try
-                    {
-                        if (DateTime.Now.Hour == 1)
-                        {
-                            DateTime starttime = DateTime.Today.AddDays(-1);
-                            DateTime endtime = DateTime.Today.AddSeconds(-1);
-                            TaskDatabaseHelper.SaveTocsv(starttime, endtime, AGV_Name, TaskName);
-                        }
-                    }
-                    catch
-                    {
-                    }
-                    Thread.Sleep(60000);
-                }
-            });
             DateTime start = DateTime.Parse(StartTime);
             DateTime end = DateTime.Parse(EndTime);
             using (var taskDb = new TaskDatabaseHelper())
