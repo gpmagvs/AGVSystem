@@ -34,7 +34,16 @@ Console.Title = "GPM-AGV系統(AGVs)";
 LOG.SetLogFolderName("AGVS LOG");
 LOG.INFO("AGVS System Start");
 AGVSConfigulator.Init();
-AGVSDatabase.Initialize().GetAwaiter().GetResult();
+try
+{
+    AGVSDatabase.Initialize().GetAwaiter().GetResult();
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"資料庫初始化異常-請確認資料庫! {ex.Message}");
+    Environment.Exit(4);
+}
+
 EQTransferTaskManager.Initialize();
 AGVSMapManager.Initialize();
 HotRunScriptManager.Initialize();
