@@ -107,13 +107,21 @@ var app = builder.Build();
 _ = Task.Run(async () =>
 {
     await Task.Delay(3000);
-    StaEQPManagager.InitializeAsync(new clsEQManagementConfigs
+    try
     {
-        UseEqEmu = AGVSConfigulator.SysConfigs.EQManagementConfigs.UseEQEmu,
-        EQConfigPath = $"{AGVSConfigulator.SysConfigs.EQManagementConfigs.EquipmentManagementConfigFolder}//EQConfigs.json",
-        WIPConfigPath = $"{AGVSConfigulator.SysConfigs.EQManagementConfigs.EquipmentManagementConfigFolder}//WIPConfigs.json",
-        ChargeStationConfigPath = $"{AGVSConfigulator.SysConfigs.EQManagementConfigs.EquipmentManagementConfigFolder}//ChargStationConfigs.json",
-    });
+        StaEQPManagager.InitializeAsync(new clsEQManagementConfigs
+        {
+            UseEqEmu = AGVSConfigulator.SysConfigs.EQManagementConfigs.UseEQEmu,
+            EQConfigPath = $"{AGVSConfigulator.SysConfigs.EQManagementConfigs.EquipmentManagementConfigFolder}//EQConfigs.json",
+            WIPConfigPath = $"{AGVSConfigulator.SysConfigs.EQManagementConfigs.EquipmentManagementConfigFolder}//WIPConfigs.json",
+            ChargeStationConfigPath = $"{AGVSConfigulator.SysConfigs.EQManagementConfigs.EquipmentManagementConfigFolder}//ChargStationConfigs.json",
+        });
+    }
+    catch (Exception ex)
+    {
+        AlarmManagerCenter.AddAlarmAsync(ALARMS.SYSTEM_EQP_MANAGEMENT_INITIALIZE_FAIL_WITH_EXCEPTION);
+        LOG.Critical(ex);
+    }
 });
 
 AGVSWebsocketServerMiddleware.Middleware.Initialize();
