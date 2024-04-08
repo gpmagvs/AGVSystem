@@ -95,7 +95,8 @@ namespace AGVSystem.Controllers
             AGVSConfigulator.LoadConfig();
             var website_config = new
             {
-                AGVSConfigulator.SysConfigs.WebUserLogoutExipreTime
+                AGVSConfigulator.SysConfigs.WebUserLogoutExipreTime,
+                AGVSConfigulator.SysConfigs.FieldName,
             };
             return Ok(website_config);
         }
