@@ -60,7 +60,9 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
             var script = HotRunScripts.FirstOrDefault(script => script.no == no);
             if (script != null)
             {
+                script.StopFlag = true;
                 script.cancellationTokenSource?.Cancel();
+                script.cancellationTokenSource = null;
             }
         }
         private static (bool, string) StartHotRun(HotRunScript script)
@@ -91,6 +93,7 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
             {
                 try
                 {
+                    script.StopFlag = false;
                     script.finish_num = 0;
                     script.state = "Running";
                     UpdateScriptState(script);
@@ -100,7 +103,7 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                     while (agvstates.OnlineStatus == clsEnums.ONLINE_STATE.OFFLINE || !agvstates.Connected || agvstates.MainStatus == clsEnums.MAIN_STATUS.DOWN || agvstates.MainStatus == clsEnums.MAIN_STATUS.RUN)
                     {
                         await Task.Delay(100);
-                        if (script.cancellationTokenSource.IsCancellationRequested)
+                        if (script.StopFlag || script.cancellationTokenSource.IsCancellationRequested)
                         {
                             script.state = "IDLE";
                             return;
@@ -111,7 +114,7 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                     while (script.finish_num != script.loop_num)
                     {
                         await Task.Delay(1);
-                        if (script.cancellationTokenSource.IsCancellationRequested)
+                        if (script.StopFlag || script.cancellationTokenSource.IsCancellationRequested)
                         {
                             script.state = "IDLE";
                             return;
@@ -119,26 +122,28 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                         if (agv != null)
                         {
                             foreach (HotRunAction _action in script.actions)
-                            {
+                            {                                                                                         //經惟中斷點20240409
                                 var TaskName = $"HR_{_action.action.ToUpper()}_{DateTime.Now.ToString("yMdHHmmss")}";
                                 await TaskManager.AddTask(new clsTaskDto
                                 {
                                     Action = GetActionByActionName(_action.action),
                                     From_Station = _action.source_tag.ToString(),
                                     To_Station = _action.action == "measure" ? _action.destine_name : _action.destine_tag.ToString(),
+                                    From_Slot = _action.source_slot.ToString(),
+                                    To_Slot = _action.destine_slot.ToString(),
                                     DispatcherName = "Hot_Run",
                                     Carrier_ID = _action.cst_id,
                                     TaskName = TaskName,
-                                    DesignatedAGVName = script.agv_name
+                                    DesignatedAGVName = script.agv_name,
+                                    bypass_eq_status_check = true,
                                 });
                                 TaskDatabaseHelper dbH = new TaskDatabaseHelper();
-
                                 var status = await dbH.GetTaskStateByID(TaskName);
-
+                                script.state = "Running";
                                 while (status != TASK_RUN_STATUS.NAVIGATING)
                                 {
                                     status = await dbH.GetTaskStateByID(TaskName);
-                                    if (script.cancellationTokenSource.IsCancellationRequested)
+                                    if (script.StopFlag || script.cancellationTokenSource.IsCancellationRequested)
                                     {
                                         script.state = "IDLE";
                                         return;
@@ -151,7 +156,7 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                                 while (status != TASK_RUN_STATUS.ACTION_FINISH)
                                 {
                                     status = await dbH.GetTaskStateByID(TaskName);
-                                    if (script.cancellationTokenSource.IsCancellationRequested)
+                                    if (script.StopFlag || script.cancellationTokenSource.IsCancellationRequested)
                                     {
                                         script.state = "IDLE";
                                         return;

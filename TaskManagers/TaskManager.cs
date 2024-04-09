@@ -76,12 +76,19 @@ namespace AGVSystem.TaskManagers
                 }
                 else if (_order_action == ACTION_TYPE.Carry)
                 {
-                    results = EQTransferTaskManager.CheckUnloadStationStatus(source_station_tag);
-                    if (!results.confirm)
-                        return results;
-                    results = EQTransferTaskManager.CheckLoadStationStatus(destine_station_tag);
-                    if (!results.confirm)
-                        return results;
+
+                    if (sourcePoint.StationType != STATION_TYPE.Buffer && sourcePoint.StationType != STATION_TYPE.Charge_Buffer)
+                    {
+                        results = EQTransferTaskManager.CheckUnloadStationStatus(source_station_tag);
+                        if (!results.confirm)
+                            return results;
+                    }
+                    if (destinePoint.StationType != STATION_TYPE.Buffer && destinePoint.StationType != STATION_TYPE.Charge_Buffer)
+                    {
+                        results = EQTransferTaskManager.CheckLoadStationStatus(destine_station_tag);
+                        if (!results.confirm)
+                            return results;
+                    }
                 }
             }
 
