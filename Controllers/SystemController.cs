@@ -8,6 +8,7 @@ using AGVSystemCommonNet6.Microservices.VMS;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using System.Reflection;
 using System.Text;
 
 namespace AGVSystem.Controllers
@@ -92,14 +93,25 @@ namespace AGVSystem.Controllers
         [HttpGet("Website")]
         public async Task<IActionResult> Get()
         {
-            AGVSConfigulator.LoadConfig();
+            try
+            {
+                AGVSConfigulator.LoadConfig();
+            }
+            catch (Exception ex)
+            {
+                LOG.WARN(ex.Message);
+            }
             var website_config = new
             {
                 AGVSConfigulator.SysConfigs.WebUserLogoutExipreTime,
                 AGVSConfigulator.SysConfigs.FieldName,
+                APPVersion = GetAppVersion()
             };
             return Ok(website_config);
         }
-
+        private string GetAppVersion()
+        {
+            return Assembly.GetExecutingAssembly().GetName().Version.ToString();
+        }
     }
 }

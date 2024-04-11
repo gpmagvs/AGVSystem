@@ -49,7 +49,7 @@ namespace AGVSystem.Controllers
             return Ok();
         }
 
-        
+
 
         [HttpGet("Cancel")]
         [Authorize]
@@ -144,7 +144,7 @@ namespace AGVSystem.Controllers
                 return Unauthorized();
             }
             var result = await TaskManager.CancelChargeTaskByAGVAsync(agv_name);
-            return Ok(new { confirm= result.confirm,message= result.message});
+            return Ok(new { confirm = result.confirm, message = result.message });
         }
 
 
@@ -254,7 +254,9 @@ namespace AGVSystem.Controllers
                     if (rack_content_state == RACK_CONTENT_STATE.UNKNOWN)
                         return (new { confirm = false, message = "Task Abort_起點設備RACK空框/實框狀態未知" }).ToJson();
                     else
+                    {
                         return (new { confirm = true, message = "" }).ToJson();
+                    }
                 }
             }
         }
@@ -268,8 +270,43 @@ namespace AGVSystem.Controllers
             if (eq == null)
                 return $"找不到Tag為{tag}的設備";
             eq.CancelToEQUpAndLow();
+            eq.CancelReserve();
             LOG.INFO($"Get AGV LD.ULD Task Finish At Tag {tag}-Action={action}. TO Eq DO ALL OFF", color: ConsoleColor.Green);
             return $"{eq.EQName} ToEQUp DO OFF";
+        }
+        [HttpGet("LDULDOrderStart")]
+        public async Task<string> LDULDOrderStart(int from, int to, ACTION_TYPE action)
+        {
+            string msg = "";
+            clsEQ? sourceEq = null;
+            clsEQ? destineEq = null;
+            if (from != -1)
+            {
+                sourceEq = StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == from);
+                if (sourceEq == null)
+                {
+                    return $"找不到Tag為{from}的起點設備";
+                }
+                else
+                {
+                    sourceEq.ToEQUp();
+                    sourceEq.ReserveUp();
+                    msg += $"Reserve {sourceEq.EQName} ;";
+                }
+            }
+            if (to != -1)
+            {
+                destineEq = StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == to);
+                if (destineEq == null)
+                    return $"找不到Tag為{from}的設備";
+                else
+                {
+                    destineEq.ToEQUp();
+                    destineEq.ReserveUp();
+                    msg += $"Reserve {destineEq.EQName} ;";
+                }
+            }
+            return msg;
         }
 
         [HttpPost("HotRun")]
