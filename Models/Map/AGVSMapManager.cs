@@ -4,6 +4,7 @@ using AGVSystemCommonNet6.MAP;
 using EquipmentManagment.Device.Options;
 using EquipmentManagment.Manager;
 using Newtonsoft.Json;
+using WebSocketSharp;
 
 namespace AGVSystem.Models.Map
 {
@@ -160,6 +161,19 @@ namespace AGVSystem.Models.Map
             AGVUploadLocMode = enabled;
             if (!enabled)
                 AGVUploadCoordinationStore.Clear();
+        }
+
+        internal static List<int> GetEntryPointsOfTag(List<int> maintainingEQTags)
+        {
+            return maintainingEQTags.SelectMany(tag => GetEntryPointsOfTag(tag)).ToList();
+        }
+        internal static List<int> GetEntryPointsOfTag(int eqTag)
+        {
+            MapPoint? eqPoint = CurrentMap.Points.Values.FirstOrDefault(pt => pt.TagNumber == eqTag);
+            if (eqPoint == null || !eqPoint.IsEquipment)
+                return new List<int>();
+
+            return eqPoint.Target.Keys.SelectMany(index => CurrentMap.Points.Where(pt => pt.Key == index).Select(pt => pt.Value.TagNumber)).ToList();
         }
     }
 }

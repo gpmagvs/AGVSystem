@@ -6,6 +6,16 @@ namespace AGVSystem.Controllers
 {
     public partial class EquipmentController
     {
+
+
+        [HttpGet("Emu/MaintainStatusSimulation")]
+        public async Task<IActionResult> MaintainStatusSimulation(string EqName, bool isMaintain)
+        {
+            bool confirm = StaEQPEmulatorsManagager.MaintainStatusSimulation(EqName, isMaintain);
+            return Ok(confirm);
+        }
+
+
         [HttpGet("Emu/InputChange")]
         public async Task<IActionResult> InputChange(string EqName, int index, bool value)
         {

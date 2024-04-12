@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.CodeAnalysis.Options;
 using Newtonsoft.Json;
 using System.Text;
+using System.Xml.Linq;
 
 namespace AGVSystem.Controllers
 {
@@ -173,6 +174,27 @@ namespace AGVSystem.Controllers
 
             }
         }
+
+
+        [HttpPost("ChargeStation/SaveUsableAGVSetting")]
+        public async Task<IActionResult> SaveUsableAGVSetting([FromBody] string[] agvNames, string ChargeStationName)
+        {
+            try
+            {
+
+                var charge_station = StaEQPManagager.ChargeStations.FirstOrDefault(eq => eq.EQName == ChargeStationName);
+                if (charge_station == null)
+                    return Ok(new { confirm = false, message = $"Charge Station:{ChargeStationName} is not exist" });
+                charge_station.SetUsableAGVList(agvNames);
+                StaEQPManagager.SaveChargeStationConfigs();
+                return Ok(new { confirm = true, message = "" });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { confirm = false, message = ex.Message });
+            }
+        }
+
         [HttpPost("AgvHsSignal")]
         public async Task<IActionResult> AgvHsSignal(string EqName, string SignalName, bool State)
         {
@@ -213,6 +235,7 @@ namespace AGVSystem.Controllers
 
             return Ok(new { confirm, message });
         }
+
     }
 
 }
