@@ -266,20 +266,21 @@ namespace AGVSystem.Controllers
         }
 
         [HttpGet("LoadUnloadTaskFinish")]
-        public async Task<string> LoadUnloadTaskFinish(int tag, ACTION_TYPE action)
+        public async Task<clsAGVSTaskReportResponse> LoadUnloadTaskFinish(int tag, ACTION_TYPE action)
         {
             if (action != ACTION_TYPE.Load && action != ACTION_TYPE.Unload)
-                return "Action should equal Load or Unlaod";
+                return new clsAGVSTaskReportResponse(false, "Action should equal Load or Unlaod");
             clsEQ? eq = StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == tag);
             if (eq == null)
-                return $"找不到Tag為{tag}的設備";
+                return new clsAGVSTaskReportResponse(false, $"找不到Tag為{tag}的設備");
+
             eq.CancelToEQUpAndLow();
             eq.CancelReserve();
             LOG.INFO($"Get AGV LD.ULD Task Finish At Tag {tag}-Action={action}. TO Eq DO ALL OFF", color: ConsoleColor.Green);
-            return $"{eq.EQName} ToEQUp DO OFF";
+            return new clsAGVSTaskReportResponse(true, $"{eq.EQName} ToEQUp DO OFF");
         }
         [HttpGet("LDULDOrderStart")]
-        public async Task<string> LDULDOrderStart(int from, int to, ACTION_TYPE action)
+        public async Task<clsAGVSTaskReportResponse> LDULDOrderStart(int from, int to, ACTION_TYPE action)
         {
             string msg = "";
             clsEQ? sourceEq = null;
@@ -289,7 +290,7 @@ namespace AGVSystem.Controllers
                 sourceEq = StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == from);
                 if (sourceEq == null)
                 {
-                    return $"找不到Tag為{from}的起點設備";
+                    return new clsAGVSTaskReportResponse(false, $"找不到Tag為{from}的起點設備");
                 }
                 else
                 {
@@ -302,7 +303,7 @@ namespace AGVSystem.Controllers
             {
                 destineEq = StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == to);
                 if (destineEq == null)
-                    return $"找不到Tag為{from}的設備";
+                    return new clsAGVSTaskReportResponse(false, $"找不到Tag為{from}的設備");
                 else
                 {
                     destineEq.ToEQUp();
@@ -310,7 +311,7 @@ namespace AGVSystem.Controllers
                     msg += $"Reserve {destineEq.EQName} ;";
                 }
             }
-            return msg;
+            return new clsAGVSTaskReportResponse(true, msg);
         }
 
         [HttpPost("HotRun")]
