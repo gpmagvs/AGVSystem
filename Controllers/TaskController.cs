@@ -10,7 +10,7 @@ using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.Log;
 using AGVSystemCommonNet6.MAP;
-
+using AGVSystemCommonNet6.Microservices.ResponseModel;
 using AGVSystemCommonNet6.User;
 using AGVSystemCommonNet6.Vehicle_Control.VCS_ALARM;
 using EquipmentManagment.MainEquipment;
@@ -231,31 +231,35 @@ namespace AGVSystem.Controllers
         }
 
         [HttpGet("StartTransferCargoReport")]
-        public async Task<string> StartTransferCargoReport(string AGVName, int SourceTag, int DestineTag)
+        public async Task<clsAGVSTaskReportResponse> StartTransferCargoReport(string AGVName, int SourceTag, int DestineTag)
         {
-            var _response = new { confirm = false, message = "" };
+            var _response = new clsAGVSTaskReportResponse();
 
             clsEQ? destineEQ = StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == DestineTag);
             clsEQ sourceEQ = null;
             if (destineEQ == null)
             {
-                return (new { confirm = false, message = $"找不到Tag為{DestineTag}的終點設備" }).ToJson();
+
+                return new clsAGVSTaskReportResponse() { confirm = false, message = $"找不到Tag為{DestineTag}的終點設備" };
             }
             else
             {
                 sourceEQ = StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == SourceTag);
                 if (sourceEQ == null)
                 {
-                    return (new { confirm = false, message = $"找不到Tag為{SourceTag}的起點設備" }).ToJson();
+                    return new clsAGVSTaskReportResponse() { confirm = false, message = $"找不到Tag為{SourceTag}的起點設備" };
+
                 }
                 else
                 {
                     RACK_CONTENT_STATE rack_content_state = StaEQPManagager.CargoStartTransferToDestineHandler(sourceEQ, destineEQ);
                     if (rack_content_state == RACK_CONTENT_STATE.UNKNOWN)
-                        return (new { confirm = false, message = "Task Abort_起點設備RACK空框/實框狀態未知" }).ToJson();
+                    {
+                        return new clsAGVSTaskReportResponse() { confirm = false, message = $"Task Abort_起點設備RACK空框/實框狀態未知" };
+                    }
                     else
                     {
-                        return (new { confirm = true, message = "" }).ToJson();
+                        return new clsAGVSTaskReportResponse { confirm = true };
                     }
                 }
             }
