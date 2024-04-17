@@ -136,10 +136,7 @@ namespace AGVSystem.TaskManagers
                             }
                             if (taskOrder.TaskName != agv_state.TaskName)
                                 continue;
-                            destineEQ.ToEQLow();
-                            destineEQ.ReserveLow();
-                            sourceEQ.ReserveLow();
-                            LOG.INFO($"Reserved {sourceEQ.EQName} and {destineEQ.EQName}");
+                          
                             if (agv_state.TransferProcess == VehicleMovementStage.Traveling_To_Source || agv_state.TransferProcess == VehicleMovementStage.Traveling_To_Destine) //移動途中
                             {
                                 if (agv_state.MainStatus == clsEnums.MAIN_STATUS.DOWN)
@@ -185,8 +182,6 @@ namespace AGVSystem.TaskManagers
 
                     }
                     LOG.WARN($"[LocalAutoTransferTaskMonitor] {taskOrder.TaskName} Monitor End ,Current Order State ={orderState},AGV Main Status= {agv_state.MainStatus}");
-                    sourceEQ.CancelReserve();
-                    destineEQ.CancelReserve();
                     EQTransferTaskManager.UnloadEQQueueing.Remove(sourceEQ);
                     LOG.WARN($"[LocalAutoTransferTaskMonitor] {taskOrder.TaskName} OFF reserve signal of {sourceEQ.EQName} and {destineEQ.EQName}");
                     RaiseMonitorEndInvloke();
