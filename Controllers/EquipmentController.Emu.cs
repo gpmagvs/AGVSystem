@@ -9,9 +9,9 @@ namespace AGVSystem.Controllers
 
 
         [HttpGet("Emu/MaintainStatusSimulation")]
-        public async Task<IActionResult> MaintainStatusSimulation(string EqName, bool isMaintain)
+        public async Task<IActionResult> MaintainStatusSimulation(int TagNumber, bool isMaintain)
         {
-            bool confirm = StaEQPEmulatorsManagager.MaintainStatusSimulation(EqName, isMaintain);
+            bool confirm = StaEQPEmulatorsManagager.MaintainStatusSimulation(TagNumber, isMaintain);
             return Ok(confirm);
         }
 
