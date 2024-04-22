@@ -12,7 +12,22 @@ namespace AGVSystem.Models.EQDevices
             EndPointDeviceAbstract.OnEQDisconnected += HandleDeviceDisconnected;
             EndPointDeviceAbstract.OnEQConnected += HandleDeviceReconnected;
             EndPointDeviceAbstract.OnEQInputDataSizeNotEnough += HandleEQInputDataSizeNotEnough;
+            EndPointDeviceAbstract.OnPartsStartReplacing += HandleEQStartPartsReplace;
+            EndPointDeviceAbstract.OnPartsEndReplacing += HandleEQFinishPartsReplace;
 
+        }
+
+        private static void HandleEQFinishPartsReplace(object? sender, EndPointDeviceAbstract e)
+        {
+
+            var tagOfEQInPartsReplacing = e.EndPointOptions.TagID;
+            AGVSystemCommonNet6.Microservices.VMS.VMSSerivces.RemovePartsReplaceworkstationTag(tagOfEQInPartsReplacing);
+        }
+
+        private static void HandleEQStartPartsReplace(object? sender, EndPointDeviceAbstract e)
+        {
+            var tagOfEQInPartsReplacing = e.EndPointOptions.TagID;
+            AGVSystemCommonNet6.Microservices.VMS.VMSSerivces.AddPartsReplaceworkstationTag(tagOfEQInPartsReplacing);
         }
 
         private static void HandleEQInputDataSizeNotEnough(object? sender, EndPointDeviceAbstract device)
@@ -33,7 +48,7 @@ namespace AGVSystem.Models.EQDevices
         internal static async void HandleDeviceReconnected(object? sender, EndPointDeviceAbstract device)
         {
             _Log($"EQ-{device.EQName} 已連線({device.EndPointOptions.ConnOptions.IP}-{device.EndPointOptions.ConnOptions.ConnMethod})", device.EQName);
-                await AlarmManagerCenter.SetAlarmCheckedAsync(device.EQName, ALARMS.EQ_Disconnect, "SystemAuto");
+            await AlarmManagerCenter.SetAlarmCheckedAsync(device.EQName, ALARMS.EQ_Disconnect, "SystemAuto");
         }
 
         internal static async void HandleEQIOStateChanged(object? sender, EndPointDeviceAbstract.IOChangedEventArgs device)

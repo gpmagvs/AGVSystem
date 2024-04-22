@@ -5,7 +5,7 @@ https://go.microsoft.com/fwlink/?LinkID=208121.
 <Project>
   <PropertyGroup>
     <_PublishTargetUrl>C:\AGVSystem</_PublishTargetUrl>
-    <History>True|2024-04-17T12:15:52.9475982Z;True|2024-04-17T17:01:41.2237689+08:00;True|2024-04-17T14:18:44.9484017+08:00;True|2024-04-15T10:33:49.8885760+08:00;</History>
+    <History>True|2024-04-22T05:42:21.2688184Z;True|2024-04-17T20:15:52.9475982+08:00;True|2024-04-17T17:01:41.2237689+08:00;True|2024-04-17T14:18:44.9484017+08:00;True|2024-04-15T10:33:49.8885760+08:00;</History>
     <LastFailureDetails />
   </PropertyGroup>
 </Project>

@@ -16,6 +16,13 @@ namespace AGVSystem.Controllers
         }
 
 
+
+        [HttpGet("Emu/PartsReplcingSimulation")]
+        public async Task<IActionResult> PartsReplcingSimulation(int TagNumber, bool isPartsReplcing)
+        {
+            bool confirm = StaEQPEmulatorsManagager.PartsReplacingSimulation(TagNumber, isPartsReplcing);
+            return Ok(confirm);
+        }
         [HttpGet("Emu/InputChange")]
         public async Task<IActionResult> InputChange(string EqName, int index, bool value)
         {
