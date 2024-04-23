@@ -18,6 +18,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.CodeAnalysis.Emit;
 using AGVSystemCommonNet6.Microservices.VMS;
+using EquipmentManagment.Device.Options;
 
 namespace AGVSystem.TaskManagers
 {
@@ -245,22 +246,40 @@ namespace AGVSystem.TaskManagers
                 return new(true, ALARMS.NONE, "");
 
             clsAGVStateDto? _agv_assigned = VMSSerivces.AgvStatesData.FirstOrDefault(agv_dat => agv_dat.AGV_Name == _agv_name);
-            EquipmentManagment.Device.Options.VEHICLE_TYPE model = _agv_assigned.Model.ConvertToEQAcceptAGVTYPE();
+            VEHICLE_TYPE model = _agv_assigned.Model.ConvertToEQAcceptAGVTYPE();
 
             clsEQ source_equipment = StaEQPManagager.GetEQByTag(taskData.From_Station_Tag);
             clsEQ destine_equipment = StaEQPManagager.GetEQByTag(taskData.To_Station_Tag);
 
             if (source_equipment != null)
             {
-                EquipmentManagment.Device.Options.VEHICLE_TYPE source_eq_accept_agv_model = source_equipment.EndPointOptions.Accept_AGV_Type;
-                if (source_eq_accept_agv_model != EquipmentManagment.Device.Options.VEHICLE_TYPE.ALL && source_eq_accept_agv_model != model)
+                VEHICLE_TYPE source_eq_accept_agv_model = source_equipment.EndPointOptions.Accept_AGV_Type;
+                if (source_eq_accept_agv_model != VEHICLE_TYPE.ALL && source_eq_accept_agv_model != model)
                     return (false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Source_Equipment, $"來源設備不允許{model}車種進行任務");
             }
             if (destine_equipment != null)
             {
-                EquipmentManagment.Device.Options.VEHICLE_TYPE destine_eq_accept_agv_model = destine_equipment.EndPointOptions.Accept_AGV_Type;
-                if (destine_eq_accept_agv_model != EquipmentManagment.Device.Options.VEHICLE_TYPE.ALL && destine_eq_accept_agv_model != model)
-                    return (false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Destine_Equipment, $"終點設備不允許{model}車種進行任務");
+                VEHICLE_TYPE destine_eq_accept_agv_model = destine_equipment.EndPointOptions.Accept_AGV_Type;
+
+                if (taskData.need_change_agv)
+                {
+                    //檢查終點站可用車種
+                    var toDestineAGV = VMSSerivces.AgvStatesData.FirstOrDefault(agv_dat => agv_dat.AGV_Name == taskData.TransferToDestineAGVName);
+                    var modelToDestine = toDestineAGV.Model.ConvertToEQAcceptAGVTYPE();
+                    if (destine_eq_accept_agv_model != VEHICLE_TYPE.ALL && destine_eq_accept_agv_model != modelToDestine)
+                        return (false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Destine_Equipment, $"終點設備不允許{modelToDestine}車種進行任務");
+                    //檢查轉運站可用車種
+                    clsEQ transferStation_equipment = StaEQPManagager.GetEQByTag(taskData.ChangeAGVMiddleStationTag);
+                    VEHICLE_TYPE transferStation_eq_accept_agv_model = transferStation_equipment.EndPointOptions.Accept_AGV_Type;
+                    if (transferStation_eq_accept_agv_model != VEHICLE_TYPE.ALL && transferStation_eq_accept_agv_model != transferStation_eq_accept_agv_model)
+                        return (false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Destine_Equipment, $"轉運設備不允許{model}車種進行任務");
+                }
+                else
+                {
+                    if (destine_eq_accept_agv_model != VEHICLE_TYPE.ALL && destine_eq_accept_agv_model != model)
+                        return (false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Destine_Equipment, $"終點設備不允許{model}車種進行任務");
+                }
+
             }
 
             return new(true, ALARMS.NONE, "");
