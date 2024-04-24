@@ -15,6 +15,7 @@ using AGVSystemCommonNet6.User;
 using AGVSystemCommonNet6.Vehicle_Control.VCS_ALARM;
 using EquipmentManagment.MainEquipment;
 using EquipmentManagment.Manager;
+using EquipmentManagment.WIP;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -169,65 +170,33 @@ namespace AGVSystem.Controllers
             return Ok(await AddTask(taskData, user));
         }
 
-        /// <summary>
-        /// Load/Unload完成回報
-        /// </summary>
-        /// <param name="agv_name"></param>
-        /// <param name="LDULD">0:load , 1:unlod</param>
-        /// <returns></returns>
-        [HttpPost("LDULDFinishFeedback")]
-        public async Task<IActionResult> LDULDFinishFeedback(string agv_name, int EQTag, int LDULD)
-        {
-            LOG.INFO($"AGVC LDULD REPORT : {agv_name} Finish {(LDULD == 0 ? "Load" : "Unload")} (EQ TAG={EQTag})");
-            clsEQ eq = StaEQPManagager.GetEQByTag(EQTag);
-
-            if (eq == null)
-                return Ok(new { confirm = false });
-            else
-            {
-                eq.CancelReserve();
-                eq.ToEQLow();
-            }
-            if (AGVSConfigulator.SysConfigs.EQManagementConfigs.UseEQEmu)
-            {
-                _ = Task.Run(() =>
-                   {
-                       var eqEmu = StaEQPEmulatorsManagager.GetEQEmuByName(eq.EQName);
-                       if (LDULD == 0)
-                       {
-                           eqEmu.SetStatusBUSY();
-                           //Task.Factory.StartNew(async () =>
-                           //{
-                           //    await Task.Delay(3000); //等待3秒後 Unload Request ON ,模擬設備完成
-                           //    eqEmu.SetStatusUnloadable();
-                           //});
-                       }
-                       else if (LDULD == 1)
-                           eqEmu.SetStatusLoadable();
-                   });
-            }
-
-            return Ok(new { confirm = true });
-        }
 
         [HttpGet("LoadUnloadTaskStart")]
-        public async Task<string> LoadUnloadTaskStart(int tag, ACTION_TYPE action)
+        public async Task<IActionResult> LoadUnloadTaskStart(int tag, ACTION_TYPE action)
         {
             if (action != ACTION_TYPE.Load && action != ACTION_TYPE.Unload)
-                return "Action should equal Load or Unlaod";
-            clsEQ? eq = StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == tag);
-            if (eq == null)
-                return $"找不到Tag為{tag}的設備";
-            try
+                return Ok(new clsAGVSTaskReportResponse(false, "Action should equal Load or Unlaod"));
+
+            (bool existDevice, clsEQ mainEQ, clsRack rack) result = TryGetEndDevice(tag);
+
+            if (!result.existDevice)
+                return Ok(new clsAGVSTaskReportResponse(false, $"找不到Tag為{tag}的設備"));
+
+            if (result.mainEQ != null)
             {
-                eq.ToEQUp();
+                try
+                {
+                    result.mainEQ.ToEQUp();
+                }
+                catch (Exception ex)
+                {
+                    return Ok(new clsAGVSTaskReportResponse(false, $"{result.mainEQ.EQName} ToEQUp DO ON的過程中發生錯誤:{ex.Message}"));
+                }
+                LOG.INFO($"Get AGV LD.ULD Task Start At Tag {tag}-Action={action}. TO Eq Up DO ON", color: ConsoleColor.Green);
+                return Ok(new clsAGVSTaskReportResponse(true, $"{result.mainEQ.EQName} ToEQUp DO ON"));
             }
-            catch (Exception ex)
-            {
-                return $"{eq.EQName} ToEQUp DO ON的過程中發生錯誤:{ex.Message}";
-            }
-            LOG.INFO($"Get AGV LD.ULD Task Start At Tag {tag}-Action={action}. TO Eq Up DO ON", color: ConsoleColor.Green);
-            return $"{eq.EQName} ToEQUp DO ON";
+            else
+                return  Ok(new clsAGVSTaskReportResponse(true, $"{action} at {result.rack.EQName} Start"));
         }
 
         [HttpGet("StartTransferCargoReport")]
@@ -270,58 +239,70 @@ namespace AGVSystem.Controllers
         {
             if (action != ACTION_TYPE.Load && action != ACTION_TYPE.Unload)
                 return new clsAGVSTaskReportResponse(false, "Action should equal Load or Unlaod");
-            clsEQ? eq = StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == tag);
-            if (eq == null)
-                return new clsAGVSTaskReportResponse(false, $"找不到Tag為{tag}的設備");
 
-            eq.CancelToEQUpAndLow();
-            eq.CancelReserve();
-            LOG.INFO($"Get AGV LD.ULD Task Finish At Tag {tag}-Action={action}. TO Eq DO ALL OFF", color: ConsoleColor.Green);
-            return new clsAGVSTaskReportResponse(true, $"{eq.EQName} ToEQUp DO OFF");
+            (bool existDevice, clsEQ mainEQ, clsRack rack) result = TryGetEndDevice(tag);
+            if (!result.existDevice)
+                return new clsAGVSTaskReportResponse(false, $"找不到Tag為{tag}的設備");
+            if (result.mainEQ != null)
+            {
+                result.mainEQ.CancelToEQUpAndLow();
+                result.mainEQ.CancelReserve();
+                LOG.INFO($"Get AGV LD.ULD Task Finish At Tag {tag}-Action={action}. TO Eq DO ALL OFF", color: ConsoleColor.Green);
+                return new clsAGVSTaskReportResponse(true, $"{result.mainEQ.EQName} ToEQUp DO OFF");
+            }
+            else
+                return new clsAGVSTaskReportResponse(true, $"{action} from {result.rack} Finish");
         }
         [HttpGet("LDULDOrderStart")]
         public async Task<clsAGVSTaskReportResponse> LDULDOrderStart(int from, int to, ACTION_TYPE action)
         {
             string msg = "";
-            clsEQ? sourceEq = null;
-            clsEQ? destineEq = null;
             if (from != -1)
             {
-                sourceEq = StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == from);
-                if (sourceEq == null)
+                (bool existDevice, clsEQ mainEQ, clsRack rack) result = TryGetEndDevice(from);
+                if (!result.existDevice)
                 {
                     return new clsAGVSTaskReportResponse(false, $"找不到Tag為{from}的起點設備");
                 }
                 else
                 {
-                    if (!sourceEq.IsConnected)
-                        return new clsAGVSTaskReportResponse(false, "Source Equipment Disconnect");
-
-                    sourceEq.ToEQUp();
-                    sourceEq.ReserveUp();
-                    msg += $"Reserve {sourceEq.EQName} ;";
+                    if (result.mainEQ != null)
+                    {
+                        if (!result.mainEQ.IsConnected)
+                            return new clsAGVSTaskReportResponse(false, "Source Equipment Disconnect");
+                        result.mainEQ.ToEQUp();
+                        result.mainEQ.ReserveUp();
+                        msg += $"Reserve {result.mainEQ.EQName} ;";
+                    }
                 }
             }
             if (to != -1)
             {
-
-                destineEq = StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == to);
-                if (destineEq == null)
+                (bool existDevice, clsEQ mainEQ, clsRack rack) result = TryGetEndDevice(to);
+                if (!result.existDevice)
                     return new clsAGVSTaskReportResponse(false, $"找不到Tag為{from}的設備");
                 else
                 {
+                    if (result.mainEQ != null)
+                    {
 
-                    if (!destineEq.IsConnected)
-                        return new clsAGVSTaskReportResponse(false, "Destine Equipment Disconnect");
+                        if (!result.mainEQ.IsConnected)
+                            return new clsAGVSTaskReportResponse(false, "Destine Equipment Disconnect");
 
-                    destineEq.ToEQUp();
-                    destineEq.ReserveUp();
-                    msg += $"Reserve {destineEq.EQName} ;";
+                        result.mainEQ.ToEQUp();
+                        result.mainEQ.ReserveUp();
+                        msg += $"Reserve {result.mainEQ.EQName} ;";
+                    }
                 }
             }
             return new clsAGVSTaskReportResponse(true, msg);
         }
-
+        private (bool existDevice, clsEQ mainEQ, clsRack rack) TryGetEndDevice(int tag)
+        {
+            var Eq = StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == tag);
+            var Rack = StaEQPManagager.RacksList.FirstOrDefault(eq => eq.EndPointOptions.TagID == tag);
+            return (Eq != null || Rack != null, Eq, Rack);
+        }
         [HttpPost("HotRun")]
         public async Task<IActionResult> SaveHotRun([FromBody] HotRunScript[] settings)
         {
