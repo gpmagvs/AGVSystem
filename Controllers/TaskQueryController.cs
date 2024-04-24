@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using AGVSystemCommonNet6.AGVDispatch.Model;
 using Microsoft.Build.Framework;
 using AGVSystemCommonNet6.AGVDispatch;
+using AGVSystem.Models.Map;
 
 namespace AGVSystem.Controllers
 {
@@ -24,6 +25,15 @@ namespace AGVSystem.Controllers
             using (var taskDb = new TaskDatabaseHelper())
             {
                 taskDb.TaskQuery(out int count, currentpage, start, end, AGV_Name, TaskName, Result, ActionType, out List<clsTaskDto>? tasks);
+
+                tasks.ForEach(task =>
+                {
+                    if (task.From_Station_Tag != -1)
+                        task.From_Station_Display = AGVSMapManager.GetMapPointByTag(task.From_Station_Tag).Graph.Display;
+                    if (task.To_Station_Tag != -1)
+                        task.To_Station_Display = AGVSMapManager.GetMapPointByTag(task.To_Station_Tag).Graph.Display;
+                });
+
                 return Ok(new { count, tasks });
             }
         }

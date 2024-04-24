@@ -209,6 +209,10 @@ namespace AGVSystem.Controllers
                         EQ.To_EQ_Up = State;
                     if (SignalName == "To_EQ_Low")
                         EQ.To_EQ_Low = State;
+                    if (SignalName == "Cmd_Reserve_Up")
+                        EQ.CMD_Reserve_Up = State;
+                    if (SignalName == "Cmd_Reserve_Low")
+                        EQ.CMD_Reserve_Low= State;
                     if (SignalName == "VALID")
                         EQ.HS_AGV_VALID = State;
                     if (SignalName == "TR_REQ")
