@@ -294,6 +294,9 @@ namespace AGVSystem.Controllers
                 }
                 else
                 {
+                    if (!sourceEq.IsConnected)
+                        return new clsAGVSTaskReportResponse(false, "Source Equipment Disconnect");
+
                     sourceEq.ToEQUp();
                     sourceEq.ReserveUp();
                     msg += $"Reserve {sourceEq.EQName} ;";
@@ -301,11 +304,16 @@ namespace AGVSystem.Controllers
             }
             if (to != -1)
             {
+
                 destineEq = StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == to);
                 if (destineEq == null)
                     return new clsAGVSTaskReportResponse(false, $"找不到Tag為{from}的設備");
                 else
                 {
+
+                    if (!destineEq.IsConnected)
+                        return new clsAGVSTaskReportResponse(false, "Destine Equipment Disconnect");
+
                     destineEq.ToEQUp();
                     destineEq.ReserveUp();
                     msg += $"Reserve {destineEq.EQName} ;";
