@@ -58,7 +58,6 @@ AGVSSocketHost agvs_host = new AGVSSocketHost();
 agvs_host.Start();
 AlarmManagerCenter.Initialize();
 AlarmManager.LoadVCSTrobleShootings();
-VMSDataStore.Initialize();
 VMSSerivces.OnVMSReconnected += async (sender, e) => await VMSSerivces.RunModeSwitch(SystemModes.RunMode);
 VMSSerivces.AgvStateFetchWorker();
 VMSSerivces.AliveCheckWorker();
