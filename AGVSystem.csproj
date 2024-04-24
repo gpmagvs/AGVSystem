@@ -64,6 +64,30 @@
     <ProjectReference Include="..\EquipmentManagment\EquipmentManagment.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="Resources\AOI_SOP_000_AGV 無線網路斷線回復 .pdf">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Resources\AOI_SOP_000_AGV 當機處理-2 %28工程人員%29.pdf">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Resources\AOI_SOP_000_AGV 當機處理.pdf">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Resources\AOI_SOP_010_AGV 開機關機.pdf">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Resources\AOI_SOP_010_車載更新.pdf">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Resources\AOI_SOP_100_ AGV 充電操作.pdf">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Resources\AOI_SOP_100_AGV_手動充電%28電池喚醒%29.pdf">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
 	<!--<Exec Command="powershell.exe -ExecutionPolicy Bypass -File &quot;AutoVersionModify.ps1&quot;&#xD;&#xA;" />-->
   </Target>
