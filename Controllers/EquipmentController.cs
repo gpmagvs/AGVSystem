@@ -1,5 +1,6 @@
 ﻿using AGVSystem.Models.Map;
 using AGVSystem.Models.WebsocketMiddleware;
+using AGVSystem.TaskManagers;
 using AGVSystemCommonNet6.DATABASE;
 using EquipmentManagment.ChargeStation;
 using EquipmentManagment.Connection;
@@ -70,7 +71,8 @@ namespace AGVSystem.Controllers
             {
                 Tag = option.TagID,
                 EqName = option.Name,
-                AGVModbusGatewayPort = option.ConnOptions.AGVModbusGatewayPort
+                AGVModbusGatewayPort = option.ConnOptions.AGVModbusGatewayPort,
+                Accept_AGV_Type = option.Accept_AGV_Type.ToAGVModel()
             }).ToList();
             return Ok(options);
 
@@ -212,7 +214,7 @@ namespace AGVSystem.Controllers
                     if (SignalName == "Cmd_Reserve_Up")
                         EQ.CMD_Reserve_Up = State;
                     if (SignalName == "Cmd_Reserve_Low")
-                        EQ.CMD_Reserve_Low= State;
+                        EQ.CMD_Reserve_Low = State;
                     if (SignalName == "VALID")
                         EQ.HS_AGV_VALID = State;
                     if (SignalName == "TR_REQ")

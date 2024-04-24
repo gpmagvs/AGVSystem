@@ -56,7 +56,6 @@ clsEQ.OnIOStateChanged += EQDeviceEventsHandler.HandleEQIOStateChanged;
 AGVSSocketHost agvs_host = new AGVSSocketHost();
 agvs_host.Start();
 AlarmManagerCenter.Initialize();
-VMSDataStore.Initialize();
 VMSSerivces.OnVMSReconnected += async (sender, e) => await VMSSerivces.RunModeSwitch(SystemModes.RunMode);
 VMSSerivces.AgvStateFetchWorker();
 VMSSerivces.AliveCheckWorker();
@@ -111,7 +110,6 @@ _ = Task.Run(async () =>
     {
         StaEQPManagager.InitializeAsync(new clsEQManagementConfigs
         {
-            UseEqEmu = AGVSConfigulator.SysConfigs.EQManagementConfigs.UseEQEmu,
             EQConfigPath = $"{AGVSConfigulator.SysConfigs.EQManagementConfigs.EquipmentManagementConfigFolder}//EQConfigs.json",
             WIPConfigPath = $"{AGVSConfigulator.SysConfigs.EQManagementConfigs.EquipmentManagementConfigFolder}//WIPConfigs.json",
             ChargeStationConfigPath = $"{AGVSConfigulator.SysConfigs.EQManagementConfigs.EquipmentManagementConfigFolder}//ChargStationConfigs.json",
