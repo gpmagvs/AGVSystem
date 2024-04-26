@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationIcon>favicon.ico</ApplicationIcon>
 	<GenerateDocumentationFile>true</GenerateDocumentationFile>
-	<AssemblyVersion>1.1.117.0</AssemblyVersion>
+	<AssemblyVersion>1.1.117.3</AssemblyVersion>
 
   </PropertyGroup>
 
@@ -36,9 +36,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="SaveLog\**" />
     <Compile Remove="wwwroot\images\AGVDisplayImages - 複製\**" />
+    <Content Remove="SaveLog\**" />
     <Content Remove="wwwroot\images\AGVDisplayImages - 複製\**" />
+    <EmbeddedResource Remove="SaveLog\**" />
     <EmbeddedResource Remove="wwwroot\images\AGVDisplayImages - 複製\**" />
+    <None Remove="SaveLog\**" />
     <None Remove="wwwroot\images\AGVDisplayImages - 複製\**" />
   </ItemGroup>
 
