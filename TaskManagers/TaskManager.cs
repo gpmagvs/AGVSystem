@@ -10,6 +10,7 @@ using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.DATABASE.Helpers;
 using AGVSystemCommonNet6.HttpTools;
 using AGVSystemCommonNet6.Log;
+using AGVSystemCommonNet6.Microservices.ResponseModel;
 using AGVSystemCommonNet6.Microservices.VMS;
 using EquipmentManagment.Manager;
 using Microsoft.AspNetCore.Identity;
@@ -38,6 +39,8 @@ namespace AGVSystem.TaskManagers
 
         public static async Task<(bool confirm, ALARMS alarm_code, string message)> AddTask(clsTaskDto taskData, TASK_RECIEVE_SOURCE source = TASK_RECIEVE_SOURCE.LOCAL)
         {
+         
+
             var _order_action = taskData.Action;
             var source_station_tag = int.Parse(taskData.From_Station);
             var destine_station_tag = int.Parse(taskData.To_Station);
@@ -133,6 +136,15 @@ namespace AGVSystem.TaskManagers
                     return agv_type_check_result;
                 #endregion
 
+                #region AGV電量確認
+
+                #endregion
+                if (taskData.DesignatedAGVName != "")
+                {
+                    clsResponseBase checkReuslt = await VMSSerivces.TASK_DISPATCH.CheckOutAGVBatteryAndChargeStatus(taskData.DesignatedAGVName, taskData.Action);
+                    if (!checkReuslt.confirm)
+                        return (false, ALARMS.CANNOT_DISPATCH_ORDER_BY_AGV_BAT_STATUS_CHECK, checkReuslt.message);
+                }
 
                 taskData.RecieveTime = DateTime.Now;
                 await Task.Delay(200);
@@ -156,10 +168,12 @@ namespace AGVSystem.TaskManagers
                             AlarmManagerCenter.AddAlarmAsync(ALARMS.Destine_Eq_Already_Has_Task_To_Excute, ALARM_SOURCE.AGVS);
                             return (false, ALARMS.Destine_Eq_Already_Has_Task_To_Excute, $"目的地設備已有搬運任務");
                         }
+
                     }
                     db.tables.Tasks.Add(taskData);
                     var added = await db.SaveChanges();
                 }
+               
                 return new(true, ALARMS.NONE, "");
             }
             catch (Exception ex)
