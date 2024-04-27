@@ -81,7 +81,7 @@ namespace AGVSystem.Models.WebsocketMiddleware
 
                     return vm;
                 }
-                return output.OrderBy(agv=>agv.AGV_Name).ToList();
+                return output.OrderBy(agv => agv.AGV_Name).ToList();
             }
             catch (Exception)
             {
@@ -95,7 +95,8 @@ namespace AGVSystem.Models.WebsocketMiddleware
                 WIPName = wip.EQName,
                 Columns = wip.RackOption.Columns,
                 Rows = wip.RackOption.Rows,
-                Ports = wip.PortsStatus.ToList()
+                Ports = wip.PortsStatus.ToList(),
+                ColumnsTagMap = wip.RackOption.ColumnTagMap
             }).ToList();
         }
     }

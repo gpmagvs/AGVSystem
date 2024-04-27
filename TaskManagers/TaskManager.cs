@@ -16,6 +16,7 @@ using EquipmentManagment.Manager;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
+using static AGVSystemCommonNet6.MAP.MapPoint;
 using static SQLite.SQLite3;
 using static System.Collections.Specialized.BitVector32;
 

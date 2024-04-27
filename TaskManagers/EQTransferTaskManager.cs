@@ -19,6 +19,7 @@ using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.CodeAnalysis.Emit;
 using AGVSystemCommonNet6.Microservices.VMS;
 using EquipmentManagment.Device.Options;
+using static AGVSystemCommonNet6.MAP.MapPoint;
 
 namespace AGVSystem.TaskManagers
 {
