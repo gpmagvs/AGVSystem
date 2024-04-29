@@ -16,7 +16,12 @@ namespace AGVSystem.Models.WebsocketMiddleware
 {
     public class AGVSWebsocketServerMiddleware : WebsocketServerMiddleware
     {
-        public static AGVSWebsocketServerMiddleware Middleware { get; set; } = new AGVSWebsocketServerMiddleware();
+        public static AGVSWebsocketServerMiddleware Middleware { get; set; } = new AGVSWebsocketServerMiddleware(300);
+
+        public AGVSWebsocketServerMiddleware(int publish_duraction) : base(publish_duraction)
+        {
+
+        }
 
         AGVSDatabase db = new AGVSDatabase();
         public override List<string> channelMaps { get; set; } = new List<string>()
