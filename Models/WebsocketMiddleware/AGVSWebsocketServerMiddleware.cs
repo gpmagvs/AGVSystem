@@ -1,7 +1,6 @@
 ﻿using AGVSystem.Controllers;
 using AGVSystem.Models.Map;
 using AGVSystem.Models.TaskAllocation.HotRun;
-using AGVSystem.Static;
 using AGVSystemCommonNet6.AGVDispatch.Messages;
 using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.Alarm;
@@ -17,7 +16,12 @@ namespace AGVSystem.Models.WebsocketMiddleware
 {
     public class AGVSWebsocketServerMiddleware : WebsocketServerMiddleware
     {
-        public static AGVSWebsocketServerMiddleware Middleware { get; set; } = new AGVSWebsocketServerMiddleware();
+        public static AGVSWebsocketServerMiddleware Middleware { get; set; } = new AGVSWebsocketServerMiddleware(300);
+
+        public AGVSWebsocketServerMiddleware(int publish_duraction) : base(publish_duraction)
+        {
+
+        }
 
         AGVSDatabase db = new AGVSDatabase();
         public override List<string> channelMaps { get; set; } = new List<string>()
@@ -82,7 +86,7 @@ namespace AGVSystem.Models.WebsocketMiddleware
 
                     return vm;
                 }
-                return output.OrderBy(agv=>agv.AGV_Name).ToList();
+                return output.OrderBy(agv => agv.AGV_Name).ToList();
             }
             catch (Exception)
             {
@@ -96,7 +100,8 @@ namespace AGVSystem.Models.WebsocketMiddleware
                 WIPName = wip.EQName,
                 Columns = wip.RackOption.Columns,
                 Rows = wip.RackOption.Rows,
-                Ports = wip.PortsStatus.ToList()
+                Ports = wip.PortsStatus.ToList(),
+                ColumnsTagMap = wip.RackOption.ColumnTagMap
             }).ToList();
         }
     }

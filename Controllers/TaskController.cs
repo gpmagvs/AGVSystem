@@ -303,32 +303,7 @@ namespace AGVSystem.Controllers
             var Rack = StaEQPManagager.RacksList.FirstOrDefault(eq => eq.EndPointOptions.TagID == tag);
             return (Eq != null || Rack != null, Eq, Rack);
         }
-        [HttpPost("HotRun")]
-        public async Task<IActionResult> SaveHotRun([FromBody] HotRunScript[] settings)
-        {
-            return Ok(new
-            {
-                result = HotRunScriptManager.Save(settings),
-                message = ""
-            });
-        }
-        [HttpGet("HotRun")]
-        public async Task<IActionResult> GetHotRunScripts()
-        {
-            return Ok(HotRunScriptManager.HotRunScripts);
-        }
-        [HttpGet("HotRun/Start")]
-        public async Task<IActionResult> StartHotRun(int no)
-        {
-            (bool confirm, string message) response = HotRunScriptManager.Run(no);
-            return Ok(new { confirm = response.confirm, message = response.message });
-        }
-        [HttpGet("HotRun/Stop")]
-        public async Task<IActionResult> StopHotRun(int no)
-        {
-            HotRunScriptManager.Stop(no);
-            return Ok();
-        }
+     
         private async Task<object> AddTask(clsTaskDto taskData, string user = "")
         {
             taskData.DispatcherName = user;

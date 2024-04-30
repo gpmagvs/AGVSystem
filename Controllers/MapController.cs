@@ -14,6 +14,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Text.Json.Serialization;
+using static AGVSystemCommonNet6.MAP.MapPoint;
 
 namespace AGVSystem.Controllers
 {
@@ -150,7 +151,7 @@ namespace AGVSystem.Controllers
             return Ok(new MapPoint()
             {
                 Enable = true,
-                StationType = AGVSystemCommonNet6.AGVDispatch.Messages.STATION_TYPE.Normal,
+                StationType =STATION_TYPE.Normal,
                 TagNumber = 1
             });
         }

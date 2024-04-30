@@ -29,9 +29,15 @@ namespace AGVSystem.Controllers
                 tasks.ForEach(task =>
                 {
                     if (task.From_Station_Tag != -1)
-                        task.From_Station_Display = AGVSMapManager.GetMapPointByTag(task.From_Station_Tag).Graph.Display;
+                    {
+                        var fromPoint = AGVSMapManager.GetMapPointByTag(task.From_Station_Tag);
+                        task.From_Station_Display = fromPoint == null ? task.From_Station_Tag + "" : fromPoint.Graph.Display;
+                    }
                     if (task.To_Station_Tag != -1)
-                        task.To_Station_Display = AGVSMapManager.GetMapPointByTag(task.To_Station_Tag).Graph.Display;
+                    {
+                        var toPoint = AGVSMapManager.GetMapPointByTag(task.To_Station_Tag);
+                        task.To_Station_Display = toPoint == null ? task.To_Station_Tag + "" : toPoint.Graph.Display;
+                    }
                 });
 
                 return Ok(new { count, tasks });
