@@ -154,6 +154,24 @@ app.UseDirectoryBrowser(new DirectoryBrowserOptions
     RequestPath = mapFileRequestPath
 });
 
+var trobleshootingFileFolderPath = app.Configuration.GetValue<string>("TrobleShootingFileOptions:TrobleShootingFile:FolderPath");
+var trobleshootingFileRequestPath = app.Configuration.GetValue<string>("TrobleShootingFileOptions:TrobleShootingFile:RequestPath");
+Directory.CreateDirectory(trobleshootingFileFolderPath);
+var trobleshootingFileProvider = new PhysicalFileProvider(trobleshootingFileFolderPath);
+
+// Enable displaying browser links.
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = trobleshootingFileProvider,
+    RequestPath = trobleshootingFileRequestPath
+});
+
+app.UseDirectoryBrowser(new DirectoryBrowserOptions
+{
+    FileProvider = trobleshootingFileProvider,
+    RequestPath = trobleshootingFileRequestPath
+});
+
 var agvDisplayImageFolder = Path.Combine(app.Environment.WebRootPath, @"images\AGVDisplayImages");
 Directory.CreateDirectory(agvDisplayImageFolder);
 
