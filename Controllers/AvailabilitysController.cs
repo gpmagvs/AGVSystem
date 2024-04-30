@@ -53,8 +53,8 @@ namespace AGVSystem.Controllers
         {
             var startDate = DateTime.Parse(StartDate);
             var endDate = DateTime.Parse(EndDate);
-            endDate = endDate.AddDays(1);
             MTTRMTBFCount.MTTR_TimeCount(startDate, endDate, AGVName);
+            endDate = endDate.AddDays(1);
             using var db = new AGVSDatabase();
             var datas = db.tables.Availabilitys.Where(dat => dat.AGVName == AGVName && dat.Time >= startDate && dat.Time <= endDate);
             var idle_time = datas.Sum(d => d.IDLE_TIME);
@@ -75,7 +75,7 @@ namespace AGVSystem.Controllers
                 },
                 BarchartMTTR = new
                 {
-                    date = datas.Select(dat => dat.Time.ToString()).ToArray(),
+                    dates = MTTRMTBFCount.Mttr_date.ToArray(),
                     time = MTTRMTBFCount.Mttr_data.ToArray(),
                 },
                 BarchartMTBF = new
