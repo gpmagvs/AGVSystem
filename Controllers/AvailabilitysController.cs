@@ -73,12 +73,12 @@ namespace AGVSystem.Controllers
                     down = datas.Select(dat => dat.DOWN_TIME).ToArray(),
                     charge = datas.Select(dat => dat.CHARGE_TIME).ToArray(),
                 },
-                linechartMTTR = new
+                BarchartMTTR = new
                 {
                     date = datas.Select(dat => dat.Time.ToString()).ToArray(),
                     time = MTTRMTBFCount.Mttr_data.ToArray(),
                 },
-                linechartMTBF = new
+                BarchartMTBF = new
                 {
                     date = datas.Select(dat => dat.Time.ToString()).ToArray(),
                     //time
