@@ -69,11 +69,11 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
         }
         private static (bool, string) StartHotRun(HotRunScript script)
         {
-            using var db = new AGVSDatabase();
+             var db = new AGVSDatabase();
 
             clsAGVStateDto GetAGVState()
             {
-                return db.GetAGVState(script.agv_name);
+                return db.tables.AgvStates.FirstOrDefault(s => s.AGV_Name == script.agv_name);
                 //return VMSSerivces.AgvStatesData.FirstOrDefault(agv => agv.AGV_Name == script.agv_name);
             }
             clsAGVStateDto? agv = GetAGVState();

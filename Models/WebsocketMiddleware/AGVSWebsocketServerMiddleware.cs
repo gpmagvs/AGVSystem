@@ -39,25 +39,34 @@ namespace AGVSystem.Models.WebsocketMiddleware
 
         protected override async Task CollectViewModelData()
         {
-            //var vmsData = await GetAGV_StatesData_FromVMS(db.tables.Tasks);
-            var incompleted_tasks = db.tables.Tasks.Where(t => t.State == TASK_RUN_STATUS.WAIT || t.State == TASK_RUN_STATUS.NAVIGATING).OrderByDescending(t => t.Priority).AsNoTracking().ToList();
-            var completed_tasks = db.tables.Tasks.Where(t => t.State != TASK_RUN_STATUS.WAIT && t.State != TASK_RUN_STATUS.NAVIGATING).OrderByDescending(t => t.FinishTime).Take(20).AsNoTracking().ToList();
-
-            CurrentViewModelDataOfAllChannel["/ws"] = new
+            try
             {
-                EQStatus = new
+                //var vmsData = await GetAGV_StatesData_FromVMS(db.tables.Tasks);
+                var incompleted_tasks = db.tables.Tasks.AsNoTracking().Where(t => t.State == TASK_RUN_STATUS.WAIT || t.State == TASK_RUN_STATUS.NAVIGATING).OrderByDescending(t => t.RecieveTime).ToList();
+                var completed_tasks = db.tables.Tasks.AsNoTracking().Where(t => t.State != TASK_RUN_STATUS.WAIT && t.State != TASK_RUN_STATUS.NAVIGATING).OrderByDescending(t => t.FinishTime).Take(20).ToList();
+
+                CurrentViewModelDataOfAllChannel["/ws"] = new
                 {
-                    EQPData = StaEQPManagager.GetEQStates(),
-                    ChargeStationData = StaEQPManagager.GetChargeStationStates(),
-                    WIPsData = GetWIPDataViewModels()
-                },
-                VMSAliveCheck = VMSSerivces.IsAlive,
-                AGVLocationUpload = AGVSMapManager.AGVUploadCoordinationStore,
-                HotRun = HotRunScriptManager.HotRunScripts,
-                UncheckedAlarm = AlarmManagerCenter.uncheckedAlarms,
-                //VMSStatus = vmsData,
-                TaskData = new { incompleteds = incompleted_tasks, completeds = completed_tasks }
-            };
+                    EQStatus = new
+                    {
+                        EQPData = StaEQPManagager.GetEQStates(),
+                        ChargeStationData = StaEQPManagager.GetChargeStationStates(),
+                        WIPsData = GetWIPDataViewModels()
+                    },
+                    VMSAliveCheck = VMSSerivces.IsAlive,
+                    AGVLocationUpload = AGVSMapManager.AGVUploadCoordinationStore,
+                    HotRun = HotRunScriptManager.HotRunScripts,
+                    UncheckedAlarm = AlarmManagerCenter.uncheckedAlarms,
+                    //VMSStatus = vmsData,
+                    TaskData = new { incompleteds = incompleted_tasks, completeds = completed_tasks }
+                };
+            }
+            catch (Exception ex)
+            {
+
+                throw ex;
+            }
+           
         }
 
         //private static async Task<List<clsAGVStateViewModel>> GetAGV_StatesData_FromVMS(DbSet<AGVSystemCommonNet6.AGVDispatch.clsTaskDto> tasks)

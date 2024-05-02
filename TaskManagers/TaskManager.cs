@@ -264,6 +264,9 @@ namespace AGVSystem.TaskManagers
         {
             try
             {
+             
+                await VMSSerivces.TaskCancel(task_name);
+                await Task.Delay(500);
                 using (var db = new AGVSDatabase())
                 {
                     var task = db.tables.Tasks.Where(tk => tk.TaskName == task_name).FirstOrDefault();
@@ -277,18 +280,13 @@ namespace AGVSystem.TaskManagers
                                 monitor.sourceEQ.CancelReserve();
                                 monitor.destineEQ.CancelReserve();
                             }
-
                         }
-
                         task.FinishTime = DateTime.Now;
                         task.FailureReason = reason;
                         task.State = status;
                         await db.SaveChanges();
-
-
                     }
                 }
-                await VMSSerivces.TaskCancel(task_name);
                 return true;
             }
             catch (Exception ex)
