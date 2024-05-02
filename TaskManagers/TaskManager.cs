@@ -40,7 +40,7 @@ namespace AGVSystem.TaskManagers
 
         public static async Task<(bool confirm, ALARMS alarm_code, string message)> AddTask(clsTaskDto taskData, TASK_RECIEVE_SOURCE source = TASK_RECIEVE_SOURCE.LOCAL)
         {
-         
+
 
             var _order_action = taskData.Action;
             var source_station_tag = int.Parse(taskData.From_Station);
@@ -99,12 +99,13 @@ namespace AGVSystem.TaskManagers
             }
 
             #region 若起點設定是AGV,則起點要設為
+            using AGVSDatabase database = new AGVSDatabase();
 
             if (taskData.From_Station.Contains("AGV") && _order_action == ACTION_TYPE.Carry)
             {
                 var agv_name = taskData.From_Station;
                 taskData.DesignatedAGVName = agv_name;
-                var agv = VMSSerivces.AgvStatesData.FirstOrDefault(d => d.AGV_Name == agv_name);
+                var agv = database.tables.AgvStates.FirstOrDefault(d => d.AGV_Name == agv_name);
                 taskData.From_Station = agv.CurrentLocation;
             }
 
@@ -116,7 +117,7 @@ namespace AGVSystem.TaskManagers
             {
                 try
                 {
-                    if (VMSSerivces.AgvStatesData.Where(agv => agv.AGV_Name != taskData.DesignatedAGVName).Any(agv => agv.CurrentLocation == taskData.To_Station))
+                    if (database.tables.AgvStates.Where(agv => agv.AGV_Name != taskData.DesignatedAGVName).Any(agv => agv.CurrentLocation == taskData.To_Station))
                     {
                         AlarmManagerCenter.AddAlarmAsync(ALARMS.Destine_Charge_Station_Has_AGV, ALARM_SOURCE.AGVS, level: ALARM_LEVEL.WARNING);
                         return (false, ALARMS.Destine_Eq_Station_Has_Task_To_Park, $"目的充電站已有AGV停駐");
@@ -174,7 +175,7 @@ namespace AGVSystem.TaskManagers
                     db.tables.Tasks.Add(taskData);
                     var added = await db.SaveChanges();
                 }
-               
+
                 return new(true, ALARMS.NONE, "");
             }
             catch (Exception ex)

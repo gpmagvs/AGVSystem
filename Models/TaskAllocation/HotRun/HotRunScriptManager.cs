@@ -3,9 +3,11 @@ using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.AGVDispatch;
 using AGVSystemCommonNet6.AGVDispatch.Messages;
 using AGVSystemCommonNet6.Alarm;
+using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.DATABASE.Helpers;
 using AGVSystemCommonNet6.Microservices.VMS;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Update;
 using Newtonsoft.Json;
 using NuGet.Configuration;
 using NuGet.ContentModel;
@@ -67,9 +69,12 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
         }
         private static (bool, string) StartHotRun(HotRunScript script)
         {
+            using var db = new AGVSDatabase();
+
             clsAGVStateDto GetAGVState()
             {
-                return VMSSerivces.AgvStatesData.FirstOrDefault(agv => agv.AGV_Name == script.agv_name);
+                return db.GetAGVState(script.agv_name);
+                //return VMSSerivces.AgvStatesData.FirstOrDefault(agv => agv.AGV_Name == script.agv_name);
             }
             clsAGVStateDto? agv = GetAGVState();
             if (agv == null)
@@ -82,7 +87,7 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                 AlarmManagerCenter.AddAlarmAsync(ALARMS.CANNOT_DISPATCH_LOAD_TASK_WHEN_AGV_NO_CARGO);
                 return new(false, ALARMS.CANNOT_DISPATCH_LOAD_TASK_WHEN_AGV_NO_CARGO.ToString());
             }
-            else if ((firstAction == ACTION_TYPE.Unload | firstAction == ACTION_TYPE.Carry) && agv.CurrentCarrierID != "")
+            else if ((firstAction == ACTION_TYPE.Unload || firstAction == ACTION_TYPE.Carry) && agv.CurrentCarrierID != "")
             {
                 var alarm_code = firstAction == ACTION_TYPE.Unload ? ALARMS.CANNOT_DISPATCH_UNLOAD_TASK_WHEN_AGV_HAS_CARGO : ALARMS.CANNOT_DISPATCH_CARRY_TASK_WHEN_AGV_HAS_CARGO;
                 AlarmManagerCenter.AddAlarmAsync(alarm_code);

@@ -58,7 +58,6 @@ agvs_host.Start();
 AlarmManagerCenter.Initialize();
 AlarmManager.LoadVCSTrobleShootings();
 VMSSerivces.OnVMSReconnected += async (sender, e) => await VMSSerivces.RunModeSwitch(SystemModes.RunMode);
-VMSSerivces.AgvStateFetchWorker();
 VMSSerivces.AliveCheckWorker();
 VMSSerivces.RunModeSwitch(AGVSystemCommonNet6.AGVDispatch.RunMode.RUN_MODE.MAINTAIN);
 
@@ -154,23 +153,31 @@ app.UseDirectoryBrowser(new DirectoryBrowserOptions
     RequestPath = mapFileRequestPath
 });
 
-var trobleshootingFileFolderPath = app.Configuration.GetValue<string>("TrobleShootingFileOptions:TrobleShootingFile:FolderPath");
-var trobleshootingFileRequestPath = app.Configuration.GetValue<string>("TrobleShootingFileOptions:TrobleShootingFile:RequestPath");
-Directory.CreateDirectory(trobleshootingFileFolderPath);
-var trobleshootingFileProvider = new PhysicalFileProvider(trobleshootingFileFolderPath);
-
-// Enable displaying browser links.
-app.UseStaticFiles(new StaticFileOptions
+try
 {
-    FileProvider = trobleshootingFileProvider,
-    RequestPath = trobleshootingFileRequestPath
-});
+    var trobleshootingFileFolderPath = app.Configuration.GetValue<string>("TrobleShootingFileOptions:TrobleShootingFile:FolderPath");
+    var trobleshootingFileRequestPath = app.Configuration.GetValue<string>("TrobleShootingFileOptions:TrobleShootingFile:RequestPath");
+    Directory.CreateDirectory(trobleshootingFileFolderPath);
+    var trobleshootingFileProvider = new PhysicalFileProvider(trobleshootingFileFolderPath);
 
-app.UseDirectoryBrowser(new DirectoryBrowserOptions
+    // Enable displaying browser links.
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = trobleshootingFileProvider,
+        RequestPath = trobleshootingFileRequestPath
+    });
+
+    app.UseDirectoryBrowser(new DirectoryBrowserOptions
+    {
+        FileProvider = trobleshootingFileProvider,
+        RequestPath = trobleshootingFileRequestPath
+    });
+}
+catch (Exception ex)
 {
-    FileProvider = trobleshootingFileProvider,
-    RequestPath = trobleshootingFileRequestPath
-});
+    LOG.ERROR(ex.Message, ex);
+}
+
 
 var agvDisplayImageFolder = Path.Combine(app.Environment.WebRootPath, @"images\AGVDisplayImages");
 Directory.CreateDirectory(agvDisplayImageFolder);

@@ -39,7 +39,7 @@ namespace AGVSystem.Models.WebsocketMiddleware
 
         protected override async Task CollectViewModelData()
         {
-            var vmsData = await GetAGV_StatesData_FromVMS(db.tables.Tasks);
+            //var vmsData = await GetAGV_StatesData_FromVMS(db.tables.Tasks);
             var incompleted_tasks = db.tables.Tasks.Where(t => t.State == TASK_RUN_STATUS.WAIT || t.State == TASK_RUN_STATUS.NAVIGATING).OrderByDescending(t => t.Priority).AsNoTracking().ToList();
             var completed_tasks = db.tables.Tasks.Where(t => t.State != TASK_RUN_STATUS.WAIT && t.State != TASK_RUN_STATUS.NAVIGATING).OrderByDescending(t => t.FinishTime).Take(20).AsNoTracking().ToList();
 
@@ -55,44 +55,45 @@ namespace AGVSystem.Models.WebsocketMiddleware
                 AGVLocationUpload = AGVSMapManager.AGVUploadCoordinationStore,
                 HotRun = HotRunScriptManager.HotRunScripts,
                 UncheckedAlarm = AlarmManagerCenter.uncheckedAlarms,
-                VMSStatus = vmsData,
+                //VMSStatus = vmsData,
                 TaskData = new { incompleteds = incompleted_tasks, completeds = completed_tasks }
             };
         }
 
-        private static async Task<List<clsAGVStateViewModel>> GetAGV_StatesData_FromVMS(DbSet<AGVSystemCommonNet6.AGVDispatch.clsTaskDto> tasks)
-        {
-            try
-            {
-                List<clsAGVStateViewModel> output = VMSSerivces.AgvStatesData.Select(d => GenViewMode(d)).ToList();
-                clsAGVStateViewModel GenViewMode(clsAGVStateDto d)
-                {
-                    clsAGVStateViewModel vm = JsonConvert.DeserializeObject<clsAGVStateViewModel>(JsonConvert.SerializeObject(d));
-                    vm.StationName = AGVSMapManager.GetNameByTagStr(vm.CurrentLocation);
+        //private static async Task<List<clsAGVStateViewModel>> GetAGV_StatesData_FromVMS(DbSet<AGVSystemCommonNet6.AGVDispatch.clsTaskDto> tasks)
+        //{
+        //    try
+        //    {
+        //        List<clsAGVStateViewModel> output = VMSSerivces.AgvStatesData.Select(d => GenViewMode(d)).ToList();
+        //        clsAGVStateViewModel GenViewMode(clsAGVStateDto d)
+        //        {
+        //            clsAGVStateViewModel vm = JsonConvert.DeserializeObject<clsAGVStateViewModel>(JsonConvert.SerializeObject(d));
+        //            vm.StationName = AGVSMapManager.GetNameByTagStr(vm.CurrentLocation);
 
-                    if (vm.TaskName == "")
-                    {
-                        vm.TaskSourceStationName = vm.TaskDestineStationName = "";
-                    }
-                    else
-                    {
-                        var task_ = tasks.FirstOrDefault(tk => tk.TaskName == vm.TaskName);
-                        if (task_ != null)
-                        {
-                            vm.TaskSourceStationName = task_.Action != ACTION_TYPE.Carry ? vm.StationName : AGVSMapManager.GetNameByTagStr(task_.From_Station);
-                            vm.TaskDestineStationName = AGVSMapManager.GetNameByTagStr(task_.To_Station);
-                        }
-                    }
+        //            if (vm.TaskName == "")
+        //            {
+        //                vm.TaskSourceStationName = vm.TaskDestineStationName = "";
+        //            }
+        //            else
+        //            {
+        //                var task_ = tasks.FirstOrDefault(tk => tk.TaskName == vm.TaskName);
+        //                if (task_ != null)
+        //                {
+        //                    vm.TaskSourceStationName = task_.Action != ACTION_TYPE.Carry ? vm.StationName : AGVSMapManager.GetNameByTagStr(task_.From_Station);
+        //                    vm.TaskDestineStationName = AGVSMapManager.GetNameByTagStr(task_.To_Station);
+        //                }
+        //            }
 
-                    return vm;
-                }
-                return output.OrderBy(agv => agv.AGV_Name).ToList();
-            }
-            catch (Exception)
-            {
-                return null;
-            }
-        }
+        //            return vm;
+        //        }
+        //        return output.OrderBy(agv => agv.AGV_Name).ToList();
+        //    }
+        //    catch (Exception)
+        //    {
+        //        return null;
+        //    }
+        //}
+        //
         private static List<ViewModel.WIPDataViewModel> GetWIPDataViewModels()
         {
             return StaEQPManagager.RacksList.Select(wip => new ViewModel.WIPDataViewModel()

@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationIcon>favicon.ico</ApplicationIcon>
 	<GenerateDocumentationFile>true</GenerateDocumentationFile>
-	<AssemblyVersion>1.1.121.0</AssemblyVersion>
+	<AssemblyVersion>1.1.122.5</AssemblyVersion>
 
   </PropertyGroup>
 
@@ -94,6 +94,10 @@
 
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
 	<!--<Exec Command="powershell.exe -ExecutionPolicy Bypass -File &quot;AutoVersionModify.ps1&quot;&#xD;&#xA;" />-->
+  </Target>
+
+  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+    <Exec Command="tasklist | find /I &quot;AGVSystem.exe&quot; &gt; nul &amp;&amp; taskkill /F /IM &quot;AGVSystem.exe&quot; || echo &quot;AGVSystem not running.&quot;&amp; exit 0" />
   </Target>
 </Project>
 

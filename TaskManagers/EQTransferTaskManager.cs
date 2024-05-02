@@ -65,7 +65,7 @@ namespace AGVSystem.TaskManagers
         {
             while (SystemModes.RunMode == RUN_MODE.RUN)
             {
-                Thread.Sleep(1);
+                await Task.Delay(10);
                 if (SystemModes.TransferTaskMode == TRANSFER_MODE.MANUAL)
                 {
                     AutoRunning = false;
@@ -245,8 +245,10 @@ namespace AGVSystem.TaskManagers
             string _agv_name = taskData.DesignatedAGVName;
             if (_agv_name == "" || _agv_name == null)
                 return new(true, ALARMS.NONE, "");
+            using AGVSDatabase database = new AGVSDatabase();
+            IEnumerable<clsAGVStateDto> agvstates = database.tables.AgvStates;
 
-            clsAGVStateDto? _agv_assigned = VMSSerivces.AgvStatesData.FirstOrDefault(agv_dat => agv_dat.AGV_Name == _agv_name);
+            clsAGVStateDto? _agv_assigned = agvstates.FirstOrDefault(agv_dat => agv_dat.AGV_Name == _agv_name);
             VEHICLE_TYPE model = _agv_assigned.Model.ConvertToEQAcceptAGVTYPE();
 
             clsEQ source_equipment = StaEQPManagager.GetEQByTag(taskData.From_Station_Tag);
@@ -265,7 +267,7 @@ namespace AGVSystem.TaskManagers
                 if (taskData.need_change_agv)
                 {
                     //檢查終點站可用車種
-                    var toDestineAGV = VMSSerivces.AgvStatesData.FirstOrDefault(agv_dat => agv_dat.AGV_Name == taskData.TransferToDestineAGVName);
+                    var toDestineAGV = agvstates.FirstOrDefault(agv_dat => agv_dat.AGV_Name == taskData.TransferToDestineAGVName);
                     var modelToDestine = toDestineAGV.Model.ConvertToEQAcceptAGVTYPE();
                     if (destine_eq_accept_agv_model != VEHICLE_TYPE.ALL && destine_eq_accept_agv_model != modelToDestine)
                         return (false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Destine_Equipment, $"終點設備不允許{modelToDestine}車種進行任務");
