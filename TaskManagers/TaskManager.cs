@@ -266,7 +266,6 @@ namespace AGVSystem.TaskManagers
             {
              
                 await VMSSerivces.TaskCancel(task_name);
-                await Task.Delay(500);
                 //using (var db = new AGVSDatabase())
                 //{
                 //    var task = db.tables.Tasks.Where(tk => tk.TaskName == task_name).FirstOrDefault();

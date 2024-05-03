@@ -56,12 +56,14 @@ namespace AGVSystem.Controllers
         [Authorize]
         public async Task<IActionResult> Cancel(string task_name)
         {
-            if (!UserValidation())
-            {
-                return Unauthorized();
-            }
+            //if (!UserValidation())
+            //{
+            //    return Unauthorized();
+            //}
+            LOG.TRACE($"User try cancle Task-{task_name}");
 
             bool canceled = await TaskManager.Cancel(task_name, $"User manual canceled");
+            LOG.TRACE($"User try cancle Task-{task_name}---{canceled}");
             return Ok(canceled);
         }
 
@@ -196,7 +198,7 @@ namespace AGVSystem.Controllers
                 return Ok(new clsAGVSTaskReportResponse(true, $"{result.mainEQ.EQName} ToEQUp DO ON"));
             }
             else
-                return  Ok(new clsAGVSTaskReportResponse(true, $"{action} at {result.rack.EQName} Start"));
+                return Ok(new clsAGVSTaskReportResponse(true, $"{action} at {result.rack.EQName} Start"));
         }
 
         [HttpGet("StartTransferCargoReport")]
@@ -303,7 +305,7 @@ namespace AGVSystem.Controllers
             var Rack = StaEQPManagager.RacksList.FirstOrDefault(eq => eq.EndPointOptions.TagID == tag);
             return (Eq != null || Rack != null, Eq, Rack);
         }
-     
+
         private async Task<object> AddTask(clsTaskDto taskData, string user = "")
         {
             taskData.DispatcherName = user;
