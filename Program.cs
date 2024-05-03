@@ -155,10 +155,9 @@ app.UseDirectoryBrowser(new DirectoryBrowserOptions
 
 try
 {
-    var trobleshootingFileFolderPath = app.Configuration.GetValue<string>("TrobleShootingFileOptions:TrobleShootingFile:FolderPath");
+    Directory.CreateDirectory(AGVSConfigulator.SysConfigs.TrobleShootingFolder);
     var trobleshootingFileRequestPath = app.Configuration.GetValue<string>("TrobleShootingFileOptions:TrobleShootingFile:RequestPath");
-    Directory.CreateDirectory(trobleshootingFileFolderPath);
-    var trobleshootingFileProvider = new PhysicalFileProvider(trobleshootingFileFolderPath);
+    var trobleshootingFileProvider = new PhysicalFileProvider(AGVSConfigulator.SysConfigs.TrobleShootingFolder);
 
     // Enable displaying browser links.
     app.UseStaticFiles(new StaticFileOptions
