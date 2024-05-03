@@ -267,26 +267,26 @@ namespace AGVSystem.TaskManagers
              
                 await VMSSerivces.TaskCancel(task_name);
                 await Task.Delay(500);
-                using (var db = new AGVSDatabase())
-                {
-                    var task = db.tables.Tasks.Where(tk => tk.TaskName == task_name).FirstOrDefault();
-                    if (task != null)
-                    {
+                //using (var db = new AGVSDatabase())
+                //{
+                //    var task = db.tables.Tasks.Where(tk => tk.TaskName == task_name).FirstOrDefault();
+                //    if (task != null)
+                //    {
 
-                        if (task.Action == ACTION_TYPE.Carry)
-                        {
-                            if (EQTransferTaskManager.MonitoringCarrerTasks.Remove(task_name, out clsLocalAutoTransferTaskMonitor monitor))
-                            {
-                                monitor.sourceEQ.CancelReserve();
-                                monitor.destineEQ.CancelReserve();
-                            }
-                        }
-                        task.FinishTime = DateTime.Now;
-                        task.FailureReason = reason;
-                        task.State = status;
-                        await db.SaveChanges();
-                    }
-                }
+                //        if (task.Action == ACTION_TYPE.Carry)
+                //        {
+                //            if (EQTransferTaskManager.MonitoringCarrerTasks.Remove(task_name, out clsLocalAutoTransferTaskMonitor monitor))
+                //            {
+                //                monitor.sourceEQ.CancelReserve();
+                //                monitor.destineEQ.CancelReserve();
+                //            }
+                //        }
+                //        task.FinishTime = DateTime.Now;
+                //        task.FailureReason = reason;
+                //        task.State = status;
+                //        await db.SaveChanges();
+                //    }
+                //}
                 return true;
             }
             catch (Exception ex)
