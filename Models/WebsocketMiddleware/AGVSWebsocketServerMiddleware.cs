@@ -41,9 +41,11 @@ namespace AGVSystem.Models.WebsocketMiddleware
         {
             try
             {
+                var tasks = db.tables.Tasks.OrderByDescending(t => t.RecieveTime).Take(30).AsNoTracking();
+
                 //var vmsData = await GetAGV_StatesData_FromVMS(db.tables.Tasks);
-                var incompleted_tasks = db.tables.Tasks.AsNoTracking().Where(t => t.State == TASK_RUN_STATUS.WAIT || t.State == TASK_RUN_STATUS.NAVIGATING).OrderByDescending(t => t.RecieveTime).ToList();
-                var completed_tasks = db.tables.Tasks.AsNoTracking().Where(t => t.State != TASK_RUN_STATUS.WAIT && t.State != TASK_RUN_STATUS.NAVIGATING).OrderByDescending(t => t.FinishTime).Take(20).ToList();
+                var incompleted_tasks = tasks.Where(t => t.State == TASK_RUN_STATUS.WAIT || t.State == TASK_RUN_STATUS.NAVIGATING).OrderByDescending(t => t.RecieveTime).ToList();
+                var completed_tasks = tasks.Where(t => t.State != TASK_RUN_STATUS.WAIT && t.State != TASK_RUN_STATUS.NAVIGATING).OrderByDescending(t => t.FinishTime).Take(20).ToList();
 
                 CurrentViewModelDataOfAllChannel["/ws"] = new
                 {
@@ -66,7 +68,7 @@ namespace AGVSystem.Models.WebsocketMiddleware
 
                 throw ex;
             }
-           
+
         }
 
         //private static async Task<List<clsAGVStateViewModel>> GetAGV_StatesData_FromVMS(DbSet<AGVSystemCommonNet6.AGVDispatch.clsTaskDto> tasks)
