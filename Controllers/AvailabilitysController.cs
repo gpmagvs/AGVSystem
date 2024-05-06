@@ -80,7 +80,7 @@ namespace AGVSystem.Controllers
                 },
                 BarchartMTBF = new
                 {
-                    date = MTTRMTBFCount.MttrMtbf_date.ToArray(),
+                    dates = MTTRMTBFCount.MttrMtbf_date.ToArray(),
                     time = MTTRMTBFCount.Mtbf_data.ToArray(),
                 }
             };
