@@ -10,6 +10,7 @@ using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.DATABASE;
+using AGVSystemCommonNet6.DATABASE.BackgroundServices;
 using AGVSystemCommonNet6.HttpTools;
 using AGVSystemCommonNet6.Log;
 using AGVSystemCommonNet6.Microservices;
@@ -99,7 +100,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("secret_keysecret_keysecret_key11"))
         }
     );
+
 builder.Services.AddDbContext<AGVSDbContext>(options => options.UseSqlServer(AGVSConfigulator.SysConfigs.DBConnection));
+builder.Services.AddHostedService<DatabaseBackgroundService>();
 
 var app = builder.Build();
 

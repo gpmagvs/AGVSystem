@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using AGVSystemCommonNet6.DATABASE;
 using System.Net.NetworkInformation;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace AGVSystem.Models.WebsocketMiddleware
 {
@@ -41,11 +42,8 @@ namespace AGVSystem.Models.WebsocketMiddleware
         {
             try
             {
-                var tasks = db.tables.Tasks.AsNoTracking().OrderByDescending(t => t.RecieveTime).Take(30).ToList();
-
-                //var vmsData = await GetAGV_StatesData_FromVMS(db.tables.Tasks);
-                var incompleted_tasks = tasks.Where(t => t.State == TASK_RUN_STATUS.WAIT || t.State == TASK_RUN_STATUS.NAVIGATING).OrderByDescending(t => t.RecieveTime).ToList();
-                var completed_tasks = tasks.Where(t => t.State != TASK_RUN_STATUS.WAIT && t.State != TASK_RUN_STATUS.NAVIGATING).OrderByDescending(t => t.FinishTime).Take(20).ToList();
+                var incompleted_tasks = DatabaseCaches.TaskCaches.InCompletedTasks;
+                var completed_tasks = DatabaseCaches.TaskCaches.CompleteTasks;
 
                 CurrentViewModelDataOfAllChannel["/ws"] = new
                 {
