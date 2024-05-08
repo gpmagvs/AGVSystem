@@ -54,6 +54,7 @@ namespace AGVSystem.Controllers
             var startDate = DateTime.Parse(StartDate);
             var endDate = DateTime.Parse(EndDate);
             MTTRMTBFCount.MTTRMTBF_TimeCount(startDate, endDate, AGVName);
+            MTTRMTBFCount.MissTagCount(startDate, endDate, AGVName);
             endDate = endDate.AddDays(1);
             using var db = new AGVSDatabase();
             var datas = db.tables.Availabilitys.Where(dat => dat.AGVName == AGVName && dat.Time >= startDate && dat.Time <= endDate);
@@ -80,8 +81,13 @@ namespace AGVSystem.Controllers
                 },
                 BarchartMTBF = new
                 {
-                    date = MTTRMTBFCount.MttrMtbf_date.ToArray(),
+                    dates = MTTRMTBFCount.MttrMtbf_date.ToArray(),
                     time = MTTRMTBFCount.Mtbf_data.ToArray(),
+                },
+                BarchartMissTag = new
+                {
+                    dates = MTTRMTBFCount.MttrMtbf_date.ToArray(),
+                    count = MTTRMTBFCount.MissTagcount.ToArray(),
                 }
             };
             return Ok(dataset);
