@@ -240,7 +240,7 @@ namespace AGVSystem.TaskManagers
 
         }
 
-        public static (bool confirm, ALARMS alarm_code, string message) CheckEQAcceptAGVType(clsTaskDto taskData)
+        public static (bool confirm, ALARMS alarm_code, string message) CheckEQAcceptAGVType(ref clsTaskDto taskData)
         {
             string _agv_name = taskData.DesignatedAGVName;
             if (_agv_name == "" || _agv_name == null)
@@ -267,14 +267,16 @@ namespace AGVSystem.TaskManagers
                 if (taskData.need_change_agv)
                 {
                     //檢查終點站可用車種
-                    if (taskData.TransferToDestineAGVName != "")
+                    string strTransferToDestineAGVName = taskData.TransferToDestineAGVName;
+                    if (strTransferToDestineAGVName != "")
                     {
-                        var toDestineAGV = agvstates.FirstOrDefault(agv_dat => agv_dat.AGV_Name == taskData.TransferToDestineAGVName);
+                        
+                        var toDestineAGV = agvstates.FirstOrDefault(agv_dat => agv_dat.AGV_Name == strTransferToDestineAGVName);
                         var modelToDestine = toDestineAGV.Model.ConvertToEQAcceptAGVTYPE();
                         if (destine_eq_accept_agv_model != VEHICLE_TYPE.ALL && destine_eq_accept_agv_model != modelToDestine)
                             return (false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Destine_Equipment, $"終點設備不允許{modelToDestine}車種進行任務");
                         //檢查轉運站可用車種
-                        clsEQ transferStation_equipment = StaEQPManagager.GetEQByTag(taskData.ChangeAGVMiddleStationTag);
+                        clsEQ transferStation_equipment = StaEQPManagager.GetEQByTag(taskData.TransferFromTag);
                         VEHICLE_TYPE transferStation_eq_accept_agv_model = transferStation_equipment.EndPointOptions.Accept_AGV_Type;
                         if (transferStation_eq_accept_agv_model != VEHICLE_TYPE.ALL && transferStation_eq_accept_agv_model != transferStation_eq_accept_agv_model)
                             return (false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Destine_Equipment, $"轉運設備不允許{model}車種進行任務");
@@ -282,12 +284,14 @@ namespace AGVSystem.TaskManagers
                 }
                 else
                 {
+                    //if (destine_eq_accept_agv_model != VEHICLE_TYPE.ALL && destine_eq_accept_agv_model != model)
+                    //    return (false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Destine_Equipment, $"終點設備不允許{model}車種進行任務");
                     if (destine_eq_accept_agv_model != VEHICLE_TYPE.ALL && destine_eq_accept_agv_model != model)
-                        return (false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Destine_Equipment, $"終點設備不允許{model}車種進行任務");
+                    {
+                        taskData.need_change_agv = true;
+                    }
                 }
-
             }
-
             return new(true, ALARMS.NONE, "");
         }
         private static bool IsEQDataValid(EndPointDeviceAbstract endpoint, out int unloadStationTag, out ALARMS alarm_code)

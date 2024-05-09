@@ -133,7 +133,7 @@ namespace AGVSystem.TaskManagers
             try
             {
                 #region AGV車款與設備允許車款確認
-                (bool confirm, ALARMS alarm_code, string message) agv_type_check_result = EQTransferTaskManager.CheckEQAcceptAGVType(taskData);
+                (bool confirm, ALARMS alarm_code, string message) agv_type_check_result = EQTransferTaskManager.CheckEQAcceptAGVType(ref taskData);
                 if (!agv_type_check_result.confirm)
                     return agv_type_check_result;
                 #endregion

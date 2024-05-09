@@ -75,8 +75,9 @@ namespace AGVSystem.Controllers
                 Accept_AGV_Type = option.Accept_AGV_Type.ToAGVModel()
             }).ToList();
             return Ok(options);
-
         }
+
+
         [HttpPost("SaveEQOptions")]
         public async Task<IActionResult> SaveEQOptions(List<clsEndPointOptions> datas)
         {

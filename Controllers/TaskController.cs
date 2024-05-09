@@ -126,7 +126,7 @@ namespace AGVSystem.Controllers
             return Ok(await AddTask(taskData, user));
         }
         [HttpPost("charge")]
-        [Authorize]
+        //[Authorize]
         public async Task<IActionResult> ChargeTask([FromBody] clsTaskDto taskData, string user = "")
         {
             if (!UserValidation())
@@ -182,7 +182,7 @@ namespace AGVSystem.Controllers
             (bool existDevice, clsEQ mainEQ, clsRack rack) result = TryGetEndDevice(tag);
 
             if (!result.existDevice)
-                return Ok(new clsAGVSTaskReportResponse(false, $"找不到Tag為{tag}的設備"));
+                return Ok(new clsAGVSTaskReportResponse(false, $"[LoadUnloadTaskStart] 找不到Tag為{tag}的設備"));
 
             if (result.mainEQ != null)
             {
@@ -211,14 +211,14 @@ namespace AGVSystem.Controllers
             if (destineEQ == null)
             {
 
-                return new clsAGVSTaskReportResponse() { confirm = false, message = $"找不到Tag為{DestineTag}的終點設備" };
+                return new clsAGVSTaskReportResponse() { confirm = false, message = $"[StartTransferCargoReport] 找不到Tag為{DestineTag}的終點設備" };
             }
             else
             {
                 sourceEQ = StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == SourceTag);
                 if (sourceEQ == null)
                 {
-                    return new clsAGVSTaskReportResponse() { confirm = false, message = $"找不到Tag為{SourceTag}的起點設備" };
+                    return new clsAGVSTaskReportResponse() { confirm = false, message = $"[StartTransferCargoReport] 找不到Tag為{SourceTag}的起點設備" };
 
                 }
                 else
@@ -244,7 +244,7 @@ namespace AGVSystem.Controllers
 
             (bool existDevice, clsEQ mainEQ, clsRack rack) result = TryGetEndDevice(tag);
             if (!result.existDevice)
-                return new clsAGVSTaskReportResponse(false, $"找不到Tag為{tag}的設備");
+                return new clsAGVSTaskReportResponse(false, $"[LoadUnloadTaskFinish] 找不到Tag為{tag}的設備");
             if (result.mainEQ != null)
             {
                 result.mainEQ.CancelToEQUpAndLow();
@@ -264,7 +264,7 @@ namespace AGVSystem.Controllers
                 (bool existDevice, clsEQ mainEQ, clsRack rack) result = TryGetEndDevice(from);
                 if (!result.existDevice)
                 {
-                    return new clsAGVSTaskReportResponse(false, $"找不到Tag為{from}的起點設備");
+                    return new clsAGVSTaskReportResponse(false, $"[LDULDOrderStart] 找不到Tag為{from}的起點設備");
                 }
                 else
                 {
@@ -282,7 +282,7 @@ namespace AGVSystem.Controllers
             {
                 (bool existDevice, clsEQ mainEQ, clsRack rack) result = TryGetEndDevice(to);
                 if (!result.existDevice)
-                    return new clsAGVSTaskReportResponse(false, $"找不到Tag為{from}的設備");
+                    return new clsAGVSTaskReportResponse(false, $"[LDULDOrderStart] 找不到Tag為{to}的終點設備");
                 else
                 {
                     if (result.mainEQ != null)
