@@ -263,33 +263,35 @@ namespace AGVSystem.TaskManagers
             if (destine_equipment != null)
             {
                 VEHICLE_TYPE destine_eq_accept_agv_model = destine_equipment.EndPointOptions.Accept_AGV_Type;
-
                 if (taskData.need_change_agv)
                 {
-                    //檢查終點站可用車種
-                    string strTransferToDestineAGVName = taskData.TransferToDestineAGVName;
-                    if (strTransferToDestineAGVName != "")
-                    {
-                        
-                        var toDestineAGV = agvstates.FirstOrDefault(agv_dat => agv_dat.AGV_Name == strTransferToDestineAGVName);
-                        var modelToDestine = toDestineAGV.Model.ConvertToEQAcceptAGVTYPE();
-                        if (destine_eq_accept_agv_model != VEHICLE_TYPE.ALL && destine_eq_accept_agv_model != modelToDestine)
-                            return (false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Destine_Equipment, $"終點設備不允許{modelToDestine}車種進行任務");
-                        //檢查轉運站可用車種
+                    if (taskData.TransferFromTag != -1)
+                    {   //檢查轉運站可用車種
                         clsEQ transferStation_equipment = StaEQPManagager.GetEQByTag(taskData.TransferFromTag);
                         VEHICLE_TYPE transferStation_eq_accept_agv_model = transferStation_equipment.EndPointOptions.Accept_AGV_Type;
                         if (transferStation_eq_accept_agv_model != VEHICLE_TYPE.ALL && transferStation_eq_accept_agv_model != transferStation_eq_accept_agv_model)
                             return (false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Destine_Equipment, $"轉運設備不允許{model}車種進行任務");
                     }
+                    else { } //不指定轉運站，會在第一段任務結束轉成第二段任務之後找任務起點可去的離轉運站
+                    string strTransferToDestineAGVName = taskData.TransferToDestineAGVName;
+                    if (strTransferToDestineAGVName != "")
+                    {
+                        //檢查終點站可用車種
+                        var toDestineAGV = agvstates.FirstOrDefault(agv_dat => agv_dat.AGV_Name == strTransferToDestineAGVName);
+                        var modelToDestine = toDestineAGV.Model.ConvertToEQAcceptAGVTYPE();
+                        if (destine_eq_accept_agv_model != VEHICLE_TYPE.ALL && destine_eq_accept_agv_model != modelToDestine)
+                            return (false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Destine_Equipment, $"終點設備不允許{modelToDestine}車種進行任務");
+                    }
+                    else { } //不指定轉運車種，會在第一段任務結束轉成第二段任務之後自動找離轉運站最近的車
                 }
                 else
                 {
                     //if (destine_eq_accept_agv_model != VEHICLE_TYPE.ALL && destine_eq_accept_agv_model != model)
                     //    return (false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Destine_Equipment, $"終點設備不允許{model}車種進行任務");
-                    if (destine_eq_accept_agv_model != VEHICLE_TYPE.ALL && destine_eq_accept_agv_model != model)
-                    {
+                    if (destine_eq_accept_agv_model != VEHICLE_TYPE.ALL && destine_eq_accept_agv_model != model) // 自動改成轉運任務
                         taskData.need_change_agv = true;
-                    }
+                    else // 直達車
+                        taskData.need_change_agv = false;
                 }
             }
             return new(true, ALARMS.NONE, "");

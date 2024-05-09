@@ -40,8 +40,6 @@ namespace AGVSystem.TaskManagers
 
         public static async Task<(bool confirm, ALARMS alarm_code, string message)> AddTask(clsTaskDto taskData, TASK_RECIEVE_SOURCE source = TASK_RECIEVE_SOURCE.LOCAL)
         {
-
-
             var _order_action = taskData.Action;
             var source_station_tag = int.Parse(taskData.From_Station);
             var destine_station_tag = int.Parse(taskData.To_Station);
