@@ -13,13 +13,16 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
 
         public string comment { get; set; } = "Description";
         internal CancellationTokenSource cancellationTokenSource { get; set; }
+        internal bool StopFlag { get; set; } = false;
     }
     public class HotRunAction
     {
         public int no { get; set; }
         public string action { get; set; } = "move";
         public int source_tag { get; set; }
+        public int source_slot { get; set; } = 0;
         public int destine_tag { get; set; }
+        public int destine_slot { get; set; } = 0;
         public string destine_name { get; set; } = "";
         public int destine_theta { get; set; } = -1;
         public string cst_id { get; set; } = "";

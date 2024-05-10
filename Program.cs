@@ -1,20 +1,22 @@
 using AGVSystem;
+using AGVSystem.Models.Automation;
 using AGVSystem.Models.EQDevices;
 using AGVSystem.Models.Map;
 using AGVSystem.Models.Sys;
 using AGVSystem.Models.TaskAllocation.HotRun;
 using AGVSystem.Models.WebsocketMiddleware;
-using AGVSystem.Static;
 using AGVSystem.TaskManagers;
 using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.DATABASE;
+using AGVSystemCommonNet6.DATABASE.BackgroundServices;
 using AGVSystemCommonNet6.HttpTools;
 using AGVSystemCommonNet6.Log;
 using AGVSystemCommonNet6.Microservices;
 using AGVSystemCommonNet6.Microservices.VMS;
 using AGVSystemCommonNet6.User;
+using AGVSystemCommonNet6.Vehicle_Control.VCS_ALARM;
 using EquipmentManagment.Device;
 using EquipmentManagment.MainEquipment;
 using EquipmentManagment.Manager;
@@ -33,7 +35,16 @@ Console.Title = "GPM-AGV系統(AGVs)";
 LOG.SetLogFolderName("AGVS LOG");
 LOG.INFO("AGVS System Start");
 AGVSConfigulator.Init();
-AGVSDatabase.Initialize();
+try
+{
+    AGVSDatabase.Initialize().GetAwaiter().GetResult();
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"資料庫初始化異常-請確認資料庫! {ex.Message}");
+    Environment.Exit(4);
+}
+
 EQTransferTaskManager.Initialize();
 AGVSMapManager.Initialize();
 HotRunScriptManager.Initialize();
@@ -46,9 +57,8 @@ clsEQ.OnIOStateChanged += EQDeviceEventsHandler.HandleEQIOStateChanged;
 AGVSSocketHost agvs_host = new AGVSSocketHost();
 agvs_host.Start();
 AlarmManagerCenter.Initialize();
-VMSDataStore.Initialize();
+AlarmManager.LoadVCSTrobleShootings();
 VMSSerivces.OnVMSReconnected += async (sender, e) => await VMSSerivces.RunModeSwitch(SystemModes.RunMode);
-VMSSerivces.AgvStateFetchWorker();
 VMSSerivces.AliveCheckWorker();
 VMSSerivces.RunModeSwitch(AGVSystemCommonNet6.AGVDispatch.RunMode.RUN_MODE.MAINTAIN);
 
@@ -90,23 +100,34 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("secret_keysecret_keysecret_key11"))
         }
     );
+
 builder.Services.AddDbContext<AGVSDbContext>(options => options.UseSqlServer(AGVSConfigulator.SysConfigs.DBConnection));
+builder.Services.AddHostedService<DatabaseBackgroundService>();
 
 var app = builder.Build();
 
 _ = Task.Run(async () =>
 {
     await Task.Delay(3000);
-    StaEQPManagager.InitializeAsync(new clsEQManagementConfigs
+    try
     {
-        UseEqEmu = AGVSConfigulator.SysConfigs.EQManagementConfigs.UseEQEmu,
-        EQConfigPath = $"{AGVSConfigulator.SysConfigs.EQManagementConfigs.EquipmentManagementConfigFolder}//EQConfigs.json",
-        WIPConfigPath = $"{AGVSConfigulator.SysConfigs.EQManagementConfigs.EquipmentManagementConfigFolder}//WIPConfigs.json",
-        ChargeStationConfigPath = $"{AGVSConfigulator.SysConfigs.EQManagementConfigs.EquipmentManagementConfigFolder}//ChargStationConfigs.json",
-    });
+        StaEQPManagager.InitializeAsync(new clsEQManagementConfigs
+        {
+            EQConfigPath = $"{AGVSConfigulator.SysConfigs.EQManagementConfigs.EquipmentManagementConfigFolder}//EQConfigs.json",
+            WIPConfigPath = $"{AGVSConfigulator.SysConfigs.EQManagementConfigs.EquipmentManagementConfigFolder}//WIPConfigs.json",
+            ChargeStationConfigPath = $"{AGVSConfigulator.SysConfigs.EQManagementConfigs.EquipmentManagementConfigFolder}//ChargStationConfigs.json",
+        });
+    }
+    catch (Exception ex)
+    {
+        AlarmManagerCenter.AddAlarmAsync(ALARMS.SYSTEM_EQP_MANAGEMENT_INITIALIZE_FAIL_WITH_EXCEPTION);
+        LOG.Critical(ex);
+    }
 });
 
 AGVSWebsocketServerMiddleware.Middleware.Initialize();
+AutomationManager.InitialzeDefaultTasks();
+AutomationManager.StartAllAutomationTasks();
 app.UseAuthentication();
 app.UseSwagger();
 app.UseSwaggerUI();
@@ -134,6 +155,31 @@ app.UseDirectoryBrowser(new DirectoryBrowserOptions
     FileProvider = mapFileProvider,
     RequestPath = mapFileRequestPath
 });
+
+try
+{
+    Directory.CreateDirectory(AGVSConfigulator.SysConfigs.TrobleShootingFolder);
+    var trobleshootingFileRequestPath = app.Configuration.GetValue<string>("TrobleShootingFileOptions:TrobleShootingFile:RequestPath");
+    var trobleshootingFileProvider = new PhysicalFileProvider(AGVSConfigulator.SysConfigs.TrobleShootingFolder);
+
+    // Enable displaying browser links.
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = trobleshootingFileProvider,
+        RequestPath = trobleshootingFileRequestPath
+    });
+
+    app.UseDirectoryBrowser(new DirectoryBrowserOptions
+    {
+        FileProvider = trobleshootingFileProvider,
+        RequestPath = trobleshootingFileRequestPath
+    });
+}
+catch (Exception ex)
+{
+    LOG.ERROR(ex.Message, ex);
+}
+
 
 var agvDisplayImageFolder = Path.Combine(app.Environment.WebRootPath, @"images\AGVDisplayImages");
 Directory.CreateDirectory(agvDisplayImageFolder);

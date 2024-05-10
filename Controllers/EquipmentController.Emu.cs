@@ -6,6 +6,23 @@ namespace AGVSystem.Controllers
 {
     public partial class EquipmentController
     {
+
+
+        [HttpGet("Emu/MaintainStatusSimulation")]
+        public async Task<IActionResult> MaintainStatusSimulation(int TagNumber, bool isMaintain)
+        {
+            bool confirm = StaEQPEmulatorsManagager.MaintainStatusSimulation(TagNumber, isMaintain);
+            return Ok(confirm);
+        }
+
+
+
+        [HttpGet("Emu/PartsReplcingSimulation")]
+        public async Task<IActionResult> PartsReplcingSimulation(int TagNumber, bool isPartsReplcing)
+        {
+            bool confirm = StaEQPEmulatorsManagager.PartsReplacingSimulation(TagNumber, isPartsReplcing);
+            return Ok(confirm);
+        }
         [HttpGet("Emu/InputChange")]
         public async Task<IActionResult> InputChange(string EqName, int index, bool value)
         {

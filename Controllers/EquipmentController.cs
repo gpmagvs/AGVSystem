@@ -1,5 +1,6 @@
 ﻿using AGVSystem.Models.Map;
 using AGVSystem.Models.WebsocketMiddleware;
+using AGVSystem.TaskManagers;
 using AGVSystemCommonNet6.DATABASE;
 using EquipmentManagment.ChargeStation;
 using EquipmentManagment.Connection;
@@ -12,6 +13,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.CodeAnalysis.Options;
 using Newtonsoft.Json;
 using System.Text;
+using System.Xml.Linq;
 
 namespace AGVSystem.Controllers
 {
@@ -69,11 +71,13 @@ namespace AGVSystem.Controllers
             {
                 Tag = option.TagID,
                 EqName = option.Name,
-                AGVModbusGatewayPort = option.ConnOptions.AGVModbusGatewayPort
+                AGVModbusGatewayPort = option.ConnOptions.AGVModbusGatewayPort,
+                Accept_AGV_Type = option.Accept_AGV_Type.ToAGVModel()
             }).ToList();
             return Ok(options);
-
         }
+
+
         [HttpPost("SaveEQOptions")]
         public async Task<IActionResult> SaveEQOptions(List<clsEndPointOptions> datas)
         {
@@ -173,6 +177,27 @@ namespace AGVSystem.Controllers
 
             }
         }
+
+
+        [HttpPost("ChargeStation/SaveUsableAGVSetting")]
+        public async Task<IActionResult> SaveUsableAGVSetting([FromBody] string[] agvNames, string ChargeStationName)
+        {
+            try
+            {
+
+                var charge_station = StaEQPManagager.ChargeStations.FirstOrDefault(eq => eq.EQName == ChargeStationName);
+                if (charge_station == null)
+                    return Ok(new { confirm = false, message = $"Charge Station:{ChargeStationName} is not exist" });
+                charge_station.SetUsableAGVList(agvNames);
+                StaEQPManagager.SaveChargeStationConfigs();
+                return Ok(new { confirm = true, message = "" });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { confirm = false, message = ex.Message });
+            }
+        }
+
         [HttpPost("AgvHsSignal")]
         public async Task<IActionResult> AgvHsSignal(string EqName, string SignalName, bool State)
         {
@@ -187,6 +212,10 @@ namespace AGVSystem.Controllers
                         EQ.To_EQ_Up = State;
                     if (SignalName == "To_EQ_Low")
                         EQ.To_EQ_Low = State;
+                    if (SignalName == "Cmd_Reserve_Up")
+                        EQ.CMD_Reserve_Up = State;
+                    if (SignalName == "Cmd_Reserve_Low")
+                        EQ.CMD_Reserve_Low = State;
                     if (SignalName == "VALID")
                         EQ.HS_AGV_VALID = State;
                     if (SignalName == "TR_REQ")
@@ -213,6 +242,7 @@ namespace AGVSystem.Controllers
 
             return Ok(new { confirm, message });
         }
+
     }
 
 }

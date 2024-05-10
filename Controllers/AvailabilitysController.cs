@@ -3,6 +3,7 @@ using AGVSystemCommonNet6.DATABASE;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using AGVSystemCommonNet6.Availability;
 
 namespace AGVSystem.Controllers
 {
@@ -52,8 +53,9 @@ namespace AGVSystem.Controllers
         {
             var startDate = DateTime.Parse(StartDate);
             var endDate = DateTime.Parse(EndDate);
+            MTTRMTBFCount.MTTRMTBF_TimeCount(startDate, endDate, AGVName);
+            MTTRMTBFCount.MissTagCount(startDate, endDate, AGVName);
             endDate = endDate.AddDays(1);
-
             using var db = new AGVSDatabase();
             var datas = db.tables.Availabilitys.Where(dat => dat.AGVName == AGVName && dat.Time >= startDate && dat.Time <= endDate);
             var idle_time = datas.Sum(d => d.IDLE_TIME);
@@ -61,7 +63,7 @@ namespace AGVSystem.Controllers
             var down_time = datas.Sum(d => d.DOWN_TIME);
             var charge_time = datas.Sum(d => d.CHARGE_TIME);
             //['RUN', 'IDLE', 'DOWN', 'CHARGE', 'UNKNOWN']
-            var dataset =new
+            var dataset = new
             {
                 total = new double[] { run_time, idle_time, down_time, charge_time },
                 days = new
@@ -71,6 +73,21 @@ namespace AGVSystem.Controllers
                     run = datas.Select(dat => dat.RUN_TIME).ToArray(),
                     down = datas.Select(dat => dat.DOWN_TIME).ToArray(),
                     charge = datas.Select(dat => dat.CHARGE_TIME).ToArray(),
+                },
+                BarchartMTTR = new
+                {
+                    dates = MTTRMTBFCount.MttrMtbf_date.ToArray(),
+                    time = MTTRMTBFCount.Mttr_data.ToArray(),
+                },
+                BarchartMTBF = new
+                {
+                    dates = MTTRMTBFCount.MttrMtbf_date.ToArray(),
+                    time = MTTRMTBFCount.Mtbf_data.ToArray(),
+                },
+                BarchartMissTag = new
+                {
+                    dates = MTTRMTBFCount.MttrMtbf_date.ToArray(),
+                    count = MTTRMTBFCount.MissTagcount.ToArray(),
                 }
             };
             return Ok(dataset);

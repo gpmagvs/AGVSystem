@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using AGVSystemCommonNet6.AGVDispatch.Model;
 using Microsoft.Build.Framework;
 using AGVSystemCommonNet6.AGVDispatch;
+using AGVSystem.Models.Map;
 
 namespace AGVSystem.Controllers
 {
@@ -19,30 +20,26 @@ namespace AGVSystem.Controllers
         [HttpGet("TaskQuery")]
         public async Task<IActionResult> TaskQuery(int currentpage, string StartTime, string EndTime, string? AGV_Name = "ALL", string? TaskName = "ALL", string Result = "ALL", string ActionType = "ALL")
         {
-            _ = Task.Factory.StartNew(async () =>
-            {
-                while (true)
-                {
-                    try
-                    {
-                        if (DateTime.Now.Hour == 1)
-                        {
-                            DateTime starttime = DateTime.Today.AddDays(-1);
-                            DateTime endtime = DateTime.Today.AddSeconds(-1);
-                            TaskDatabaseHelper.SaveTocsv(starttime, endtime, AGV_Name, TaskName);
-                        }
-                    }
-                    catch
-                    {
-                    }
-                    Thread.Sleep(60000);
-                }
-            });
             DateTime start = DateTime.Parse(StartTime);
             DateTime end = DateTime.Parse(EndTime);
             using (var taskDb = new TaskDatabaseHelper())
             {
                 taskDb.TaskQuery(out int count, currentpage, start, end, AGV_Name, TaskName, Result, ActionType, out List<clsTaskDto>? tasks);
+
+                tasks.ForEach(task =>
+                {
+                    if (task.From_Station_Tag != -1)
+                    {
+                        var fromPoint = AGVSMapManager.GetMapPointByTag(task.From_Station_Tag);
+                        task.From_Station_Display = fromPoint == null ? task.From_Station_Tag + "" : fromPoint.Graph.Display;
+                    }
+                    if (task.To_Station_Tag != -1)
+                    {
+                        var toPoint = AGVSMapManager.GetMapPointByTag(task.To_Station_Tag);
+                        task.To_Station_Display = toPoint == null ? task.To_Station_Tag + "" : toPoint.Graph.Display;
+                    }
+                });
+
                 return Ok(new { count, tasks });
             }
         }

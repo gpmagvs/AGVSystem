@@ -4,6 +4,7 @@ using EquipmentManagment.Manager;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
+using NuGet.DependencyResolver;
 
 namespace AGVSystem.Controllers.EmuControllers
 {
@@ -39,21 +40,19 @@ namespace AGVSystem.Controllers.EmuControllers
         [HttpGet("SetSensorState")]
         public async Task<IActionResult> SetSensorState(string rack_id, string port_id, string cargo_type, int sensor_number, bool state)
         {
-
-            if (!AGVSConfigulator.SysConfigs.EQManagementConfigs.UseEQEmu)
-                return Ok(new { confirm = false, message = $"Not simulation mode, modify sensor io state is invalid." });
-
-
             EquipmentManagment.Emu.clsWIPEmu? IOModuleEmu = StaEQPEmulatorsManagager.WIPEmulators.Values.FirstOrDefault(wip => wip.options.Name == rack_id);
             if (IOModuleEmu == null)
                 return Ok(new { confirm = false, message = $"Rack-{rack_id} Not Exist" });
+
             // clsRackIOLocation iolocation = (clsRackIOLocation)IOModuleEmu.options.IOLocation;
             //IOModuleEmu.ModifyInput(index, !IOModuleEmu.GetInput(index));
 
             var rack = StaEQPManagager.RacksList.FirstOrDefault(rack => rack.EQName == rack_id);
+            
+            if(!rack.RackOption.IsEmulation)
+                return Ok(new { confirm = false, message = $"Not simulation mode, modify sensor io state is invalid." });
+
             var port = rack?.PortsStatus.FirstOrDefault(port => port.Properties.ID == port_id);
-
-
             var ioLocation = port.Properties.IOLocation;
 
             int _io_location = 0;
