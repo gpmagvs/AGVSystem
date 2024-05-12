@@ -68,10 +68,12 @@ namespace AGVSystem.Service
 
         }
 
-        private IEnumerable<RTAvailabilityDto> _GetDataInCondition(string agvName, DateTime fromTime, DateTime toTime)
+        private List<RTAvailabilityDto> _GetDataInCondition(string agvName, DateTime fromTime, DateTime toTime)
         {
-            return _dbContent.RealTimeAvailabilitys.AsNoTracking().Where(entity => entity.StartTime >= fromTime && entity.EndTime <= toTime)
-                                                           .Where(entity => entity.AGVName == agvName);
+            return _dbContent.RealTimeAvailabilitys.AsNoTracking()
+                                                     .Where(entity => entity.StartTime >= fromTime && entity.EndTime <= toTime)          
+                                                     .Where(entity => entity.AGVName == agvName)
+                                                     .ToList();
         }
     }
 }

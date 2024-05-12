@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using AGVSystemCommonNet6.Availability;
 using AGVSystem.Service;
+using System.Diagnostics;
 
 namespace AGVSystem.Controllers
 {
@@ -54,6 +55,7 @@ namespace AGVSystem.Controllers
         [HttpGet("Query")]
         public async Task<IActionResult> Query(string AGVName, string StartDate, string EndDate)
         {
+            Stopwatch stopwatch = Stopwatch.StartNew();
             var startDate = DateTime.Parse(StartDate);
             var endDate = DateTime.Parse(EndDate);
             endDate = endDate.AddDays(1);
@@ -63,6 +65,9 @@ namespace AGVSystem.Controllers
             Dictionary<DateTime, double> MTBF = _MeanTimeQuerier.GetMTBF(AGVName,startDate, endDate );
             Dictionary<DateTime, double> MTTR= _MeanTimeQuerier.GetMTTR(AGVName,startDate, endDate );
 
+            stopwatch.Stop();
+            Console.WriteLine($"MTBF/MTTR Data Prepare Time Spend: {stopwatch.Elapsed.TotalSeconds} s");
+            stopwatch.Restart();
             using var db = new AGVSDatabase();
             var datas = db.tables.Availabilitys.Where(dat => dat.AGVName == AGVName && dat.Time >= startDate && dat.Time <= endDate);
             var idle_time = datas.Sum(d => d.IDLE_TIME);
@@ -89,6 +94,8 @@ namespace AGVSystem.Controllers
                     count = MTTRMTBFCount.MissTagcount.ToArray(),
                 }
             };
+            stopwatch.Stop();
+            Console.WriteLine($"{stopwatch.Elapsed.TotalSeconds}");
             return Ok(dataset);
         }
     }
