@@ -69,6 +69,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Resources\AGVS_TrobleShooting.csv">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Resources\AOI_SOP_000_AGV 無線網路斷線回復 .pdf">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -88,6 +91,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Resources\AOI_SOP_100_AGV_手動充電%28電池喚醒%29.pdf">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Resources\VCS_TrobleShooting.csv">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
