@@ -4,7 +4,7 @@ using EquipmentManagment.Device;
 
 namespace AGVSystem.Models.EQDevices
 {
-    public class EQDeviceEventsHandler
+    public partial class EQDeviceEventsHandler
     {
 
         internal static void Initialize()
@@ -14,6 +14,8 @@ namespace AGVSystem.Models.EQDevices
             EndPointDeviceAbstract.OnEQInputDataSizeNotEnough += HandleEQInputDataSizeNotEnough;
             EndPointDeviceAbstract.OnPartsStartReplacing += HandleEQStartPartsReplace;
             EndPointDeviceAbstract.OnPartsEndReplacing += HandleEQFinishPartsReplace;
+            EndPointDeviceAbstract.OnDeviceMaintainStart += HandleDeviceMaintainStart;
+            EndPointDeviceAbstract.OnDeviceMaintainFinish += HandleDeviceMaintainFinish;
 
         }
 
