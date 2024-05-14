@@ -239,6 +239,37 @@ namespace AGVSystem.TaskManagers
             }
 
         }
+        public static (bool confirm, ALARMS alarm_code, string message) CheckEQAcceptCargoType(clsTaskDto taskData)
+        {
+            clsEQ source_equipment = StaEQPManagager.GetEQByTag(taskData.From_Station_Tag);
+            clsEQ destine_equipment = StaEQPManagager.GetEQByTag(taskData.To_Station_Tag);
+            int FromStation_CSTType = 0;
+            int ToStation_CSTType = 0;
+
+            if (source_equipment != null)
+            {
+                EQ_ACCEPT_CARGO_TYPE source_eq_accept_cargo_type = source_equipment.EndPointOptions.EQAcceeptCargoType;
+                FromStation_CSTType = (int)source_eq_accept_cargo_type;
+            }
+            if (destine_equipment != null)
+            {
+                EQ_ACCEPT_CARGO_TYPE source_eq_accept_cargo_type = destine_equipment.EndPointOptions.EQAcceeptCargoType;
+                ToStation_CSTType = (int)source_eq_accept_cargo_type;
+            }
+            if (taskData.Action == ACTION_TYPE.Carry)
+            {
+                if (((EQ_ACCEPT_CARGO_TYPE)FromStation_CSTType != EQ_ACCEPT_CARGO_TYPE.None && FromStation_CSTType != ToStation_CSTType) ||
+                    ((EQ_ACCEPT_CARGO_TYPE)ToStation_CSTType != EQ_ACCEPT_CARGO_TYPE.None && FromStation_CSTType != ToStation_CSTType))
+                    return new(false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Source_Equipment, "FromStation and ToStation Accept EQtype not match");
+                else
+                {
+                    taskData.CST_TYPE = FromStation_CSTType;
+                    return new(true, ALARMS.NONE, "");
+                }
+            }
+            else
+                return new(true, ALARMS.NONE, "");
+        }
 
         public static (bool confirm, ALARMS alarm_code, string message) CheckEQAcceptAGVType(ref clsTaskDto taskData)
         {
@@ -296,6 +327,7 @@ namespace AGVSystem.TaskManagers
             }
             return new(true, ALARMS.NONE, "");
         }
+
         private static bool IsEQDataValid(EndPointDeviceAbstract endpoint, out int unloadStationTag, out ALARMS alarm_code)
         {
             alarm_code = ALARMS.NONE;

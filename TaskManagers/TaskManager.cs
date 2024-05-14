@@ -106,7 +106,6 @@ namespace AGVSystem.TaskManagers
                 var agv = database.tables.AgvStates.FirstOrDefault(d => d.AGV_Name == agv_name);
                 taskData.From_Station = agv.CurrentLocation;
             }
-
             #endregion
 
             #region 充電任務確認
@@ -130,6 +129,10 @@ namespace AGVSystem.TaskManagers
             #endregion
             try
             {
+                (bool confirm, ALARMS alarm_code, string message) eq_accept_cargo_type_check_result =EQTransferTaskManager.CheckEQAcceptCargoType(taskData);
+                if (!eq_accept_cargo_type_check_result.confirm)
+                    return eq_accept_cargo_type_check_result;
+
                 #region AGV車款與設備允許車款確認
                 (bool confirm, ALARMS alarm_code, string message) agv_type_check_result = EQTransferTaskManager.CheckEQAcceptAGVType(ref taskData);
                 if (!agv_type_check_result.confirm)
