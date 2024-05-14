@@ -1,4 +1,5 @@
-﻿using AGVSystemCommonNet6.Alarm;
+﻿using AGVSystem.Service;
+using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.Log;
 using EquipmentManagment.Device;
 
@@ -6,7 +7,6 @@ namespace AGVSystem.Models.EQDevices
 {
     public partial class EQDeviceEventsHandler
     {
-
         internal static void Initialize()
         {
             EndPointDeviceAbstract.OnEQDisconnected += HandleDeviceDisconnected;

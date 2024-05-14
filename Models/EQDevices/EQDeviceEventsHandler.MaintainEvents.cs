@@ -1,7 +1,9 @@
 ﻿using AGVSystem.Models.Map;
+using AGVSystem.Service;
 using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.Log;
 using AGVSystemCommonNet6.MAP;
+using AGVSystemCommonNet6.Microservices;
 using AGVSystemCommonNet6.Microservices.VMS;
 using EquipmentManagment.Device;
 using System.Diagnostics;
@@ -12,13 +14,14 @@ namespace AGVSystem.Models.EQDevices
     {
         private static void HandleDeviceMaintainFinish(object? sender, EndPointDeviceAbstract device)
         {
-            LOG.TRACE($"{device.EQName} Maintain Signal ON");
+            LOG.TRACE($"{device.EQName} Maintain Signal OFF");
             ChangeEnableStateOfEntryPointOfEQOfMapAndRequestVMSReload(device.EndPointOptions.TagID, true);
         }
 
         private static void HandleDeviceMaintainStart(object? sender, EndPointDeviceAbstract device)
         {
-            LOG.TRACE($"{device.EQName} Maintain Signal OFF");
+            LOG.TRACE($"{device.EQName} Maintain Signal ON");
+            NotifyServiceHelper.EquipmentMaintainingNotify(device.EQName);
             ChangeEnableStateOfEntryPointOfEQOfMapAndRequestVMSReload(device.EndPointOptions.TagID, false);
         }
 
@@ -42,10 +45,8 @@ namespace AGVSystem.Models.EQDevices
             }
             clsMapConfigs mapConfigs = AGVSConfigulator.SysConfigs.MapConfigs;
             MapManager.SaveMapToFile(AGVSMapManager.CurrentMap, mapConfigs.MapFileFullName);
-            Stopwatch _stopwatch = Stopwatch.StartNew();
-            await AGVSystemCommonNet6.Microservices.MapSync.SendReloadRequest(mapConfigs.CurrentMapFileName);
-            _stopwatch.Stop();
-            Console.WriteLine($"SendReloadRequest time spend={_stopwatch.Elapsed.Seconds} s");
+            await NotifyServiceHelper.ReloadMapNotify();
+            MapSync.SendReloadRequest(mapConfigs.CurrentMapFileName);
             string modifiedTagCollectionsStr = string.Join(",", entryPoints.Select(pt => pt.TagNumber));
             LOG.TRACE($"Modify Tags={modifiedTagCollectionsStr} 'Enable' property to {enabled}");
 
