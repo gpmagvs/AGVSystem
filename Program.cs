@@ -200,7 +200,7 @@ var agvDisplayImageFolder = Path.Combine(app.Environment.WebRootPath, @"images\A
 Directory.CreateDirectory(agvDisplayImageFolder);
 
 app.UseVueRouterHistory();
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 app.UseAuthorization();
 app.UseAuthentication();
 app.MapControllers();
