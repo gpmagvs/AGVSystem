@@ -23,6 +23,8 @@ using EquipmentManagment.MainEquipment;
 using EquipmentManagment.Manager;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Json;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.AspNetCore.WebSockets;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
@@ -82,8 +84,6 @@ builder.Services.AddSwaggerGen(opton =>
 });
 builder.Services.AddControllers().AddJsonOptions(options => options.JsonSerializerOptions.PropertyNamingPolicy = null);
 builder.Services.AddDirectoryBrowser();
-
-
 builder.Services.Configure<JsonOptions>(options =>
 {
     options.SerializerOptions.PropertyNamingPolicy = null;
@@ -105,6 +105,20 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
 builder.Services.AddDbContext<AGVSDbContext>(options => options.UseSqlServer(AGVSConfigulator.SysConfigs.DBConnection));
 builder.Services.AddHostedService<DatabaseBackgroundService>();
 builder.Services.AddScoped<MeanTimeQueryService>();
+builder.Services.AddSingleton<NotifyServiceHelper>();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+builder.Services.AddWebSockets(options =>
+{
+    options.KeepAliveInterval = TimeSpan.FromSeconds(600);
+});
 
 var app = builder.Build();
 
@@ -130,12 +144,10 @@ _ = Task.Run(async () =>
 AGVSWebsocketServerMiddleware.Middleware.Initialize();
 AutomationManager.InitialzeDefaultTasks();
 AutomationManager.StartAllAutomationTasks();
-app.UseAuthentication();
 app.UseSwagger();
 app.UseSwaggerUI();
-app.UseCors(c => c.AllowAnyHeader().AllowAnyOrigin().AllowAnyMethod());
-app.UseWebSockets(new WebSocketOptions { KeepAliveInterval = TimeSpan.FromSeconds(1) });
-
+app.UseCors(c => c.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+app.UseWebSockets();
 app.UseDefaultFiles(new DefaultFilesOptions());
 app.UseStaticFiles();
 
@@ -187,6 +199,7 @@ var agvDisplayImageFolder = Path.Combine(app.Environment.WebRootPath, @"images\A
 Directory.CreateDirectory(agvDisplayImageFolder);
 
 app.UseVueRouterHistory();
+//app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
 app.Run();
