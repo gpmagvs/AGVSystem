@@ -69,6 +69,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Update="Resources\AGVS_AlarmCodes.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="Resources\AGVS_TrobleShooting.csv">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
