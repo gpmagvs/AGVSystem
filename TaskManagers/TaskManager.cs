@@ -2,6 +2,7 @@
 using AGVSystem.Models.BayMeasure;
 using AGVSystem.Models.Map;
 using AGVSystem.Models.Sys;
+using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.AGVDispatch;
 using AGVSystemCommonNet6.AGVDispatch.Messages;
 using AGVSystemCommonNet6.AGVDispatch.RunMode;
@@ -119,6 +120,11 @@ namespace AGVSystem.TaskManagers
                         AlarmManagerCenter.AddAlarmAsync(ALARMS.Destine_Charge_Station_Has_AGV, ALARM_SOURCE.AGVS, level: ALARM_LEVEL.WARNING);
                         return (false, ALARMS.Destine_Eq_Station_Has_Task_To_Park, $"目的充電站已有AGV停駐");
                     }
+                    if (database.tables.AgvStates.Where(agv => agv.AGV_Name == taskData.DesignatedAGVName && agv.Model != clsEnums.AGV_TYPE.SUBMERGED_SHIELD && (agv.CargoStatus != 0 || agv.CurrentCarrierID != string.Empty)).Any())
+                    {
+                        AlarmManagerCenter.AddAlarmAsync(ALARMS.Destine_Charge_Station_Has_AGV, ALARM_SOURCE.AGVS, level: ALARM_LEVEL.WARNING);
+                        return (false, ALARMS.Destine_Eq_Station_Has_Task_To_Park, $"車型非{clsEnums.AGV_TYPE.SUBMERGED_SHIELD}車上有貨不行進行充電任務");
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -129,7 +135,7 @@ namespace AGVSystem.TaskManagers
             #endregion
             try
             {
-                (bool confirm, ALARMS alarm_code, string message) eq_accept_cargo_type_check_result =EQTransferTaskManager.CheckEQAcceptCargoType(taskData);
+                (bool confirm, ALARMS alarm_code, string message) eq_accept_cargo_type_check_result = EQTransferTaskManager.CheckEQAcceptCargoType(taskData);
                 if (!eq_accept_cargo_type_check_result.confirm)
                     return eq_accept_cargo_type_check_result;
 
@@ -265,7 +271,7 @@ namespace AGVSystem.TaskManagers
         {
             try
             {
-             
+
                 await VMSSerivces.TaskCancel(task_name);
                 //using (var db = new AGVSDatabase())
                 //{
