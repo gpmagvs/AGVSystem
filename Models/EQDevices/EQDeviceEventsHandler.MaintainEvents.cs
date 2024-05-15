@@ -5,6 +5,7 @@ using AGVSystemCommonNet6.Log;
 using AGVSystemCommonNet6.MAP;
 using AGVSystemCommonNet6.Microservices;
 using AGVSystemCommonNet6.Microservices.VMS;
+using AGVSystemCommonNet6.Notify;
 using EquipmentManagment.Device;
 using System.Diagnostics;
 
@@ -15,13 +16,14 @@ namespace AGVSystem.Models.EQDevices
         private static void HandleDeviceMaintainFinish(object? sender, EndPointDeviceAbstract device)
         {
             LOG.TRACE($"{device.EQName} Maintain Signal OFF");
+            NotifyServiceHelper.SUCCESS($"設備-{device.EQName} 完成維修");
             ChangeEnableStateOfEntryPointOfEQOfMapAndRequestVMSReload(device.EndPointOptions.TagID, true);
         }
 
         private static void HandleDeviceMaintainStart(object? sender, EndPointDeviceAbstract device)
         {
             LOG.TRACE($"{device.EQName} Maintain Signal ON");
-            NotifyServiceHelper.EquipmentMaintainingNotify(device.EQName);
+            NotifyServiceHelper.WARNING($"設備-{device.EQName} 維修中!");
             ChangeEnableStateOfEntryPointOfEQOfMapAndRequestVMSReload(device.EndPointOptions.TagID, false);
         }
 
@@ -45,7 +47,7 @@ namespace AGVSystem.Models.EQDevices
             }
             clsMapConfigs mapConfigs = AGVSConfigulator.SysConfigs.MapConfigs;
             MapManager.SaveMapToFile(AGVSMapManager.CurrentMap, mapConfigs.MapFileFullName);
-            await NotifyServiceHelper.ReloadMapNotify();
+            await NotifyServiceHelper.INFO($"Map-Reload", false);
             MapSync.SendReloadRequest(mapConfigs.CurrentMapFileName);
             string modifiedTagCollectionsStr = string.Join(",", entryPoints.Select(pt => pt.TagNumber));
             LOG.TRACE($"Modify Tags={modifiedTagCollectionsStr} 'Enable' property to {enabled}");

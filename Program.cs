@@ -105,7 +105,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
 builder.Services.AddDbContext<AGVSDbContext>(options => options.UseSqlServer(AGVSConfigulator.SysConfigs.DBConnection));
 builder.Services.AddHostedService<DatabaseBackgroundService>();
 builder.Services.AddScoped<MeanTimeQueryService>();
-builder.Services.AddSingleton<NotifyServiceHelper>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>

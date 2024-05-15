@@ -1,8 +1,7 @@
-﻿using AGVSystem.Service;
-using Microsoft.AspNetCore.Http;
+﻿using AGVSystemCommonNet6.Notify;
 using Microsoft.AspNetCore.Mvc;
 
-namespace AGVSystem.Controllers
+namespace VMSystem.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -15,35 +14,8 @@ namespace AGVSystem.Controllers
         [HttpGet]
         public async Task GetEventsAsync()
         {
-            //try
-            //{
-            //    HttpContext.Response.ContentType = "text/event-stream";
-            //    var tcs = new TaskCompletionSource<object>();
-
-            //    NotifyServiceHelper.OnMessage += OnMessageRecieved;
-            //    HttpContext.RequestAborted.Register(() =>
-            //    {
-            //        NotifyServiceHelper.OnMessage -= OnMessageRecieved;
-            //        tcs.TrySetCanceled();
-            //    });
-            //    await tcs.Task;
-            //}
-            //catch (TaskCanceledException ex)
-            //{
-            //    Console.WriteLine($"Notify register is disconnect.");
-            //}
-            //async void OnMessageRecieved(object sender, (string eventName, string message) e)
-            //{
-            //    try
-            //    {
-            //        await Response.WriteAsync($"event:{e.eventName}\n");
-            //        await Response.WriteAsync($"data:{e.message}\n\n");
-            //        await Response.Body.FlushAsync();
-            //    }
-            //    catch (Exception ex)
-            //    {
-            //    }
-            //}
+            await NotifyServiceHelper.WebsocketNotification(HttpContext);
         }
+
     }
 }
