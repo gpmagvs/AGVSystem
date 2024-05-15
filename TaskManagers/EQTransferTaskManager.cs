@@ -260,12 +260,17 @@ namespace AGVSystem.TaskManagers
             {
                 if (((EQ_ACCEPT_CARGO_TYPE)FromStation_CSTType != EQ_ACCEPT_CARGO_TYPE.None && FromStation_CSTType != ToStation_CSTType) ||
                     ((EQ_ACCEPT_CARGO_TYPE)ToStation_CSTType != EQ_ACCEPT_CARGO_TYPE.None && FromStation_CSTType != ToStation_CSTType))
-                    return new(false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Source_Equipment, "FromStation and ToStation Accept EQtype not match");
+                    return new(false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Source_Equipment, $"FromStation Accept: {(EQ_ACCEPT_CARGO_TYPE)FromStation_CSTType} and ToStation Accept: {(EQ_ACCEPT_CARGO_TYPE)ToStation_CSTType} @@NOT MATCH");
                 else
                 {
                     taskData.CST_TYPE = FromStation_CSTType;
                     return new(true, ALARMS.NONE, "");
                 }
+            }
+            else if (taskData.Action == ACTION_TYPE.Load)
+            {
+                // TODO 須知道車子目前背KUAN or TRAY 再比對放貨站點可接受貨物類型
+                return new(true, ALARMS.NONE, "");
             }
             else
                 return new(true, ALARMS.NONE, "");

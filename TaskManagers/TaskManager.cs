@@ -135,9 +135,11 @@ namespace AGVSystem.TaskManagers
             #endregion
             try
             {
+                #region 起終點KUAN及TRAY確認
                 (bool confirm, ALARMS alarm_code, string message) eq_accept_cargo_type_check_result = EQTransferTaskManager.CheckEQAcceptCargoType(taskData);
                 if (!eq_accept_cargo_type_check_result.confirm)
                     return eq_accept_cargo_type_check_result;
+                #endregion
 
                 #region AGV車款與設備允許車款確認
                 (bool confirm, ALARMS alarm_code, string message) agv_type_check_result = EQTransferTaskManager.CheckEQAcceptAGVType(ref taskData);
