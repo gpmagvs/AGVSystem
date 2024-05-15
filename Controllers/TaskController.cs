@@ -56,10 +56,10 @@ namespace AGVSystem.Controllers
         [Authorize]
         public async Task<IActionResult> Cancel(string task_name)
         {
-            //if (!UserValidation())
-            //{
-            //    return Unauthorized();
-            //}
+            if (!UserValidation())
+            {
+                return Unauthorized();
+            }
             LOG.TRACE($"User try cancle Task-{task_name}");
 
             bool canceled = await TaskManager.Cancel(task_name, $"User manual canceled");
