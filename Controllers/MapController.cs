@@ -26,6 +26,7 @@ namespace AGVSystem.Controllers
         private string tempMapFilePath = "";
         private IConfiguration configuration;
         private string mapFileFolder => configuration.GetValue<string>("StaticFileOptions:MapFile:FolderPath");
+        private string agvImageFileFolder => configuration.GetValue<string>("StaticFileOptions:AGVImageStoreFile:FolderPath");
         public MapController(IConfiguration configuration)
         {
             this.configuration = configuration;
@@ -75,7 +76,7 @@ namespace AGVSystem.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(new { confirm = false,message=ex.Message});
+                return Ok(new { confirm = false, message = ex.Message });
             }
         }
 
@@ -151,7 +152,7 @@ namespace AGVSystem.Controllers
             return Ok(new MapPoint()
             {
                 Enable = true,
-                StationType =STATION_TYPE.Normal,
+                StationType = STATION_TYPE.Normal,
                 TagNumber = 1
             });
         }
@@ -194,8 +195,8 @@ namespace AGVSystem.Controllers
 
             if (file.Length > 0)
             {
-                var fileName = $@"\images\AGVDisplayImage\{AGVName}-Icon.png";
-                var imageFolder = Path.Combine(Environment.CurrentDirectory, "wwwroot");
+                var fileName = $@"\{AGVName}-Icon.png";
+                var imageFolder = agvImageFileFolder;
                 var filePath = imageFolder + fileName;
 
                 Directory.CreateDirectory(Path.GetDirectoryName(filePath));
