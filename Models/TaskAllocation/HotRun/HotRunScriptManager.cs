@@ -39,7 +39,7 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
             System.IO.File.WriteAllText(filename, JsonConvert.SerializeObject(settings, Formatting.Indented));
         }
 
-        public static void ReloadHotRunScripts()
+        public static async Task ReloadHotRunScripts()
         {
             var folder = "C://AGVS";
             Directory.CreateDirectory(folder);
@@ -53,6 +53,7 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                     script.state = "IDLE";
                     if (string.IsNullOrEmpty(script.scriptID))
                     {
+                        await Task.Delay(100);
                         script.scriptID = $"AutoCreatedID-{DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss-ffff")}";
                         _AnyScriptIDCreated = true;
                     }
