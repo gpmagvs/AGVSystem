@@ -9,7 +9,7 @@ namespace AGVSystem.Controllers
     public class HotRunController : ControllerBase
     {
         [HttpPost]
-        public async Task<IActionResult> SaveHotRun([FromBody] HotRunScript[] settings)
+        public async Task<IActionResult> SaveHotRun([FromBody] List<HotRunScript> settings)
         {
             return Ok(new
             {
@@ -24,15 +24,15 @@ namespace AGVSystem.Controllers
             return Ok(HotRunScriptManager.HotRunScripts);
         }
         [HttpGet("Start")]
-        public async Task<IActionResult> StartHotRun(int no)
+        public async Task<IActionResult> StartHotRun(string scriptID)
         {
-            (bool confirm, string message) response = HotRunScriptManager.Run(no);
+            (bool confirm, string message) response = HotRunScriptManager.Run(scriptID);
             return Ok(new { confirm = response.confirm, message = response.message });
         }
         [HttpGet("Stop")]
-        public async Task<IActionResult> StopHotRun(int no)
+        public async Task<IActionResult> StopHotRun(string scriptID)
         {
-            HotRunScriptManager.Stop(no);
+            HotRunScriptManager.Stop(scriptID);
             return Ok();
         }
     }

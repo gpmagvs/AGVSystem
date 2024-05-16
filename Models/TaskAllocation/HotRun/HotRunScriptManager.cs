@@ -6,7 +6,10 @@ using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.DATABASE.Helpers;
 using AGVSystemCommonNet6.Microservices.VMS;
+using AGVSystemCommonNet6.Notify;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Build.ObjectModelRemoting;
+using Microsoft.CodeAnalysis.Scripting;
 using Microsoft.EntityFrameworkCore.Update;
 using Newtonsoft.Json;
 using NuGet.Common;
@@ -18,16 +21,24 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
 {
     public class HotRunScriptManager
     {
-        public static HotRunScript[] HotRunScripts { get; set; } = new HotRunScript[0];
-        public static bool Save(HotRunScript[] settings)
+        public static List<HotRunScript> HotRunScripts { get; set; } = new List<HotRunScript>();
+        public static List<HotRunScript> RunningScriptList = new List<HotRunScript>();
+        public static bool Save(List<HotRunScript> settings)
         {
+            SaveSyncHotRunScripts(settings);
             HotRunScripts = settings;
+            SaveScriptsToJsonFile(settings);
+            return true;
+        }
+
+        private static void SaveScriptsToJsonFile(List<HotRunScript> settings)
+        {
             var folder = "C://AGVS";
             Directory.CreateDirectory(folder);
             var filename = Path.Combine(folder, "HotRunScripts.json");
             System.IO.File.WriteAllText(filename, JsonConvert.SerializeObject(settings, Formatting.Indented));
-            return true;
         }
+
         public static void ReloadHotRunScripts()
         {
             var folder = "C://AGVS";
@@ -35,20 +46,29 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
             var filename = Path.Combine(folder, "HotRunScripts.json");
             if (File.Exists(filename))
             {
-                HotRunScripts = JsonConvert.DeserializeObject<HotRunScript[]>(System.IO.File.ReadAllText(filename));
+                HotRunScripts = JsonConvert.DeserializeObject<List<HotRunScript>>(System.IO.File.ReadAllText(filename));
+                bool _AnyScriptIDCreated = false;
                 foreach (var script in HotRunScripts)
                 {
                     script.state = "IDLE";
+                    if (string.IsNullOrEmpty(script.scriptID))
+                    {
+                        script.scriptID = $"AutoCreatedID-{DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss-ffff")}";
+                        _AnyScriptIDCreated = true;
+                    }
                 }
+
+                if (_AnyScriptIDCreated)
+                    Save(HotRunScripts);
             }
         }
         public static void Initialize()
         {
             ReloadHotRunScripts();
         }
-        public static (bool, string) Run(int no)
+        public static (bool, string) Run(string scriptID)
         {
-            var script = HotRunScripts.FirstOrDefault(script => script.no == no);
+            var script = HotRunScripts.FirstOrDefault(script => script.scriptID == scriptID);
             if (script != null)
             {
                 script.cancellationTokenSource = new CancellationTokenSource();
@@ -58,16 +78,66 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                 return (false, "");
         }
 
-        internal static void Stop(int no)
+        internal static void Stop(string scriptID)
         {
-            var script = HotRunScripts.FirstOrDefault(script => script.no == no);
+            var script = RunningScriptList.FirstOrDefault(script => script.scriptID == scriptID);
             if (script != null)
+            {
+                script.StopFlag = true;
+                script.cancellationTokenSource?.Cancel();
+                script.cancellationTokenSource = null;
+
+                RunningScriptList.Remove(script);
+            }
+        }
+
+        private static void SaveSyncHotRunScripts(List<HotRunScript> newScripts)
+        {
+            var scriptsIDCollection = newScripts.Select(script => script.scriptID);
+            var originalScriptIDCollection = HotRunScripts.Select(script => script.scriptID);
+            if (scriptsIDCollection.Any())
+            {
+                //select out not exist scripts
+                IEnumerable<HotRunScript> deletedScripts = HotRunScripts.TakeWhile(script => !scriptsIDCollection.Contains(script.scriptID));
+                if (deletedScripts.Any())
+                    StopScript(deletedScripts);
+
+
+                //handle just edited maybe scripts
+                IEnumerable<HotRunScript> remainOldScripts = HotRunScripts.Where(script => !deletedScripts.Contains(script));
+                foreach (HotRunScript script in remainOldScripts)
+                {
+                    HotRunScript editedScriptFound = newScripts.First(editedScript => editedScript.scriptID == script.scriptID);
+                    script.SyncSetting(editedScriptFound);
+                }
+
+                //new scripts
+                var newToAddScripts = newScripts.Where(script => !originalScriptIDCollection.Contains(script.scriptID));
+                foreach (var item in newToAddScripts)
+                {
+                    item.scriptID = $"{DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss-ffff")}";
+                }
+                HotRunScripts.AddRange(newToAddScripts);
+                HotRunScripts = HotRunScripts.SkipWhile(script => deletedScripts.Any(s => s.scriptID == script.scriptID)).ToList();
+
+            }
+            else//新設定中腳本ID集合為空=>表示沒有任何腳本
+            {
+                HotRunScripts = new List<HotRunScript>();
+            }
+            SaveScriptsToJsonFile(HotRunScripts);
+        }
+
+        private static void StopScript(IEnumerable<HotRunScript> scripts)
+        {
+            foreach (var script in scripts)
             {
                 script.StopFlag = true;
                 script.cancellationTokenSource?.Cancel();
                 script.cancellationTokenSource = null;
             }
         }
+
         private static (bool, string) StartHotRun(HotRunScript script)
         {
 
@@ -101,7 +171,7 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                     script.finish_num = 0;
                     script.state = "Running";
                     UpdateScriptState(script);
-
+                    RunningScriptList.Add(script);
                     //等待AGV可做任務
                     var agvstates = GetAGVState();
                     while (agvstates.OnlineStatus == clsEnums.ONLINE_STATE.OFFLINE || !agvstates.Connected || agvstates.MainStatus == clsEnums.MAIN_STATUS.DOWN || agvstates.MainStatus == clsEnums.MAIN_STATUS.RUN)
@@ -110,7 +180,7 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                         if (script.StopFlag || script.cancellationTokenSource.IsCancellationRequested)
                         {
                             script.state = "IDLE";
-                            return;
+                            throw new TaskCanceledException();
                         }
                         agvstates = GetAGVState();
                     }
@@ -126,7 +196,9 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                         if (agv != null)
                         {
                             foreach (HotRunAction _action in script.actions)
-                            {                                                                                         //經惟中斷點20240409
+                            {
+                                script.RunningAction = _action;
+
                                 var TaskName = $"HR_{_action.action.ToUpper()}_{DateTime.Now.ToString("yMdHHmmss")}";
                                 await TaskManager.AddTask(new clsTaskDto
                                 {
@@ -146,22 +218,24 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                                 {
                                     return DatabaseCaches.TaskCaches.RunningTasks.Any(tk => tk.TaskName == TaskName);
                                 }
+                                script.UpdateRealTimeMessage($"等待任務開始");
                                 while (!WaitTaskExecuting(TaskName))
                                 {
                                     if (script.StopFlag || script.cancellationTokenSource.IsCancellationRequested)
                                     {
                                         script.state = "IDLE";
-                                        return;
+                                        throw new TaskCanceledException();
                                     }
                                     await Task.Delay(500);
                                 }
 
+                                script.UpdateRealTimeMessage($"等待任務結束");
                                 while (WaitTaskExecuting(TaskName))
                                 {
                                     if (script.StopFlag || script.cancellationTokenSource.IsCancellationRequested)
                                     {
                                         script.state = "IDLE";
-                                        return;
+                                        throw new TaskCanceledException();
                                     }
                                     await Task.Delay(500);
                                 }
@@ -180,11 +254,19 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                     UpdateScriptState(script);
                     Console.WriteLine("Hot Run Finish.");
                 }
+                catch (TaskCanceledException ex)
+                {
+                    await NotifyServiceHelper.WARNING($"User Cancel Hot Run Script-{script.scriptID}({script.comment})");
+                    script.state = "IDLE";
+                    script.UpdateRealTimeMessage("已取消工作", false, false);
+                    UpdateScriptState(script);
+                }
                 catch (Exception ex)
                 {
                     script.state = "IDLE";
                     UpdateScriptState(script);
                 }
+
 
             });
             return (true, "");
@@ -214,11 +296,12 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
 
         private static void UpdateScriptState(HotRunScript script)
         {
-            HotRunScript? _script = HotRunScripts.FirstOrDefault(s => s.no == script.no);
+            HotRunScript? _script = HotRunScripts.FirstOrDefault(s => s.scriptID == script.scriptID);
             _script.finish_num = script.finish_num;
             _script.state = script.state;
 
         }
+
 
     }
 }
