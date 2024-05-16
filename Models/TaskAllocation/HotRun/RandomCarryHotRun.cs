@@ -23,7 +23,7 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
             script.state = "Running";
 
             await NotifyServiceHelper.INFO($"隨機搬運任務HOT RUN 開始!");
-
+            script.StopFlag = false;
             while (!script.StopFlag)
             {
                 await Task.Delay(1000);
