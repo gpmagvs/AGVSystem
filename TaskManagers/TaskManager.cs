@@ -13,6 +13,7 @@ using AGVSystemCommonNet6.HttpTools;
 using AGVSystemCommonNet6.Log;
 using AGVSystemCommonNet6.Microservices.ResponseModel;
 using AGVSystemCommonNet6.Microservices.VMS;
+using EquipmentManagment.Device.Options;
 using EquipmentManagment.Manager;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -48,9 +49,32 @@ namespace AGVSystem.TaskManagers
             AGVSystemCommonNet6.MAP.MapPoint sourcePoint = AGVSMapManager.GetMapPointByTag(source_station_tag);
             AGVSystemCommonNet6.MAP.MapPoint destinePoint = AGVSMapManager.GetMapPointByTag(destine_station_tag);
 
+            using AGVSDatabase database = new AGVSDatabase();
+            #region   AGV 狀態檢查
+            // AGV 有貨不可派取貨or搬運, 無貨不可派放貨, 有貨不能去充電(非潛盾車型)
+            if (taskData.DesignatedAGVName != "")
+            {
+                IEnumerable<clsAGVStateDto> agvstates = database.tables.AgvStates;
+                clsAGVStateDto? _agv_assigned = agvstates.FirstOrDefault(agv_dat => agv_dat.AGV_Name == taskData.DesignatedAGVName);
+                VEHICLE_TYPE model = _agv_assigned.Model.ConvertToEQAcceptAGVTYPE();
+                if ((taskData.Action == ACTION_TYPE.Unload || taskData.Action == ACTION_TYPE.Carry) && _agv_assigned.CargoStatus != 0)
+                    return (false, ALARMS.Station_Disabled, $"{_agv_assigned.AGV_Name} with cargo can not assigned to {taskData.Action}");
+                else if (taskData.Action == ACTION_TYPE.Load && _agv_assigned.CargoStatus == 0)
+                    return (false, ALARMS.Station_Disabled, $"{_agv_assigned.AGV_Name} no cargo can not assigned to {taskData.Action}");
+
+                if (taskData.Action == ACTION_TYPE.Charge && _agv_assigned.Model != clsEnums.AGV_TYPE.SUBMERGED_SHIELD && _agv_assigned.CargoStatus != 0 && _agv_assigned.CurrentCarrierID != string.Empty)
+                    return (false, ALARMS.Destine_Eq_Station_Has_Task_To_Park, $"車型非{clsEnums.AGV_TYPE.SUBMERGED_SHIELD}車上有貨不行進行充電任務");
+            }
+            #endregion
+
+            #region 設備狀態檢查
             bool source_station_disabled = sourcePoint == null || source_station_tag == -1 ? false : !sourcePoint.Enable;
             bool destine_station_disabled = destinePoint == null || destine_station_tag == -1 ? false : !destinePoint.Enable;
             bool destine_station_isequipment = destinePoint == null || destine_station_tag == -1 ? false : destinePoint.IsEquipment;
+            if (source_station_disabled)
+                return (false, ALARMS.Station_Disabled, "來源站點未啟用，無法指派任務");
+            if (destine_station_disabled)
+                return (false, ALARMS.Station_Disabled, "目標站點未啟用，無法指派任務");
             if (destine_station_isequipment == true)
             {
                 if (_order_action == ACTION_TYPE.None)
@@ -58,11 +82,9 @@ namespace AGVSystem.TaskManagers
                 else if (_order_action == ACTION_TYPE.Park)
                     return (false, ALARMS.Station_Disabled, "目標站點為設備，無法指派停車任務");
             }
-            if (source_station_disabled)
-                return (false, ALARMS.Station_Disabled, "來源站點未啟用，無法指派任務");
-            if (destine_station_disabled)
-                return (false, ALARMS.Station_Disabled, "目標站點未啟用，無法指派任務");
+            #endregion
 
+            taskData.bypass_eq_status_check = false;
             if (!taskData.bypass_eq_status_check && (_order_action == ACTION_TYPE.Load || _order_action == ACTION_TYPE.LoadAndPark
                                                    || _order_action == ACTION_TYPE.Unload || _order_action == ACTION_TYPE.Carry))
             {
@@ -98,7 +120,7 @@ namespace AGVSystem.TaskManagers
             }
 
             #region 若起點設定是AGV,則起點要設為
-            using AGVSDatabase database = new AGVSDatabase();
+            //using AGVSDatabase database = new AGVSDatabase();
 
             if (taskData.From_Station.Contains("AGV") && _order_action == ACTION_TYPE.Carry)
             {
@@ -119,11 +141,6 @@ namespace AGVSystem.TaskManagers
                     {
                         AlarmManagerCenter.AddAlarmAsync(ALARMS.Destine_Charge_Station_Has_AGV, ALARM_SOURCE.AGVS, level: ALARM_LEVEL.WARNING);
                         return (false, ALARMS.Destine_Eq_Station_Has_Task_To_Park, $"目的充電站已有AGV停駐");
-                    }
-                    if (database.tables.AgvStates.Where(agv => agv.AGV_Name == taskData.DesignatedAGVName && agv.Model != clsEnums.AGV_TYPE.SUBMERGED_SHIELD && (agv.CargoStatus != 0 || agv.CurrentCarrierID != string.Empty)).Any())
-                    {
-                        AlarmManagerCenter.AddAlarmAsync(ALARMS.Destine_Charge_Station_Has_AGV, ALARM_SOURCE.AGVS, level: ALARM_LEVEL.WARNING);
-                        return (false, ALARMS.Destine_Eq_Station_Has_Task_To_Park, $"車型非{clsEnums.AGV_TYPE.SUBMERGED_SHIELD}車上有貨不行進行充電任務");
                     }
                 }
                 catch (Exception ex)

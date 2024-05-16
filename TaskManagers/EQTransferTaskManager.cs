@@ -160,7 +160,6 @@ namespace AGVSystem.TaskManagers
         }
         public static (bool confirm, ALARMS alarm_code, string message) CheckLoadStationStatus(int station_tag, bool check_rack_move_out_is_empty_or_full = true)
         {
-
             bool _eq_exist = TryGetStationEQDIStatus(station_tag, out clsEQ equipment);
             if (!_eq_exist)
                 return new(false, ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, $"設備站點TAG-{station_tag} 不存在於當前地圖");
@@ -174,7 +173,6 @@ namespace AGVSystem.TaskManagers
                 return new(false, ALARMS.EQ_LOAD_REQ_BUT_RACK_FULL_OR_EMPTY_IS_UNKNOWN, $"設備[{equipment.EQName}] 無法確定要載入空框或實框");
 
             return new(true, ALARMS.NONE, "");
-
         }
 
         public static bool TryGetStationEQDIStatus(int station_tag, out clsEQ equipment)
