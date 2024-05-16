@@ -256,14 +256,23 @@ namespace AGVSystem.TaskManagers
             }
             if (taskData.Action == ACTION_TYPE.Carry)
             {
-                if (((EQ_ACCEPT_CARGO_TYPE)FromStation_CSTType != EQ_ACCEPT_CARGO_TYPE.None && FromStation_CSTType != ToStation_CSTType) ||
-                    ((EQ_ACCEPT_CARGO_TYPE)ToStation_CSTType != EQ_ACCEPT_CARGO_TYPE.None && FromStation_CSTType != ToStation_CSTType))
-                    return new(false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Source_Equipment, $"FromStation Accept: {(EQ_ACCEPT_CARGO_TYPE)FromStation_CSTType} and ToStation Accept: {(EQ_ACCEPT_CARGO_TYPE)ToStation_CSTType} @@NOT MATCH");
-                else
+                if ((EQ_ACCEPT_CARGO_TYPE)FromStation_CSTType == EQ_ACCEPT_CARGO_TYPE.None && (EQ_ACCEPT_CARGO_TYPE)ToStation_CSTType == EQ_ACCEPT_CARGO_TYPE.None)
                 {
                     taskData.CST_TYPE = FromStation_CSTType;
                     return new(true, ALARMS.NONE, "");
                 }
+                else if ((EQ_ACCEPT_CARGO_TYPE)FromStation_CSTType == EQ_ACCEPT_CARGO_TYPE.None)
+                {
+                    taskData.CST_TYPE = ToStation_CSTType;
+                    return new(true, ALARMS.NONE, "");
+                }
+                else if ((EQ_ACCEPT_CARGO_TYPE)ToStation_CSTType == EQ_ACCEPT_CARGO_TYPE.None)
+                {
+                    taskData.CST_TYPE = FromStation_CSTType;
+                    return new(true, ALARMS.NONE, "");
+                }
+                else
+                    return new(false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Source_Equipment, $"FromStation Accept: {(EQ_ACCEPT_CARGO_TYPE)FromStation_CSTType} and ToStation Accept: {(EQ_ACCEPT_CARGO_TYPE)ToStation_CSTType} @@NOT MATCH");
             }
             else if (taskData.Action == ACTION_TYPE.Load)
             {
