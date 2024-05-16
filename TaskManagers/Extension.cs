@@ -26,6 +26,8 @@ namespace AGVSystem.TaskManagers
                     return clsEnums.AGV_TYPE.FORK;
                 case EquipmentManagment.Device.Options.VEHICLE_TYPE.SUBMERGED_SHIELD:
                     return clsEnums.AGV_TYPE.SUBMERGED_SHIELD;
+                case VEHICLE_TYPE.ALL:
+                    return AGV_TYPE.Any;
                 default:
                     return clsEnums.AGV_TYPE.FORK;
             }

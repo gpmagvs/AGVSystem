@@ -30,6 +30,8 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
         private string _RealTimeMessage = "";
         public string RealTimeMessage => _RealTimeMessage;
 
+        public bool IsRandomCarryRun { get; set; } = false;
+
         internal void SyncSetting(HotRunScript script)
         {
             this.no = script.no;

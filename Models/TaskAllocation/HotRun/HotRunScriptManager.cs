@@ -140,6 +140,10 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
 
         private static (bool, string) StartHotRun(HotRunScript script)
         {
+            if (script.IsRandomCarryRun)
+            {
+                return StartRandomCarryHotRun(script);
+            }
 
             clsAGVStateDto GetAGVState()
             {
@@ -269,6 +273,14 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
 
 
             });
+            return (true, "");
+        }
+
+        private static (bool, string) StartRandomCarryHotRun(HotRunScript script)
+        {
+            RandomCarryHotRun randomCarryHotRun = new RandomCarryHotRun(script);
+            RunningScriptList.Add(script);
+            randomCarryHotRun.StartAsync();
             return (true, "");
         }
 
