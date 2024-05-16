@@ -153,8 +153,14 @@ app.UseStaticFiles();
 // 加載配置文件
 var mapFileFolderPath = app.Configuration.GetValue<string>("StaticFileOptions:MapFile:FolderPath");
 var mapFileRequestPath = app.Configuration.GetValue<string>("StaticFileOptions:MapFile:RequestPath");
+var agvImageFileFolderPath = app.Configuration.GetValue<string>("StaticFileOptions:AGVImageStoreFile:FolderPath");
+var agvImageFileRequestPath = app.Configuration.GetValue<string>("StaticFileOptions:AGVImageStoreFile:RequestPath");
+
 Directory.CreateDirectory(mapFileFolderPath);
+Directory.CreateDirectory(agvImageFileFolderPath);
+
 var mapFileProvider = new PhysicalFileProvider(mapFileFolderPath);
+var agvImageFileProvider = new PhysicalFileProvider(agvImageFileFolderPath);
 
 // Enable displaying browser links.
 app.UseStaticFiles(new StaticFileOptions
@@ -163,11 +169,44 @@ app.UseStaticFiles(new StaticFileOptions
     RequestPath = mapFileRequestPath
 });
 
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = agvImageFileProvider,
+    RequestPath = agvImageFileRequestPath
+});
+
 app.UseDirectoryBrowser(new DirectoryBrowserOptions
 {
     FileProvider = mapFileProvider,
     RequestPath = mapFileRequestPath
 });
+CreateDefaultAGVImage();
+
+void CreateDefaultAGVImage()
+{
+    try
+    {
+        var exist_fileNames = Directory.GetFiles(agvImageFileFolderPath).Select(file => Path.GetFileName(file)).ToList();
+
+        for (int i = 0; i < 10; i++)
+        {
+            //AGV_003-Icon.png;
+            string agvImageFileName = $"AGV_00{i}-Icon.png";
+            string defaultImgFullFileName = "./Resources/AGVImages/default.png";
+            string agvImageFullFileName = Path.Combine(agvImageFileFolderPath, agvImageFileName);
+            if (!exist_fileNames.Contains(agvImageFileName))
+            {
+                File.Copy(defaultImgFullFileName, agvImageFullFileName, true);
+            }
+        }
+
+    }
+    catch (Exception ex)
+    {
+        LOG.ERROR($"Program-CreateDefaultAGVImage Error :{ex.Message}", ex);
+    }
+}
+
 
 try
 {

@@ -214,65 +214,72 @@ namespace AGVSystem.TaskManagers
 
         public static (bool confirm, ALARMS alarm_code, string message) CheckChargeTask(string agv_name, int assign_charge_station_tag)
         {
-
-            IEnumerable<int> useableChargeTags = StaEQPManagager.GetUsableChargeStationTags(agv_name);
-            IEnumerable<AGVSystemCommonNet6.MAP.MapPoint> chargeStations = AGVSMapManager.CurrentMap.Points.Values.Where(point => point.IsCharge && useableChargeTags.Contains(point.TagNumber));
-
-            bool isNoChargeStation = chargeStations.Count() == 0;
-
-            bool isUnspecified = assign_charge_station_tag == -1;
-            if (isNoChargeStation)
-                return (false, ALARMS.NO_AVAILABLE_CHARGE_PILE, "當前地圖上沒有充電站可以使用");
-
-            using var database = new AGVSDatabase();
-            var chargeTasks = database.tables.Tasks.Where(_task => (_task.State == TASK_RUN_STATUS.NAVIGATING || _task.State == TASK_RUN_STATUS.WAIT) && _task.Action == ACTION_TYPE.Charge).AsNoTracking();
-
-            bool isAlreadyHasChargeTask = chargeTasks.Any(_task => _task.DesignatedAGVName == agv_name);
-            if (isAlreadyHasChargeTask)
-                return (false, ALARMS.AGV_Already_Has_Charge_Task, "AGV已有充電任務");
-
-            if (!isUnspecified) //有指定充電站
+            try
             {
-                if (!useableChargeTags.Contains(assign_charge_station_tag))
+
+                IEnumerable<int> useableChargeTags = StaEQPManagager.GetUsableChargeStationTags(agv_name);
+                IEnumerable<AGVSystemCommonNet6.MAP.MapPoint> chargeStations = AGVSMapManager.CurrentMap.Points.Values.Where(point => point.IsCharge && useableChargeTags.Contains(point.TagNumber));
+
+                bool isNoChargeStation = chargeStations.Count() == 0;
+
+                bool isUnspecified = assign_charge_station_tag == -1;
+                if (isNoChargeStation)
+                    return (false, ALARMS.NO_AVAILABLE_CHARGE_PILE, "當前地圖上沒有充電站可以使用");
+
+                var chargeTasks = DatabaseCaches.TaskCaches.InCompletedTasks.Where(_task => _task.Action == ACTION_TYPE.Charge);
+
+                bool isAlreadyHasChargeTask = chargeTasks.Any(_task => _task.DesignatedAGVName == agv_name);
+                if (isAlreadyHasChargeTask)
+                    return (false, ALARMS.AGV_Already_Has_Charge_Task, "AGV已有充電任務");
+
+                if (!isUnspecified) //有指定充電站
                 {
-                    return (false, ALARMS.INVALID_CHARGE_STATION, $"該充電站不允許{agv_name}使用");
+                    if (!useableChargeTags.Contains(assign_charge_station_tag))
+                    {
+                        return (false, ALARMS.INVALID_CHARGE_STATION, $"該充電站不允許{agv_name}使用");
+                    }
+                    bool isChargeStationHasTask = chargeTasks.Count() == 0 ? false : chargeTasks.Where(_task => _task.DesignatedAGVName != agv_name).Any(tk => tk.To_Station_Tag == assign_charge_station_tag);
+                    bool isAnyAGVInTheChargeStation = DatabaseCaches.Vehicle.VehicleStates.Where(agv => agv.AGV_Name != agv_name).Any(agv => agv.CurrentLocation == assign_charge_station_tag + "");
+
+                    if (isChargeStationHasTask)
+                        return (false, ALARMS.Charge_Station_Already_Has_Task_Assigned, "已有任務指派AGV前往此充電站");
+
+                    if (isAnyAGVInTheChargeStation)
+                        return (false, ALARMS.Charge_Station_Already_Has_AGV_Parked, "已有AGV停駐在此充電站");
+
+                    return (true, ALARMS.NONE, "");
                 }
-                bool isChargeStationHasTask = chargeTasks.Count() == 0 ? false : chargeTasks.Where(_task => _task.DesignatedAGVName != agv_name).Any(tk => tk.To_Station_Tag == assign_charge_station_tag);
-                bool isAnyAGVInTheChargeStation = database.tables.AgvStates.Where(agv => agv.AGV_Name != agv_name).Any(agv => agv.CurrentLocation == assign_charge_station_tag + "");
+                else //沒有指定充電站:無充電站可以用的情境:1. 所有充電站都有AGV(除了自己)
+                {
 
-                if (isChargeStationHasTask)
-                    return (false, ALARMS.Charge_Station_Already_Has_Task_Assigned, "已有任務指派AGV前往此充電站");
+                    string agv_currnet_tag = DatabaseCaches.Vehicle.VehicleStates.First(agv => agv.AGV_Name == agv_name).CurrentLocation;
+                    string[] other_agv_current_tag = DatabaseCaches.Vehicle.VehicleStates.Where(agv => agv.AGV_Name != agv_name).Select(agv => agv.CurrentLocation).ToArray();
 
-                if (isAnyAGVInTheChargeStation)
-                    return (false, ALARMS.Charge_Station_Already_Has_AGV_Parked, "已有AGV停駐在此充電站");
+                    List<int> chargeStationTags = chargeStations.Where(station => useableChargeTags.Contains(station.TagNumber)).Select(station => station.TagNumber).ToList();
 
-                return (true, ALARMS.NONE, "");
+                    bool isAGVInChargeStation = chargeStationTags.Any(tag => tag + "" == agv_currnet_tag);
+                    if (isAGVInChargeStation)
+                        return (true, ALARMS.NONE, "");
+
+                    IEnumerable<int> usableChargeStationTags = chargeStationTags.Where(tag => !other_agv_current_tag.Contains(tag + ""));
+
+                    bool hasChargeStationUse = usableChargeStationTags.Count() > 0;
+                    if (!hasChargeStationUse)
+                        return (false, ALARMS.NO_AVAILABLE_CHARGE_PILE, "沒有空閒的充電站可以使用");
+
+                    bool isAllChargeStationsHasTask = chargeTasks.Where(tk => tk.DesignatedAGVName == agv_name).Count() == usableChargeStationTags.Count();
+                    if (isAllChargeStationsHasTask)
+                        return (false, ALARMS.NO_AVAILABLE_CHARGE_PILE, "沒有空閒的充電站可以使用");
+
+                    return (true, ALARMS.NONE, "");
+                }
+
             }
-            else //沒有指定充電站:無充電站可以用的情境:1. 所有充電站都有AGV(除了自己)
+            catch (Exception ex)
             {
 
-                string agv_currnet_tag = database.tables.AgvStates.First(agv => agv.AGV_Name == agv_name).CurrentLocation;
-                string[] other_agv_current_tag = database.tables.AgvStates.Where(agv => agv.AGV_Name != agv_name).Select(agv => agv.CurrentLocation).ToArray();
-
-                List<int> chargeStationTags = chargeStations.Where(station => useableChargeTags.Contains(station.TagNumber)).Select(station => station.TagNumber).ToList();
-
-                bool isAGVInChargeStation = chargeStationTags.Any(tag => tag + "" == agv_currnet_tag);
-                if (isAGVInChargeStation)
-                    return (true, ALARMS.NONE, "");
-
-                IEnumerable<int> usableChargeStationTags = chargeStationTags.Where(tag => !other_agv_current_tag.Contains(tag + ""));
-
-                bool hasChargeStationUse = usableChargeStationTags.Count() > 0;
-                if (!hasChargeStationUse)
-                    return (false, ALARMS.NO_AVAILABLE_CHARGE_PILE, "沒有空閒的充電站可以使用");
-
-                bool isAllChargeStationsHasTask = chargeTasks.Where(tk => tk.DesignatedAGVName == agv_name).Count() == usableChargeStationTags.Count();
-                if (isAllChargeStationsHasTask)
-                    return (false, ALARMS.NO_AVAILABLE_CHARGE_PILE, "沒有空閒的充電站可以使用");
-
-                return (true, ALARMS.NONE, "");
+                throw ex;
             }
-
 
 
         }
