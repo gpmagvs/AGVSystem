@@ -1,4 +1,5 @@
 ﻿using AGVSystem.TaskManagers;
+using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.AGVDispatch;
 using AGVSystemCommonNet6.AGVDispatch.Messages;
 using AGVSystemCommonNet6.DATABASE;
@@ -27,6 +28,10 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
             while (!script.StopFlag)
             {
                 await Task.Delay(1000);
+
+                if (TaskUplimitReach())
+                    continue;
+
                 if (TrySelectEquipmentPairTCarray(out int fromTag, out int toTag))
                 {
                     string TaskName = $"HR_{ACTION_TYPE.Carry}_{DateTime.Now.ToString("yMdHHmmss")}";
@@ -59,6 +64,14 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                 }
             }
             script.state = "IDLE";
+            await NotifyServiceHelper.INFO($"隨機搬運任務 HOT RUN 已結束");
+
+        }
+
+        private bool TaskUplimitReach()
+        {
+            int onliningVehicleCnt = DatabaseCaches.Vehicle.VehicleStates.Where(vehicle => vehicle.OnlineStatus == clsEnums.ONLINE_STATE.ONLINE).Count();
+            return DatabaseCaches.TaskCaches.InCompletedTasks.Where(t => t.TaskName.Contains("HR_")).Count() >= onliningVehicleCnt;
         }
 
         private bool TrySelectEquipmentPairTCarray(out int fromTag, out int toTag)
@@ -93,6 +106,9 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
 
                 fromTag = selectedUpStreamEq.EndPointOptions.TagID;
                 toTag = selectedDownStreamEq.EndPointOptions.TagID;
+
+                Console.WriteLine($"upStreamRandomIndex:{upStreamRandomIndex} downStreamRandomIndex:{downStreamRandomIndex}");
+
                 return true;
             }
             else
