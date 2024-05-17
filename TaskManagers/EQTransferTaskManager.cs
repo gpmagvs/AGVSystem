@@ -160,7 +160,6 @@ namespace AGVSystem.TaskManagers
         }
         public static (bool confirm, ALARMS alarm_code, string message) CheckLoadStationStatus(int station_tag, bool check_rack_move_out_is_empty_or_full = true)
         {
-
             bool _eq_exist = TryGetStationEQDIStatus(station_tag, out clsEQ equipment);
             if (!_eq_exist)
                 return new(false, ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, $"設備站點TAG-{station_tag} 不存在於當前地圖");
@@ -174,7 +173,6 @@ namespace AGVSystem.TaskManagers
                 return new(false, ALARMS.EQ_LOAD_REQ_BUT_RACK_FULL_OR_EMPTY_IS_UNKNOWN, $"設備[{equipment.EQName}] 無法確定要載入空框或實框");
 
             return new(true, ALARMS.NONE, "");
-
         }
 
         public static bool TryGetStationEQDIStatus(int station_tag, out clsEQ equipment)
@@ -239,6 +237,51 @@ namespace AGVSystem.TaskManagers
             }
 
         }
+        public static (bool confirm, ALARMS alarm_code, string message) CheckEQAcceptCargoType(clsTaskDto taskData)
+        {
+            clsEQ source_equipment = StaEQPManagager.GetEQByTag(taskData.From_Station_Tag);
+            clsEQ destine_equipment = StaEQPManagager.GetEQByTag(taskData.To_Station_Tag);
+            int FromStation_CSTType = 0;
+            int ToStation_CSTType = 0;
+
+            if (source_equipment != null)
+            {
+                EQ_ACCEPT_CARGO_TYPE source_eq_accept_cargo_type = source_equipment.EndPointOptions.EQAcceeptCargoType;
+                FromStation_CSTType = (int)source_eq_accept_cargo_type;
+            }
+            if (destine_equipment != null)
+            {
+                EQ_ACCEPT_CARGO_TYPE source_eq_accept_cargo_type = destine_equipment.EndPointOptions.EQAcceeptCargoType;
+                ToStation_CSTType = (int)source_eq_accept_cargo_type;
+            }
+            if (taskData.Action == ACTION_TYPE.Carry)
+            {
+                if ((EQ_ACCEPT_CARGO_TYPE)FromStation_CSTType == EQ_ACCEPT_CARGO_TYPE.None && (EQ_ACCEPT_CARGO_TYPE)ToStation_CSTType == EQ_ACCEPT_CARGO_TYPE.None)
+                {
+                    taskData.CST_TYPE = FromStation_CSTType;
+                    return new(true, ALARMS.NONE, "");
+                }
+                else if ((EQ_ACCEPT_CARGO_TYPE)FromStation_CSTType == EQ_ACCEPT_CARGO_TYPE.None)
+                {
+                    taskData.CST_TYPE = ToStation_CSTType;
+                    return new(true, ALARMS.NONE, "");
+                }
+                else if ((EQ_ACCEPT_CARGO_TYPE)ToStation_CSTType == EQ_ACCEPT_CARGO_TYPE.None)
+                {
+                    taskData.CST_TYPE = FromStation_CSTType;
+                    return new(true, ALARMS.NONE, "");
+                }
+                else
+                    return new(false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Source_Equipment, $"FromStation Accept: {(EQ_ACCEPT_CARGO_TYPE)FromStation_CSTType} and ToStation Accept: {(EQ_ACCEPT_CARGO_TYPE)ToStation_CSTType} @@NOT MATCH");
+            }
+            else if (taskData.Action == ACTION_TYPE.Load)
+            {
+                // TODO 須知道車子目前背KUAN or TRAY 再比對放貨站點可接受貨物類型
+                return new(true, ALARMS.NONE, "");
+            }
+            else
+                return new(true, ALARMS.NONE, "");
+        }
 
         public static (bool confirm, ALARMS alarm_code, string message) CheckEQAcceptAGVType(ref clsTaskDto taskData)
         {
@@ -296,6 +339,7 @@ namespace AGVSystem.TaskManagers
             }
             return new(true, ALARMS.NONE, "");
         }
+
         private static bool IsEQDataValid(EndPointDeviceAbstract endpoint, out int unloadStationTag, out ALARMS alarm_code)
         {
             alarm_code = ALARMS.NONE;

@@ -39,7 +39,6 @@ namespace AGVSystem.Controllers
         }
 
         [HttpGet("Allocation")]
-        [Authorize]
         public async Task<IActionResult> Test()
         {
             if (!UserValidation())
@@ -53,13 +52,12 @@ namespace AGVSystem.Controllers
 
 
         [HttpGet("Cancel")]
-        [Authorize]
         public async Task<IActionResult> Cancel(string task_name)
         {
-            //if (!UserValidation())
-            //{
-            //    return Unauthorized();
-            //}
+            if (!UserValidation())
+            {
+                return Unauthorized();
+            }
             LOG.TRACE($"User try cancle Task-{task_name}");
 
             bool canceled = await TaskManager.Cancel(task_name, $"User manual canceled");
@@ -68,7 +66,6 @@ namespace AGVSystem.Controllers
         }
 
         [HttpPost("move")]
-        [Authorize]
         public async Task<IActionResult> MoveTask([FromBody] clsTaskDto taskData, string user = "")
         {
             if (!UserValidation())
@@ -78,7 +75,6 @@ namespace AGVSystem.Controllers
             return Ok(await AddTask(taskData, user));
         }
         [HttpPost("measure")]
-        [Authorize]
         public async Task<IActionResult> MeasureTask([FromBody] clsTaskDto taskData, string user = "")
         {
             if (!UserValidation())
@@ -96,7 +92,6 @@ namespace AGVSystem.Controllers
                 return Ok(new { confirm = false, message = $"Bay - {taskData.To_Station} not found" });
         }
         [HttpPost("load")]
-        [Authorize]
         public async Task<IActionResult> LoadTask([FromBody] clsTaskDto taskData, string user = "")
         {
             if (!UserValidation())
@@ -106,7 +101,6 @@ namespace AGVSystem.Controllers
             return Ok(await AddTask(taskData, user));
         }
         [HttpPost("unload")]
-        [Authorize]
         public async Task<IActionResult> UnloadTask([FromBody] clsTaskDto taskData, string user = "")
         {
             if (!UserValidation())
@@ -116,7 +110,6 @@ namespace AGVSystem.Controllers
             return Ok(await AddTask(taskData, user));
         }
         [HttpPost("carry")]
-        [Authorize]
         public async Task<IActionResult> CarryTask([FromBody] clsTaskDto taskData, string user = "")
         {
             if (!UserValidation())
@@ -126,17 +119,24 @@ namespace AGVSystem.Controllers
             return Ok(await AddTask(taskData, user));
         }
         [HttpPost("charge")]
-        //[Authorize]
         public async Task<IActionResult> ChargeTask([FromBody] clsTaskDto taskData, string user = "")
         {
             if (!UserValidation())
             {
                 return Unauthorized();
             }
-            (bool confirm, ALARMS alarm_code, string message) check_result = TaskManager.CheckChargeTask(taskData.DesignatedAGVName, taskData.To_Station_Tag);
-            if (!check_result.confirm)
-                return Ok(new { confirm = check_result.confirm, alarm_code = check_result.alarm_code, message = check_result.message });
-            return Ok(await AddTask(taskData, user));
+            try
+            {
+
+                (bool confirm, ALARMS alarm_code, string message) check_result = TaskManager.CheckChargeTask(taskData.DesignatedAGVName, taskData.To_Station_Tag);
+                if (!check_result.confirm)
+                    return Ok(new { confirm = check_result.confirm, alarm_code = check_result.alarm_code, message = check_result.message });
+                return Ok(await AddTask(taskData, user));
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { confirm = false, alarm_code = ALARMS.SYSTEM_ERROR, message = "[Internal Error] " + ex.Message });
+            }
         }
 
         [HttpGet("CancelChargeTask")]
@@ -152,7 +152,6 @@ namespace AGVSystem.Controllers
 
 
         [HttpPost("ExangeBattery")]
-        [Authorize]
         public async Task<IActionResult> ExangeBattery([FromBody] clsTaskDto taskData, string user = "")
         {
             if (!UserValidation())
@@ -162,7 +161,6 @@ namespace AGVSystem.Controllers
             return Ok(await AddTask(taskData, user));
         }
         [HttpPost("park")]
-        [Authorize]
         public async Task<IActionResult> ParkTask([FromBody] clsTaskDto taskData, string user = "")
         {
             if (!UserValidation())

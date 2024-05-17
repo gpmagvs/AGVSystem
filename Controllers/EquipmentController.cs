@@ -56,7 +56,7 @@ namespace AGVSystem.Controllers
             var option = (eqoptions.FirstOrDefault(opt => opt.TagID == eq_tag));
             if (option != null)
             {
-                return Ok(new { Tag = option.TagID, EqName = option.Name, AGVModbusGatewayPort = option.ConnOptions.AGVModbusGatewayPort });
+                return Ok(new { Tag = option.TagID, EqName = option.Name, AGVModbusGatewayPort = option.ConnOptions.AGVModbusGatewayPort, Accept_AGV_Type = option.Accept_AGV_Type.ToAGVModel() });
             }
             else
             {

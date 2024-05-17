@@ -129,6 +129,8 @@ namespace AGVSystem.TaskManagers
                             await Task.Delay(1000);
                             orderState = await taskDatabase.GetTaskStateByID(taskOrder.TaskName);
                             agv_state = agvStatuDatabase.GetAGVStateByAGVName(agv_state.AGV_Name);
+                            if (orderState == TASK_RUN_STATUS.CANCEL || orderState == TASK_RUN_STATUS.FAILURE)
+                                break;
 
                             if (IsOrderFinish(orderState) | agv_state.MainStatus == clsEnums.MAIN_STATUS.DOWN)
                             {

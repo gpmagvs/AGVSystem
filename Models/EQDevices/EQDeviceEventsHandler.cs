@@ -1,12 +1,12 @@
-﻿using AGVSystemCommonNet6.Alarm;
+﻿using AGVSystem.Service;
+using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.Log;
 using EquipmentManagment.Device;
 
 namespace AGVSystem.Models.EQDevices
 {
-    public class EQDeviceEventsHandler
+    public partial class EQDeviceEventsHandler
     {
-
         internal static void Initialize()
         {
             EndPointDeviceAbstract.OnEQDisconnected += HandleDeviceDisconnected;
@@ -14,6 +14,8 @@ namespace AGVSystem.Models.EQDevices
             EndPointDeviceAbstract.OnEQInputDataSizeNotEnough += HandleEQInputDataSizeNotEnough;
             EndPointDeviceAbstract.OnPartsStartReplacing += HandleEQStartPartsReplace;
             EndPointDeviceAbstract.OnPartsEndReplacing += HandleEQFinishPartsReplace;
+            EndPointDeviceAbstract.OnDeviceMaintainStart += HandleDeviceMaintainStart;
+            EndPointDeviceAbstract.OnDeviceMaintainFinish += HandleDeviceMaintainFinish;
 
         }
 
@@ -41,7 +43,7 @@ namespace AGVSystem.Models.EQDevices
 
         internal static async void HandleDeviceDisconnected(object? sender, EndPointDeviceAbstract device)
         {
-            _Log($"EQ-{device.EQName} 連線中斷({device.EndPointOptions.ConnOptions.IP}-{device.EndPointOptions.ConnOptions.ConnMethod})", device.EQName);
+            _Log($"EQ-{device.EQName} 連線中斷({device.EndPointOptions.ConnOptions.IP}:{device.EndPointOptions.ConnOptions.Port}-{device.EndPointOptions.ConnOptions.ConnMethod})", device.EQName);
             await AlarmManagerCenter.AddAlarmAsync(ALARMS.EQ_Disconnect, source: ALARM_SOURCE.EQP, Equipment_Name: device.EQName);
         }
 

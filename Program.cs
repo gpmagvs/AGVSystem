@@ -5,6 +5,7 @@ using AGVSystem.Models.Map;
 using AGVSystem.Models.Sys;
 using AGVSystem.Models.TaskAllocation.HotRun;
 using AGVSystem.Models.WebsocketMiddleware;
+using AGVSystem.Service;
 using AGVSystem.TaskManagers;
 using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.Alarm;
@@ -22,6 +23,8 @@ using EquipmentManagment.MainEquipment;
 using EquipmentManagment.Manager;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Json;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.AspNetCore.WebSockets;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
@@ -81,8 +84,6 @@ builder.Services.AddSwaggerGen(opton =>
 });
 builder.Services.AddControllers().AddJsonOptions(options => options.JsonSerializerOptions.PropertyNamingPolicy = null);
 builder.Services.AddDirectoryBrowser();
-
-
 builder.Services.Configure<JsonOptions>(options =>
 {
     options.SerializerOptions.PropertyNamingPolicy = null;
@@ -103,6 +104,20 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
 
 builder.Services.AddDbContext<AGVSDbContext>(options => options.UseSqlServer(AGVSConfigulator.SysConfigs.DBConnection));
 builder.Services.AddHostedService<DatabaseBackgroundService>();
+builder.Services.AddScoped<MeanTimeQueryService>();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+builder.Services.AddWebSockets(options =>
+{
+    options.KeepAliveInterval = TimeSpan.FromSeconds(600);
+});
 
 var app = builder.Build();
 
@@ -128,20 +143,24 @@ _ = Task.Run(async () =>
 AGVSWebsocketServerMiddleware.Middleware.Initialize();
 AutomationManager.InitialzeDefaultTasks();
 AutomationManager.StartAllAutomationTasks();
-app.UseAuthentication();
 app.UseSwagger();
 app.UseSwaggerUI();
-app.UseCors(c => c.AllowAnyHeader().AllowAnyOrigin().AllowAnyMethod());
-app.UseWebSockets(new WebSocketOptions { KeepAliveInterval = TimeSpan.FromSeconds(1) });
-
+app.UseCors(c => c.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+app.UseWebSockets();
 app.UseDefaultFiles(new DefaultFilesOptions());
 app.UseStaticFiles();
 
 // 加載配置文件
 var mapFileFolderPath = app.Configuration.GetValue<string>("StaticFileOptions:MapFile:FolderPath");
 var mapFileRequestPath = app.Configuration.GetValue<string>("StaticFileOptions:MapFile:RequestPath");
+var agvImageFileFolderPath = app.Configuration.GetValue<string>("StaticFileOptions:AGVImageStoreFile:FolderPath");
+var agvImageFileRequestPath = app.Configuration.GetValue<string>("StaticFileOptions:AGVImageStoreFile:RequestPath");
+
 Directory.CreateDirectory(mapFileFolderPath);
+Directory.CreateDirectory(agvImageFileFolderPath);
+
 var mapFileProvider = new PhysicalFileProvider(mapFileFolderPath);
+var agvImageFileProvider = new PhysicalFileProvider(agvImageFileFolderPath);
 
 // Enable displaying browser links.
 app.UseStaticFiles(new StaticFileOptions
@@ -150,11 +169,44 @@ app.UseStaticFiles(new StaticFileOptions
     RequestPath = mapFileRequestPath
 });
 
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = agvImageFileProvider,
+    RequestPath = agvImageFileRequestPath
+});
+
 app.UseDirectoryBrowser(new DirectoryBrowserOptions
 {
     FileProvider = mapFileProvider,
     RequestPath = mapFileRequestPath
 });
+CreateDefaultAGVImage();
+
+void CreateDefaultAGVImage()
+{
+    try
+    {
+        var exist_fileNames = Directory.GetFiles(agvImageFileFolderPath).Select(file => Path.GetFileName(file)).ToList();
+
+        for (int i = 0; i < 10; i++)
+        {
+            //AGV_003-Icon.png;
+            string agvImageFileName = $"AGV_00{i}-Icon.png";
+            string defaultImgFullFileName = "./Resources/AGVImages/default.png";
+            string agvImageFullFileName = Path.Combine(agvImageFileFolderPath, agvImageFileName);
+            if (!exist_fileNames.Contains(agvImageFileName))
+            {
+                File.Copy(defaultImgFullFileName, agvImageFullFileName, true);
+            }
+        }
+
+    }
+    catch (Exception ex)
+    {
+        LOG.ERROR($"Program-CreateDefaultAGVImage Error :{ex.Message}", ex);
+    }
+}
+
 
 try
 {
@@ -185,6 +237,7 @@ var agvDisplayImageFolder = Path.Combine(app.Environment.WebRootPath, @"images\A
 Directory.CreateDirectory(agvDisplayImageFolder);
 
 app.UseVueRouterHistory();
+//app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
 app.Run();

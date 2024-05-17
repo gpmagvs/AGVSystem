@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using AGVSystemCommonNet6.Availability;
+using AGVSystem.Service;
+using System.Diagnostics;
 
 namespace AGVSystem.Controllers
 {
@@ -12,10 +14,12 @@ namespace AGVSystem.Controllers
     public class AvailabilitysController : ControllerBase
     {
         private readonly AGVSDbContext _DbContext;
+        private readonly MeanTimeQueryService _MeanTimeQuerier;
 
-        public AvailabilitysController(AGVSDbContext DbContext)
+        public AvailabilitysController(AGVSDbContext DbContext, MeanTimeQueryService MeanTimeQuerier)
         {
             this._DbContext = DbContext;
+            this._MeanTimeQuerier = MeanTimeQuerier;
         }
 
         [HttpGet("Today")]
@@ -51,11 +55,19 @@ namespace AGVSystem.Controllers
         [HttpGet("Query")]
         public async Task<IActionResult> Query(string AGVName, string StartDate, string EndDate)
         {
+            Stopwatch stopwatch = Stopwatch.StartNew();
             var startDate = DateTime.Parse(StartDate);
             var endDate = DateTime.Parse(EndDate);
-            MTTRMTBFCount.MTTRMTBF_TimeCount(startDate, endDate, AGVName);
-            MTTRMTBFCount.MissTagCount(startDate, endDate, AGVName);
             endDate = endDate.AddDays(1);
+            //MTTRMTBFCount.MTTRMTBF_TimeCount(startDate, endDate, AGVName);
+            //MTTRMTBFCount.MissTagCount(startDate, endDate, AGVName);
+
+            Dictionary<DateTime, double> MTBF = _MeanTimeQuerier.GetMTBF(AGVName,startDate, endDate );
+            Dictionary<DateTime, double> MTTR= _MeanTimeQuerier.GetMTTR(AGVName,startDate, endDate );
+
+            stopwatch.Stop();
+            Console.WriteLine($"MTBF/MTTR Data Prepare Time Spend: {stopwatch.Elapsed.TotalSeconds} s");
+            stopwatch.Restart();
             using var db = new AGVSDatabase();
             var datas = db.tables.Availabilitys.Where(dat => dat.AGVName == AGVName && dat.Time >= startDate && dat.Time <= endDate);
             var idle_time = datas.Sum(d => d.IDLE_TIME);
@@ -74,22 +86,16 @@ namespace AGVSystem.Controllers
                     down = datas.Select(dat => dat.DOWN_TIME).ToArray(),
                     charge = datas.Select(dat => dat.CHARGE_TIME).ToArray(),
                 },
-                BarchartMTTR = new
-                {
-                    dates = MTTRMTBFCount.MttrMtbf_date.ToArray(),
-                    time = MTTRMTBFCount.Mttr_data.ToArray(),
-                },
-                BarchartMTBF = new
-                {
-                    dates = MTTRMTBFCount.MttrMtbf_date.ToArray(),
-                    time = MTTRMTBFCount.Mtbf_data.ToArray(),
-                },
+                BarchartMTTR = MTTR.ToDictionary(k=>k.Key.ToString("yyyy/MM/dd"),k=>k.Value),
+                BarchartMTBF = MTBF.ToDictionary(k => k.Key.ToString("yyyy/MM/dd"), k => k.Value),
                 BarchartMissTag = new
                 {
                     dates = MTTRMTBFCount.MttrMtbf_date.ToArray(),
                     count = MTTRMTBFCount.MissTagcount.ToArray(),
                 }
             };
+            stopwatch.Stop();
+            Console.WriteLine($"{stopwatch.Elapsed.TotalSeconds}");
             return Ok(dataset);
         }
     }
