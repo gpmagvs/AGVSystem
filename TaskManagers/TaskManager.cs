@@ -84,7 +84,7 @@ namespace AGVSystem.TaskManagers
             }
             #endregion
 
-            taskData.bypass_eq_status_check = false;
+            //taskData.bypass_eq_status_check = false;
             if (!taskData.bypass_eq_status_check && (_order_action == ACTION_TYPE.Load || _order_action == ACTION_TYPE.LoadAndPark
                                                    || _order_action == ACTION_TYPE.Unload || _order_action == ACTION_TYPE.Carry))
             {
