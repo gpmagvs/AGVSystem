@@ -64,7 +64,9 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                 }
             }
             script.state = "IDLE";
+            script.UpdateRealTimeMessage("", false, notification: false);
             await NotifyServiceHelper.INFO($"隨機搬運任務 HOT RUN 已結束");
+
 
         }
 
