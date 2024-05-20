@@ -89,19 +89,19 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
 
             }
 
-            List<EquipmentManagment.MainEquipment.clsEQ> usableEqList = StaEQPManagager.MainEQList.Where(eq => !tagsOfAssignedEq.Contains(eq.EndPointOptions.TagID)).ToList();
-            Dictionary<clsEQ, IEnumerable<clsEQ>> avalidEQAndDownStreams = usableEqList.ToDictionary(eq => eq, eq => eq.DownstremEQ.Where(_downStrem => !_downStrem.IsAssignedTask()));
+            List<EquipmentManagment.MainEquipment.clsEQ> usableEqList = StaEQPManagager.MainEQList.Where(eq => !eq.IsMaintaining && !tagsOfAssignedEq.Contains(eq.EndPointOptions.TagID)).ToList();
+            Dictionary<clsEQ, IEnumerable<clsEQ>> avalidEQAndDownStreams = usableEqList.ToDictionary(eq => eq, eq => eq.DownstremEQ.Where(_downStrem => !_downStrem.IsMaintaining && !_downStrem.IsAssignedTask()));
             avalidEQAndDownStreams = avalidEQAndDownStreams.Where(pari => pari.Value.Count() != 0)
                                                            .ToDictionary(p => p.Key, p => p.Value);
 
             if (avalidEQAndDownStreams.Any())
             {
                 var avllidUpStreamEqCnt = avalidEQAndDownStreams.Count;
-                Random _random = new Random(DateTime.Now.Second);
+                Random _random = new Random((int)DateTime.Now.Ticks);
                 int upStreamRandomIndex = _random.Next(0, avllidUpStreamEqCnt - 1);
                 var selectedUpStreamEqPair = avalidEQAndDownStreams.ToList()[upStreamRandomIndex];
-
-                Random _random2 = new Random(DateTime.Now.Second);
+                Thread.Sleep(10);
+                Random _random2 = new Random((int)DateTime.Now.Ticks);
                 int downStreamRandomIndex = _random2.Next(0, selectedUpStreamEqPair.Value.Count() - 1);
                 var selectedUpStreamEq = selectedUpStreamEqPair.Key;
                 var selectedDownStreamEq = selectedUpStreamEqPair.Value.ToList()[downStreamRandomIndex];
