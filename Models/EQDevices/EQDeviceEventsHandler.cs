@@ -37,14 +37,14 @@ namespace AGVSystem.Models.EQDevices
             _ = Task.Factory.StartNew(async () =>
             {
                 await AlarmManagerCenter.ResetAlarmAsync(new clsAlarmDto() { AlarmCode = (int)ALARMS.EQ_Input_Data_Not_Enough }, false);
-                await AlarmManagerCenter.AddAlarmAsync(ALARMS.EQ_Input_Data_Not_Enough, source: ALARM_SOURCE.EQP, Equipment_Name: device.EQName);
+                await AlarmManagerCenter.AddAlarmAsync(1081, source: ALARM_SOURCE.EQP, Equipment_Name: device.EQName);
             });
         }
 
         internal static async void HandleDeviceDisconnected(object? sender, EndPointDeviceAbstract device)
         {
             _Log($"EQ-{device.EQName} 連線中斷({device.EndPointOptions.ConnOptions.IP}:{device.EndPointOptions.ConnOptions.Port}-{device.EndPointOptions.ConnOptions.ConnMethod})", device.EQName);
-            await AlarmManagerCenter.AddAlarmAsync(ALARMS.EQ_Disconnect, source: ALARM_SOURCE.EQP, Equipment_Name: device.EQName);
+            await AlarmManagerCenter.AddAlarmAsync(1068, source: ALARM_SOURCE.EQP, Equipment_Name: device.EQName);
         }
 
         internal static async void HandleDeviceReconnected(object? sender, EndPointDeviceAbstract device)
