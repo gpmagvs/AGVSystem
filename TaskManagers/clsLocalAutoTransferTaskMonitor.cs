@@ -155,9 +155,9 @@ namespace AGVSystem.TaskManagers
                             }
                             ALARMS EQStatusMonitoringResultAlarmCode = MonitorEQsStatusIO();
 
-                            if (EQStatusMonitoringResultAlarmCode == ALARMS.Source_Eq_Unload_Request_Off && agv_state.TransferProcess == VehicleMovementStage.Traveling_To_Source) //前往取貨途中
+                            if (EQStatusMonitoringResultAlarmCode == ALARMS.Source_Eq_Unload_Request_Off && agv_state.TransferProcess == VehicleMovementStage.Traveling_To_Source) //前往取貨途中//Source_Eq_Unload_Request_Off
                             {
-                                AlarmManagerCenter.AddAlarmAsync(ALARMS.Source_Eq_Unload_Request_Off, level: ALARM_LEVEL.WARNING, Equipment_Name: sourceEQ.EQName, location: agv_state.CurrentLocation, taskName: taskOrder.TaskName);
+                                AlarmManagerCenter.AddAlarmAsync(ALARMS.Source_Eq_Unload_Request_Off, level: ALARM_LEVEL.WARNING, Equipment_Name: sourceEQ.EQName, location: agv_state.CurrentLocation, taskName: taskOrder.TaskName);//Source_Eq_Unload_Request_Off
                                 await TaskManager.Cancel(taskOrder.TaskName, $"Source EQ Unload_Request OFF", TASK_RUN_STATUS.FAILURE);
                                 break;
                             }
