@@ -158,12 +158,14 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
             var firstAction = GetActionByActionName(script.actions.First().action);
             if (firstAction == ACTION_TYPE.Load && agv.CurrentCarrierID == "")
             {
-                AlarmManagerCenter.AddAlarmAsync(ALARMS.CANNOT_DISPATCH_LOAD_TASK_WHEN_AGV_NO_CARGO);
-                return new(false, ALARMS.CANNOT_DISPATCH_LOAD_TASK_WHEN_AGV_NO_CARGO.ToString());
+                Task<clsAlarmDto> res = AlarmManagerCenter.AddAlarmAsync(644);
+                return new(false, res.Result.Description_En);
+                //AlarmManagerCenter.AddAlarmAsync(644);// {"AlarmCode": 644,"Description_Zh": "任務指定的車載卡匣狀態不符合任務 請確認車載是否有卡匣存在
+                // return new(false, ALARMS.CANNOT_DISPATCH_LOAD_TASK_WHEN_AGV_NO_CARGO.ToString());
             }
             else if ((firstAction == ACTION_TYPE.Unload || firstAction == ACTION_TYPE.Carry) && agv.CurrentCarrierID != "")
             {
-                var alarm_code = firstAction == ACTION_TYPE.Unload ? ALARMS.CANNOT_DISPATCH_UNLOAD_TASK_WHEN_AGV_HAS_CARGO : ALARMS.CANNOT_DISPATCH_CARRY_TASK_WHEN_AGV_HAS_CARGO;
+                var alarm_code = firstAction == ACTION_TYPE.Unload ? 144 :1053; //Task Is Not Transfer But AGV Carrier Exist 或 CANNOT_DISPATCH_CARRY_TASK_WHEN_AGV_HAS_CARGO
                 AlarmManagerCenter.AddAlarmAsync(alarm_code);
                 return new(false, alarm_code.ToString());
             }
