@@ -20,6 +20,7 @@ using Microsoft.CodeAnalysis.Emit;
 using AGVSystemCommonNet6.Microservices.VMS;
 using EquipmentManagment.Device.Options;
 using static AGVSystemCommonNet6.MAP.MapPoint;
+using EquipmentManagment.WIP;
 
 namespace AGVSystem.TaskManagers
 {
@@ -237,6 +238,7 @@ namespace AGVSystem.TaskManagers
             }
 
         }
+
         public static (bool confirm, ALARMS alarm_code, string message) CheckEQAcceptCargoType(clsTaskDto taskData)
         {
             clsEQ source_equipment = StaEQPManagager.GetEQByTag(taskData.From_Station_Tag);
@@ -249,38 +251,77 @@ namespace AGVSystem.TaskManagers
                 EQ_ACCEPT_CARGO_TYPE source_eq_accept_cargo_type = source_equipment.EndPointOptions.EQAcceeptCargoType;
                 FromStation_CSTType = (int)source_eq_accept_cargo_type;
             }
+            else
+                return new(false, ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, $"設備站點TAG-{taskData.From_Station_Tag} 不存在於當前地圖");
             if (destine_equipment != null)
             {
                 EQ_ACCEPT_CARGO_TYPE source_eq_accept_cargo_type = destine_equipment.EndPointOptions.EQAcceeptCargoType;
                 ToStation_CSTType = (int)source_eq_accept_cargo_type;
             }
-            if (taskData.Action == ACTION_TYPE.Carry)
+            else
+                return new(false, ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, $"設備站點TAG-{taskData.To_Station_Tag} 不存在於當前地圖");
+
+            if ((EQ_ACCEPT_CARGO_TYPE)FromStation_CSTType == EQ_ACCEPT_CARGO_TYPE.None && (EQ_ACCEPT_CARGO_TYPE)ToStation_CSTType == EQ_ACCEPT_CARGO_TYPE.None)
             {
-                if ((EQ_ACCEPT_CARGO_TYPE)FromStation_CSTType == EQ_ACCEPT_CARGO_TYPE.None && (EQ_ACCEPT_CARGO_TYPE)ToStation_CSTType == EQ_ACCEPT_CARGO_TYPE.None)
-                {
-                    taskData.CST_TYPE = FromStation_CSTType;
-                    return new(true, ALARMS.NONE, "");
-                }
-                else if ((EQ_ACCEPT_CARGO_TYPE)FromStation_CSTType == EQ_ACCEPT_CARGO_TYPE.None)
-                {
-                    taskData.CST_TYPE = ToStation_CSTType;
-                    return new(true, ALARMS.NONE, "");
-                }
-                else if ((EQ_ACCEPT_CARGO_TYPE)ToStation_CSTType == EQ_ACCEPT_CARGO_TYPE.None)
-                {
-                    taskData.CST_TYPE = FromStation_CSTType;
-                    return new(true, ALARMS.NONE, "");
-                }
-                else
-                    return new(false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Source_Equipment, $"FromStation Accept: {(EQ_ACCEPT_CARGO_TYPE)FromStation_CSTType} and ToStation Accept: {(EQ_ACCEPT_CARGO_TYPE)ToStation_CSTType} @@NOT MATCH");
+                taskData.CST_TYPE = FromStation_CSTType;
+                return new(true, ALARMS.NONE, "");
             }
-            else if (taskData.Action == ACTION_TYPE.Load)
+            else if ((EQ_ACCEPT_CARGO_TYPE)FromStation_CSTType == EQ_ACCEPT_CARGO_TYPE.None)
             {
-                // TODO 須知道車子目前背KUAN or TRAY 再比對放貨站點可接受貨物類型
+                taskData.CST_TYPE = ToStation_CSTType;
+                return new(true, ALARMS.NONE, "");
+            }
+            else if ((EQ_ACCEPT_CARGO_TYPE)ToStation_CSTType == EQ_ACCEPT_CARGO_TYPE.None)
+            {
+                taskData.CST_TYPE = FromStation_CSTType;
+                return new(true, ALARMS.NONE, "");
+            }
+            else if (FromStation_CSTType == ToStation_CSTType)
+            {
+                taskData.CST_TYPE = FromStation_CSTType;
                 return new(true, ALARMS.NONE, "");
             }
             else
-                return new(true, ALARMS.NONE, "");
+                return new(false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Source_Equipment, $"FromStation Accept: {(EQ_ACCEPT_CARGO_TYPE)FromStation_CSTType} and ToStation Accept: {(EQ_ACCEPT_CARGO_TYPE)ToStation_CSTType} @@NOT MATCH");
+        }
+
+        public static (bool confirm, ALARMS alarm_code, string message) CheckEQAcceptAGVType(int station_tag, string _agv_name)
+        {
+            using AGVSDatabase database = new AGVSDatabase();
+            IEnumerable<clsAGVStateDto> agvstates = database.tables.AgvStates;
+
+            clsAGVStateDto? _agv_assigned = agvstates.FirstOrDefault(agv_dat => agv_dat.AGV_Name == _agv_name);
+            VEHICLE_TYPE model = _agv_assigned.Model.ConvertToEQAcceptAGVTYPE();
+            clsEQ equipment = StaEQPManagager.GetEQByTag(station_tag);
+            if (equipment == null )
+                return new(false, ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, $"設備站點TAG-{station_tag} 不存在於當前地圖");
+            else
+            {
+                VEHICLE_TYPE source_eq_accept_agv_model = equipment.EndPointOptions.Accept_AGV_Type;
+                if (source_eq_accept_agv_model != VEHICLE_TYPE.ALL && source_eq_accept_agv_model != model)
+                    return (false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Source_Equipment, $"設備不允許{model}車種進行任務");
+                else
+                    return new(true, ALARMS.NONE, "");
+            }
+        }
+        public static (bool confirm, ALARMS alarm_code, string message) CheckRackAcceptAGVType(int station_tag, string _agv_name)
+        {
+            using AGVSDatabase database = new AGVSDatabase();
+            IEnumerable<clsAGVStateDto> agvstates = database.tables.AgvStates;
+
+            clsAGVStateDto? _agv_assigned = agvstates.FirstOrDefault(agv_dat => agv_dat.AGV_Name == _agv_name);
+            VEHICLE_TYPE model = _agv_assigned.Model.ConvertToEQAcceptAGVTYPE();
+            clsRack rack = StaEQPManagager.GetRackByTag(station_tag);
+            if (rack == null)
+                return new(false, ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, $"RACK站點TAG-{station_tag} 不存在於當前地圖");
+            else
+            {
+                VEHICLE_TYPE source_eq_accept_agv_model = rack.EndPointOptions.Accept_AGV_Type;
+                if (source_eq_accept_agv_model != VEHICLE_TYPE.ALL && source_eq_accept_agv_model != model)
+                    return (false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Source_Equipment, $"設備不允許{model}車種進行任務");
+                else
+                    return new(true, ALARMS.NONE, "");
+            }
         }
 
         public static (bool confirm, ALARMS alarm_code, string message) CheckEQAcceptAGVType(ref clsTaskDto taskData)
@@ -297,45 +338,42 @@ namespace AGVSystem.TaskManagers
             clsEQ source_equipment = StaEQPManagager.GetEQByTag(taskData.From_Station_Tag);
             clsEQ destine_equipment = StaEQPManagager.GetEQByTag(taskData.To_Station_Tag);
 
-            if (source_equipment != null)
+            // 不檢查起始站點 因為可能是放貨任務
+            if (destine_equipment == null)
+                return new(false, ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, $"設備站點TAG-{taskData.To_Station_Tag} 不存在於當前地圖");
+
+            VEHICLE_TYPE destine_eq_accept_agv_model = destine_equipment.EndPointOptions.Accept_AGV_Type;
+            if (taskData.need_change_agv == false)
             {
-                VEHICLE_TYPE source_eq_accept_agv_model = source_equipment.EndPointOptions.Accept_AGV_Type;
-                if (source_eq_accept_agv_model != VEHICLE_TYPE.ALL && source_eq_accept_agv_model != model)
-                    return (false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Source_Equipment, $"來源設備不允許{model}車種進行任務");
+                if (destine_eq_accept_agv_model != VEHICLE_TYPE.ALL && destine_eq_accept_agv_model != model) // 自動改成轉運任務
+                {
+                    taskData.need_change_agv = true;// VMS OrderHandlerFactory._CreateSequenceTasks 會依這個變數取得轉換站並判別To_Station是不是要改成轉運站
+                    taskData.ChangeAGVMiddleStationTag = -1;
+                    taskData.TransferToDestineAGVName = "";
+                }
+                else // 直達車
+                    taskData.need_change_agv = false;
             }
-            if (destine_equipment != null)
+            else
             {
-                VEHICLE_TYPE destine_eq_accept_agv_model = destine_equipment.EndPointOptions.Accept_AGV_Type;
-                if (taskData.need_change_agv)
-                {
-                    if (taskData.TransferFromTag != -1)
-                    {   //檢查轉運站可用車種
-                        clsEQ transferStation_equipment = StaEQPManagager.GetEQByTag(taskData.TransferFromTag);
-                        VEHICLE_TYPE transferStation_eq_accept_agv_model = transferStation_equipment.EndPointOptions.Accept_AGV_Type;
-                        if (transferStation_eq_accept_agv_model != VEHICLE_TYPE.ALL && transferStation_eq_accept_agv_model != transferStation_eq_accept_agv_model)
-                            return (false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Destine_Equipment, $"轉運設備不允許{model}車種進行任務");
-                    }
-                    else { } //不指定轉運站，會在第一段任務結束轉成第二段任務之後找任務起點可去的離轉運站
-                    string strTransferToDestineAGVName = taskData.TransferToDestineAGVName;
-                    if (strTransferToDestineAGVName != "")
-                    {
-                        //檢查終點站可用車種
-                        var toDestineAGV = agvstates.FirstOrDefault(agv_dat => agv_dat.AGV_Name == strTransferToDestineAGVName);
-                        var modelToDestine = toDestineAGV.Model.ConvertToEQAcceptAGVTYPE();
-                        if (destine_eq_accept_agv_model != VEHICLE_TYPE.ALL && destine_eq_accept_agv_model != modelToDestine)
-                            return (false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Destine_Equipment, $"終點設備不允許{modelToDestine}車種進行任務");
-                    }
-                    else { } //不指定轉運車種，會在第一段任務結束轉成第二段任務之後自動找離轉運站最近的車
+                if (taskData.TransferFromTag != -1)
+                {   //檢查轉運站可用車種
+                    clsEQ transferStation_equipment = StaEQPManagager.GetEQByTag(taskData.TransferFromTag);
+                    VEHICLE_TYPE transferStation_eq_accept_agv_model = transferStation_equipment.EndPointOptions.Accept_AGV_Type;
+                    if (transferStation_eq_accept_agv_model != VEHICLE_TYPE.ALL && transferStation_eq_accept_agv_model != transferStation_eq_accept_agv_model)
+                        return (false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Destine_Equipment, $"轉運設備不允許{model}車種進行任務");
                 }
-                else
+                else { } //不指定轉運站，會在第一段任務結束轉成第二段任務之後找任務起點可去的離轉運站
+                string strTransferToDestineAGVName = taskData.TransferToDestineAGVName;
+                if (strTransferToDestineAGVName != "")
                 {
-                    //if (destine_eq_accept_agv_model != VEHICLE_TYPE.ALL && destine_eq_accept_agv_model != model)
-                    //    return (false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Destine_Equipment, $"終點設備不允許{model}車種進行任務");
-                    if (destine_eq_accept_agv_model != VEHICLE_TYPE.ALL && destine_eq_accept_agv_model != model) // 自動改成轉運任務
-                        taskData.need_change_agv = true;
-                    else // 直達車
-                        taskData.need_change_agv = false;
+                    //檢查終點站可用車種
+                    var toDestineAGV = agvstates.FirstOrDefault(agv_dat => agv_dat.AGV_Name == strTransferToDestineAGVName);
+                    var modelToDestine = toDestineAGV.Model.ConvertToEQAcceptAGVTYPE();
+                    if (destine_eq_accept_agv_model != VEHICLE_TYPE.ALL && destine_eq_accept_agv_model != modelToDestine)
+                        return (false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Destine_Equipment, $"終點設備不允許{modelToDestine}車種進行任務");
                 }
+                else { } //不指定轉運車種，會在第一段任務結束轉成第二段任務之後自動找離轉運站最近的車
             }
             return new(true, ALARMS.NONE, "");
         }
