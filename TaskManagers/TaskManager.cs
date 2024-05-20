@@ -15,6 +15,7 @@ using AGVSystemCommonNet6.Microservices.ResponseModel;
 using AGVSystemCommonNet6.Microservices.VMS;
 using EquipmentManagment.Device.Options;
 using EquipmentManagment.Manager;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
@@ -67,7 +68,6 @@ namespace AGVSystem.TaskManagers
             }
             #endregion
 
-            #region 設備狀態檢查
             bool source_station_disabled = sourcePoint == null || source_station_tag == -1 ? false : !sourcePoint.Enable;
             bool destine_station_disabled = destinePoint == null || destine_station_tag == -1 ? false : !destinePoint.Enable;
             bool destine_station_isequipment = destinePoint == null || destine_station_tag == -1 ? false : destinePoint.IsEquipment;
@@ -82,28 +82,32 @@ namespace AGVSystem.TaskManagers
                 else if (_order_action == ACTION_TYPE.Park)
                     return (false, ALARMS.Station_Disabled, "目標站點為設備，無法指派停車任務");
             }
-            #endregion
-
-            taskData.bypass_eq_status_check = false;
+            #region 設備狀態檢查
+            //taskData.bypass_eq_status_check = false;
             if (!taskData.bypass_eq_status_check && (_order_action == ACTION_TYPE.Load || _order_action == ACTION_TYPE.LoadAndPark
                                                    || _order_action == ACTION_TYPE.Unload || _order_action == ACTION_TYPE.Carry))
             {
                 (bool confirm, ALARMS alarm_code, string message) results = (false, ALARMS.NONE, "");
                 if (_order_action == ACTION_TYPE.Unload)
                 {
-                    results = EQTransferTaskManager.CheckUnloadStationStatus(destine_station_tag);
-                    if (!results.confirm)
-                        return results;
+                    if (destinePoint.StationType != STATION_TYPE.Buffer && destinePoint.StationType != STATION_TYPE.Charge_Buffer)
+                    {
+                        results = EQTransferTaskManager.CheckUnloadStationStatus(destine_station_tag);
+                        if (!results.confirm)
+                            return results;
+                    }
                 }
                 else if (_order_action == ACTION_TYPE.Load)
                 {
-                    results = EQTransferTaskManager.CheckLoadStationStatus(destine_station_tag);
-                    if (!results.confirm)
-                        return results;
+                    if (destinePoint.StationType != STATION_TYPE.Buffer && destinePoint.StationType != STATION_TYPE.Charge_Buffer)
+                    {
+                        results = EQTransferTaskManager.CheckLoadStationStatus(destine_station_tag);
+                        if (!results.confirm)
+                            return results;
+                    }
                 }
                 else if (_order_action == ACTION_TYPE.Carry)
                 {
-
                     if (sourcePoint.StationType != STATION_TYPE.Buffer && sourcePoint.StationType != STATION_TYPE.Charge_Buffer)
                     {
                         results = EQTransferTaskManager.CheckUnloadStationStatus(source_station_tag);
@@ -116,8 +120,73 @@ namespace AGVSystem.TaskManagers
                         if (!results.confirm)
                             return results;
                     }
+
+                    results = EQTransferTaskManager.CheckEQAcceptCargoType(taskData);
+                    if (!results.confirm)
+                        return results;
                 }
             }
+            #endregion
+
+            #region 檢查設備與車輛 AGV車款與設備允許車款確認
+            bool bypass = false;
+            if (taskData.DesignatedAGVName != "")
+            {
+                if (!bypass && (_order_action == ACTION_TYPE.Load || _order_action == ACTION_TYPE.LoadAndPark
+                                                   || _order_action == ACTION_TYPE.Unload || _order_action == ACTION_TYPE.Carry))
+                {
+                    (bool confirm, ALARMS alarm_code, string message) results = (false, ALARMS.NONE, "");
+
+                    IEnumerable<clsAGVStateDto> agvstates = database.tables.AgvStates;
+
+                    clsAGVStateDto? _agv_assigned = agvstates.FirstOrDefault(agv_dat => agv_dat.AGV_Name == taskData.DesignatedAGVName);
+                    VEHICLE_TYPE model = _agv_assigned.Model.ConvertToEQAcceptAGVTYPE();
+
+
+                    if (taskData.Action == ACTION_TYPE.Unload)
+                    {
+                        if (Convert.ToInt16(taskData.To_Slot) > 0 && model == VEHICLE_TYPE.SUBMERGED_SHIELD)
+                            return new(false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Destine_Equipment, $"{model} can not accept slot={taskData.To_Slot} task");
+                        if (destinePoint.StationType == STATION_TYPE.EQ)
+                        {
+                            results = EQTransferTaskManager.CheckEQAcceptAGVType(destine_station_tag, taskData.DesignatedAGVName);
+                            if (!results.confirm)
+                                return results;
+                        }
+                    }
+                    else if (taskData.Action == ACTION_TYPE.Load)
+                    {
+                        if (Convert.ToInt16(taskData.To_Slot) > 0 && model == VEHICLE_TYPE.SUBMERGED_SHIELD)
+                            return new(false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Destine_Equipment, $"{model} can not accept slot={taskData.To_Slot} task");
+                        if (destinePoint.StationType == STATION_TYPE.EQ)
+                        {
+                            results = EQTransferTaskManager.CheckEQAcceptAGVType(destine_station_tag, taskData.DesignatedAGVName);
+                            if (!results.confirm)
+                                return results;
+
+                            // TODO (需再新增EQTransferTaskManager.CheckEQAcceptCargoType) 放貨
+                            // 須知道車子目前背KUAN or TRAY 再比對放貨站點可接受貨物類型
+                            //results = EQTransferTaskManager.CheckEQAcceptAGVType(ref taskData);
+                            //if (!results.confirm)
+                            //    return results;
+                        }                        
+                    }
+                    else if (taskData.Action == ACTION_TYPE.Carry) // 先檢查From Station,如果允許再比From Station及 To Station如果兩個不同則生成轉運
+                    {
+                        if (sourcePoint.StationType == STATION_TYPE.EQ && destinePoint.StationType == STATION_TYPE.EQ)
+                        {
+                            results = EQTransferTaskManager.CheckEQAcceptAGVType(source_station_tag, taskData.DesignatedAGVName);
+                            if (!results.confirm)
+                                return results;
+
+                            results = EQTransferTaskManager.CheckEQAcceptAGVType(ref taskData);
+                            if (!results.confirm)
+                                return results;
+                        }
+                    }
+                }
+            }
+            #endregion
 
             #region 若起點設定是AGV,則起點要設為
             //using AGVSDatabase database = new AGVSDatabase();
@@ -152,18 +221,6 @@ namespace AGVSystem.TaskManagers
             #endregion
             try
             {
-                #region 起終點KUAN及TRAY確認
-                (bool confirm, ALARMS alarm_code, string message) eq_accept_cargo_type_check_result = EQTransferTaskManager.CheckEQAcceptCargoType(taskData);
-                if (!eq_accept_cargo_type_check_result.confirm)
-                    return eq_accept_cargo_type_check_result;
-                #endregion
-
-                #region AGV車款與設備允許車款確認
-                (bool confirm, ALARMS alarm_code, string message) agv_type_check_result = EQTransferTaskManager.CheckEQAcceptAGVType(ref taskData);
-                if (!agv_type_check_result.confirm)
-                    return agv_type_check_result;
-                #endregion
-
                 #region AGV電量確認
 
                 #endregion
@@ -212,7 +269,7 @@ namespace AGVSystem.TaskManagers
             }
         }
 
-        public static (bool confirm, ALARMS alarm_code, string message) CheckChargeTask(string agv_name, int assign_charge_station_tag)
+        public static (bool confirm, int alarm_code, string message) CheckChargeTask(string agv_name, int assign_charge_station_tag)
         {
             try
             {
@@ -224,30 +281,30 @@ namespace AGVSystem.TaskManagers
 
                 bool isUnspecified = assign_charge_station_tag == -1;
                 if (isNoChargeStation)
-                    return (false, ALARMS.NO_AVAILABLE_CHARGE_PILE, "當前地圖上沒有充電站可以使用");
+                    return (false, 1008, "當前地圖上沒有充電站可以使用");
 
                 var chargeTasks = DatabaseCaches.TaskCaches.InCompletedTasks.Where(_task => _task.Action == ACTION_TYPE.Charge);
 
                 bool isAlreadyHasChargeTask = chargeTasks.Any(_task => _task.DesignatedAGVName == agv_name);
                 if (isAlreadyHasChargeTask)
-                    return (false, ALARMS.AGV_Already_Has_Charge_Task, "AGV已有充電任務");
+                    return (false, 1082, "AGV已有充電任務");
 
                 if (!isUnspecified) //有指定充電站
                 {
                     if (!useableChargeTags.Contains(assign_charge_station_tag))
                     {
-                        return (false, ALARMS.INVALID_CHARGE_STATION, $"該充電站不允許{agv_name}使用");
+                        return (false, 61, $"該充電站不允許{agv_name}使用");
                     }
                     bool isChargeStationHasTask = chargeTasks.Count() == 0 ? false : chargeTasks.Where(_task => _task.DesignatedAGVName != agv_name).Any(tk => tk.To_Station_Tag == assign_charge_station_tag);
                     bool isAnyAGVInTheChargeStation = DatabaseCaches.Vehicle.VehicleStates.Where(agv => agv.AGV_Name != agv_name).Any(agv => agv.CurrentLocation == assign_charge_station_tag + "");
 
                     if (isChargeStationHasTask)
-                        return (false, ALARMS.Charge_Station_Already_Has_Task_Assigned, "已有任務指派AGV前往此充電站");
+                        return (false, 1082, "已有任務指派AGV前往此充電站");
 
                     if (isAnyAGVInTheChargeStation)
-                        return (false, ALARMS.Charge_Station_Already_Has_AGV_Parked, "已有AGV停駐在此充電站");
+                        return (false, 1084, "已有AGV停駐在此充電站");
 
-                    return (true, ALARMS.NONE, "");
+                    return (true, 0, "");
                 }
                 else //沒有指定充電站:無充電站可以用的情境:1. 所有充電站都有AGV(除了自己)
                 {
@@ -259,19 +316,19 @@ namespace AGVSystem.TaskManagers
 
                     bool isAGVInChargeStation = chargeStationTags.Any(tag => tag + "" == agv_currnet_tag);
                     if (isAGVInChargeStation)
-                        return (true, ALARMS.NONE, "");
+                        return (true,0, "");
 
                     IEnumerable<int> usableChargeStationTags = chargeStationTags.Where(tag => !other_agv_current_tag.Contains(tag + ""));
 
                     bool hasChargeStationUse = usableChargeStationTags.Count() > 0;
                     if (!hasChargeStationUse)
-                        return (false, ALARMS.NO_AVAILABLE_CHARGE_PILE, "沒有空閒的充電站可以使用");
+                        return (false, 1008, "沒有空閒的充電站可以使用");
 
                     bool isAllChargeStationsHasTask = chargeTasks.Where(tk => tk.DesignatedAGVName == agv_name).Count() == usableChargeStationTags.Count();
                     if (isAllChargeStationsHasTask)
-                        return (false, ALARMS.NO_AVAILABLE_CHARGE_PILE, "沒有空閒的充電站可以使用");
+                        return (false, 1008, "沒有空閒的充電站可以使用");
 
-                    return (true, ALARMS.NONE, "");
+                    return (true, 0, "");
                 }
 
             }
