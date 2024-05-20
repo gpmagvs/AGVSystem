@@ -188,6 +188,8 @@ namespace AGVSystem.Controllers
                 { // TODO 設備異常
                     if (action == ACTION_TYPE.Unload)
                     {
+                        if (result.mainEQ.IsConnected == false)
+                            return Ok(new clsAGVSTaskReportResponse() { confirm = false, AlarmCode = ALARMS.EQ_Disconnect, message = $"Unload_Request={result.mainEQ.Unload_Request} cannot Unload" });
                         if (result.mainEQ.Unload_Request == false)
                             return Ok(new clsAGVSTaskReportResponse() { confirm = false, AlarmCode = ALARMS.EQ_UNLOAD_REQUEST_IS_NOT_ON, message = $"Unload_Request={result.mainEQ.Unload_Request} cannot Unload" });
                         if (result.mainEQ.Port_Exist == false)
@@ -197,6 +199,8 @@ namespace AGVSystem.Controllers
                     }
                     else if (action == ACTION_TYPE.Load)
                     {
+                        if (result.mainEQ.IsConnected == false)
+                            return Ok(new clsAGVSTaskReportResponse() { confirm = false, AlarmCode = ALARMS.EQ_Disconnect, message = $"Unload_Request={result.mainEQ.Unload_Request} cannot Unload" });
                         if (result.mainEQ.Load_Request == false)
                             return Ok(new clsAGVSTaskReportResponse() { confirm = false, AlarmCode = ALARMS.EQ_LOAD_REQUEST_IS_NOT_ON, message = $"Unload_Request={result.mainEQ.Unload_Request} cannot Unload" });
                         if (result.mainEQ.Port_Exist == true)
