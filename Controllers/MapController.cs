@@ -13,6 +13,7 @@ using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Drawing;
 using System.Runtime.InteropServices;
+using System.Security.Permissions;
 using System.Text.Json.Serialization;
 using static AGVSystemCommonNet6.MAP.MapPoint;
 
@@ -37,7 +38,11 @@ namespace AGVSystem.Controllers
             return Ok(MapManager.LoadMapFromFile());
         }
 
-
+        [HttpGet("GetPointEnableMap")]
+        public async Task<IActionResult> GetPointEnableMap()
+        {
+            return Ok(AGVSMapManager.CurrentMap.Points.Values.ToDictionary(pt => pt.TagNumber, pt => pt.Enable));
+        }
 
         [HttpGet("GeoMapJson")]
         public async Task<IActionResult> GetGeoMapJson()
