@@ -189,24 +189,24 @@ namespace AGVSystem.Controllers
                     if (action == ACTION_TYPE.Unload)
                     {
                         if (result.mainEQ.IsConnected == false)
-                            return Ok(new clsAGVSTaskReportResponse() { confirm = false, AlarmCode = ALARMS.EQ_Disconnect, message = $"Unload_Request={result.mainEQ.Unload_Request} cannot Unload" });
+                            return Ok(new clsAGVSTaskReportResponse() { confirm = false, alarmcode = 1000, message = $"Unload_Request={result.mainEQ.Unload_Request} cannot Unload" });//EQ_Disconnect
                         if (result.mainEQ.Unload_Request == false)
-                            return Ok(new clsAGVSTaskReportResponse() { confirm = false, AlarmCode = ALARMS.EQ_UNLOAD_REQUEST_IS_NOT_ON, message = $"Unload_Request={result.mainEQ.Unload_Request} cannot Unload" });
+                            return Ok(new clsAGVSTaskReportResponse() { confirm = false, alarmcode = 1015, message = $"Unload_Request={result.mainEQ.Unload_Request} cannot Unload" });//EQ_UNLOAD_REQUEST_IS_NOT_ON
                         if (result.mainEQ.Port_Exist == false)
-                            return Ok(new clsAGVSTaskReportResponse() { confirm = false, AlarmCode = ALARMS.EQ_UNLOAD_REQUEST_ON_BUT_NO_CARGO, message = $"Port_Exist={result.mainEQ.Port_Exist} cannot Unload" });
+                            return Ok(new clsAGVSTaskReportResponse() { confirm = false, alarmcode = 1076, message = $"Port_Exist={result.mainEQ.Port_Exist} cannot Unload" });//EQ_UNLOAD_REQUEST_ON_BUT_NO_CARGO
                         if (result.mainEQ.Up_Pose == false)
-                            return Ok(new clsAGVSTaskReportResponse() { confirm = false, AlarmCode = ALARMS.EQ_UNLOAD_REQUEST_ON_BUT_NO_CARGO, message = $"Up_Pose={result.mainEQ.Up_Pose} cannot Unload" });
+                            return Ok(new clsAGVSTaskReportResponse() { confirm = false, alarmcode = 1076, message = $"Up_Pose={result.mainEQ.Up_Pose} cannot Unload" });//EQ_UNLOAD_REQUEST_ON_BUT_NO_CARGO
                     }
                     else if (action == ACTION_TYPE.Load)
                     {
                         if (result.mainEQ.IsConnected == false)
-                            return Ok(new clsAGVSTaskReportResponse() { confirm = false, AlarmCode = ALARMS.EQ_Disconnect, message = $"Unload_Request={result.mainEQ.Unload_Request} cannot Unload" });
+                            return Ok(new clsAGVSTaskReportResponse() { confirm = false, alarmcode = 1068, message = $"Unload_Request={result.mainEQ.Unload_Request} cannot Unload" });//EQ_Disconnect
                         if (result.mainEQ.Load_Request == false)
-                            return Ok(new clsAGVSTaskReportResponse() { confirm = false, AlarmCode = ALARMS.EQ_LOAD_REQUEST_IS_NOT_ON, message = $"Unload_Request={result.mainEQ.Unload_Request} cannot Unload" });
+                            return Ok(new clsAGVSTaskReportResponse() { confirm = false, alarmcode = 1014, message = $"Unload_Request={result.mainEQ.Unload_Request} cannot Unload" });//EQ_LOAD_REQUEST_IS_NOT_ON
                         if (result.mainEQ.Port_Exist == true)
-                            return Ok(new clsAGVSTaskReportResponse() { confirm = false, AlarmCode = ALARMS.EQ_LOAD_REQUEST_ON_BUT_HAS_CARGO, message = $"Port_Exist={result.mainEQ.Port_Exist} cannot Unload" });
+                            return Ok(new clsAGVSTaskReportResponse() { confirm = false, alarmcode = 1075, message = $"Port_Exist={result.mainEQ.Port_Exist} cannot Unload" });//EQ_LOAD_REQUEST_ON_BUT_HAS_CARGO
                         if (result.mainEQ.Down_Pose == false)
-                            return Ok(new clsAGVSTaskReportResponse() { confirm = false, AlarmCode = ALARMS.EQ_LOAD_REQUEST_IS_NOT_ON, message = $"Down_Pose={result.mainEQ.Down_Pose} cannot Unload" });
+                            return Ok(new clsAGVSTaskReportResponse() { confirm = false, alarmcode = 1014, message = $"Down_Pose={result.mainEQ.Down_Pose} cannot Unload" });//EQ_LOAD_REQUEST_IS_NOT_ON
                     }
                 }
                 else if (result.rack != null)
