@@ -47,7 +47,7 @@ namespace AGVSystem.Models.EQDevices
             }
             clsMapConfigs mapConfigs = AGVSConfigulator.SysConfigs.MapConfigs;
             MapManager.SaveMapToFile(AGVSMapManager.CurrentMap, mapConfigs.MapFileFullName);
-            await NotifyServiceHelper.INFO($"Map-Reload", false);
+            await NotifyServiceHelper.INFO($"Map-Point-Enabled-Property-Changed", false);
             MapSync.SendReloadRequest(mapConfigs.CurrentMapFileName);
             string modifiedTagCollectionsStr = string.Join(",", entryPoints.Select(pt => pt.TagNumber));
             LOG.TRACE($"Modify Tags={modifiedTagCollectionsStr} 'Enable' property to {enabled}");

@@ -21,6 +21,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using NuGet.Configuration;
+using NuGet.Protocol;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -175,28 +176,65 @@ namespace AGVSystem.Controllers
         public async Task<IActionResult> LoadUnloadTaskStart(int tag, ACTION_TYPE action)
         {
             if (action != ACTION_TYPE.Load && action != ACTION_TYPE.Unload)
-                return Ok(new clsAGVSTaskReportResponse(false, "Action should equal Load or Unlaod"));
+                return Ok(new clsAGVSTaskReportResponse() { confirm = false, message = "Action should equal Load or Unlaod" });
 
             (bool existDevice, clsEQ mainEQ, clsRack rack) result = TryGetEndDevice(tag);
 
             if (!result.existDevice)
-                return Ok(new clsAGVSTaskReportResponse(false, $"[LoadUnloadTaskStart] 找不到Tag為{tag}的設備"));
+                return Ok(new clsAGVSTaskReportResponse() { confirm = false, message = $"[LoadUnloadTaskStart] 找不到Tag為{tag}的設備" });
+            else
+            {
+                if (result.mainEQ != null)
+                { // TODO 設備異常
+                    if (action == ACTION_TYPE.Unload)
+                    {
+                        if (result.mainEQ.IsConnected == false)
+                            return Ok(new clsAGVSTaskReportResponse() { confirm = false, AlarmCode = ALARMS.EQ_Disconnect, message = $"Unload_Request={result.mainEQ.Unload_Request} cannot Unload" });
+                        if (result.mainEQ.Unload_Request == false)
+                            return Ok(new clsAGVSTaskReportResponse() { confirm = false, AlarmCode = ALARMS.EQ_UNLOAD_REQUEST_IS_NOT_ON, message = $"Unload_Request={result.mainEQ.Unload_Request} cannot Unload" });
+                        if (result.mainEQ.Port_Exist == false)
+                            return Ok(new clsAGVSTaskReportResponse() { confirm = false, AlarmCode = ALARMS.EQ_UNLOAD_REQUEST_ON_BUT_NO_CARGO, message = $"Port_Exist={result.mainEQ.Port_Exist} cannot Unload" });
+                        if (result.mainEQ.Up_Pose == false)
+                            return Ok(new clsAGVSTaskReportResponse() { confirm = false, AlarmCode = ALARMS.EQ_UNLOAD_REQUEST_ON_BUT_NO_CARGO, message = $"Up_Pose={result.mainEQ.Up_Pose} cannot Unload" });
+                    }
+                    else if (action == ACTION_TYPE.Load)
+                    {
+                        if (result.mainEQ.IsConnected == false)
+                            return Ok(new clsAGVSTaskReportResponse() { confirm = false, AlarmCode = ALARMS.EQ_Disconnect, message = $"Unload_Request={result.mainEQ.Unload_Request} cannot Unload" });
+                        if (result.mainEQ.Load_Request == false)
+                            return Ok(new clsAGVSTaskReportResponse() { confirm = false, AlarmCode = ALARMS.EQ_LOAD_REQUEST_IS_NOT_ON, message = $"Unload_Request={result.mainEQ.Unload_Request} cannot Unload" });
+                        if (result.mainEQ.Port_Exist == true)
+                            return Ok(new clsAGVSTaskReportResponse() { confirm = false, AlarmCode = ALARMS.EQ_LOAD_REQUEST_ON_BUT_HAS_CARGO, message = $"Port_Exist={result.mainEQ.Port_Exist} cannot Unload" });
+                        if (result.mainEQ.Down_Pose == false)
+                            return Ok(new clsAGVSTaskReportResponse() { confirm = false, AlarmCode = ALARMS.EQ_LOAD_REQUEST_IS_NOT_ON, message = $"Down_Pose={result.mainEQ.Down_Pose} cannot Unload" });
+                    }
+                }
+                else if (result.rack != null)
+                {
+                    // 不交握do noting
+                }
+                else
+                {
+                    return Ok(new clsAGVSTaskReportResponse() { confirm = false, message = $"tag={tag}, mainEQ=null, cannot Unload" });
+                }
+            }
 
             if (result.mainEQ != null)
             {
                 try
                 {
+                    result.mainEQ.ReserveUp();
                     result.mainEQ.ToEQUp();
                 }
                 catch (Exception ex)
                 {
-                    return Ok(new clsAGVSTaskReportResponse(false, $"{result.mainEQ.EQName} ToEQUp DO ON的過程中發生錯誤:{ex.Message}"));
+                    return Ok(new clsAGVSTaskReportResponse() { confirm = false, message = $"{result.mainEQ.EQName} ToEQUp DO ON的過程中發生錯誤:{ex.Message}" });
                 }
                 LOG.INFO($"Get AGV LD.ULD Task Start At Tag {tag}-Action={action}. TO Eq Up DO ON", color: ConsoleColor.Green);
-                return Ok(new clsAGVSTaskReportResponse(true, $"{result.mainEQ.EQName} ToEQUp DO ON"));
+                return Ok(new clsAGVSTaskReportResponse() { confirm = true, message = $"{result.mainEQ.EQName} ToEQUp DO ON" });
             }
             else
-                return Ok(new clsAGVSTaskReportResponse(true, $"{action} at {result.rack.EQName} Start"));
+                return Ok(new clsAGVSTaskReportResponse() { confirm = true, message = $"{action} at {result.rack.EQName} Start" });
         }
 
         [HttpGet("StartTransferCargoReport")]
@@ -238,20 +276,20 @@ namespace AGVSystem.Controllers
         public async Task<clsAGVSTaskReportResponse> LoadUnloadTaskFinish(int tag, ACTION_TYPE action)
         {
             if (action != ACTION_TYPE.Load && action != ACTION_TYPE.Unload)
-                return new clsAGVSTaskReportResponse(false, "Action should equal Load or Unlaod");
+                return new clsAGVSTaskReportResponse() { confirm = false, message = "Action should equal Load or Unlaod" };
 
             (bool existDevice, clsEQ mainEQ, clsRack rack) result = TryGetEndDevice(tag);
             if (!result.existDevice)
-                return new clsAGVSTaskReportResponse(false, $"[LoadUnloadTaskFinish] 找不到Tag為{tag}的設備");
+                return new clsAGVSTaskReportResponse() { confirm = false, message = $"[LoadUnloadTaskFinish] 找不到Tag為{tag}的設備" };
             if (result.mainEQ != null)
             {
                 result.mainEQ.CancelToEQUpAndLow();
                 result.mainEQ.CancelReserve();
                 LOG.INFO($"Get AGV LD.ULD Task Finish At Tag {tag}-Action={action}. TO Eq DO ALL OFF", color: ConsoleColor.Green);
-                return new clsAGVSTaskReportResponse(true, $"{result.mainEQ.EQName} ToEQUp DO OFF");
+                return new clsAGVSTaskReportResponse() { confirm = true, message = $"{result.mainEQ.EQName} ToEQUp DO OFF" };
             }
             else
-                return new clsAGVSTaskReportResponse(true, $"{action} from {result.rack} Finish");
+                return new clsAGVSTaskReportResponse() { confirm = true, message = $"{action} from {result.rack} Finish" };
         }
         [HttpGet("LDULDOrderStart")]
         public async Task<clsAGVSTaskReportResponse> LDULDOrderStart(int from, int to, ACTION_TYPE action)
@@ -262,14 +300,14 @@ namespace AGVSystem.Controllers
                 (bool existDevice, clsEQ mainEQ, clsRack rack) result = TryGetEndDevice(from);
                 if (!result.existDevice)
                 {
-                    return new clsAGVSTaskReportResponse(false, $"[LDULDOrderStart] 找不到Tag為{from}的起點設備");
+                    return new clsAGVSTaskReportResponse() { confirm = false, message = $"[LDULDOrderStart] 找不到Tag為{from}的起點設備" };
                 }
                 else
                 {
                     if (result.mainEQ != null)
                     {
                         if (!result.mainEQ.IsConnected)
-                            return new clsAGVSTaskReportResponse(false, "Source Equipment Disconnect");
+                            return new clsAGVSTaskReportResponse() { confirm = false, message = "Source Equipment Disconnect" };
                         result.mainEQ.ToEQUp();
                         result.mainEQ.ReserveUp();
                         msg += $"Reserve {result.mainEQ.EQName} ;";
@@ -280,14 +318,14 @@ namespace AGVSystem.Controllers
             {
                 (bool existDevice, clsEQ mainEQ, clsRack rack) result = TryGetEndDevice(to);
                 if (!result.existDevice)
-                    return new clsAGVSTaskReportResponse(false, $"[LDULDOrderStart] 找不到Tag為{to}的終點設備");
+                    return new clsAGVSTaskReportResponse() { confirm = false, message = $"[LDULDOrderStart] 找不到Tag為{to}的終點設備" };
                 else
                 {
                     if (result.mainEQ != null)
                     {
 
                         if (!result.mainEQ.IsConnected)
-                            return new clsAGVSTaskReportResponse(false, "Destine Equipment Disconnect");
+                            return new clsAGVSTaskReportResponse() { confirm = false, message = "Destine Equipment Disconnect" };
 
                         result.mainEQ.ToEQUp();
                         result.mainEQ.ReserveUp();
@@ -295,7 +333,7 @@ namespace AGVSystem.Controllers
                     }
                 }
             }
-            return new clsAGVSTaskReportResponse(true, msg);
+            return new clsAGVSTaskReportResponse() { confirm = true, message = msg };
         }
         private (bool existDevice, clsEQ mainEQ, clsRack rack) TryGetEndDevice(int tag)
         {
