@@ -44,13 +44,20 @@ namespace AGVSystem.Models.EQDevices
         internal static async void HandleDeviceDisconnected(object? sender, EndPointDeviceAbstract device)
         {
             _Log($"EQ-{device.EQName} 連線中斷({device.EndPointOptions.ConnOptions.IP}:{device.EndPointOptions.ConnOptions.Port}-{device.EndPointOptions.ConnOptions.ConnMethod})", device.EQName);
-            await AlarmManagerCenter.AddAlarmAsync(1068, source: ALARM_SOURCE.EQP, Equipment_Name: device.EQName);
+
+            _ = Task.Run(async () =>
+            {
+                await AlarmManagerCenter.AddAlarmAsync(1068, source: ALARM_SOURCE.EQP, Equipment_Name: device.EQName);
+            });
         }
 
         internal static async void HandleDeviceReconnected(object? sender, EndPointDeviceAbstract device)
         {
             _Log($"EQ-{device.EQName} 已連線({device.EndPointOptions.ConnOptions.IP}-{device.EndPointOptions.ConnOptions.ConnMethod})", device.EQName);
-            await AlarmManagerCenter.SetAlarmCheckedAsync(device.EQName, ALARMS.EQ_Disconnect, "SystemAuto");
+            _ = Task.Run(async () =>
+            {
+                await AlarmManagerCenter.SetAlarmCheckedAsync(device.EQName, ALARMS.EQ_Disconnect, "SystemAuto");
+            });
         }
 
         internal static async void HandleEQIOStateChanged(object? sender, EndPointDeviceAbstract.IOChangedEventArgs device)
