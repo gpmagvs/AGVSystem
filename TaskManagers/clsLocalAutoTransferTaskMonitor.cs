@@ -65,6 +65,7 @@ namespace AGVSystem.TaskManagers
                 while (GetTaskOrderFromDB().Result == null)
                 {
                     ALARMS EQStatusMonitoringResultAlarmCode = MonitorEQsStatusIO();
+                   // int eEQStatusMonitoringResultAlarmCode = mMonitorEQsStatusIO();
                     if (EQStatusMonitoringResultAlarmCode != ALARMS.NONE)
                     {
                         bool canceled = await TaskManager.Cancel(taskOrder.TaskName, EQStatusMonitoringResultAlarmCode.ToString());
@@ -191,7 +192,7 @@ namespace AGVSystem.TaskManagers
             });
 
         }
-        private ALARMS MonitorEQsStatusIO()
+        private  ALARMS MonitorEQsStatusIO()
         {
             if (!sourceEQ.Unload_Request) //前往取貨途中
             {
@@ -209,6 +210,26 @@ namespace AGVSystem.TaskManagers
             else
             {
                 return ALARMS.NONE;
+            }
+        }
+        private int  mMonitorEQsStatusIO()
+        {
+            if (!sourceEQ.Unload_Request) //前往取貨途中
+            {
+                return 1055; //Source_Eq_Unload_Request_Off
+            }
+            else if (!destineEQ.Load_Request)
+            {
+                return 1056;//Destine_Eq_Load_Request_Off
+            }
+            else if (!sourceEQ.Eqp_Status_Down | !sourceEQ.Eqp_Status_Down)
+            {
+                bool isSourceEQ = !sourceEQ.Eqp_Status_Down;
+                return isSourceEQ ? 1057 :1058 ;//ALARMS.Source_Eq_Status_Down : ALARMS.Destine_Eq_Status_Down
+            }
+            else
+            {
+                return 1000;//NONE
             }
         }
 
