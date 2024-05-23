@@ -22,6 +22,7 @@ using EquipmentManagment.Device.Options;
 using static AGVSystemCommonNet6.MAP.MapPoint;
 using EquipmentManagment.WIP;
 using static AGVSystemCommonNet6.GPMRosMessageNet.Services.EquipmentStateRequest;
+using NuGet.Protocol;
 
 namespace AGVSystem.TaskManagers
 {
@@ -191,20 +192,36 @@ namespace AGVSystem.TaskManagers
         {
             return new(true, ALARMS.NONE, "");
         }
-        public static (bool confirm, ALARMS alarm_code, string message) CheckLoadRackStatus(int station_tag, bool check_rack_move_out_is_empty_or_full = true)
+        public static (bool confirm, ALARMS alarm_code, string message,clsRack rack) CheckLoadUnloadRackStatus(int station_tag, string strSlot = "-1")
         {
             bool _eq_exist = TryGetStationWIP(station_tag, out clsRack rack);
             if (!_eq_exist)
-                return new(false, ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, $"WIP站點TAG-{station_tag} 不存在於當前地圖");
+                return new(false, ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, $"WIP站點TAG-{station_tag} 不存在於當前地圖",null);
             if (!rack.IsConnected)
-                return new(false, ALARMS.Endpoint_EQ_NOT_CONNECTED, $"設備[{rack.EQName}] 尚未連線,無法確認狀態");
-            //if (!rack.RackOption.Columns)
-            //    return new(false, ALARMS.EQ_LOAD_REQUEST_IS_NOT_ON, $"設備[{equipment.EQName}] 沒有[出料]請求");
-            //if (!equipment.Port_Exist)
-            //    return new(false, ALARMS.EQ_UNLOAD_REQUEST_ON_BUT_NO_CARGO, $"設備[{equipment.EQName}] PORT內無貨物，無法載出");
-            
+                return new(false, ALARMS.Endpoint_EQ_NOT_CONNECTED, $"設備[{rack.EQName}] 尚未連線,無法確認狀態",rack);
+            return new(true, ALARMS.NONE, "",rack);
+        }
+
+        public static (bool confirm, ALARMS alarm_code, string message) CheckLoadUnloadPortofRackStatus(int station_tag, ACTION_TYPE actiontype,clsRack rack, string strSlot = "-1")
+        {
+            List<clsPortOfRack> ports = StaEQPManagager.GetRackColumnByTag(station_tag);
+
+            clsPortOfRack specificport = ports.Where(x => x.Layer == Convert.ToInt32(strSlot)).FirstOrDefault();
+            if (specificport == null)
+                return new(false, ALARMS.EQ_LOAD_REQUEST_IS_NOT_ON, $"WIP設備[{rack.EQName}-{specificport.Properties.ID}] 料座不存在");
+            if (actiontype == ACTION_TYPE.Unload)
+            {
+                if (specificport.CargoExist == false)
+                    return new(false, ALARMS.EQ_LOAD_REQUEST_IS_NOT_ON, $"WIP設備[{rack.EQName}-{specificport.Properties.ID}] 料座無貨");
+            }
+            else if (actiontype == ACTION_TYPE.Load || actiontype == ACTION_TYPE.LoadAndPark)
+            {
+                if (specificport.CargoExist == true)
+                    return new(false, ALARMS.EQ_LOAD_REQUEST_IS_NOT_ON, $"WIP設備[{rack.EQName}-{specificport.Properties.ID}] 料座已占用");
+            }
             return new(true, ALARMS.NONE, "");
         }
+
         public static bool TryGetStationWIP(int station_tag, out clsRack rack)
         {
             rack = null;
@@ -216,6 +233,7 @@ namespace AGVSystem.TaskManagers
             rack = StaEQPManagager.GetRackByTag(station_tag);
             return rack != null;
         }
+
 
         public static (bool confirm, ALARMS alarm_code, string message) CheckEQLDULDStatus(ACTION_TYPE action, int from_tag, int to_tag)
         {
