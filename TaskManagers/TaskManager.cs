@@ -114,12 +114,18 @@ namespace AGVSystem.TaskManagers
                         if (!results.confirm)
                             return results;
                     }
-                    if (destinePoint.StationType != STATION_TYPE.Buffer && destinePoint.StationType != STATION_TYPE.Charge_Buffer)
+                    else if(destinePoint.StationType == STATION_TYPE.Buffer || destinePoint.StationType == STATION_TYPE.Charge_Buffer) { }
+                    if (destinePoint.StationType == STATION_TYPE.EQ || destinePoint.StationType == STATION_TYPE.EQ_LD|| destinePoint.StationType == STATION_TYPE.EQ_ULD)
                     {
                         results = EQTransferTaskManager.CheckLoadStationStatus(destine_station_tag);
                         if (!results.confirm)
                             return results;
                     }
+                    else if (destinePoint.StationType == STATION_TYPE.Buffer || destinePoint.StationType == STATION_TYPE.Charge_Buffer) {
+
+                        results = EQTransferTaskManager.CheckLoadRackStatus(destine_station_tag);
+                        if (!results.confirm)
+                            return results; }
 
                     results = EQTransferTaskManager.CheckEQAcceptCargoType(taskData);
                     if (!results.confirm)

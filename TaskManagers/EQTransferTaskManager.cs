@@ -21,6 +21,7 @@ using AGVSystemCommonNet6.Microservices.VMS;
 using EquipmentManagment.Device.Options;
 using static AGVSystemCommonNet6.MAP.MapPoint;
 using EquipmentManagment.WIP;
+using static AGVSystemCommonNet6.GPMRosMessageNet.Services.EquipmentStateRequest;
 
 namespace AGVSystem.TaskManagers
 {
@@ -175,7 +176,6 @@ namespace AGVSystem.TaskManagers
 
             return new(true, ALARMS.NONE, "");
         }
-
         public static bool TryGetStationEQDIStatus(int station_tag, out clsEQ equipment)
         {
             equipment = null;
@@ -187,6 +187,36 @@ namespace AGVSystem.TaskManagers
             equipment = StaEQPManagager.GetEQByTag(station_tag);
             return equipment != null;
         }
+        public static (bool confirm, ALARMS alarm_code, string message) CheckUnloadRackStatus(int station_tag, bool check_rack_move_out_is_empty_or_full = true)
+        {
+            return new(true, ALARMS.NONE, "");
+        }
+        public static (bool confirm, ALARMS alarm_code, string message) CheckLoadRackStatus(int station_tag, bool check_rack_move_out_is_empty_or_full = true)
+        {
+            bool _eq_exist = TryGetStationWIP(station_tag, out clsRack rack);
+            if (!_eq_exist)
+                return new(false, ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, $"WIP站點TAG-{station_tag} 不存在於當前地圖");
+            if (!rack.IsConnected)
+                return new(false, ALARMS.Endpoint_EQ_NOT_CONNECTED, $"設備[{rack.EQName}] 尚未連線,無法確認狀態");
+            //if (!rack.RackOption.Columns)
+            //    return new(false, ALARMS.EQ_LOAD_REQUEST_IS_NOT_ON, $"設備[{equipment.EQName}] 沒有[出料]請求");
+            //if (!equipment.Port_Exist)
+            //    return new(false, ALARMS.EQ_UNLOAD_REQUEST_ON_BUT_NO_CARGO, $"設備[{equipment.EQName}] PORT內無貨物，無法載出");
+            
+            return new(true, ALARMS.NONE, "");
+        }
+        public static bool TryGetStationWIP(int station_tag, out clsRack rack)
+        {
+            rack = null;
+            KeyValuePair<int, MapPoint> StationOnMap = AGVSMapManager.CurrentMap.Points.FirstOrDefault(pt => pt.Value.TagNumber == station_tag);
+            if (StationOnMap.Value == null)
+            {
+                return false;
+            }
+            rack = StaEQPManagager.GetRackByTag(station_tag);
+            return rack != null;
+        }
+
         public static (bool confirm, ALARMS alarm_code, string message) CheckEQLDULDStatus(ACTION_TYPE action, int from_tag, int to_tag)
         {
             try
@@ -293,7 +323,7 @@ namespace AGVSystem.TaskManagers
             clsAGVStateDto? _agv_assigned = agvstates.FirstOrDefault(agv_dat => agv_dat.AGV_Name == _agv_name);
             VEHICLE_TYPE model = _agv_assigned.Model.ConvertToEQAcceptAGVTYPE();
             clsEQ equipment = StaEQPManagager.GetEQByTag(station_tag);
-            if (equipment == null )
+            if (equipment == null)
                 return new(false, ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, $"設備站點TAG-{station_tag} 不存在於當前地圖");
             else
             {
