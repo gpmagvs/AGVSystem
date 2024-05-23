@@ -198,6 +198,34 @@ namespace AGVSystem.Controllers
             }
         }
 
+
+        [HttpPost("ChargeStation/ModifyTagNumber")]
+        public async Task<IActionResult> ModifyTagNumber([FromBody] int[] newTag, string ChargeStationName)
+        {
+            try
+            {
+
+                var charge_station = StaEQPManagager.ChargeStations.FirstOrDefault(eq => eq.EQName == ChargeStationName);
+                if (charge_station == null)
+                    return Ok(new { confirm = false, message = $"Charge Station:{ChargeStationName} is not exist" });
+
+                var otherTags = StaEQPManagager.ChargeStations.Where(eq => eq != charge_station)
+                                              .Select(eq => eq.EndPointOptions.TagID).ToList();
+                //TODO WIP、主設備的TAG也要檢查
+                if (otherTags.Contains(newTag[0]))
+                {
+                    return Ok(new { confirm = false, message = $"Tag-{newTag[0]} 已被其他設備設定" });
+                }
+                charge_station.SetTag(newTag[0]);
+                StaEQPManagager.SaveChargeStationConfigs();
+                return Ok(new { confirm = true, message = "" });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { confirm = false, message = ex.Message });
+            }
+        }
+
         [HttpPost("AgvHsSignal")]
         public async Task<IActionResult> AgvHsSignal(string EqName, string SignalName, bool State)
         {
