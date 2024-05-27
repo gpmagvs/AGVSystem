@@ -80,8 +80,8 @@ namespace AGVSystem.TaskManagers
             {
                 if (_order_action == ACTION_TYPE.None)
                     return (false, ALARMS.Station_Disabled, "目標站點為設備，無法指派移動任務");
-                else if (_order_action == ACTION_TYPE.Park)
-                    return (false, ALARMS.Station_Disabled, "目標站點為設備，無法指派停車任務");
+                else if (_order_action == ACTION_TYPE.Park && !destinePoint.IsParking)
+                    return (false, ALARMS.Station_Disabled, "目標站點非可停車點，無法指派停車任務");
             }
             #region 設備狀態檢查
             //taskData.bypass_eq_status_check = false;
@@ -109,6 +109,7 @@ namespace AGVSystem.TaskManagers
                 }
                 else if (_order_action == ACTION_TYPE.Carry)
                 {
+                    // TODO bufferEQ需加slot判別
                     if (sourcePoint.StationType == STATION_TYPE.EQ || sourcePoint.StationType == STATION_TYPE.EQ_LD || sourcePoint.StationType == STATION_TYPE.EQ_ULD)
                     {
                         results = EQTransferTaskManager.CheckUnloadStationStatus(source_station_tag);
