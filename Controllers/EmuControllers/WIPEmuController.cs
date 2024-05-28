@@ -1,10 +1,13 @@
 ﻿using AGVSystemCommonNet6.Configuration;
+using AGVSystemCommonNet6.Log;
 using EquipmentManagment.Device.Options;
 using EquipmentManagment.Manager;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 using NuGet.DependencyResolver;
+using SQLite;
+using static EquipmentManagment.WIP.clsPortOfRack;
 
 namespace AGVSystem.Controllers.EmuControllers
 {
@@ -53,6 +56,14 @@ namespace AGVSystem.Controllers.EmuControllers
                 return Ok(new { confirm = false, message = $"Not simulation mode, modify sensor io state is invalid." });
 
             var port = rack?.PortsStatus.FirstOrDefault(port => port.Properties.ID == port_id);
+            //if (port.RackPlacementState == CARGO_PLACEMENT_STATUS.NO_CARGO_BUT_CLICK)
+            //{
+            //    return Ok(new { confirm = false, message = $"{rack_id}-{port_id},Rack Sensor is Flash" });
+            //}
+            //else if (port.TrayPlacementState == CARGO_PLACEMENT_STATUS.NO_CARGO_BUT_CLICK)
+            //{
+            //    return Ok(new { confirm = false, message = $"{rack_id}-{port_id},Tray Sensor is Flash" });
+            //}
             var ioLocation = port.Properties.IOLocation;
 
             int _io_location = 0;
