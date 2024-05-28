@@ -178,7 +178,10 @@ namespace AGVSystem.Controllers
             if (action != ACTION_TYPE.Load && action != ACTION_TYPE.Unload)
                 return Ok(new clsAGVSTaskReportResponse() { confirm = false, message = "Action should equal Load or Unlaod" });
 
+            EQTransferTaskManager.CheckLoadUnloadStation(tag,-1,action);
+
             (bool existDevice, clsEQ mainEQ, clsRack rack) result = TryGetEndDevice(tag);
+            
 
             if (!result.existDevice)
                 return Ok(new clsAGVSTaskReportResponse() { confirm = false, message = $"[LoadUnloadTaskStart] 找不到Tag為{tag}的設備" });
@@ -292,17 +295,22 @@ namespace AGVSystem.Controllers
                 return new clsAGVSTaskReportResponse() { confirm = true, message = $"{action} from {result.rack} Finish" };
         }
         [HttpGet("LDULDOrderStart")]
-        public async Task<clsAGVSTaskReportResponse> LDULDOrderStart(int from, int to, ACTION_TYPE action)
+        public async Task<clsAGVSTaskReportResponse> LDULDOrderStart(int from,int FromSlot, int to,int ToSlot, ACTION_TYPE action)
         {
             try
             {
                 if (action == ACTION_TYPE.LoadAndPark || action == ACTION_TYPE.Load || action == ACTION_TYPE.Unload)
                 {
-                    clsAGVSTaskReportResponse result = ((OkObjectResult)await LoadUnloadTaskStart(to, action)).Value as clsAGVSTaskReportResponse;
-                    return result;
+                    if (ToSlot == -1) { }
+                    else
+                    {
+                        clsAGVSTaskReportResponse result = ((OkObjectResult)await LoadUnloadTaskStart(to, action)).Value as clsAGVSTaskReportResponse;
+                        return result;
+                    }
                 }
                 else if (action == ACTION_TYPE.Carry)
                 {
+
                     clsAGVSTaskReportResponse result_from = ((OkObjectResult)await LoadUnloadTaskStart(from, ACTION_TYPE.Unload)).Value as clsAGVSTaskReportResponse;
                     clsAGVSTaskReportResponse result_to = ((OkObjectResult)await LoadUnloadTaskStart(to, ACTION_TYPE.Load)).Value as clsAGVSTaskReportResponse;
                     if (!result_from.confirm)
