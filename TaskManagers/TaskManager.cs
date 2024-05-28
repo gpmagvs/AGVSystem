@@ -15,6 +15,7 @@ using AGVSystemCommonNet6.Microservices.ResponseModel;
 using AGVSystemCommonNet6.Microservices.VMS;
 using EquipmentManagment.Device.Options;
 using EquipmentManagment.Manager;
+using EquipmentManagment.WIP;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -79,8 +80,8 @@ namespace AGVSystem.TaskManagers
             {
                 if (_order_action == ACTION_TYPE.None)
                     return (false, ALARMS.Station_Disabled, "目標站點為設備，無法指派移動任務");
-                else if (_order_action == ACTION_TYPE.Park)
-                    return (false, ALARMS.Station_Disabled, "目標站點為設備，無法指派停車任務");
+                else if (_order_action == ACTION_TYPE.Park && !destinePoint.IsParking)
+                    return (false, ALARMS.Station_Disabled, "目標站點非可停車點，無法指派停車任務");
             }
             #region 設備狀態檢查
             //taskData.bypass_eq_status_check = false;
@@ -108,22 +109,58 @@ namespace AGVSystem.TaskManagers
                 }
                 else if (_order_action == ACTION_TYPE.Carry)
                 {
-                    if (sourcePoint.StationType != STATION_TYPE.Buffer && sourcePoint.StationType != STATION_TYPE.Charge_Buffer)
+                    // TODO bufferEQ需加slot判別
+                    if (sourcePoint.StationType == STATION_TYPE.EQ || sourcePoint.StationType == STATION_TYPE.EQ_LD || sourcePoint.StationType == STATION_TYPE.EQ_ULD)
                     {
                         results = EQTransferTaskManager.CheckUnloadStationStatus(source_station_tag);
                         if (!results.confirm)
                             return results;
                     }
-                    if (destinePoint.StationType != STATION_TYPE.Buffer && destinePoint.StationType != STATION_TYPE.Charge_Buffer)
+                    else if (sourcePoint.StationType == STATION_TYPE.Buffer || sourcePoint.StationType == STATION_TYPE.Charge_Buffer)
+                    {
+                    }
+                    if (destinePoint.StationType == STATION_TYPE.EQ || destinePoint.StationType == STATION_TYPE.EQ_LD || destinePoint.StationType == STATION_TYPE.EQ_ULD)
                     {
                         results = EQTransferTaskManager.CheckLoadStationStatus(destine_station_tag);
                         if (!results.confirm)
                             return results;
                     }
-
-                    results = EQTransferTaskManager.CheckEQAcceptCargoType(taskData);
-                    if (!results.confirm)
-                        return results;
+                    else if (destinePoint.StationType == STATION_TYPE.Buffer || destinePoint.StationType == STATION_TYPE.Charge_Buffer)
+                    {
+                        if (taskData.To_Slot == "-1")
+                        {
+                            List<clsPortOfRack> ports = StaEQPManagager.GetRackColumnByTag(destine_station_tag);
+                            clsPortOfRack port = ports.Where(x => x.CargoExist == false).OrderBy(x => x.Layer).FirstOrDefault();
+                            if (port != null)
+                            {
+                                taskData.To_Slot = port.Layer.ToString();
+                            }
+                            else
+                            { 
+                              return new(false, ALARMS.EQ_LOAD_REQUEST_IS_NOT_ON, $"WIP設備[rack.EQName] 沒有空料座");
+                            }
+                        }
+                        else
+                        {
+                            (bool confirm, ALARMS alarm_code, string message, clsRack rack) res = EQTransferTaskManager.CheckLoadUnloadRackStatus(destine_station_tag, taskData.To_Slot);
+                            if (!res.confirm)
+                            {
+                                results.confirm = res.confirm;
+                                results.alarm_code = res.alarm_code;
+                                results.message = res.message;
+                                return results;
+                            }
+                            results = EQTransferTaskManager.CheckLoadUnloadPortofRackStatus(destine_station_tag, ACTION_TYPE.Load,res.rack, taskData.To_Slot);
+                            if (!results.confirm)
+                                return results;
+                        }
+                    }
+                    if (destinePoint.StationType == STATION_TYPE.EQ || destinePoint.StationType == STATION_TYPE.EQ_LD || destinePoint.StationType == STATION_TYPE.EQ_ULD)
+                    {
+                        results = EQTransferTaskManager.CheckEQAcceptCargoType(taskData);
+                        if (!results.confirm)
+                            return results;
+                    }
                 }
             }
             #endregion
@@ -169,7 +206,7 @@ namespace AGVSystem.TaskManagers
                             //results = EQTransferTaskManager.CheckEQAcceptAGVType(ref taskData);
                             //if (!results.confirm)
                             //    return results;
-                        }                        
+                        }
                     }
                     else if (taskData.Action == ACTION_TYPE.Carry) // 先檢查From Station,如果允許再比From Station及 To Station如果兩個不同則生成轉運
                     {
@@ -316,7 +353,7 @@ namespace AGVSystem.TaskManagers
 
                     bool isAGVInChargeStation = chargeStationTags.Any(tag => tag + "" == agv_currnet_tag);
                     if (isAGVInChargeStation)
-                        return (true,0, "");
+                        return (true, 0, "");
 
                     IEnumerable<int> usableChargeStationTags = chargeStationTags.Where(tag => !other_agv_current_tag.Contains(tag + ""));
 
