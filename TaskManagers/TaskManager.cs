@@ -18,6 +18,7 @@ using EquipmentManagment.Manager;
 using EquipmentManagment.WIP;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 using static AGVSystemCommonNet6.MAP.MapPoint;
@@ -89,72 +90,19 @@ namespace AGVSystem.TaskManagers
                                                    || _order_action == ACTION_TYPE.Unload || _order_action == ACTION_TYPE.Carry))
             {
                 (bool confirm, ALARMS alarm_code, string message) results = (false, ALARMS.NONE, "");
-                if (_order_action == ACTION_TYPE.Unload)
+                (bool confirm, ALARMS alarm_code, string message, object obj, Type objtype) results2;
+
+
+                if (taskData.Action == ACTION_TYPE.Unload || taskData.Action == ACTION_TYPE.Load || taskData.Action == ACTION_TYPE.LoadAndPark)
+                    results2 = EQTransferTaskManager.CheckLoadUnloadStation(destine_station_tag, Convert.ToInt16(taskData.To_Slot), ACTION_TYPE.Unload);
+                else if (taskData.Action == ACTION_TYPE.Carry)
                 {
-                    if (destinePoint.StationType != STATION_TYPE.Buffer && destinePoint.StationType != STATION_TYPE.Charge_Buffer)
-                    {
-                        results = EQTransferTaskManager.CheckUnloadStationStatus(destine_station_tag);
-                        if (!results.confirm)
-                            return results;
-                    }
-                }
-                else if (_order_action == ACTION_TYPE.Load)
-                {
-                    if (destinePoint.StationType != STATION_TYPE.Buffer && destinePoint.StationType != STATION_TYPE.Charge_Buffer)
-                    {
-                        results = EQTransferTaskManager.CheckLoadStationStatus(destine_station_tag);
-                        if (!results.confirm)
-                            return results;
-                    }
-                }
-                else if (_order_action == ACTION_TYPE.Carry)
-                {
-                    // TODO bufferEQ需加slot判別
-                    if (sourcePoint.StationType == STATION_TYPE.EQ || sourcePoint.StationType == STATION_TYPE.EQ_LD || sourcePoint.StationType == STATION_TYPE.EQ_ULD)
-                    {
-                        results = EQTransferTaskManager.CheckUnloadStationStatus(source_station_tag);
-                        if (!results.confirm)
-                            return results;
-                    }
-                    else if (sourcePoint.StationType == STATION_TYPE.Buffer || sourcePoint.StationType == STATION_TYPE.Charge_Buffer)
-                    {
-                    }
-                    if (destinePoint.StationType == STATION_TYPE.EQ || destinePoint.StationType == STATION_TYPE.EQ_LD || destinePoint.StationType == STATION_TYPE.EQ_ULD)
-                    {
-                        results = EQTransferTaskManager.CheckLoadStationStatus(destine_station_tag);
-                        if (!results.confirm)
-                            return results;
-                    }
-                    else if (destinePoint.StationType == STATION_TYPE.Buffer || destinePoint.StationType == STATION_TYPE.Charge_Buffer)
-                    {
-                        if (taskData.To_Slot == "-1")
-                        {
-                            List<clsPortOfRack> ports = StaEQPManagager.GetRackColumnByTag(destine_station_tag);
-                            clsPortOfRack port = ports.Where(x => x.CargoExist == false).OrderBy(x => x.Layer).FirstOrDefault();
-                            if (port != null)
-                            {
-                                taskData.To_Slot = port.Layer.ToString();
-                            }
-                            else
-                            { 
-                              return new(false, ALARMS.EQ_LOAD_REQUEST_IS_NOT_ON, $"WIP設備[rack.EQName] 沒有空料座");
-                            }
-                        }
-                        else
-                        {
-                            (bool confirm, ALARMS alarm_code, string message, clsRack rack) res = EQTransferTaskManager.CheckLoadUnloadRackStatus(destine_station_tag, taskData.To_Slot);
-                            if (!res.confirm)
-                            {
-                                results.confirm = res.confirm;
-                                results.alarm_code = res.alarm_code;
-                                results.message = res.message;
-                                return results;
-                            }
-                            results = EQTransferTaskManager.CheckLoadUnloadPortofRackStatus(destine_station_tag, ACTION_TYPE.Load,res.rack, taskData.To_Slot);
-                            if (!results.confirm)
-                                return results;
-                        }
-                    }
+                    results2 = EQTransferTaskManager.CheckLoadUnloadStation(source_station_tag, Convert.ToInt16(taskData.From_Slot), ACTION_TYPE.Unload);
+                    if (!results.confirm)
+                        return results;
+                    results2 = EQTransferTaskManager.CheckLoadUnloadStation(destine_station_tag, Convert.ToInt16(taskData.To_Slot), ACTION_TYPE.Unload);
+                    if (!results.confirm)
+                        return results;
                     if (destinePoint.StationType == STATION_TYPE.EQ || destinePoint.StationType == STATION_TYPE.EQ_LD || destinePoint.StationType == STATION_TYPE.EQ_ULD)
                     {
                         results = EQTransferTaskManager.CheckEQAcceptCargoType(taskData);
@@ -162,6 +110,8 @@ namespace AGVSystem.TaskManagers
                             return results;
                     }
                 }
+                if (!results.confirm)
+                    return results;
             }
             #endregion
 
