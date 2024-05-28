@@ -203,9 +203,9 @@ namespace AGVSystem.Controllers
                     else if (action == ACTION_TYPE.Load)
                     {
                         if (result.mainEQ.IsConnected == false)
-                            return Ok(new clsAGVSTaskReportResponse() { confirm = false, alarmcode_int = 1068, message = $"Unload_Request={result.mainEQ.Unload_Request} cannot Unload" });//EQ_Disconnect
+                            return Ok(new clsAGVSTaskReportResponse() { confirm = false, alarmcode_int = 1068, message = $"IsConnected={result.mainEQ.IsConnected} cannot Unload" });//EQ_Disconnect
                         if (result.mainEQ.Load_Request == false)
-                            return Ok(new clsAGVSTaskReportResponse() { confirm = false, alarmcode_int = 1014, message = $"Unload_Request={result.mainEQ.Unload_Request} cannot Unload" });//EQ_LOAD_REQUEST_IS_NOT_ON
+                            return Ok(new clsAGVSTaskReportResponse() { confirm = false, alarmcode_int = 1014, message = $"Load_Request={result.mainEQ.Load_Request} cannot Unload" });//EQ_LOAD_REQUEST_IS_NOT_ON
                         if (result.mainEQ.Port_Exist == true)
                             return Ok(new clsAGVSTaskReportResponse() { confirm = false, alarmcode_int = 1075, message = $"Port_Exist={result.mainEQ.Port_Exist} cannot Unload" });//EQ_LOAD_REQUEST_ON_BUT_HAS_CARGO
                         if (result.mainEQ.Down_Pose == false)
