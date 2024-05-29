@@ -201,8 +201,13 @@ namespace AGVSystem.Controllers
                     return Ok(new clsAGVSTaskReportResponse() { confirm = true, message = $"{mainEQ.EQName} ToEQUp DO ON" });
                 }
                 else if (result.objtype == typeof(clsPortOfRack))
-                { }
-                return Ok(new clsAGVSTaskReportResponse() { confirm = true, message = "" });
+                {
+                    return Ok(new clsAGVSTaskReportResponse() { confirm = true, message = result.message });
+                }
+                else
+                {
+                    return Ok(new clsAGVSTaskReportResponse() { confirm = false, message = "NOT EQ or RACK" });
+                }
             }
 
             //(bool existDevice, clsEQ mainEQ, clsRack rack) result = TryGetEndDevice(tag);
@@ -347,7 +352,8 @@ namespace AGVSystem.Controllers
                     else
                     {
                         //todo find empty rack to load cargo
-                        return new clsAGVSTaskReportResponse() { confirm = false, message = $"" };
+                        clsPortOfRack port = EQTransferTaskManager.get_empyt_port_of_rack(to);
+                        return new clsAGVSTaskReportResponse() { confirm = true, message = $"Get empty port OK", ReturnObj = port.Layer };
                     }
                 }
                 else

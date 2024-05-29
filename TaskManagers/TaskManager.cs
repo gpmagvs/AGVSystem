@@ -134,6 +134,7 @@ namespace AGVSystem.TaskManagers
                     {
                         if (Convert.ToInt16(taskData.To_Slot) > 0 && model == VEHICLE_TYPE.SUBMERGED_SHIELD)
                             return new(false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Destine_Equipment, $"{model} can not accept slot={taskData.To_Slot} task");
+
                         if (destinePoint.StationType == STATION_TYPE.EQ)
                         {
                             results = EQTransferTaskManager.CheckEQAcceptAGVType(destine_station_tag, taskData.DesignatedAGVName);
@@ -144,7 +145,11 @@ namespace AGVSystem.TaskManagers
                     else if (taskData.Action == ACTION_TYPE.Load)
                     {
                         if (Convert.ToInt16(taskData.To_Slot) > 0 && model == VEHICLE_TYPE.SUBMERGED_SHIELD)
-                            return new(false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Destine_Equipment, $"{model} can not accept slot={taskData.To_Slot} task");
+                        {
+                            taskData.need_change_agv = true;
+                            //return new(false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Destine_Equipment, $"{model} can not accept slot={taskData.To_Slot} task");
+                        }
+
                         if (destinePoint.StationType == STATION_TYPE.EQ)
                         {
                             results = EQTransferTaskManager.CheckEQAcceptAGVType(destine_station_tag, taskData.DesignatedAGVName);
