@@ -180,14 +180,14 @@ namespace AGVSystem.Controllers
             if (action != ACTION_TYPE.Load && action != ACTION_TYPE.Unload)
                 return Ok(new clsAGVSTaskReportResponse() { confirm = false, message = "Action should equal Load or Unlaod" });
 
-            (bool confirm, ALARMS alarm_code, string message,object obj,Type objtype) result = EQTransferTaskManager.CheckLoadUnloadStation(tag, slot, action);
+            (bool confirm, ALARMS alarm_code, string message, object obj, Type objtype) result = EQTransferTaskManager.CheckLoadUnloadStation(tag, slot, action);
             if (result.confirm == false)
                 return Ok(new clsAGVSTaskReportResponse() { confirm = false, message = $"{result.message}" });
             else
             {
-                if (result.objtype == typeof(clsEQ)) 
+                if (result.objtype == typeof(clsEQ))
                 {
-                    clsEQ mainEQ= (clsEQ)result.obj;
+                    clsEQ mainEQ = (clsEQ)result.obj;
                     try
                     {
                         mainEQ.ReserveUp();
@@ -200,10 +200,8 @@ namespace AGVSystem.Controllers
                     LOG.INFO($"Get AGV LD.ULD Task Start At Tag {tag}-Action={action}. TO Eq Up DO ON", color: ConsoleColor.Green);
                     return Ok(new clsAGVSTaskReportResponse() { confirm = true, message = $"{mainEQ.EQName} ToEQUp DO ON" });
                 }
-                else if (result.objtype == typeof(clsPortOfRack)) 
-                {
-                }
-                //TODO 取得設備及預約訊號
+                else if (result.objtype == typeof(clsPortOfRack))
+                { }
                 return Ok(new clsAGVSTaskReportResponse() { confirm = true, message = "" });
             }
 
