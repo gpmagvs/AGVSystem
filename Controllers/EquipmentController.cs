@@ -14,6 +14,7 @@ using Microsoft.CodeAnalysis.Options;
 using Newtonsoft.Json;
 using System.Text;
 using System.Xml.Linq;
+using static AGVSystemCommonNet6.MAP.MapPoint;
 
 namespace AGVSystem.Controllers
 {
@@ -27,6 +28,23 @@ namespace AGVSystem.Controllers
         {
             var eq = StaEQPManagager.GetEQByName(EqName);
             eq.WriteOutputs(start, value);
+            return Ok();
+        }
+
+        [HttpGet("GetEQWIPInfoByTag")]
+        public async Task<IActionResult> GetEQWIPInfoByTag(int Tag) 
+        {
+            AGVSystemCommonNet6.MAP.MapPoint MapPoint = AGVSMapManager.GetMapPointByTag(Tag);
+            if (MapPoint.StationType == STATION_TYPE.EQ || MapPoint.StationType == STATION_TYPE.EQ_LD || MapPoint.StationType == STATION_TYPE.EQ_ULD)
+            {
+                var EQ = StaEQPManagager.EQOptions.Values.FirstOrDefault(eq => eq.TagID == Tag);
+                return Ok(EQ);
+            }
+            else if (MapPoint.StationType == STATION_TYPE.Buffer || MapPoint.StationType == STATION_TYPE.Charge_Buffer || MapPoint.StationType == STATION_TYPE.Buffer_EQ) 
+            {
+                var WIP = StaEQPManagager.RacksOptions.Values.Select(x=>x).Where(x=>x.ColumnTagMap.Any(x=>x.Value.Contains(Tag))).FirstOrDefault();
+                return Ok(WIP);
+            }
             return Ok();
         }
 
