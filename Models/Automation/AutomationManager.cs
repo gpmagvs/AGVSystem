@@ -1,4 +1,5 @@
 ﻿using AGVSystemCommonNet6;
+using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.Log;
 using Microsoft.Extensions.Options;
 
@@ -30,7 +31,7 @@ namespace AGVSystem.Models.Automation
                 {
                     TaskName = "Alarm Report Save Automaiton",
                     Period = AutomationOptions.PERIOD.DAILY,
-                    HourInDaily = 1,
+                    HourInDaily = AGVSConfigulator.SysConfigs.AutoSendDailyData.SaveTime,
                     ImmediateStart = true,
                 }
             });
@@ -42,7 +43,7 @@ namespace AGVSystem.Models.Automation
                 {
                     TaskName = "Task History Report Save Automaiton",
                     Period = AutomationOptions.PERIOD.DAILY,
-                    HourInDaily = 1,
+                    HourInDaily = AGVSConfigulator.SysConfigs.AutoSendDailyData.SaveTime,
                     ImmediateStart = true,
                 }
             });
