@@ -22,9 +22,9 @@ namespace AGVSystem.Models.EQDevices
             clsChargeStation.OnBatteryNotConnected += HandleChargeStationBatteryNotConnectEvent;
             clsChargeStation.OnBatteryChargeFull += HandleChargeFullEvent;
 
-            clsPortOfRack.OnRackPortSensorFlash += HandlePortOfRackSensorFlash; ;
+            clsPortOfRack.OnRackPortSensorFlash += HandlePortOfRackSensorFlash;
+            clsPortOfRack.OnRackPortSensorStatusChanged += HandlePortOfRackSensorStatusChanged;
         }
-
 
         private static void HandleEQFinishPartsReplace(object? sender, EndPointDeviceAbstract e)
         {

@@ -19,8 +19,17 @@ namespace AGVSystem.Models.EQDevices
         {
             string rackName = e.rack.EQName;
             string portId = e.port.Properties.ID;
-            AlarmManagerCenter.AddAlarmAsync(ALARMS.Rack_Port_Sensor_Flash, ALARM_SOURCE.EQP, ALARM_LEVEL.WARNING, $"{rackName}-{portId}");
-            NotifyServiceHelper.WARNING($"{rackName}-{portId} Sensor Flash!");
+            AlarmManagerCenter.AddAlarmAsync(ALARMS.Rack_Port_Sensor_Flash, ALARM_SOURCE.EQP, ALARM_LEVEL.WARNING, rackName, portId);
+            NotifyServiceHelper.WARNING($"[{rackName}]-Port:{portId} Sensor Flash!");
         }
+
+
+        private static void HandlePortOfRackSensorStatusChanged(object? sender, (clsRack rack, clsPortOfRack port) e)
+        {
+            string rackName = e.rack.EQName;
+            string portId = e.port.Properties.ID;
+            AlarmManagerCenter.SetAlarmCheckedAsync(rackName, portId, ALARMS.Rack_Port_Sensor_Flash);
+        }
+
     }
 }
