@@ -104,6 +104,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
 
 builder.Services.AddDbContext<AGVSDbContext>(options => options.UseSqlServer(AGVSConfigulator.SysConfigs.DBConnection));
 builder.Services.AddHostedService<DatabaseBackgroundService>();
+builder.Services.AddHostedService<VehicleLocationMonitorBackgroundService>();
 builder.Services.AddScoped<MeanTimeQueryService>();
 builder.Services.AddCors(options =>
 {

@@ -15,8 +15,10 @@ using AGVSystemCommonNet6.Microservices.ResponseModel;
 using AGVSystemCommonNet6.Microservices.VMS;
 using EquipmentManagment.Device.Options;
 using EquipmentManagment.Manager;
+using EquipmentManagment.WIP;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 using static AGVSystemCommonNet6.MAP.MapPoint;
@@ -79,8 +81,8 @@ namespace AGVSystem.TaskManagers
             {
                 if (_order_action == ACTION_TYPE.None)
                     return (false, ALARMS.Station_Disabled, "目標站點為設備，無法指派移動任務");
-                else if (_order_action == ACTION_TYPE.Park)
-                    return (false, ALARMS.Station_Disabled, "目標站點為設備，無法指派停車任務");
+                else if (_order_action == ACTION_TYPE.Park && !destinePoint.IsParking)
+                    return (false, ALARMS.Station_Disabled, "目標站點非可停車點，無法指派停車任務");
             }
             #region 設備狀態檢查
             //taskData.bypass_eq_status_check = false;
@@ -88,43 +90,28 @@ namespace AGVSystem.TaskManagers
                                                    || _order_action == ACTION_TYPE.Unload || _order_action == ACTION_TYPE.Carry))
             {
                 (bool confirm, ALARMS alarm_code, string message) results = (false, ALARMS.NONE, "");
-                if (_order_action == ACTION_TYPE.Unload)
-                {
-                    if (destinePoint.StationType != STATION_TYPE.Buffer && destinePoint.StationType != STATION_TYPE.Charge_Buffer)
-                    {
-                        results = EQTransferTaskManager.CheckUnloadStationStatus(destine_station_tag);
-                        if (!results.confirm)
-                            return results;
-                    }
-                }
-                else if (_order_action == ACTION_TYPE.Load)
-                {
-                    if (destinePoint.StationType != STATION_TYPE.Buffer && destinePoint.StationType != STATION_TYPE.Charge_Buffer)
-                    {
-                        results = EQTransferTaskManager.CheckLoadStationStatus(destine_station_tag);
-                        if (!results.confirm)
-                            return results;
-                    }
-                }
-                else if (_order_action == ACTION_TYPE.Carry)
-                {
-                    if (sourcePoint.StationType != STATION_TYPE.Buffer && sourcePoint.StationType != STATION_TYPE.Charge_Buffer)
-                    {
-                        results = EQTransferTaskManager.CheckUnloadStationStatus(source_station_tag);
-                        if (!results.confirm)
-                            return results;
-                    }
-                    if (destinePoint.StationType != STATION_TYPE.Buffer && destinePoint.StationType != STATION_TYPE.Charge_Buffer)
-                    {
-                        results = EQTransferTaskManager.CheckLoadStationStatus(destine_station_tag);
-                        if (!results.confirm)
-                            return results;
-                    }
+                (bool confirm, ALARMS alarm_code, string message, object obj, Type objtype) results2;
 
-                    results = EQTransferTaskManager.CheckEQAcceptCargoType(taskData);
+
+                if (taskData.Action == ACTION_TYPE.Unload || taskData.Action == ACTION_TYPE.Load || taskData.Action == ACTION_TYPE.LoadAndPark)
+                    results2 = EQTransferTaskManager.CheckLoadUnloadStation(destine_station_tag, Convert.ToInt16(taskData.To_Slot), ACTION_TYPE.Unload);
+                else if (taskData.Action == ACTION_TYPE.Carry)
+                {
+                    results2 = EQTransferTaskManager.CheckLoadUnloadStation(source_station_tag, Convert.ToInt16(taskData.From_Slot), ACTION_TYPE.Unload);
                     if (!results.confirm)
                         return results;
+                    results2 = EQTransferTaskManager.CheckLoadUnloadStation(destine_station_tag, Convert.ToInt16(taskData.To_Slot), ACTION_TYPE.Unload);
+                    if (!results.confirm)
+                        return results;
+                    if (destinePoint.StationType == STATION_TYPE.EQ || destinePoint.StationType == STATION_TYPE.EQ_LD || destinePoint.StationType == STATION_TYPE.EQ_ULD)
+                    {
+                        results = EQTransferTaskManager.CheckEQAcceptCargoType(taskData);
+                        if (!results.confirm)
+                            return results;
+                    }
                 }
+                if (!results.confirm)
+                    return results;
             }
             #endregion
 
@@ -147,6 +134,7 @@ namespace AGVSystem.TaskManagers
                     {
                         if (Convert.ToInt16(taskData.To_Slot) > 0 && model == VEHICLE_TYPE.SUBMERGED_SHIELD)
                             return new(false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Destine_Equipment, $"{model} can not accept slot={taskData.To_Slot} task");
+
                         if (destinePoint.StationType == STATION_TYPE.EQ)
                         {
                             results = EQTransferTaskManager.CheckEQAcceptAGVType(destine_station_tag, taskData.DesignatedAGVName);
@@ -157,7 +145,11 @@ namespace AGVSystem.TaskManagers
                     else if (taskData.Action == ACTION_TYPE.Load)
                     {
                         if (Convert.ToInt16(taskData.To_Slot) > 0 && model == VEHICLE_TYPE.SUBMERGED_SHIELD)
-                            return new(false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Destine_Equipment, $"{model} can not accept slot={taskData.To_Slot} task");
+                        {
+                            taskData.need_change_agv = true;
+                            //return new(false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Destine_Equipment, $"{model} can not accept slot={taskData.To_Slot} task");
+                        }
+
                         if (destinePoint.StationType == STATION_TYPE.EQ)
                         {
                             results = EQTransferTaskManager.CheckEQAcceptAGVType(destine_station_tag, taskData.DesignatedAGVName);
@@ -169,7 +161,7 @@ namespace AGVSystem.TaskManagers
                             //results = EQTransferTaskManager.CheckEQAcceptAGVType(ref taskData);
                             //if (!results.confirm)
                             //    return results;
-                        }                        
+                        }
                     }
                     else if (taskData.Action == ACTION_TYPE.Carry) // 先檢查From Station,如果允許再比From Station及 To Station如果兩個不同則生成轉運
                     {
@@ -316,7 +308,7 @@ namespace AGVSystem.TaskManagers
 
                     bool isAGVInChargeStation = chargeStationTags.Any(tag => tag + "" == agv_currnet_tag);
                     if (isAGVInChargeStation)
-                        return (true,0, "");
+                        return (true, 0, "");
 
                     IEnumerable<int> usableChargeStationTags = chargeStationTags.Where(tag => !other_agv_current_tag.Contains(tag + ""));
 

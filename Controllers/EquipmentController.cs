@@ -14,6 +14,7 @@ using Microsoft.CodeAnalysis.Options;
 using Newtonsoft.Json;
 using System.Text;
 using System.Xml.Linq;
+using static AGVSystemCommonNet6.MAP.MapPoint;
 
 namespace AGVSystem.Controllers
 {
@@ -27,6 +28,23 @@ namespace AGVSystem.Controllers
         {
             var eq = StaEQPManagager.GetEQByName(EqName);
             eq.WriteOutputs(start, value);
+            return Ok();
+        }
+
+        [HttpGet("GetEQWIPInfoByTag")]
+        public async Task<IActionResult> GetEQWIPInfoByTag(int Tag) 
+        {
+            AGVSystemCommonNet6.MAP.MapPoint MapPoint = AGVSMapManager.GetMapPointByTag(Tag);
+            if (MapPoint.StationType == STATION_TYPE.EQ || MapPoint.StationType == STATION_TYPE.EQ_LD || MapPoint.StationType == STATION_TYPE.EQ_ULD)
+            {
+                var EQ = StaEQPManagager.EQOptions.Values.FirstOrDefault(eq => eq.TagID == Tag);
+                return Ok(EQ);
+            }
+            else if (MapPoint.StationType == STATION_TYPE.Buffer || MapPoint.StationType == STATION_TYPE.Charge_Buffer || MapPoint.StationType == STATION_TYPE.Buffer_EQ) 
+            {
+                var WIP = StaEQPManagager.RacksOptions.Values.Select(x=>x).Where(x=>x.ColumnTagMap.Any(x=>x.Value.Contains(Tag))).FirstOrDefault();
+                return Ok(WIP);
+            }
             return Ok();
         }
 
@@ -189,6 +207,34 @@ namespace AGVSystem.Controllers
                 if (charge_station == null)
                     return Ok(new { confirm = false, message = $"Charge Station:{ChargeStationName} is not exist" });
                 charge_station.SetUsableAGVList(agvNames);
+                StaEQPManagager.SaveChargeStationConfigs();
+                return Ok(new { confirm = true, message = "" });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { confirm = false, message = ex.Message });
+            }
+        }
+
+
+        [HttpPost("ChargeStation/ModifyTagNumber")]
+        public async Task<IActionResult> ModifyTagNumber([FromBody] int[] newTag, string ChargeStationName)
+        {
+            try
+            {
+
+                var charge_station = StaEQPManagager.ChargeStations.FirstOrDefault(eq => eq.EQName == ChargeStationName);
+                if (charge_station == null)
+                    return Ok(new { confirm = false, message = $"Charge Station:{ChargeStationName} is not exist" });
+
+                var otherTags = StaEQPManagager.ChargeStations.Where(eq => eq != charge_station)
+                                              .Select(eq => eq.EndPointOptions.TagID).ToList();
+                //TODO WIP、主設備的TAG也要檢查
+                if (otherTags.Contains(newTag[0]))
+                {
+                    return Ok(new { confirm = false, message = $"Tag-{newTag[0]} 已被其他設備設定" });
+                }
+                charge_station.SetTag(newTag[0]);
                 StaEQPManagager.SaveChargeStationConfigs();
                 return Ok(new { confirm = true, message = "" });
             }

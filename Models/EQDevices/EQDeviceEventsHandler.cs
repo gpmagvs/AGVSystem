@@ -1,6 +1,7 @@
 ﻿using AGVSystem.Service;
 using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.Log;
+using EquipmentManagment.ChargeStation;
 using EquipmentManagment.Device;
 
 namespace AGVSystem.Models.EQDevices
@@ -17,7 +18,11 @@ namespace AGVSystem.Models.EQDevices
             EndPointDeviceAbstract.OnDeviceMaintainStart += HandleDeviceMaintainStart;
             EndPointDeviceAbstract.OnDeviceMaintainFinish += HandleDeviceMaintainFinish;
 
+            clsChargeStation.OnBatteryNotConnected += HandleChargeStationBatteryNotConnectEvent;
+            clsChargeStation.OnBatteryChargeFull += HandleChargeFullEvent;
+
         }
+
 
         private static void HandleEQFinishPartsReplace(object? sender, EndPointDeviceAbstract e)
         {
