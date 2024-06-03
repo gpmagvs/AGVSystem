@@ -132,10 +132,24 @@ namespace AGVSystem.TaskManagers
 
                     if (taskData.Action == ACTION_TYPE.Unload)
                     {
-                        if (Convert.ToInt16(taskData.To_Slot) > 0 && model == VEHICLE_TYPE.SUBMERGED_SHIELD)
-                            return new(false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Destine_Equipment, $"{model} can not accept slot={taskData.To_Slot} task");
-
-                        if (destinePoint.StationType == STATION_TYPE.EQ)
+                        if (destinePoint.StationType == STATION_TYPE.Buffer)
+                        {
+                            if (model == VEHICLE_TYPE.SUBMERGED_SHIELD)
+                            {
+                                results = (false, ALARMS.NONE, $"Station Type = {destinePoint.StationType} can not accept car model = {model}");
+                                return results;
+                            }
+                            else 
+                            {
+                                // Do nothing
+                            }
+                        }
+                        else if (destinePoint.StationType == STATION_TYPE.Buffer_EQ && (Convert.ToInt16(taskData.To_Slot) > 0 && model == VEHICLE_TYPE.SUBMERGED_SHIELD))
+                        {
+                            results = (false, ALARMS.NONE, $"Station Type = {destinePoint.StationType} can not accept car model = {model} to {ACTION_TYPE.Unload} at slot {taskData.To_Slot}");
+                            return results;
+                        }
+                        else
                         {
                             results = EQTransferTaskManager.CheckEQAcceptAGVType(destine_station_tag, taskData.DesignatedAGVName);
                             if (!results.confirm)
@@ -144,6 +158,10 @@ namespace AGVSystem.TaskManagers
                     }
                     else if (taskData.Action == ACTION_TYPE.Load)
                     {
+                        if (destinePoint.StationType == STATION_TYPE.Buffer) { }
+                        else if (destinePoint.StationType == STATION_TYPE.Buffer_EQ) { }
+                        else { }
+
                         if (Convert.ToInt16(taskData.To_Slot) > 0 && model == VEHICLE_TYPE.SUBMERGED_SHIELD)
                         {
                             taskData.need_change_agv = true;
