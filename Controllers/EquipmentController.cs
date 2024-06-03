@@ -32,7 +32,7 @@ namespace AGVSystem.Controllers
         }
 
         [HttpGet("GetEQWIPInfoByTag")]
-        public async Task<IActionResult> GetEQWIPInfoByTag(int Tag) 
+        public async Task<IActionResult> GetEQWIPInfoByTag(int Tag)
         {
             AGVSystemCommonNet6.MAP.MapPoint MapPoint = AGVSMapManager.GetMapPointByTag(Tag);
             if (MapPoint.StationType == STATION_TYPE.EQ || MapPoint.StationType == STATION_TYPE.EQ_LD || MapPoint.StationType == STATION_TYPE.EQ_ULD)
@@ -40,9 +40,9 @@ namespace AGVSystem.Controllers
                 var EQ = StaEQPManagager.EQOptions.Values.FirstOrDefault(eq => eq.TagID == Tag);
                 return Ok(EQ);
             }
-            else if (MapPoint.StationType == STATION_TYPE.Buffer || MapPoint.StationType == STATION_TYPE.Charge_Buffer || MapPoint.StationType == STATION_TYPE.Buffer_EQ) 
+            else if (MapPoint.StationType == STATION_TYPE.Buffer || MapPoint.StationType == STATION_TYPE.Charge_Buffer || MapPoint.StationType == STATION_TYPE.Buffer_EQ)
             {
-                var WIP = StaEQPManagager.RacksOptions.Values.Select(x=>x).Where(x=>x.ColumnTagMap.Any(x=>x.Value.Contains(Tag))).FirstOrDefault();
+                var WIP = StaEQPManagager.RacksOptions.Values.Select(x => x).Where(x => x.ColumnTagMap.Any(x => x.Value.Contains(Tag))).FirstOrDefault();
                 return Ok(WIP);
             }
             return Ok();
@@ -64,7 +64,7 @@ namespace AGVSystem.Controllers
         [HttpGet("GetWIPOptions")]
         public async Task<IActionResult> GetWIPOptions()
         {
-            clsEndPointOptions[] WIPs = StaEQPManagager.RacksList.Select(wip => wip.EndPointOptions).ToArray();
+            clsEndPointOptions[] WIPs = StaEQPManagager.RacksList.Select(wip => (clsRackOptions)wip.EndPointOptions).ToArray();
             return Ok(WIPs);
         }
         [HttpGet("GetEQOptionByTag")]
