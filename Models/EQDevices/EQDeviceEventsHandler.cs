@@ -3,6 +3,7 @@ using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.Log;
 using EquipmentManagment.ChargeStation;
 using EquipmentManagment.Device;
+using EquipmentManagment.WIP;
 
 namespace AGVSystem.Models.EQDevices
 {
@@ -21,6 +22,7 @@ namespace AGVSystem.Models.EQDevices
             clsChargeStation.OnBatteryNotConnected += HandleChargeStationBatteryNotConnectEvent;
             clsChargeStation.OnBatteryChargeFull += HandleChargeFullEvent;
 
+            clsPortOfRack.OnRackPortSensorFlash += HandlePortOfRackSensorFlash; ;
         }
 
 
