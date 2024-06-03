@@ -29,5 +29,11 @@ call git checkout master
 call git pull github master 
 cd ../
 
+cd vmsystem
+call git fetch
+call git checkout master
+call git pull github master 
+cd ../
+
 
 pause
