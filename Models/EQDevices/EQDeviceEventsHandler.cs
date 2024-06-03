@@ -19,8 +19,10 @@ namespace AGVSystem.Models.EQDevices
             EndPointDeviceAbstract.OnDeviceMaintainFinish += HandleDeviceMaintainFinish;
 
             clsChargeStation.OnBatteryNotConnected += HandleChargeStationBatteryNotConnectEvent;
+            clsChargeStation.OnBatteryChargeFull += HandleChargeFullEvent;
 
         }
+
 
         private static void HandleEQFinishPartsReplace(object? sender, EndPointDeviceAbstract e)
         {

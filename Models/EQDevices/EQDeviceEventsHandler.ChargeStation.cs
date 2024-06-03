@@ -49,5 +49,26 @@ namespace AGVSystem.Models.EQDevices
             }
         }
 
+        private static void HandleChargeFullEvent(object? sender, clsChargeStation e)
+        {
+            (int ChargeStationTag, MapPoint StationMapPoint, string UsingChargeStationVehicleName) = _GetChargeStationAndVehicle(e);
+            NotifyServiceHelper.SUCCESS($"{UsingChargeStationVehicleName} 已充飽電!({StationMapPoint.Graph.Display})");
+        }
+
+        private static (int ChargeStationTag, MapPoint StationMapPoint, string UsingChargeStationVehicleName) _GetChargeStationAndVehicle(clsChargeStation chargeStation)
+        {
+            int tag = chargeStation.EndPointOptions.TagID;
+            MapPoint mapPt = AGVSMapManager.GetMapPointByTag(tag);
+            AGVSystemCommonNet6.clsAGVStateDto? agvState = DatabaseCaches.Vehicle.VehicleStates.FirstOrDefault(vehicle => vehicle.CurrentLocation == tag.ToString());
+            if (agvState != null)
+            {
+                string agvName = agvState.AGV_Name;
+                return (tag, mapPt, agvName);
+            }
+            else
+            {
+                return (tag, mapPt, "");
+            }
+        }
     }
 }
