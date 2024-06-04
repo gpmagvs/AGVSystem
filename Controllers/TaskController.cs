@@ -179,6 +179,11 @@ namespace AGVSystem.Controllers
         {
             if (action != ACTION_TYPE.Load && action != ACTION_TYPE.Unload)
                 return Ok(new clsAGVSTaskReportResponse() { confirm = false, message = "Action should equal Load or Unlaod" });
+            if (action == ACTION_TYPE.Load && slot == -1)
+            {
+                clsPortOfRack port = EQTransferTaskManager.get_empyt_port_of_rack(tag);
+                return Ok(new clsAGVSTaskReportResponse() { confirm = true, message = $"Get empty port OK", ReturnObj = port.Layer });
+            }
 
             (bool confirm, ALARMS alarm_code, string message, object obj, Type objtype) result = EQTransferTaskManager.CheckLoadUnloadStation(tag, slot, action);
             if (result.confirm == false)
@@ -328,33 +333,31 @@ namespace AGVSystem.Controllers
         {
             try
             {
-                if (action == ACTION_TYPE.Unload || (action == ACTION_TYPE.LoadAndPark || action == ACTION_TYPE.Load && ToSlot != -1))
+                if (action == ACTION_TYPE.Unload || action == ACTION_TYPE.LoadAndPark || action == ACTION_TYPE.Load)
                 {
                     clsAGVSTaskReportResponse result = ((OkObjectResult)await LoadUnloadTaskStart(to, ToSlot, action)).Value as clsAGVSTaskReportResponse;
                     return result;
-                }
-                else if (action == ACTION_TYPE.LoadAndPark || action == ACTION_TYPE.Load && ToSlot == -1)
-                {
-                    //todo find empty rack to load cargo
-                    EQTransferTaskManager.get_empyt_port_of_rack(to);
                 }
                 else if (action == ACTION_TYPE.Carry)
                 {
                     clsAGVSTaskReportResponse result_from = ((OkObjectResult)await LoadUnloadTaskStart(from, FromSlot, ACTION_TYPE.Unload)).Value as clsAGVSTaskReportResponse;
                     if (result_from.confirm == false)
                         return result_from;
-                    if (ToSlot != -1)
-                    {
-                        clsAGVSTaskReportResponse result_to = ((OkObjectResult)await LoadUnloadTaskStart(to, ToSlot, ACTION_TYPE.Load)).Value as clsAGVSTaskReportResponse;
-                        if (result_to.confirm == false)
-                            return result_to;
-                    }
-                    else
-                    {
-                        //todo find empty rack to load cargo
-                        clsPortOfRack port = EQTransferTaskManager.get_empyt_port_of_rack(to);
-                        return new clsAGVSTaskReportResponse() { confirm = true, message = $"Get empty port OK", ReturnObj = port.Layer };
-                    }
+
+                    clsAGVSTaskReportResponse result_to = ((OkObjectResult)await LoadUnloadTaskStart(to, ToSlot, ACTION_TYPE.Load)).Value as clsAGVSTaskReportResponse;
+                    return result_to;
+                    //if (ToSlot != -1)
+                    //{
+                    //    clsAGVSTaskReportResponse result_to = ((OkObjectResult)await LoadUnloadTaskStart(to, ToSlot, ACTION_TYPE.Load)).Value as clsAGVSTaskReportResponse;
+                    //    if (result_to.confirm == false)
+                    //        return result_to;
+                    //}
+                    //else
+                    //{
+                    //    //todo find empty rack to load cargo
+                    //    clsPortOfRack port = EQTransferTaskManager.get_empyt_port_of_rack(to);
+                    //    return new clsAGVSTaskReportResponse() { confirm = true, message = $"Get empty port OK", ReturnObj = port.Layer };
+                    //}
                 }
                 else
                 {
@@ -366,7 +369,6 @@ namespace AGVSystem.Controllers
             {
                 return new clsAGVSTaskReportResponse() { confirm = false, message = $"{ex}" };
             }
-            return new clsAGVSTaskReportResponse() { confirm = true, message = "" };
         }
         private (bool existDevice, clsEQ mainEQ, clsRack rack) TryGetEndDevice(int tag)
         {
