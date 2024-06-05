@@ -1,4 +1,5 @@
-﻿using AGVSystem.Models.TaskAllocation;
+﻿using AGVSystem.Models.Map;
+using AGVSystem.Models.TaskAllocation;
 using AGVSystem.Models.TaskAllocation.HotRun;
 using AGVSystem.Models.WebsocketMiddleware;
 using AGVSystem.TaskManagers;
@@ -179,7 +180,14 @@ namespace AGVSystem.Controllers
         {
             if (action != ACTION_TYPE.Load && action != ACTION_TYPE.Unload)
                 return Ok(new clsAGVSTaskReportResponse() { confirm = false, message = "Action should equal Load or Unlaod" });
-            if (action == ACTION_TYPE.Load && slot == -1)
+            AGVSystemCommonNet6.MAP.MapPoint MapPoint = AGVSMapManager.GetMapPointByTag(tag);
+            if (MapPoint == null)
+                return Ok(new clsAGVSTaskReportResponse() { confirm = false, AlarmCode = ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, message = $"站點TAG-{tag} 不存在於當前地圖" });
+
+            if (!MapPoint.Enable)
+                return Ok(new clsAGVSTaskReportResponse() { confirm = false, AlarmCode = ALARMS.Station_Disabled, message = "站點未啟用，無法指派任務" });
+
+            if (action == ACTION_TYPE.Load && (MapPoint.StationType == MapPoint.STATION_TYPE.Buffer_EQ || MapPoint.StationType == MapPoint.STATION_TYPE.Buffer) && slot == -2)
             {
                 clsPortOfRack port = EQTransferTaskManager.get_empyt_port_of_rack(tag);
                 return Ok(new clsAGVSTaskReportResponse() { confirm = true, message = $"Get empty port OK", ReturnObj = port.Layer });
@@ -346,18 +354,6 @@ namespace AGVSystem.Controllers
 
                     clsAGVSTaskReportResponse result_to = ((OkObjectResult)await LoadUnloadTaskStart(to, ToSlot, ACTION_TYPE.Load)).Value as clsAGVSTaskReportResponse;
                     return result_to;
-                    //if (ToSlot != -1)
-                    //{
-                    //    clsAGVSTaskReportResponse result_to = ((OkObjectResult)await LoadUnloadTaskStart(to, ToSlot, ACTION_TYPE.Load)).Value as clsAGVSTaskReportResponse;
-                    //    if (result_to.confirm == false)
-                    //        return result_to;
-                    //}
-                    //else
-                    //{
-                    //    //todo find empty rack to load cargo
-                    //    clsPortOfRack port = EQTransferTaskManager.get_empyt_port_of_rack(to);
-                    //    return new clsAGVSTaskReportResponse() { confirm = true, message = $"Get empty port OK", ReturnObj = port.Layer };
-                    //}
                 }
                 else
                 {
