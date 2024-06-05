@@ -1,4 +1,4 @@
-using AGVSystem;
+Ôªøusing AGVSystem;
 using AGVSystem.Models.Automation;
 using AGVSystem.Models.EQDevices;
 using AGVSystem.Models.Map;
@@ -33,7 +33,7 @@ using System.Configuration;
 using System.Reflection;
 using System.Security.Policy;
 using System.Text;
-Console.Title = "GPM-AGV®t≤Œ(AGVs)";
+Console.Title = "GPM-AGVÁ≥ªÁµ±(AGVs)";
 LOG.SetLogFolderName("AGVS LOG");
 LOG.INFO("AGVS System Start");
 AGVSConfigulator.Init();
@@ -43,7 +43,7 @@ try
 }
 catch (Exception ex)
 {
-    Console.WriteLine($"∏ÍÆ∆Æw™Ï©l§∆≤ß±`-Ω–ΩTª{∏ÍÆ∆Æw! {ex.Message}");
+    Console.WriteLine($"Ë≥áÊñôÂ∫´ÂàùÂßãÂåñÁï∞Â∏∏-Ë´ãÁ¢∫Ë™çË≥áÊñôÂ∫´! {ex.Message}");
     Environment.Exit(4);
 }
 
@@ -71,7 +71,7 @@ builder.Services.AddSwaggerGen(opton =>
 {
     opton.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
     {
-        Title = "GPM ¨£®Æ®t≤Œ RESTFul API",
+        Title = "GPM Ê¥æËªäÁ≥ªÁµ± RESTFul API",
         Version = "V1"
     });
     var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
@@ -111,9 +111,10 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
     {
-        policy.WithOrigins("http://localhost:8080").AllowAnyMethod()
-                .AllowAnyHeader()
-                 .AllowCredentials();
+        policy.AllowAnyMethod()
+                    .AllowAnyHeader()
+                     .SetIsOriginAllowed(origin => true) // ÂÖÅËÆ∏‰ªª‰ΩïÊù•Ê∫ê
+                     .AllowCredentials(); // ÂÖÅËÆ∏Âá≠ÊçÆ
     });
 });
 builder.Services.AddWebSockets(options =>
@@ -151,7 +152,7 @@ app.UseCors("AllowAll"); app.UseWebSockets();
 app.UseDefaultFiles(new DefaultFilesOptions());
 app.UseStaticFiles();
 
-// •[∏¸∞t∏m§Â•Û
+// Âä†ËºâÈÖçÁΩÆÊñá‰ª∂
 var mapFileFolderPath = app.Configuration.GetValue<string>("StaticFileOptions:MapFile:FolderPath");
 var mapFileRequestPath = app.Configuration.GetValue<string>("StaticFileOptions:MapFile:RequestPath");
 var agvImageFileFolderPath = app.Configuration.GetValue<string>("StaticFileOptions:AGVImageStoreFile:FolderPath");
