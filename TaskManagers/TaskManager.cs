@@ -65,7 +65,7 @@ namespace AGVSystem.TaskManagers
                 else if (taskData.Action == ACTION_TYPE.Load && _agv_assigned.CargoStatus == 0)
                     return (false, ALARMS.Station_Disabled, $"{_agv_assigned.AGV_Name} no cargo can not assigned to {taskData.Action}");
 
-                if (taskData.Action == ACTION_TYPE.Charge && _agv_assigned.Model != clsEnums.AGV_TYPE.SUBMERGED_SHIELD && _agv_assigned.CargoStatus != 0 && _agv_assigned.CurrentCarrierID != string.Empty)
+                if (taskData.Action == ACTION_TYPE.Charge && _agv_assigned.Model != clsEnums.AGV_TYPE.SUBMERGED_SHIELD && (_agv_assigned.CargoStatus != 0 || _agv_assigned.CurrentCarrierID != ""))
                     return (false, ALARMS.Destine_Eq_Station_Has_Task_To_Park, $"車型非{clsEnums.AGV_TYPE.SUBMERGED_SHIELD}車上有貨不行進行充電任務");
             }
             #endregion
@@ -221,20 +221,9 @@ namespace AGVSystem.TaskManagers
                         else
                         {
                             results = EQTransferTaskManager.CheckEQAcceptAGVType(destine_station_tag, taskData.DesignatedAGVName);
-                            if (!results.confirm)
-                                return results;
+                            if (results.confirm == false)
+                                taskData.need_change_agv = true;
                         }
-
-                        //if (sourcePoint.StationType == STATION_TYPE.EQ && destinePoint.StationType == STATION_TYPE.EQ)
-                        //{
-                        //    results = EQTransferTaskManager.CheckEQAcceptAGVType(source_station_tag, taskData.DesignatedAGVName);
-                        //    if (!results.confirm)
-                        //        return results;
-
-                        //    results = EQTransferTaskManager.CheckEQAcceptAGVType(ref taskData);
-                        //    if (!results.confirm)
-                        //        return results;
-                        //}
                     }
                 }
             }
