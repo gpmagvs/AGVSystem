@@ -4,7 +4,6 @@ using AGVSystem.Models.EQDevices;
 using AGVSystem.Models.Map;
 using AGVSystem.Models.Sys;
 using AGVSystem.Models.TaskAllocation.HotRun;
-using AGVSystem.Models.WebsocketMiddleware;
 using AGVSystem.Service;
 using AGVSystem.TaskManagers;
 using AGVSystemCommonNet6;
@@ -52,7 +51,6 @@ EQTransferTaskManager.Initialize();
 AGVSMapManager.Initialize();
 HotRunScriptManager.Initialize();
 ScheduleMeasureManager.Initialize();
-
 EQDeviceEventsHandler.Initialize();
 
 clsEQ.OnIOStateChanged += EQDeviceEventsHandler.HandleEQIOStateChanged;
@@ -64,7 +62,6 @@ AlarmManager.LoadVCSTrobleShootings();
 VMSSerivces.OnVMSReconnected += async (sender, e) => await VMSSerivces.RunModeSwitch(SystemModes.RunMode);
 VMSSerivces.AliveCheckWorker();
 VMSSerivces.RunModeSwitch(AGVSystemCommonNet6.AGVDispatch.RunMode.RUN_MODE.MAINTAIN);
-
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -105,20 +102,25 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
 builder.Services.AddDbContext<AGVSDbContext>(options => options.UseSqlServer(AGVSConfigulator.SysConfigs.DBConnection));
 builder.Services.AddHostedService<DatabaseBackgroundService>();
 builder.Services.AddHostedService<VehicleLocationMonitorBackgroundService>();
+builder.Services.AddHostedService<FrontEndDataCollectionBackgroundService>();
 builder.Services.AddScoped<MeanTimeQueryService>();
+
+builder.Services.AddSignalR().AddJsonProtocol(options => { options.PayloadSerializerOptions.PropertyNamingPolicy = null; });
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
     {
-        policy.AllowAnyOrigin()
-              .AllowAnyHeader()
-              .AllowAnyMethod();
+        policy.WithOrigins("http://localhost:8080").AllowAnyMethod()
+                .AllowAnyHeader()
+                 .AllowCredentials();
     });
 });
 builder.Services.AddWebSockets(options =>
 {
     options.KeepAliveInterval = TimeSpan.FromSeconds(600);
 });
+builder.Services.AddSignalR();
 
 var app = builder.Build();
 
@@ -141,13 +143,11 @@ _ = Task.Run(async () =>
     }
 });
 
-AGVSWebsocketServerMiddleware.Middleware.Initialize();
 AutomationManager.InitialzeDefaultTasks();
 AutomationManager.StartAllAutomationTasks();
 app.UseSwagger();
 app.UseSwaggerUI();
-app.UseCors(c => c.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
-app.UseWebSockets();
+app.UseCors("AllowAll"); app.UseWebSockets();
 app.UseDefaultFiles(new DefaultFilesOptions());
 app.UseStaticFiles();
 
@@ -241,4 +241,5 @@ app.UseVueRouterHistory();
 //app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHub<FrontEndDataHub>("/FrontEndDataHub");
 app.Run();
