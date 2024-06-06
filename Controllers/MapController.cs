@@ -124,10 +124,8 @@ namespace AGVSystem.Controllers
 
             AGVSMapManager.CurrentMap = map_modified;
             AGVSMapManager.SyncEQRegionSetting(map_modified.Points.Values.ToList());
-
             AGVSystemCommonNet6.Microservices.MapSync.SendReloadRequest(AGVSConfigulator.SysConfigs.MapConfigs.CurrentMapFileName);
-
-
+            Console.WriteLine("Map Save Done.");
             return Ok(map_modified.Note);
         }
 
