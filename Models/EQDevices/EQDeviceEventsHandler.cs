@@ -44,7 +44,7 @@ namespace AGVSystem.Models.EQDevices
             _ = Task.Factory.StartNew(async () =>
             {
                 await AlarmManagerCenter.ResetAlarmAsync(new clsAlarmDto() { AlarmCode = (int)ALARMS.EQ_Input_Data_Not_Enough }, false);
-                await AlarmManagerCenter.AddAlarmAsync(1081, source: ALARM_SOURCE.EQP, Equipment_Name: device.EQName);
+                await AlarmManagerCenter.AddAlarmAsync(ALARMS.EQ_Input_Data_Not_Enough, source: ALARM_SOURCE.EQP, Equipment_Name: device.EQName);
             });
         }
 
@@ -54,7 +54,7 @@ namespace AGVSystem.Models.EQDevices
 
             _ = Task.Run(async () =>
             {
-                await AlarmManagerCenter.AddAlarmAsync(1068, source: ALARM_SOURCE.EQP, Equipment_Name: device.EQName);
+                await AlarmManagerCenter.AddAlarmAsync(ALARMS.EQ_Disconnect, source: ALARM_SOURCE.EQP, Equipment_Name: device.EQName);
             });
         }
 

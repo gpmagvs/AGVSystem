@@ -139,7 +139,7 @@ _ = Task.Run(async () =>
     }
     catch (Exception ex)
     {
-        AlarmManagerCenter.AddAlarmAsync(1101);//SYSTEM_EQP_MANAGEMENT_INITIALIZE_FAIL_WITH_EXCEPTION
+        AlarmManagerCenter.AddAlarmAsync(ALARMS.SYSTEM_EQP_MANAGEMENT_INITIALIZE_FAIL_WITH_EXCEPTION);//SYSTEM_EQP_MANAGEMENT_INITIALIZE_FAIL_WITH_EXCEPTION
         LOG.Critical(ex);
     }
 });
