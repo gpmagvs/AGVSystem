@@ -65,9 +65,9 @@ namespace AGVSystem.TaskManagers
                 while (GetTaskOrderFromDB().Result == null)
                 {
                     //ALARMS EQStatusMonitoringResultAlarmCode = MonitorEQsStatusIO();
-                    int EQStatusMonitoringResultAlarmCode = mMonitorEQsStatusIO();
+                    ALARMS EQStatusMonitoringResultAlarmCode = MonitorEQsStatusIO();
                    // int eEQStatusMonitoringResultAlarmCode = mMonitorEQsStatusIO();
-                    if (EQStatusMonitoringResultAlarmCode != 0)
+                    if (EQStatusMonitoringResultAlarmCode != ALARMS.NONE)
                     {
                         bool canceled = await TaskManager.Cancel(taskOrder.TaskName, EQStatusMonitoringResultAlarmCode.ToString());
                         LOG.WARN($"[LocalAutoTransferTaskMonitor] {taskOrder.TaskName} Monitor End: {EQStatusMonitoringResultAlarmCode}");
@@ -92,9 +92,9 @@ namespace AGVSystem.TaskManagers
                 {
                     await Task.Delay(1000);
                     //ALARMS EQStatusMonitoringResultAlarmCode = MonitorEQsStatusIO();
-                    int EQStatusMonitoringResultAlarmCode = mMonitorEQsStatusIO();
+                    ALARMS EQStatusMonitoringResultAlarmCode = MonitorEQsStatusIO();
                     orderState = await taskDatabase.GetTaskStateByID(taskOrder.TaskName);
-                    if (EQStatusMonitoringResultAlarmCode != 1000)
+                    if (EQStatusMonitoringResultAlarmCode != ALARMS.NONE)
                     {
                         bool canceled = await TaskManager.Cancel(taskOrder.TaskName, EQStatusMonitoringResultAlarmCode.ToString());
                         LOG.WARN($"[LocalAutoTransferTaskMonitor] {taskOrder.TaskName} Monitor End: {EQStatusMonitoringResultAlarmCode}");
