@@ -64,7 +64,9 @@ namespace AGVSystem.TaskManagers
                 LOG.WARN($"[LocalAutoTransferTaskMonitor] Waiting Task Dispatch To AGV ({taskOrder.TaskName})");
                 while (GetTaskOrderFromDB().Result == null)
                 {
+                    //ALARMS EQStatusMonitoringResultAlarmCode = MonitorEQsStatusIO();
                     ALARMS EQStatusMonitoringResultAlarmCode = MonitorEQsStatusIO();
+                   // int eEQStatusMonitoringResultAlarmCode = mMonitorEQsStatusIO();
                     if (EQStatusMonitoringResultAlarmCode != ALARMS.NONE)
                     {
                         bool canceled = await TaskManager.Cancel(taskOrder.TaskName, EQStatusMonitoringResultAlarmCode.ToString());
@@ -89,6 +91,7 @@ namespace AGVSystem.TaskManagers
                 while (agvStatuDatabase.GetAGVStateByAGVName(_taskOrderInDB.DesignatedAGVName).TaskName != taskOrder.TaskName)
                 {
                     await Task.Delay(1000);
+                    //ALARMS EQStatusMonitoringResultAlarmCode = MonitorEQsStatusIO();
                     ALARMS EQStatusMonitoringResultAlarmCode = MonitorEQsStatusIO();
                     orderState = await taskDatabase.GetTaskStateByID(taskOrder.TaskName);
                     if (EQStatusMonitoringResultAlarmCode != ALARMS.NONE)
@@ -153,21 +156,21 @@ namespace AGVSystem.TaskManagers
                                     LOG.INFO($"[LocalAutoTransferTaskMonitor] {taskOrder.TaskName} AGV restored to ONLINE/IDLE contine");
                                 }
                             }
+                            //ALARMS EQStatusMonitoringResultAlarmCode = MonitorEQsStatusIO();
                             ALARMS EQStatusMonitoringResultAlarmCode = MonitorEQsStatusIO();
-
                             if (EQStatusMonitoringResultAlarmCode == ALARMS.Source_Eq_Unload_Request_Off && agv_state.TransferProcess == VehicleMovementStage.Traveling_To_Source) //前往取貨途中//Source_Eq_Unload_Request_Off
                             {
                                 AlarmManagerCenter.AddAlarmAsync(ALARMS.Source_Eq_Unload_Request_Off, level: ALARM_LEVEL.WARNING, Equipment_Name: sourceEQ.EQName, location: agv_state.CurrentLocation, taskName: taskOrder.TaskName);//Source_Eq_Unload_Request_Off
                                 await TaskManager.Cancel(taskOrder.TaskName, $"Source EQ Unload_Request OFF", TASK_RUN_STATUS.FAILURE);
                                 break;
                             }
-                            if (EQStatusMonitoringResultAlarmCode == ALARMS.Destine_Eq_Load_Request_Off)
+                            if (EQStatusMonitoringResultAlarmCode == ALARMS.Destine_Eq_Load_Request_Off)//Destine_Eq_Load_Request_Off
                             {
                                 AlarmManagerCenter.AddAlarmAsync(ALARMS.Destine_Eq_Load_Request_Off, level: ALARM_LEVEL.WARNING, Equipment_Name: sourceEQ.EQName, location: agv_state.CurrentLocation, taskName: taskOrder.TaskName);
                                 await TaskManager.Cancel(taskOrder.TaskName, $"Destine EQ Load_Request OFF", TASK_RUN_STATUS.FAILURE);
                                 break;
                             }
-                            if (EQStatusMonitoringResultAlarmCode == ALARMS.Destine_Eq_Status_Down | EQStatusMonitoringResultAlarmCode == ALARMS.Source_Eq_Status_Down)
+                            if (EQStatusMonitoringResultAlarmCode == ALARMS.Destine_Eq_Status_Down | EQStatusMonitoringResultAlarmCode == ALARMS.Source_Eq_Status_Down)//Destine_Eq_Status_Down Source_Eq_Status_Down
                             {
                                 bool isSourceEQ = !sourceEQ.Eqp_Status_Down;
                                 string eqName = isSourceEQ ? sourceEQ.EQName : destineEQ.EQName;
@@ -191,7 +194,7 @@ namespace AGVSystem.TaskManagers
             });
 
         }
-        private ALARMS MonitorEQsStatusIO()
+        private  ALARMS MonitorEQsStatusIO()
         {
             if (!sourceEQ.Unload_Request) //前往取貨途中
             {
@@ -209,6 +212,26 @@ namespace AGVSystem.TaskManagers
             else
             {
                 return ALARMS.NONE;
+            }
+        }
+        private int  mMonitorEQsStatusIO()
+        {
+            if (!sourceEQ.Unload_Request) //前往取貨途中
+            {
+                return 1055; //Source_Eq_Unload_Request_Off
+            }
+            else if (!destineEQ.Load_Request)
+            {
+                return 1056;//Destine_Eq_Load_Request_Off
+            }
+            else if (!sourceEQ.Eqp_Status_Down | !sourceEQ.Eqp_Status_Down)
+            {
+                bool isSourceEQ = !sourceEQ.Eqp_Status_Down;
+                return isSourceEQ ? 1057 :1058 ;//ALARMS.Source_Eq_Status_Down : ALARMS.Destine_Eq_Status_Down
+            }
+            else
+            {
+                return 1000;//NONE
             }
         }
 

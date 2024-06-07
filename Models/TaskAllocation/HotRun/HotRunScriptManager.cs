@@ -158,7 +158,7 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
             var firstAction = GetActionByActionName(script.actions.First().action);
             if (firstAction == ACTION_TYPE.Load && agv.CurrentCarrierID == "")
             {
-                Task<clsAlarmDto> res = AlarmManagerCenter.AddAlarmAsync(644);
+                Task<clsAlarmDto> res = AlarmManagerCenter.AddAlarmAsync(ALARMS.CANNOT_DISPATCH_LOAD_TASK_WHEN_AGV_NO_CARGO);
                 return new(false, res.Result.Description_En);
                 //AlarmManagerCenter.AddAlarmAsync(644);// {"AlarmCode": 644,"Description_Zh": "任務指定的車載卡匣狀態不符合任務 請確認車載是否有卡匣存在
                 // return new(false, ALARMS.CANNOT_DISPATCH_LOAD_TASK_WHEN_AGV_NO_CARGO.ToString());
