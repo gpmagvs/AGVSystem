@@ -9,6 +9,7 @@ using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.Microservices.VMS;
 using EquipmentManagment.Manager;
 using AGVSystemCommonNet6.DATABASE;
+using Newtonsoft.Json;
 
 namespace AGVSystem.Service
 {
@@ -19,10 +20,13 @@ namespace AGVSystem.Service
         {
             _hubContext = hubContext;
         }
+        internal static object _previousData = new object();
+
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             while (!stoppingToken.IsCancellationRequested)
             {
+                await Task.Delay(100, stoppingToken);
                 var incompleted_tasks = DatabaseCaches.TaskCaches.InCompletedTasks;
                 var completed_tasks = DatabaseCaches.TaskCaches.CompleteTasks;
                 var data = new
@@ -40,8 +44,14 @@ namespace AGVSystem.Service
                     //VMSStatus = vmsData,
                     TaskData = new { incompleteds = incompleted_tasks, completeds = completed_tasks }
                 };
-                await _hubContext.Clients.All.SendAsync("ReceiveData", "VMS", data);
-                await Task.Delay(150, stoppingToken);
+                //use json string to compare the data is changed or not
+                if (!JsonConvert.SerializeObject(data).Equals(JsonConvert.SerializeObject(_previousData)))
+                {
+                    _previousData = data;
+                    await _hubContext.Clients.All.SendAsync("ReceiveData", "VMS", data);
+                    data = null;
+                    continue;
+                }
             }
         }
         private List<ViewModel.WIPDataViewModel> GetWIPDataViewModels()

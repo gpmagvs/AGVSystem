@@ -104,9 +104,6 @@ builder.Services.AddHostedService<DatabaseBackgroundService>();
 builder.Services.AddHostedService<VehicleLocationMonitorBackgroundService>();
 builder.Services.AddHostedService<FrontEndDataCollectionBackgroundService>();
 builder.Services.AddScoped<MeanTimeQueryService>();
-
-builder.Services.AddSignalR().AddJsonProtocol(options => { options.PayloadSerializerOptions.PropertyNamingPolicy = null; });
-
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -121,7 +118,7 @@ builder.Services.AddWebSockets(options =>
 {
     options.KeepAliveInterval = TimeSpan.FromSeconds(600);
 });
-builder.Services.AddSignalR();
+builder.Services.AddSignalR().AddJsonProtocol(options => { options.PayloadSerializerOptions.PropertyNamingPolicy = null; }); ;
 
 var app = builder.Build();
 

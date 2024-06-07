@@ -219,7 +219,7 @@ namespace AGVSystem.TaskManagers
                 else
                 {
                     List<clsPortOfRack> ports = StaEQPManagager.GetRackColumnByTag(station_tag);
-                    var Rack = ports.FirstOrDefault().ParentRack;
+                    var Rack = ports.FirstOrDefault().GetParentRack();
                     if (Rack == null)
                         return new(false, ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, $"WIP站點TAG-{station_tag},EQ-{Rack.EQName} 不存在於當前地圖", null, null);
                     if (Rack.IsConnected == false)
@@ -243,7 +243,7 @@ namespace AGVSystem.TaskManagers
             else if (MapPoint.StationType == STATION_TYPE.Buffer_EQ && LayerorSlot >= 1) // Buffer_EQ slot >=1 先確認WIP儲位但還是要預約EQ訊號
             {
                 List<clsPortOfRack> ports = StaEQPManagager.GetRackColumnByTag(station_tag);
-                var Rack = ports.FirstOrDefault().ParentRack;
+                var Rack = ports.FirstOrDefault().GetParentRack();
                 if (Rack == null)
                     return new(false, ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, $"WIP站點TAG-{station_tag},EQ-{Rack.EQName} 不存在於當前地圖", null, null);
                 if (Rack.IsConnected == false)
