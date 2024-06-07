@@ -104,9 +104,6 @@ builder.Services.AddHostedService<DatabaseBackgroundService>();
 builder.Services.AddHostedService<VehicleLocationMonitorBackgroundService>();
 builder.Services.AddHostedService<FrontEndDataCollectionBackgroundService>();
 builder.Services.AddScoped<MeanTimeQueryService>();
-
-builder.Services.AddSignalR().AddJsonProtocol(options => { options.PayloadSerializerOptions.PropertyNamingPolicy = null; });
-
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -121,7 +118,7 @@ builder.Services.AddWebSockets(options =>
 {
     options.KeepAliveInterval = TimeSpan.FromSeconds(600);
 });
-builder.Services.AddSignalR();
+builder.Services.AddSignalR().AddJsonProtocol(options => { options.PayloadSerializerOptions.PropertyNamingPolicy = null; }); ;
 
 var app = builder.Build();
 
@@ -139,7 +136,7 @@ _ = Task.Run(async () =>
     }
     catch (Exception ex)
     {
-        AlarmManagerCenter.AddAlarmAsync(1101);//SYSTEM_EQP_MANAGEMENT_INITIALIZE_FAIL_WITH_EXCEPTION
+        AlarmManagerCenter.AddAlarmAsync(ALARMS.SYSTEM_EQP_MANAGEMENT_INITIALIZE_FAIL_WITH_EXCEPTION);//SYSTEM_EQP_MANAGEMENT_INITIALIZE_FAIL_WITH_EXCEPTION
         LOG.Critical(ex);
     }
 });
