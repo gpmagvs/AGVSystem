@@ -502,8 +502,8 @@ namespace AGVSystem.TaskManagers
                 return new(false, ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, $"設備站點TAG-{station_tag} 不存在於當前地圖");
             else
             {
-                VEHICLE_TYPE source_eq_accept_agv_model = equipment.EndPointOptions.Accept_AGV_Type;
-                if (source_eq_accept_agv_model != VEHICLE_TYPE.ALL && source_eq_accept_agv_model != model)
+                VEHICLE_TYPE eq_accept_agv_model = equipment.EndPointOptions.Accept_AGV_Type;
+                if (eq_accept_agv_model != VEHICLE_TYPE.ALL && eq_accept_agv_model != model)
                     return (false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Source_Equipment, $"設備TAG-{station_tag}不允許{model}車種進行任務");
                 else
                     return new(true, ALARMS.NONE, "");

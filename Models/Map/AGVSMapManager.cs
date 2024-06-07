@@ -69,15 +69,15 @@ namespace AGVSystem.Models.Map
             }
         }
 
-        internal static void SyncEQRegionSetting(List<MapPoint> mapStations)
+        internal static async Task SyncEQRegionSetting(List<MapPoint> mapStations)
         {
-
+            await Task.Delay(10);
             foreach (MapPoint point in mapStations)
             {
                 try
                 {
                     int tag = point.TagNumber;
-                    var eq = StaEQPManagager.EQPDevices.First(_eq => _eq.EndPointOptions.TagID == tag);
+                    var eq = StaEQPManagager.EQPDevices.FirstOrDefault(_eq => _eq.EndPointOptions.TagID == tag);
                     if (eq != null)
                     {
                         eq.EndPointOptions.Region = point.Region;
@@ -91,7 +91,7 @@ namespace AGVSystem.Models.Map
             }
 
             StaEQPManagager.SaveEqConfigs();
-
+            Console.WriteLine("SyncEQRegionSetting  Done.");
         }
 
         internal static void SyncMapPointRegionSetting(Dictionary<string, clsEndPointOptions> eQOptions)

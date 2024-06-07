@@ -65,7 +65,7 @@ namespace AGVSystem.TaskManagers
                 else if (taskData.Action == ACTION_TYPE.Load && _agv_assigned.CargoStatus == 0)
                     return (false, ALARMS.Station_Disabled, $"{_agv_assigned.AGV_Name} no cargo can not assigned to {taskData.Action}");
 
-                if (taskData.Action == ACTION_TYPE.Charge && _agv_assigned.Model != clsEnums.AGV_TYPE.SUBMERGED_SHIELD && _agv_assigned.CargoStatus != 0 && _agv_assigned.CurrentCarrierID != string.Empty)
+                if (taskData.Action == ACTION_TYPE.Charge && _agv_assigned.Model != clsEnums.AGV_TYPE.SUBMERGED_SHIELD && (_agv_assigned.CargoStatus != 0 || _agv_assigned.CurrentCarrierID != ""))
                     return (false, ALARMS.Destine_Eq_Station_Has_Task_To_Park, $"車型非{clsEnums.AGV_TYPE.SUBMERGED_SHIELD}車上有貨不行進行充電任務");
             }
             #endregion
@@ -94,24 +94,35 @@ namespace AGVSystem.TaskManagers
 
 
                 if (taskData.Action == ACTION_TYPE.Unload || taskData.Action == ACTION_TYPE.Load || taskData.Action == ACTION_TYPE.LoadAndPark)
+                {
                     results2 = EQTransferTaskManager.CheckLoadUnloadStation(destine_station_tag, Convert.ToInt16(taskData.To_Slot), ACTION_TYPE.Unload);
+                    results.confirm = results2.confirm;
+                    results.alarm_code = results2.alarm_code;
+                    results.message= results2.message;
+                    if (!results.confirm)
+                        return results;
+                }
                 else if (taskData.Action == ACTION_TYPE.Carry)
                 {
                     results2 = EQTransferTaskManager.CheckLoadUnloadStation(source_station_tag, Convert.ToInt16(taskData.From_Slot), ACTION_TYPE.Unload);
+                    results.confirm = results2.confirm;
+                    results.alarm_code = results2.alarm_code;
+                    results.message = results2.message;
                     if (!results.confirm)
                         return results;
-                    results2 = EQTransferTaskManager.CheckLoadUnloadStation(destine_station_tag, Convert.ToInt16(taskData.To_Slot), ACTION_TYPE.Unload);
+                    results2 = EQTransferTaskManager.CheckLoadUnloadStation(destine_station_tag, Convert.ToInt16(taskData.To_Slot), ACTION_TYPE.Load);
+                    results.confirm = results2.confirm;
+                    results.alarm_code = results2.alarm_code;
+                    results.message = results2.message;
                     if (!results.confirm)
                         return results;
-                    if (destinePoint.StationType == STATION_TYPE.EQ || destinePoint.StationType == STATION_TYPE.EQ_LD || destinePoint.StationType == STATION_TYPE.EQ_ULD)
-                    {
-                        results = EQTransferTaskManager.CheckEQAcceptCargoType(taskData);
-                        if (!results.confirm)
-                            return results;
-                    }
-                }
-                if (!results.confirm)
-                    return results;
+                    //if (destinePoint.StationType == STATION_TYPE.EQ || destinePoint.StationType == STATION_TYPE.EQ_LD || destinePoint.StationType == STATION_TYPE.EQ_ULD)
+                    //{
+                    //    results = EQTransferTaskManager.CheckEQAcceptCargoType(taskData);
+                    //    if (!results.confirm)
+                    //        return results;
+                    //}
+                }                
             }
             #endregion
 
@@ -169,13 +180,10 @@ namespace AGVSystem.TaskManagers
                         {
                             results = EQTransferTaskManager.CheckEQAcceptAGVType(destine_station_tag, taskData.DesignatedAGVName);
                             if (!results.confirm)
-                                return results;
+                                taskData.need_change_agv = true;
 
                             // TODO (需再新增EQTransferTaskManager.CheckEQAcceptCargoType) 放貨
-                            // 須知道車子目前背KUAN or TRAY 再比對放貨站點可接受貨物類型
-                            //results = EQTransferTaskManager.CheckEQAcceptAGVType(ref taskData);
-                            //if (!results.confirm)
-                            //    return results;
+                            // 須知道車子目前背KUAN or TRAY 再比對放貨站點可接受貨物類型                            
                         }
                     }
                     else if (taskData.Action == ACTION_TYPE.Carry) // 先檢查From Station,如果允許再比From Station及 To Station如果兩個不同則生成轉運
@@ -213,20 +221,9 @@ namespace AGVSystem.TaskManagers
                         else
                         {
                             results = EQTransferTaskManager.CheckEQAcceptAGVType(destine_station_tag, taskData.DesignatedAGVName);
-                            if (!results.confirm)
-                                return results;
+                            if (results.confirm == false)
+                                taskData.need_change_agv = true;
                         }
-
-                        //if (sourcePoint.StationType == STATION_TYPE.EQ && destinePoint.StationType == STATION_TYPE.EQ)
-                        //{
-                        //    results = EQTransferTaskManager.CheckEQAcceptAGVType(source_station_tag, taskData.DesignatedAGVName);
-                        //    if (!results.confirm)
-                        //        return results;
-
-                        //    results = EQTransferTaskManager.CheckEQAcceptAGVType(ref taskData);
-                        //    if (!results.confirm)
-                        //        return results;
-                        //}
                     }
                 }
             }
@@ -302,7 +299,6 @@ namespace AGVSystem.TaskManagers
                     db.tables.Tasks.Add(taskData);
                     var added = await db.SaveChanges();
                 }
-
                 return new(true, ALARMS.NONE, "");
             }
             catch (Exception ex)

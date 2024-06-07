@@ -1,5 +1,4 @@
 ﻿using AGVSystem.Models.Map;
-using AGVSystem.Models.WebsocketMiddleware;
 using AGVSystem.TaskManagers;
 using AGVSystemCommonNet6.DATABASE;
 using EquipmentManagment.ChargeStation;
@@ -126,6 +125,13 @@ namespace AGVSystem.Controllers
             return Ok(new { Connected = connected });
         }
 
+        /// <summary>
+        /// 設定充電樁的設定值
+        /// </summary>
+        /// <param name="EqName"></param>
+        /// <param name="Item"></param>
+        /// <param name="Value"></param>
+        /// <returns></returns>
         [HttpGet("ChargeStation/Settings")]
         public async Task<IActionResult> ChargeStationCurveSetting(string EqName, string Item, double Value)
         {
@@ -195,7 +201,6 @@ namespace AGVSystem.Controllers
 
             }
         }
-
 
         [HttpPost("ChargeStation/SaveUsableAGVSetting")]
         public async Task<IActionResult> SaveUsableAGVSetting([FromBody] string[] agvNames, string ChargeStationName)

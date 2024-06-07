@@ -1,10 +1,9 @@
-using AGVSystem;
+Ôªøusing AGVSystem;
 using AGVSystem.Models.Automation;
 using AGVSystem.Models.EQDevices;
 using AGVSystem.Models.Map;
 using AGVSystem.Models.Sys;
 using AGVSystem.Models.TaskAllocation.HotRun;
-using AGVSystem.Models.WebsocketMiddleware;
 using AGVSystem.Service;
 using AGVSystem.TaskManagers;
 using AGVSystemCommonNet6;
@@ -34,7 +33,7 @@ using System.Configuration;
 using System.Reflection;
 using System.Security.Policy;
 using System.Text;
-Console.Title = "GPM-AGV®t≤Œ(AGVs)";
+Console.Title = "GPM-AGVÁ≥ªÁµ±(AGVs)";
 LOG.SetLogFolderName("AGVS LOG");
 LOG.INFO("AGVS System Start");
 AGVSConfigulator.Init();
@@ -44,7 +43,7 @@ try
 }
 catch (Exception ex)
 {
-    Console.WriteLine($"∏ÍÆ∆Æw™Ï©l§∆≤ß±`-Ω–ΩTª{∏ÍÆ∆Æw! {ex.Message}");
+    Console.WriteLine($"Ë≥áÊñôÂ∫´ÂàùÂßãÂåñÁï∞Â∏∏-Ë´ãÁ¢∫Ë™çË≥áÊñôÂ∫´! {ex.Message}");
     Environment.Exit(4);
 }
 
@@ -52,7 +51,6 @@ EQTransferTaskManager.Initialize();
 AGVSMapManager.Initialize();
 HotRunScriptManager.Initialize();
 ScheduleMeasureManager.Initialize();
-
 EQDeviceEventsHandler.Initialize();
 
 clsEQ.OnIOStateChanged += EQDeviceEventsHandler.HandleEQIOStateChanged;
@@ -65,7 +63,6 @@ VMSSerivces.OnVMSReconnected += async (sender, e) => await VMSSerivces.RunModeSw
 VMSSerivces.AliveCheckWorker();
 VMSSerivces.RunModeSwitch(AGVSystemCommonNet6.AGVDispatch.RunMode.RUN_MODE.MAINTAIN);
 
-
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
@@ -74,7 +71,7 @@ builder.Services.AddSwaggerGen(opton =>
 {
     opton.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
     {
-        Title = "GPM ¨£®Æ®t≤Œ RESTFul API",
+        Title = "GPM Ê¥æËªäÁ≥ªÁµ± RESTFul API",
         Version = "V1"
     });
     var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
@@ -105,20 +102,26 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
 builder.Services.AddDbContext<AGVSDbContext>(options => options.UseSqlServer(AGVSConfigulator.SysConfigs.DBConnection));
 builder.Services.AddHostedService<DatabaseBackgroundService>();
 builder.Services.AddHostedService<VehicleLocationMonitorBackgroundService>();
+builder.Services.AddHostedService<FrontEndDataCollectionBackgroundService>();
 builder.Services.AddScoped<MeanTimeQueryService>();
+
+builder.Services.AddSignalR().AddJsonProtocol(options => { options.PayloadSerializerOptions.PropertyNamingPolicy = null; });
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
     {
-        policy.AllowAnyOrigin()
-              .AllowAnyHeader()
-              .AllowAnyMethod();
+        policy.AllowAnyMethod()
+                    .AllowAnyHeader()
+                     .SetIsOriginAllowed(origin => true) // ÂÖÅËÆ∏‰ªª‰ΩïÊù•Ê∫ê
+                     .AllowCredentials(); // ÂÖÅËÆ∏Âá≠ÊçÆ
     });
 });
 builder.Services.AddWebSockets(options =>
 {
     options.KeepAliveInterval = TimeSpan.FromSeconds(600);
 });
+builder.Services.AddSignalR();
 
 var app = builder.Build();
 
@@ -141,17 +144,15 @@ _ = Task.Run(async () =>
     }
 });
 
-AGVSWebsocketServerMiddleware.Middleware.Initialize();
 AutomationManager.InitialzeDefaultTasks();
 AutomationManager.StartAllAutomationTasks();
 app.UseSwagger();
 app.UseSwaggerUI();
-app.UseCors(c => c.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
-app.UseWebSockets();
+app.UseCors("AllowAll"); app.UseWebSockets();
 app.UseDefaultFiles(new DefaultFilesOptions());
 app.UseStaticFiles();
 
-// •[∏¸∞t∏m§Â•Û
+// Âä†ËºâÈÖçÁΩÆÊñá‰ª∂
 var mapFileFolderPath = app.Configuration.GetValue<string>("StaticFileOptions:MapFile:FolderPath");
 var mapFileRequestPath = app.Configuration.GetValue<string>("StaticFileOptions:MapFile:RequestPath");
 var agvImageFileFolderPath = app.Configuration.GetValue<string>("StaticFileOptions:AGVImageStoreFile:FolderPath");
@@ -241,4 +242,5 @@ app.UseVueRouterHistory();
 //app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHub<FrontEndDataHub>("/FrontEndDataHub");
 app.Run();
