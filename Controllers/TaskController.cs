@@ -1,6 +1,6 @@
-﻿using AGVSystem.Models.TaskAllocation;
+﻿using AGVSystem.Models.Map;
+using AGVSystem.Models.TaskAllocation;
 using AGVSystem.Models.TaskAllocation.HotRun;
-using AGVSystem.Models.WebsocketMiddleware;
 using AGVSystem.TaskManagers;
 using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.AGVDispatch;
@@ -179,6 +179,18 @@ namespace AGVSystem.Controllers
         {
             if (action != ACTION_TYPE.Load && action != ACTION_TYPE.Unload)
                 return Ok(new clsAGVSTaskReportResponse() { confirm = false, message = "Action should equal Load or Unlaod" });
+            AGVSystemCommonNet6.MAP.MapPoint MapPoint = AGVSMapManager.GetMapPointByTag(tag);
+            if (MapPoint == null)
+                return Ok(new clsAGVSTaskReportResponse() { confirm = false, AlarmCode = ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, message = $"站點TAG-{tag} 不存在於當前地圖" });
+
+            if (!MapPoint.Enable)
+                return Ok(new clsAGVSTaskReportResponse() { confirm = false, AlarmCode = ALARMS.Station_Disabled, message = "站點未啟用，無法指派任務" });
+
+            if (action == ACTION_TYPE.Load && (MapPoint.StationType == MapPoint.STATION_TYPE.Buffer_EQ || MapPoint.StationType == MapPoint.STATION_TYPE.Buffer) && slot == -2)
+            {
+                clsPortOfRack port = EQTransferTaskManager.get_empyt_port_of_rack(tag);
+                return Ok(new clsAGVSTaskReportResponse() { confirm = true, message = $"Get empty port OK", ReturnObj = port.Layer });
+            }
 
             (bool confirm, ALARMS alarm_code, string message, object obj, Type objtype) result = EQTransferTaskManager.CheckLoadUnloadStation(tag, slot, action);
             if (result.confirm == false)
@@ -328,33 +340,19 @@ namespace AGVSystem.Controllers
         {
             try
             {
-                if (action == ACTION_TYPE.Unload || (action == ACTION_TYPE.LoadAndPark || action == ACTION_TYPE.Load && ToSlot != -1))
+                if (action == ACTION_TYPE.Unload || action == ACTION_TYPE.LoadAndPark || action == ACTION_TYPE.Load)
                 {
                     clsAGVSTaskReportResponse result = ((OkObjectResult)await LoadUnloadTaskStart(to, ToSlot, action)).Value as clsAGVSTaskReportResponse;
                     return result;
-                }
-                else if (action == ACTION_TYPE.LoadAndPark || action == ACTION_TYPE.Load && ToSlot == -1)
-                {
-                    //todo find empty rack to load cargo
-                    EQTransferTaskManager.get_empyt_port_of_rack(to);
                 }
                 else if (action == ACTION_TYPE.Carry)
                 {
                     clsAGVSTaskReportResponse result_from = ((OkObjectResult)await LoadUnloadTaskStart(from, FromSlot, ACTION_TYPE.Unload)).Value as clsAGVSTaskReportResponse;
                     if (result_from.confirm == false)
                         return result_from;
-                    if (ToSlot != -1)
-                    {
-                        clsAGVSTaskReportResponse result_to = ((OkObjectResult)await LoadUnloadTaskStart(to, ToSlot, ACTION_TYPE.Load)).Value as clsAGVSTaskReportResponse;
-                        if (result_to.confirm == false)
-                            return result_to;
-                    }
-                    else
-                    {
-                        //todo find empty rack to load cargo
-                        clsPortOfRack port = EQTransferTaskManager.get_empyt_port_of_rack(to);
-                        return new clsAGVSTaskReportResponse() { confirm = true, message = $"Get empty port OK", ReturnObj = port.Layer };
-                    }
+
+                    clsAGVSTaskReportResponse result_to = ((OkObjectResult)await LoadUnloadTaskStart(to, ToSlot, ACTION_TYPE.Load)).Value as clsAGVSTaskReportResponse;
+                    return result_to;
                 }
                 else
                 {
@@ -366,7 +364,6 @@ namespace AGVSystem.Controllers
             {
                 return new clsAGVSTaskReportResponse() { confirm = false, message = $"{ex}" };
             }
-            return new clsAGVSTaskReportResponse() { confirm = true, message = "" };
         }
         private (bool existDevice, clsEQ mainEQ, clsRack rack) TryGetEndDevice(int tag)
         {
