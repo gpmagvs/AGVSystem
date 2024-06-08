@@ -10,6 +10,9 @@ using AGVSystemCommonNet6.Microservices.VMS;
 using EquipmentManagment.Manager;
 using AGVSystemCommonNet6.DATABASE;
 using Newtonsoft.Json;
+using EquipmentManagment.WIP;
+using System.Xml.Linq;
+using EquipmentManagment.Device;
 
 namespace AGVSystem.Service
 {
@@ -24,6 +27,15 @@ namespace AGVSystem.Service
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            clsPortOfRack.OnRackPortSensorStatusChanged += (sender, e) =>
+            {
+                _SendDataToClient(_previousData);
+            };
+            PortStatusAbstract.CarrierIDChanged += (sender, e) =>
+            {
+                _SendDataToClient(_previousData);
+            };
+
             while (!stoppingToken.IsCancellationRequested)
             {
                 await Task.Delay(100, stoppingToken);
@@ -38,20 +50,30 @@ namespace AGVSystem.Service
                         WIPsData = GetWIPDataViewModels()
                     },
                     VMSAliveCheck = VMSSerivces.IsAlive,
-                    AGVLocationUpload = AGVSMapManager.AGVUploadCoordinationStore,
                     HotRun = HotRunScriptManager.HotRunScripts,
                     UncheckedAlarm = AlarmManagerCenter.uncheckedAlarms,
-                    //VMSStatus = vmsData,
                     TaskData = new { incompleteds = incompleted_tasks, completeds = completed_tasks }
                 };
-                //use json string to compare the data is changed or not
-                if (!JsonConvert.SerializeObject(data).Equals(JsonConvert.SerializeObject(_previousData)))
+
+                try
                 {
-                    _previousData = data;
-                    await _hubContext.Clients.All.SendAsync("ReceiveData", "VMS", data);
-                    data = null;
+                    //use json string to compare the data is changed or not
+                    if (!JsonConvert.SerializeObject(data).Equals(JsonConvert.SerializeObject(_previousData)))
+                    {
+                        await _SendDataToClient(data);
+                        _previousData = data;
+                        data = null;
+                        continue;
+                    }
+                }
+                catch (Exception)
+                {
                     continue;
                 }
+            }
+            async Task _SendDataToClient(object _data)
+            {
+                await _hubContext.Clients.All.SendAsync("ReceiveData", "VMS", _data);
             }
         }
         private List<ViewModel.WIPDataViewModel> GetWIPDataViewModels()
