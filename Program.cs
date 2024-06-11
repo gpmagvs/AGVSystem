@@ -29,6 +29,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using Serilog;
+using Serilog.Filters;
 using System.Configuration;
 using System.Reflection;
 using System.Security.Policy;
@@ -65,6 +67,24 @@ VMSSerivces.RunModeSwitch(AGVSystemCommonNet6.AGVDispatch.RunMode.RUN_MODE.MAINT
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Host.UseSerilog((context, services, configuration) => configuration
+    .ReadFrom.Services(services)
+    .Enrich.FromLogContext()
+    .WriteTo.Console()
+    .WriteTo.File("logs/log-.log",
+        rollingInterval: RollingInterval.Hour, // 每小時一個檔案
+        retainedFileCountLimit: 24 * 30,// 最多保留 30 天份的 Log 檔案
+        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}" // 輸出格式
+        )
+    .Filter.ByExcluding(Matching.FromSource("Microsoft.EntityFrameworkCore")) // 過濾EF Core Log
+    .Filter.ByExcluding(Matching.FromSource("AGVSystem.ApiLoggingMiddleware")) // 過濾ASP.NET Core Log
+    .WriteTo.File("logs/agvs/api-.log",
+        rollingInterval: RollingInterval.Hour,
+        retainedFileCountLimit: 24 * 30,
+        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}"
+        )
+);
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(opton =>
@@ -99,10 +119,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
         }
     );
 
+
 builder.Services.AddDbContext<AGVSDbContext>(options => options.UseSqlServer(AGVSConfigulator.SysConfigs.DBConnection));
 builder.Services.AddHostedService<DatabaseBackgroundService>();
 builder.Services.AddHostedService<VehicleLocationMonitorBackgroundService>();
 builder.Services.AddHostedService<FrontEndDataCollectionBackgroundService>();
+
 builder.Services.AddScoped<MeanTimeQueryService>();
 builder.Services.AddCors(options =>
 {
@@ -121,6 +143,7 @@ builder.Services.AddWebSockets(options =>
 builder.Services.AddSignalR().AddJsonProtocol(options => { options.PayloadSerializerOptions.PropertyNamingPolicy = null; }); ;
 
 var app = builder.Build();
+app.UseMiddleware<ApiLoggingMiddleware>();
 
 _ = Task.Run(async () =>
 {
@@ -235,6 +258,7 @@ catch (Exception ex)
 var agvDisplayImageFolder = Path.Combine(app.Environment.WebRootPath, @"images\AGVDisplayImages");
 Directory.CreateDirectory(agvDisplayImageFolder);
 
+//app.UseMiddleware<RequestResponseLoggingMiddleware>();
 app.UseVueRouterHistory();
 //app.UseHttpsRedirection();
 app.UseAuthorization();
