@@ -124,10 +124,8 @@ namespace AGVSystem.Controllers
 
             AGVSMapManager.CurrentMap = map_modified;
             AGVSMapManager.SyncEQRegionSetting(map_modified.Points.Values.ToList());
-
             AGVSystemCommonNet6.Microservices.MapSync.SendReloadRequest(AGVSConfigulator.SysConfigs.MapConfigs.CurrentMapFileName);
-
-
+            Console.WriteLine("Map Save Done.");
             return Ok(map_modified.Note);
         }
 
@@ -139,6 +137,11 @@ namespace AGVSystem.Controllers
             return Ok(MapManager.GetTags());
         }
 
+        [HttpGet("GetMapPointByTag")]
+        public async Task<IActionResult> GetMapPointByTag(int tag)
+        {
+            return Ok(AGVSMapManager.GetMapPointByTag(tag));
+        }
 
         [HttpGet("PreviewNavigationPath")]
         public async Task<IActionResult> PreviewNavigationPath(int fromTag, int toTag, ACTION_TYPE action = ACTION_TYPE.None, string AGVName = "")

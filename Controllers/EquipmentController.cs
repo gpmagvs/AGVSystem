@@ -1,5 +1,4 @@
 ﻿using AGVSystem.Models.Map;
-using AGVSystem.Models.WebsocketMiddleware;
 using AGVSystem.TaskManagers;
 using AGVSystemCommonNet6.DATABASE;
 using EquipmentManagment.ChargeStation;
@@ -14,6 +13,7 @@ using Microsoft.CodeAnalysis.Options;
 using Newtonsoft.Json;
 using System.Text;
 using System.Xml.Linq;
+using static AGVSystemCommonNet6.MAP.MapPoint;
 
 namespace AGVSystem.Controllers
 {
@@ -27,6 +27,23 @@ namespace AGVSystem.Controllers
         {
             var eq = StaEQPManagager.GetEQByName(EqName);
             eq.WriteOutputs(start, value);
+            return Ok();
+        }
+
+        [HttpGet("GetEQWIPInfoByTag")]
+        public async Task<IActionResult> GetEQWIPInfoByTag(int Tag)
+        {
+            AGVSystemCommonNet6.MAP.MapPoint MapPoint = AGVSMapManager.GetMapPointByTag(Tag);
+            if (MapPoint.StationType == STATION_TYPE.EQ || MapPoint.StationType == STATION_TYPE.EQ_LD || MapPoint.StationType == STATION_TYPE.EQ_ULD)
+            {
+                var EQ = StaEQPManagager.EQOptions.Values.FirstOrDefault(eq => eq.TagID == Tag);
+                return Ok(EQ);
+            }
+            else if (MapPoint.StationType == STATION_TYPE.Buffer || MapPoint.StationType == STATION_TYPE.Charge_Buffer || MapPoint.StationType == STATION_TYPE.Buffer_EQ)
+            {
+                var WIP = StaEQPManagager.RacksOptions.Values.Select(x => x).Where(x => x.ColumnTagMap.Any(x => x.Value.Contains(Tag))).FirstOrDefault();
+                return Ok(WIP);
+            }
             return Ok();
         }
 
@@ -46,7 +63,7 @@ namespace AGVSystem.Controllers
         [HttpGet("GetWIPOptions")]
         public async Task<IActionResult> GetWIPOptions()
         {
-            clsEndPointOptions[] WIPs = StaEQPManagager.RacksList.Select(wip => wip.EndPointOptions).ToArray();
+            clsEndPointOptions[] WIPs = StaEQPManagager.RacksList.Select(wip => (clsRackOptions)wip.EndPointOptions).ToArray();
             return Ok(WIPs);
         }
         [HttpGet("GetEQOptionByTag")]
@@ -108,6 +125,13 @@ namespace AGVSystem.Controllers
             return Ok(new { Connected = connected });
         }
 
+        /// <summary>
+        /// 設定充電樁的設定值
+        /// </summary>
+        /// <param name="EqName"></param>
+        /// <param name="Item"></param>
+        /// <param name="Value"></param>
+        /// <returns></returns>
         [HttpGet("ChargeStation/Settings")]
         public async Task<IActionResult> ChargeStationCurveSetting(string EqName, string Item, double Value)
         {
@@ -177,7 +201,6 @@ namespace AGVSystem.Controllers
 
             }
         }
-
 
         [HttpPost("ChargeStation/SaveUsableAGVSetting")]
         public async Task<IActionResult> SaveUsableAGVSetting([FromBody] string[] agvNames, string ChargeStationName)

@@ -145,6 +145,163 @@ namespace AGVSystem.TaskManagers
             }
             AutoRunning = false;
         }
+        public static (bool confirm, ALARMS alarm_code, string message, object obj, Type objtype) CheckLoadUnloadStation(int station_tag, int LayerorSlot, ACTION_TYPE actiontype, bool check_rack_move_out_is_empty_or_full = true)
+        {
+            AGVSystemCommonNet6.MAP.MapPoint MapPoint = AGVSMapManager.GetMapPointByTag(station_tag);
+            if (MapPoint == null)
+                return new(false, ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, $"站點TAG-{station_tag} 不存在於當前地圖", null, null);
+            if (!MapPoint.Enable)
+                return (false, ALARMS.Station_Disabled, "站點未啟用，無法指派任務", null, null);
+
+            if (MapPoint.StationType == STATION_TYPE.EQ || MapPoint.StationType == STATION_TYPE.EQ_LD || MapPoint.StationType == STATION_TYPE.EQ_ULD || 
+                (MapPoint.StationType == STATION_TYPE.Buffer_EQ && LayerorSlot == 0))
+            {
+                var Eq = StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == station_tag);
+                if (Eq == null)
+                    return new(false, ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, $"設備站點TAG-{station_tag},EQ-{Eq.EQName} 不存在於當前地圖", null, null);
+                if (!Eq.IsConnected)
+                    return new(false, ALARMS.Endpoint_EQ_NOT_CONNECTED, $"設備[{Eq.EQName}] 尚未連線,無法確認狀態", null, null);
+                if (actiontype == ACTION_TYPE.Unload)
+                {
+                    if (Eq.Unload_Request == false)
+                        return new(false, ALARMS.EQ_LOAD_REQUEST_IS_NOT_ON, $"設備[{Eq.EQName}] 沒有[出料]請求", null, null);
+                    if (Eq.Port_Exist == false)
+                        return new(false, ALARMS.EQ_UNLOAD_REQUEST_ON_BUT_NO_CARGO, $"設備[{Eq.EQName}] PORT內無貨物，無法載出", null, null);
+                    if (Eq.Up_Pose == false)
+                        return new(false, ALARMS.EQ_UNLOAD_REQUEST_ON_BUT_NO_CARGO, $"設備[{Eq.EQName}] Up_Pose=false", null, null);
+                    if (check_rack_move_out_is_empty_or_full && Eq.EndPointOptions.CheckRackContentStateIOSignal && Eq.Is_RACK_HAS_TRAY_OR_NOT_TO_LDULD_Unknown)
+                        return new(false, ALARMS.EQ_UNLOAD_REQ_BUT_RACK_FULL_OR_EMPTY_IS_UNKNOWN, $"設備[{Eq.EQName}] 無法確定要載出空框或實框", null, null);
+                }
+                else if (actiontype == ACTION_TYPE.Load)
+                {
+                    if (Eq.Load_Request == false)
+                        return new(false, ALARMS.EQ_LOAD_REQUEST_IS_NOT_ON, $"設備[{Eq.EQName}] 沒有[入料]請求", null, null);
+                    if (Eq.Port_Exist == true)
+                        return new(false, ALARMS.EQ_LOAD_REQUEST_ON_BUT_HAS_CARGO, $"設備[{Eq.EQName}] 內有貨物，無法載入", null, null);
+                    if (Eq.Down_Pose == false)
+                        return new(false, ALARMS.EQ_UNLOAD_REQUEST_ON_BUT_NO_CARGO, $"設備[{Eq.EQName}] Down_Pose=false", null, null);
+                    if (check_rack_move_out_is_empty_or_full && Eq.EndPointOptions.CheckRackContentStateIOSignal && Eq.Is_RACK_HAS_TRAY_OR_NOT_TO_LDULD_Unknown)
+                        return new(false, ALARMS.EQ_LOAD_REQ_BUT_RACK_FULL_OR_EMPTY_IS_UNKNOWN, $"設備[{Eq.EQName}] 無法確定要載入空框或實框", null, null);
+                }
+                return new(true, ALARMS.NONE, $"GET EQ", Eq, Eq.GetType());
+            }
+            else if (MapPoint.StationType == STATION_TYPE.Buffer || MapPoint.StationType == STATION_TYPE.Charge_Buffer)
+            {
+                var Eq = StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == station_tag);
+                if (Eq != null)
+                {
+                    if (!Eq.IsConnected)
+                        return new(false, ALARMS.Endpoint_EQ_NOT_CONNECTED, $"設備[{Eq.EQName}] 尚未連線,無法確認狀態", null, null);
+                    if (actiontype == ACTION_TYPE.Unload)
+                    {
+                        if (Eq.Unload_Request == false)
+                            return new(false, ALARMS.EQ_LOAD_REQUEST_IS_NOT_ON, $"設備[{Eq.EQName}] 沒有[出料]請求", null, null);
+                        if (Eq.Port_Exist == false)
+                            return new(false, ALARMS.EQ_UNLOAD_REQUEST_ON_BUT_NO_CARGO, $"設備[{Eq.EQName}] PORT內無貨物，無法載出", null, null);
+                        if (Eq.Up_Pose == false)
+                            return new(false, ALARMS.EQ_UNLOAD_REQUEST_ON_BUT_NO_CARGO, $"設備[{Eq.EQName}] Up_Pose=false", null, null);
+                        if (check_rack_move_out_is_empty_or_full && Eq.EndPointOptions.CheckRackContentStateIOSignal && Eq.Is_RACK_HAS_TRAY_OR_NOT_TO_LDULD_Unknown)
+                            return new(false, ALARMS.EQ_UNLOAD_REQ_BUT_RACK_FULL_OR_EMPTY_IS_UNKNOWN, $"設備[{Eq.EQName}] 無法確定要載出空框或實框", null, null);
+                    }
+                    else if (actiontype == ACTION_TYPE.Load)
+                    {
+                        if (Eq.Load_Request == false)
+                            return new(false, ALARMS.EQ_LOAD_REQUEST_IS_NOT_ON, $"設備[{Eq.EQName}] 沒有[入料]請求", null, null);
+                        if (Eq.Port_Exist == true)
+                            return new(false, ALARMS.EQ_LOAD_REQUEST_ON_BUT_HAS_CARGO, $"設備[{Eq.EQName}] 內有貨物，無法載入", null, null);
+                        if (Eq.Down_Pose == false)
+                            return new(false, ALARMS.EQ_UNLOAD_REQUEST_ON_BUT_NO_CARGO, $"設備[{Eq.EQName}] Down_Pose=false", null, null);
+                        if (check_rack_move_out_is_empty_or_full && Eq.EndPointOptions.CheckRackContentStateIOSignal && Eq.Is_RACK_HAS_TRAY_OR_NOT_TO_LDULD_Unknown)
+                            return new(false, ALARMS.EQ_LOAD_REQ_BUT_RACK_FULL_OR_EMPTY_IS_UNKNOWN, $"設備[{Eq.EQName}] 無法確定要載入空框或實框", null, null);
+                    }
+                    return new(true, ALARMS.NONE, $"GET EQ", Eq, Eq.GetType());
+                }
+                else
+                {
+                    List<clsPortOfRack> ports = StaEQPManagager.GetRackColumnByTag(station_tag);
+                    var Rack = ports.FirstOrDefault().GetParentRack();
+                    if (Rack == null)
+                        return new(false, ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, $"WIP站點TAG-{station_tag},EQ-{Rack.EQName} 不存在於當前地圖", null, null);
+                    if (Rack.IsConnected == false)
+                        return new(false, ALARMS.Endpoint_EQ_NOT_CONNECTED, $"WIP [{Rack.EQName}] 尚未連線,無法確認狀態", null, null);
+                    clsPortOfRack specificport = ports.Where(x => x.Layer == LayerorSlot).FirstOrDefault();
+                    if (specificport == null)
+                        return new(false, ALARMS.EQ_LOAD_REQUEST_IS_NOT_ON, $"WIP設備[{Rack.EQName}, ID:{specificport.Properties.ID}] 料座不存在", null, null);
+                    if (actiontype == ACTION_TYPE.Unload)
+                    {
+                        if (specificport.CargoExist == false)
+                            return new(false, ALARMS.EQ_LOAD_REQUEST_IS_NOT_ON, $"WIP設備[{Rack.EQName}, ID:{specificport.Properties.ID}] 料座無貨", null, null);
+                    }
+                    else if (actiontype == ACTION_TYPE.Load || actiontype == ACTION_TYPE.LoadAndPark)
+                    {
+                        if (specificport.CargoExist == true)
+                            return new(false, ALARMS.EQ_LOAD_REQUEST_IS_NOT_ON, $"WIP設備[{Rack.EQName}, ID:{specificport.Properties.ID}] 料座已占用", null, null);
+                    }
+                    return new(true, ALARMS.NONE, $" GET RACK", specificport, specificport.GetType());
+                }
+            }
+            else if (MapPoint.StationType == STATION_TYPE.Buffer_EQ && LayerorSlot >= 1) // Buffer_EQ slot >=1 先確認WIP儲位但還是要預約EQ訊號
+            {
+                List<clsPortOfRack> ports = StaEQPManagager.GetRackColumnByTag(station_tag);
+                var Rack = ports.FirstOrDefault().GetParentRack();
+                if (Rack == null)
+                    return new(false, ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, $"WIP站點TAG-{station_tag},EQ-{Rack.EQName} 不存在於當前地圖", null, null);
+                if (Rack.IsConnected == false)
+                    return new(false, ALARMS.Endpoint_EQ_NOT_CONNECTED, $"WIP [{Rack.EQName}] 尚未連線,無法確認狀態", null, null);
+                clsPortOfRack specificport = ports.Where(x => x.Layer == LayerorSlot).FirstOrDefault();
+                if (specificport == null)
+                    return new(false, ALARMS.EQ_LOAD_REQUEST_IS_NOT_ON, $"WIP設備[{Rack.EQName}, ID:{specificport.Properties.ID}] 料座不存在", null, null);
+                if (actiontype == ACTION_TYPE.Unload)
+                {
+                    if (specificport.CargoExist == false)
+                        return new(false, ALARMS.EQ_LOAD_REQUEST_IS_NOT_ON, $"WIP設備[{Rack.EQName}, ID:{specificport.Properties.ID}] 料座無貨", null, null);
+                }
+                else if (actiontype == ACTION_TYPE.Load || actiontype == ACTION_TYPE.LoadAndPark)
+                {
+                    if (specificport.CargoExist == true)
+                        return new(false, ALARMS.EQ_LOAD_REQUEST_IS_NOT_ON, $"WIP設備[{Rack.EQName}, ID:{specificport.Properties.ID}] 料座已占用", null, null);
+                }
+                var Eq = StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == station_tag);
+                if (Eq == null)
+                    return new(false, ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, $"設備站點TAG-{station_tag},EQ-{Eq.EQName} 不存在於當前地圖", null, null);
+                if (!Eq.IsConnected)
+                    return new(false, ALARMS.Endpoint_EQ_NOT_CONNECTED, $"設備[{Eq.EQName}] 尚未連線,無法確認狀態", null, null);
+                //if (actiontype == ACTION_TYPE.Unload)
+                //{
+                //    if (Eq.Unload_Request == false)
+                //        return new(false, ALARMS.EQ_LOAD_REQUEST_IS_NOT_ON, $"設備[{Eq.EQName}] 沒有[出料]請求", null, null);
+                //    if (Eq.Port_Exist == false)
+                //        return new(false, ALARMS.EQ_UNLOAD_REQUEST_ON_BUT_NO_CARGO, $"設備[{Eq.EQName}] PORT內無貨物，無法載出", null, null);
+                //    if (Eq.Up_Pose == false)
+                //        return new(false, ALARMS.EQ_UNLOAD_REQUEST_ON_BUT_NO_CARGO, $"設備[{Eq.EQName}] Up_Pose=false", null, null);
+                //    if (check_rack_move_out_is_empty_or_full && Eq.EndPointOptions.CheckRackContentStateIOSignal && Eq.Is_RACK_HAS_TRAY_OR_NOT_TO_LDULD_Unknown)
+                //        return new(false, ALARMS.EQ_UNLOAD_REQ_BUT_RACK_FULL_OR_EMPTY_IS_UNKNOWN, $"設備[{Eq.EQName}] 無法確定要載出空框或實框", null, null);
+                //}
+                //else if (actiontype == ACTION_TYPE.Load)
+                //{
+                //    if (Eq.Load_Request == false)
+                //        return new(false, ALARMS.EQ_LOAD_REQUEST_IS_NOT_ON, $"設備[{Eq.EQName}] 沒有[入料]請求", null, null);
+                //    if (Eq.Port_Exist == true)
+                //        return new(false, ALARMS.EQ_LOAD_REQUEST_ON_BUT_HAS_CARGO, $"設備[{Eq.EQName}] 內有貨物，無法載入", null, null);
+                //    if (Eq.Down_Pose == false)
+                //        return new(false, ALARMS.EQ_UNLOAD_REQUEST_ON_BUT_NO_CARGO, $"設備[{Eq.EQName}] Down_Pose=false", null, null);
+                //    if (check_rack_move_out_is_empty_or_full && Eq.EndPointOptions.CheckRackContentStateIOSignal && Eq.Is_RACK_HAS_TRAY_OR_NOT_TO_LDULD_Unknown)
+                //        return new(false, ALARMS.EQ_LOAD_REQ_BUT_RACK_FULL_OR_EMPTY_IS_UNKNOWN, $"設備[{Eq.EQName}] 無法確定要載入空框或實框", null, null);
+                //}
+                return new(true, ALARMS.NONE, $" GET EQ RACK", Eq, Eq.GetType());
+            }
+            else
+            { return new(false, ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, $"設備站點TAG-{station_tag} 不存在於當前地圖", null, null); }
+        }
+        public static clsPortOfRack get_empyt_port_of_rack(int _station_tag)
+        {
+            List<clsPortOfRack> ports = StaEQPManagager.GetRackColumnByTag(_station_tag);
+            clsPortOfRack port = ports.Where(x => x.CargoExist == false).OrderBy(x => x.Layer).FirstOrDefault();
+            return port==null ? null : port;
+            
+        }
+
+
         public static (bool confirm, ALARMS alarm_code, string message) CheckUnloadStationStatus(int station_tag, bool check_rack_move_out_is_empty_or_full = true)
         {
             bool _eq_exist = TryGetStationEQDIStatus(station_tag, out clsEQ equipment);
@@ -192,32 +349,32 @@ namespace AGVSystem.TaskManagers
         {
             return new(true, ALARMS.NONE, "");
         }
-        public static (bool confirm, ALARMS alarm_code, string message,clsRack rack) CheckLoadUnloadRackStatus(int station_tag, string strSlot = "-1")
+        public static (bool confirm, ALARMS alarm_code, string message, clsRack rack) CheckLoadUnloadRackStatus(int station_tag, string strSlot = "-1")
         {
             bool _eq_exist = TryGetStationWIP(station_tag, out clsRack rack);
             if (!_eq_exist)
-                return new(false, ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, $"WIP站點TAG-{station_tag} 不存在於當前地圖",null);
+                return new(false, ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, $"WIP站點TAG-{station_tag} 不存在於當前地圖", null);
             if (!rack.IsConnected)
-                return new(false, ALARMS.Endpoint_EQ_NOT_CONNECTED, $"設備[{rack.EQName}] 尚未連線,無法確認狀態",rack);
-            return new(true, ALARMS.NONE, "",rack);
+                return new(false, ALARMS.Endpoint_EQ_NOT_CONNECTED, $"設備[{rack.EQName}] 尚未連線,無法確認狀態", rack);
+            return new(true, ALARMS.NONE, "", rack);
         }
 
-        public static (bool confirm, ALARMS alarm_code, string message) CheckLoadUnloadPortofRackStatus(int station_tag, ACTION_TYPE actiontype,clsRack rack, string strSlot = "-1")
+        public static (bool confirm, ALARMS alarm_code, string message) CheckLoadUnloadPortofRackStatus(int station_tag, ACTION_TYPE actiontype, clsRack rack, string strSlot = "-1")
         {
             List<clsPortOfRack> ports = StaEQPManagager.GetRackColumnByTag(station_tag);
 
             clsPortOfRack specificport = ports.Where(x => x.Layer == Convert.ToInt32(strSlot)).FirstOrDefault();
             if (specificport == null)
-                return new(false, ALARMS.EQ_LOAD_REQUEST_IS_NOT_ON, $"WIP設備[{rack.EQName}-{specificport.Properties.ID}] 料座不存在");
+                return new(false, ALARMS.EQ_LOAD_REQUEST_IS_NOT_ON, $"WIP設備[{rack.EQName}, ID:{specificport.Properties.ID}] 料座不存在");
             if (actiontype == ACTION_TYPE.Unload)
             {
                 if (specificport.CargoExist == false)
-                    return new(false, ALARMS.EQ_LOAD_REQUEST_IS_NOT_ON, $"WIP設備[{rack.EQName}-{specificport.Properties.ID}] 料座無貨");
+                    return new(false, ALARMS.EQ_LOAD_REQUEST_IS_NOT_ON, $"WIP設備[{rack.EQName}, ID:{specificport.Properties.ID}] 料座無貨");
             }
             else if (actiontype == ACTION_TYPE.Load || actiontype == ACTION_TYPE.LoadAndPark)
             {
                 if (specificport.CargoExist == true)
-                    return new(false, ALARMS.EQ_LOAD_REQUEST_IS_NOT_ON, $"WIP設備[{rack.EQName}-{specificport.Properties.ID}] 料座已占用");
+                    return new(false, ALARMS.EQ_LOAD_REQUEST_IS_NOT_ON, $"WIP設備[{rack.EQName}, ID:{specificport.Properties.ID}] 料座已占用");
             }
             return new(true, ALARMS.NONE, "");
         }
@@ -345,9 +502,9 @@ namespace AGVSystem.TaskManagers
                 return new(false, ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, $"設備站點TAG-{station_tag} 不存在於當前地圖");
             else
             {
-                VEHICLE_TYPE source_eq_accept_agv_model = equipment.EndPointOptions.Accept_AGV_Type;
-                if (source_eq_accept_agv_model != VEHICLE_TYPE.ALL && source_eq_accept_agv_model != model)
-                    return (false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Source_Equipment, $"設備不允許{model}車種進行任務");
+                VEHICLE_TYPE eq_accept_agv_model = equipment.EndPointOptions.Accept_AGV_Type;
+                if (eq_accept_agv_model != VEHICLE_TYPE.ALL && eq_accept_agv_model != model)
+                    return (false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Source_Equipment, $"設備TAG-{station_tag}不允許{model}車種進行任務");
                 else
                     return new(true, ALARMS.NONE, "");
             }

@@ -1,10 +1,9 @@
-using AGVSystem;
+﻿using AGVSystem;
 using AGVSystem.Models.Automation;
 using AGVSystem.Models.EQDevices;
 using AGVSystem.Models.Map;
 using AGVSystem.Models.Sys;
 using AGVSystem.Models.TaskAllocation.HotRun;
-using AGVSystem.Models.WebsocketMiddleware;
 using AGVSystem.Service;
 using AGVSystem.TaskManagers;
 using AGVSystemCommonNet6;
@@ -30,11 +29,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using Serilog;
+using Serilog.Filters;
 using System.Configuration;
 using System.Reflection;
 using System.Security.Policy;
 using System.Text;
-Console.Title = "GPM-AGV�t��(AGVs)";
+Console.Title = "GPM-AGV系統(AGVs)";
 LOG.SetLogFolderName("AGVS LOG");
 LOG.INFO("AGVS System Start");
 AGVSConfigulator.Init();
@@ -44,7 +45,7 @@ try
 }
 catch (Exception ex)
 {
-    Console.WriteLine($"��Ʈw��l�Ʋ��`-�нT�{��Ʈw! {ex.Message}");
+    Console.WriteLine($"資料庫初始化異常-請確認資料庫! {ex.Message}");
     Environment.Exit(4);
 }
 
@@ -52,7 +53,6 @@ EQTransferTaskManager.Initialize();
 AGVSMapManager.Initialize();
 HotRunScriptManager.Initialize();
 ScheduleMeasureManager.Initialize();
-
 EQDeviceEventsHandler.Initialize();
 
 clsEQ.OnIOStateChanged += EQDeviceEventsHandler.HandleEQIOStateChanged;
@@ -65,8 +65,38 @@ VMSSerivces.OnVMSReconnected += async (sender, e) => await VMSSerivces.RunModeSw
 VMSSerivces.AliveCheckWorker();
 VMSSerivces.RunModeSwitch(AGVSystemCommonNet6.AGVDispatch.RunMode.RUN_MODE.MAINTAIN);
 
-
 var builder = WebApplication.CreateBuilder(args);
+string logRootFolder = AGVSConfigulator.SysConfigs.LogFolder;
+builder.Host.UseSerilog((context, services, configuration) => configuration
+    .ReadFrom.Services(services)
+    .Enrich.FromLogContext()
+    //全部的LOG但不包含EF Core Log與 ApiLoggingMiddleware
+    .WriteTo.Logger(lc => lc
+                .WriteTo.Console()
+                .Filter.ByExcluding(Matching.FromSource("Microsoft.EntityFrameworkCore")) // 過濾EF Core Log  
+                .Filter.ByExcluding(Matching.FromSource("AGVSystem.ApiLoggingMiddleware")) // 過濾EF Core Log
+                .WriteTo.File(
+                    path: $"{logRootFolder}/AGVS/log-.log", // 路徑
+                    rollingInterval: RollingInterval.Day, // 每小時一個檔案
+                    retainedFileCountLimit: 24 * 90,// 最多保留 30 天份的 Log 檔案
+                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}",
+                    rollOnFileSizeLimit: false,
+                    fileSizeLimitBytes: null
+                    ))
+    //只有 AGVSystem.ApiLoggingMiddleware 
+    .WriteTo.Logger(lc => lc
+                    .WriteTo.Console()
+                    .Filter.ByIncludingOnly(Matching.FromSource("AGVSystem.ApiLoggingMiddleware"))
+                    .WriteTo.File(
+                        path: $"{logRootFolder}/AGVS/api/log-.log",
+                        rollingInterval: RollingInterval.Day,
+                        retainedFileCountLimit: 24 * 90,
+                        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}",
+                        rollOnFileSizeLimit: false,
+                        fileSizeLimitBytes: null
+                    )
+                )
+);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -74,7 +104,7 @@ builder.Services.AddSwaggerGen(opton =>
 {
     opton.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
     {
-        Title = "GPM �����t�� RESTFul API",
+        Title = "GPM 派車系統 RESTFul API",
         Version = "V1"
     });
     var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
@@ -102,24 +132,31 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
         }
     );
 
+
 builder.Services.AddDbContext<AGVSDbContext>(options => options.UseSqlServer(AGVSConfigulator.SysConfigs.DBConnection));
 builder.Services.AddHostedService<DatabaseBackgroundService>();
+builder.Services.AddHostedService<VehicleLocationMonitorBackgroundService>();
+builder.Services.AddHostedService<FrontEndDataCollectionBackgroundService>();
+
 builder.Services.AddScoped<MeanTimeQueryService>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
     {
-        policy.AllowAnyOrigin()
-              .AllowAnyHeader()
-              .AllowAnyMethod();
+        policy.AllowAnyMethod()
+                    .AllowAnyHeader()
+                     .SetIsOriginAllowed(origin => true) // 允许任何来源
+                     .AllowCredentials(); // 允许凭据
     });
 });
 builder.Services.AddWebSockets(options =>
 {
     options.KeepAliveInterval = TimeSpan.FromSeconds(600);
 });
+builder.Services.AddSignalR().AddJsonProtocol(options => { options.PayloadSerializerOptions.PropertyNamingPolicy = null; }); ;
 
 var app = builder.Build();
+app.UseMiddleware<ApiLoggingMiddleware>();
 
 _ = Task.Run(async () =>
 {
@@ -135,22 +172,20 @@ _ = Task.Run(async () =>
     }
     catch (Exception ex)
     {
-        AlarmManagerCenter.AddAlarmAsync(1101);//SYSTEM_EQP_MANAGEMENT_INITIALIZE_FAIL_WITH_EXCEPTION
+        AlarmManagerCenter.AddAlarmAsync(ALARMS.SYSTEM_EQP_MANAGEMENT_INITIALIZE_FAIL_WITH_EXCEPTION);//SYSTEM_EQP_MANAGEMENT_INITIALIZE_FAIL_WITH_EXCEPTION
         LOG.Critical(ex);
     }
 });
 
-AGVSWebsocketServerMiddleware.Middleware.Initialize();
 AutomationManager.InitialzeDefaultTasks();
 AutomationManager.StartAllAutomationTasks();
 app.UseSwagger();
 app.UseSwaggerUI();
-app.UseCors(c => c.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
-app.UseWebSockets();
+app.UseCors("AllowAll"); app.UseWebSockets();
 app.UseDefaultFiles(new DefaultFilesOptions());
 app.UseStaticFiles();
 
-// �[���t�m���
+// 加載配置文件
 var mapFileFolderPath = app.Configuration.GetValue<string>("StaticFileOptions:MapFile:FolderPath");
 var mapFileRequestPath = app.Configuration.GetValue<string>("StaticFileOptions:MapFile:RequestPath");
 var agvImageFileFolderPath = app.Configuration.GetValue<string>("StaticFileOptions:AGVImageStoreFile:FolderPath");
@@ -236,8 +271,10 @@ catch (Exception ex)
 var agvDisplayImageFolder = Path.Combine(app.Environment.WebRootPath, @"images\AGVDisplayImages");
 Directory.CreateDirectory(agvDisplayImageFolder);
 
+//app.UseMiddleware<RequestResponseLoggingMiddleware>();
 app.UseVueRouterHistory();
 //app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHub<FrontEndDataHub>("/FrontEndDataHub");
 app.Run();

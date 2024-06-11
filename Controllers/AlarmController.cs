@@ -1,5 +1,4 @@
-﻿using AGVSystem.Models.WebsocketMiddleware;
-using AGVSystemCommonNet6.Alarm;
+﻿using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.DATABASE;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

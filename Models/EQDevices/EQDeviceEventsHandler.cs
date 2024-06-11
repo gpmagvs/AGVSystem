@@ -1,7 +1,9 @@
 ﻿using AGVSystem.Service;
 using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.Log;
+using EquipmentManagment.ChargeStation;
 using EquipmentManagment.Device;
+using EquipmentManagment.WIP;
 
 namespace AGVSystem.Models.EQDevices
 {
@@ -17,6 +19,11 @@ namespace AGVSystem.Models.EQDevices
             EndPointDeviceAbstract.OnDeviceMaintainStart += HandleDeviceMaintainStart;
             EndPointDeviceAbstract.OnDeviceMaintainFinish += HandleDeviceMaintainFinish;
 
+            clsChargeStation.OnBatteryNotConnected += HandleChargeStationBatteryNotConnectEvent;
+            clsChargeStation.OnBatteryChargeFull += HandleChargeFullEvent;
+
+            clsPortOfRack.OnRackPortSensorFlash += HandlePortOfRackSensorFlash;
+            clsPortOfRack.OnRackPortSensorStatusChanged += HandlePortOfRackSensorStatusChanged;
         }
 
         private static void HandleEQFinishPartsReplace(object? sender, EndPointDeviceAbstract e)
@@ -37,7 +44,7 @@ namespace AGVSystem.Models.EQDevices
             _ = Task.Factory.StartNew(async () =>
             {
                 await AlarmManagerCenter.ResetAlarmAsync(new clsAlarmDto() { AlarmCode = (int)ALARMS.EQ_Input_Data_Not_Enough }, false);
-                await AlarmManagerCenter.AddAlarmAsync(1081, source: ALARM_SOURCE.EQP, Equipment_Name: device.EQName);
+                await AlarmManagerCenter.AddAlarmAsync(ALARMS.EQ_Input_Data_Not_Enough, source: ALARM_SOURCE.EQP, Equipment_Name: device.EQName);
             });
         }
 
@@ -47,7 +54,7 @@ namespace AGVSystem.Models.EQDevices
 
             _ = Task.Run(async () =>
             {
-                await AlarmManagerCenter.AddAlarmAsync(1068, source: ALARM_SOURCE.EQP, Equipment_Name: device.EQName);
+                await AlarmManagerCenter.AddAlarmAsync(ALARMS.EQ_Disconnect, source: ALARM_SOURCE.EQP, Equipment_Name: device.EQName);
             });
         }
 

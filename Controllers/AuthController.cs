@@ -1,5 +1,4 @@
-﻿using AGVSystem.Models.WebsocketMiddleware;
-using AGVSystemCommonNet6.DATABASE;
+﻿using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.User;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection.KeyManagement;

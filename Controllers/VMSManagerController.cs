@@ -1,6 +1,5 @@
 ﻿
 using AGVSystem.Models.Map;
-using AGVSystem.Models.WebsocketMiddleware;
 using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.AGVDispatch.Messages;
 using AGVSystemCommonNet6.DATABASE;
@@ -25,7 +24,7 @@ namespace AGVSystem.Controllers
         }
 
 
-       
+
     }
 
     public class clsAGVStateViewModel : clsAGVStateDto

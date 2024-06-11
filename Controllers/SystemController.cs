@@ -1,5 +1,4 @@
 ﻿using AGVSystem.Models.Sys;
-using AGVSystem.Models.WebsocketMiddleware;
 using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.AGVDispatch.RunMode;
 using AGVSystemCommonNet6.Configuration;
@@ -17,12 +16,6 @@ namespace AGVSystem.Controllers
     [ApiController]
     public class SystemController : ControllerBase
     {
-        [HttpGet("/ws")]
-        public async Task WebsocketClient(string user_id)
-        {
-            await AGVSWebsocketServerMiddleware.Middleware.HandleWebsocketClientConnectIn(HttpContext, user_id);
-
-        }
 
         [HttpGet("OperationStates")]
         public async Task<IActionResult> OperationStates()
