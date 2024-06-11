@@ -66,23 +66,36 @@ VMSSerivces.AliveCheckWorker();
 VMSSerivces.RunModeSwitch(AGVSystemCommonNet6.AGVDispatch.RunMode.RUN_MODE.MAINTAIN);
 
 var builder = WebApplication.CreateBuilder(args);
-
+string logRootFolder = AGVSConfigulator.SysConfigs.LogFolder;
 builder.Host.UseSerilog((context, services, configuration) => configuration
     .ReadFrom.Services(services)
     .Enrich.FromLogContext()
-    .WriteTo.Console()
-    .WriteTo.File("logs/log-.log",
-        rollingInterval: RollingInterval.Hour, // 每小時一個檔案
-        retainedFileCountLimit: 24 * 30,// 最多保留 30 天份的 Log 檔案
-        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}" // 輸出格式
-        )
-    .Filter.ByExcluding(Matching.FromSource("Microsoft.EntityFrameworkCore")) // 過濾EF Core Log
-    .Filter.ByExcluding(Matching.FromSource("AGVSystem.ApiLoggingMiddleware")) // 過濾ASP.NET Core Log
-    .WriteTo.File("logs/agvs/api-.log",
-        rollingInterval: RollingInterval.Hour,
-        retainedFileCountLimit: 24 * 30,
-        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}"
-        )
+    //全部的LOG但不包含EF Core Log與 ApiLoggingMiddleware
+    .WriteTo.Logger(lc => lc
+                .WriteTo.Console()
+                .Filter.ByExcluding(Matching.FromSource("Microsoft.EntityFrameworkCore")) // 過濾EF Core Log  
+                .Filter.ByExcluding(Matching.FromSource("AGVSystem.ApiLoggingMiddleware")) // 過濾EF Core Log
+                .WriteTo.File(
+                    path: $"{logRootFolder}/AGVS/log-.log", // 路徑
+                    rollingInterval: RollingInterval.Day, // 每小時一個檔案
+                    retainedFileCountLimit: 24 * 90,// 最多保留 30 天份的 Log 檔案
+                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}",
+                    rollOnFileSizeLimit: false,
+                    fileSizeLimitBytes: null
+                    ))
+    //只有 AGVSystem.ApiLoggingMiddleware 
+    .WriteTo.Logger(lc => lc
+                    .WriteTo.Console()
+                    .Filter.ByIncludingOnly(Matching.FromSource("AGVSystem.ApiLoggingMiddleware"))
+                    .WriteTo.File(
+                        path: $"{logRootFolder}/AGVS/api/log-.log",
+                        rollingInterval: RollingInterval.Day,
+                        retainedFileCountLimit: 24 * 90,
+                        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}",
+                        rollOnFileSizeLimit: false,
+                        fileSizeLimitBytes: null
+                    )
+                )
 );
 
 builder.Services.AddControllers();
