@@ -10,6 +10,7 @@ using AGVSystemCommonNet6.AGVDispatch.Model;
 using Microsoft.Build.Framework;
 using AGVSystemCommonNet6.AGVDispatch;
 using AGVSystem.Models.Map;
+using AGVSystemCommonNet6.Vehicle_Control.VCSDatabase;
 
 namespace AGVSystem.Controllers
 {
@@ -67,6 +68,12 @@ namespace AGVSystem.Controllers
             public string AGV_Name { get; set; } = "ALL";
         }
 
+        [HttpGet("GetTaskStateByID")]
+        public async Task<IActionResult> GetTaskStateByID(string TaskName)
+        {
+            TaskDatabaseHelper dbhelper = new TaskDatabaseHelper();
+            return Ok(await dbhelper.GetTaskStateByID(TaskName));
+        }
 
 
         [HttpGet("GetTasks")]
