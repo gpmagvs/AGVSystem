@@ -12,6 +12,7 @@ using Microsoft.Build.ObjectModelRemoting;
 using Microsoft.CodeAnalysis.Scripting;
 using Microsoft.EntityFrameworkCore.Update;
 using Newtonsoft.Json;
+using NLog;
 using NuGet.Common;
 using NuGet.Configuration;
 using NuGet.ContentModel;
@@ -181,6 +182,8 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                     RunningScriptList.Add(script);
                     //等待AGV可做任務
                     var agvstates = GetAGVState();
+                    Logger logger = LogManager.GetCurrentClassLogger();
+                    logger.Info($"Hot Run Start. {script.scriptID}({script.comment})");
                     while (agvstates.OnlineStatus == clsEnums.ONLINE_STATE.OFFLINE || !agvstates.Connected || agvstates.MainStatus == clsEnums.MAIN_STATUS.DOWN || agvstates.MainStatus == clsEnums.MAIN_STATUS.RUN)
                     {
                         await Task.Delay(100);
@@ -246,6 +249,8 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                                     }
                                     await Task.Delay(500);
                                 }
+
+                                UpdateScriptState(script);
                             }
 
                             script.finish_num += 1;

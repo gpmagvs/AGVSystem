@@ -64,39 +64,6 @@ try
     builder.Logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Information);
     builder.Host.UseNLog();
 
-    string logRootFolder = AGVSConfigulator.SysConfigs.LogFolder;
-
-    //builder.Host.UseSerilog((context, services, configuration) => configuration
-    //    .ReadFrom.Services(services)
-    //    .Enrich.FromLogContext()
-    //    //全部的LOG但不包含EF Core Log與 ApiLoggingMiddleware
-    //    .WriteTo.Logger(lc => lc
-    //                .WriteTo.Console()
-    //                .Filter.ByExcluding(Matching.FromSource("Microsoft.EntityFrameworkCore")) // 過濾EF Core Log  
-    //                .Filter.ByExcluding(Matching.FromSource("AGVSystem.ApiLoggingMiddleware")) // 過濾EF Core Log
-    //                .WriteTo.File(
-    //                    path: $"{logRootFolder}/AGVS/log-.log", // 路徑
-    //                    rollingInterval: RollingInterval.Day, // 每小時一個檔案
-    //                    retainedFileCountLimit: 24 * 90,// 最多保留 30 天份的 Log 檔案
-    //                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}",
-    //                    rollOnFileSizeLimit: false,
-    //                    fileSizeLimitBytes: null
-    //                    ))
-    //    //只有 AGVSystem.ApiLoggingMiddleware 
-    //    .WriteTo.Logger(lc => lc
-    //                    .WriteTo.Console()
-    //                    .Filter.ByIncludingOnly(Matching.FromSource("AGVSystem.ApiLoggingMiddleware"))
-    //                    .WriteTo.File(
-    //                        path: $"{logRootFolder}/AGVS/api/log-.log",
-    //                        rollingInterval: RollingInterval.Day,
-    //                        retainedFileCountLimit: 24 * 90,
-    //                        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}",
-    //                        rollOnFileSizeLimit: false,
-    //                        fileSizeLimitBytes: null
-    //                    )
-    //                )
-    //);
-
     builder.Services.AddControllers();
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen(opton =>
@@ -135,7 +102,7 @@ try
     builder.Services.AddDbContext<AGVSDbContext>(options => options.UseSqlServer(AGVSConfigulator.SysConfigs.DBConnection));
     builder.Services.AddHostedService<DatabaseBackgroundService>();
     builder.Services.AddHostedService<VehicleLocationMonitorBackgroundService>();
-    builder.Services.AddHostedService<FrontEndDataCollectionBackgroundService>();
+    builder.Services.AddHostedService<FrontEndDataBrocastService>();
 
     builder.Services.AddScoped<MeanTimeQueryService>();
     builder.Services.AddCors(options =>
