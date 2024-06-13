@@ -7,6 +7,9 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
 {
     public class HotRunScript
     {
+
+        public static event EventHandler OnHotRunScriptChanged;
+
         public int no { get; set; }
         /// <summary>
         /// ¸}¥»ID(°ß¤@)
@@ -14,10 +17,35 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
         public string scriptID { get; set; } = "";
         public string agv_name { get; set; } = "";
         public int loop_num { get; set; }
-        public int finish_num { get; set; }
+
+        private int _finish_num = 0;
+        public int finish_num
+        {
+            get => _finish_num;
+            set
+            {
+                if (_finish_num != value)
+                {
+                    _finish_num = value;
+                    OnHotRunScriptChanged?.Invoke(this, null);
+                }
+            }
+        }
         public int action_num { get; set; }
 
-        public string state { get; set; } = "IDLE";
+        private string _state = "IDLE";
+        public string state
+        {
+            get=> _state; 
+            set
+            {
+                if (_state != value)
+                {
+                    _state = value;
+                    OnHotRunScriptChanged?.Invoke(this, null);  
+                }
+            }
+        }
 
         public string RunningTaskInfo => $"{RunningAction.action.ToUpper()}-{RunningAction}";
         public List<HotRunAction> actions { get; set; } = new List<HotRunAction>();
