@@ -17,7 +17,8 @@
       "applicationUrl": "https://0.0.0.0:5216",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
-      }
+      },
+      "workingDirectory": "./bin/Debug/net6.0"
     },
     "IIS Express": {
       "commandName": "IISExpress",
