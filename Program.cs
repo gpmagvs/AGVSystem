@@ -6,34 +6,22 @@ using AGVSystem.Models.Sys;
 using AGVSystem.Models.TaskAllocation.HotRun;
 using AGVSystem.Service;
 using AGVSystem.TaskManagers;
-using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.DATABASE.BackgroundServices;
-using AGVSystemCommonNet6.HttpTools;
 using AGVSystemCommonNet6.Log;
-using AGVSystemCommonNet6.Microservices;
 using AGVSystemCommonNet6.Microservices.VMS;
-using AGVSystemCommonNet6.User;
 using AGVSystemCommonNet6.Vehicle_Control.VCS_ALARM;
-using EquipmentManagment.Device;
 using EquipmentManagment.MainEquipment;
 using EquipmentManagment.Manager;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Json;
-using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.AspNetCore.WebSockets;
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using Serilog;
-using Serilog.Filters;
-using System.Configuration;
 using System.Reflection;
-using System.Security.Policy;
 using System.Text;
 Console.Title = "GPM-AGV系統(AGVs)";
 LOG.SetLogFolderName("AGVS LOG");
@@ -67,36 +55,37 @@ VMSSerivces.RunModeSwitch(AGVSystemCommonNet6.AGVDispatch.RunMode.RUN_MODE.MAINT
 
 var builder = WebApplication.CreateBuilder(args);
 string logRootFolder = AGVSConfigulator.SysConfigs.LogFolder;
-builder.Host.UseSerilog((context, services, configuration) => configuration
-    .ReadFrom.Services(services)
-    .Enrich.FromLogContext()
-    //全部的LOG但不包含EF Core Log與 ApiLoggingMiddleware
-    .WriteTo.Logger(lc => lc
-                .WriteTo.Console()
-                .Filter.ByExcluding(Matching.FromSource("Microsoft.EntityFrameworkCore")) // 過濾EF Core Log  
-                .Filter.ByExcluding(Matching.FromSource("AGVSystem.ApiLoggingMiddleware")) // 過濾EF Core Log
-                .WriteTo.File(
-                    path: $"{logRootFolder}/AGVS/log-.log", // 路徑
-                    rollingInterval: RollingInterval.Day, // 每小時一個檔案
-                    retainedFileCountLimit: 24 * 90,// 最多保留 30 天份的 Log 檔案
-                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}",
-                    rollOnFileSizeLimit: false,
-                    fileSizeLimitBytes: null
-                    ))
-    //只有 AGVSystem.ApiLoggingMiddleware 
-    .WriteTo.Logger(lc => lc
-                    .WriteTo.Console()
-                    .Filter.ByIncludingOnly(Matching.FromSource("AGVSystem.ApiLoggingMiddleware"))
-                    .WriteTo.File(
-                        path: $"{logRootFolder}/AGVS/api/log-.log",
-                        rollingInterval: RollingInterval.Day,
-                        retainedFileCountLimit: 24 * 90,
-                        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}",
-                        rollOnFileSizeLimit: false,
-                        fileSizeLimitBytes: null
-                    )
-                )
-);
+
+//builder.Host.UseSerilog((context, services, configuration) => configuration
+//    .ReadFrom.Services(services)
+//    .Enrich.FromLogContext()
+//    //全部的LOG但不包含EF Core Log與 ApiLoggingMiddleware
+//    .WriteTo.Logger(lc => lc
+//                .WriteTo.Console()
+//                .Filter.ByExcluding(Matching.FromSource("Microsoft.EntityFrameworkCore")) // 過濾EF Core Log  
+//                .Filter.ByExcluding(Matching.FromSource("AGVSystem.ApiLoggingMiddleware")) // 過濾EF Core Log
+//                .WriteTo.File(
+//                    path: $"{logRootFolder}/AGVS/log-.log", // 路徑
+//                    rollingInterval: RollingInterval.Day, // 每小時一個檔案
+//                    retainedFileCountLimit: 24 * 90,// 最多保留 30 天份的 Log 檔案
+//                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}",
+//                    rollOnFileSizeLimit: false,
+//                    fileSizeLimitBytes: null
+//                    ))
+//    //只有 AGVSystem.ApiLoggingMiddleware 
+//    .WriteTo.Logger(lc => lc
+//                    .WriteTo.Console()
+//                    .Filter.ByIncludingOnly(Matching.FromSource("AGVSystem.ApiLoggingMiddleware"))
+//                    .WriteTo.File(
+//                        path: $"{logRootFolder}/AGVS/api/log-.log",
+//                        rollingInterval: RollingInterval.Day,
+//                        retainedFileCountLimit: 24 * 90,
+//                        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}",
+//                        rollOnFileSizeLimit: false,
+//                        fileSizeLimitBytes: null
+//                    )
+//                )
+//);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
