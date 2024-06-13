@@ -21,6 +21,8 @@ using Microsoft.AspNetCore.WebSockets;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
+using NLog;
+using NLog.Web;
 using System.Reflection;
 using System.Text;
 Console.Title = "GPM-AGV系統(AGVs)";
@@ -53,217 +55,235 @@ VMSSerivces.OnVMSReconnected += async (sender, e) => await VMSSerivces.RunModeSw
 VMSSerivces.AliveCheckWorker();
 VMSSerivces.RunModeSwitch(AGVSystemCommonNet6.AGVDispatch.RunMode.RUN_MODE.MAINTAIN);
 
-var builder = WebApplication.CreateBuilder(args);
-string logRootFolder = AGVSConfigulator.SysConfigs.LogFolder;
-
-//builder.Host.UseSerilog((context, services, configuration) => configuration
-//    .ReadFrom.Services(services)
-//    .Enrich.FromLogContext()
-//    //全部的LOG但不包含EF Core Log與 ApiLoggingMiddleware
-//    .WriteTo.Logger(lc => lc
-//                .WriteTo.Console()
-//                .Filter.ByExcluding(Matching.FromSource("Microsoft.EntityFrameworkCore")) // 過濾EF Core Log  
-//                .Filter.ByExcluding(Matching.FromSource("AGVSystem.ApiLoggingMiddleware")) // 過濾EF Core Log
-//                .WriteTo.File(
-//                    path: $"{logRootFolder}/AGVS/log-.log", // 路徑
-//                    rollingInterval: RollingInterval.Day, // 每小時一個檔案
-//                    retainedFileCountLimit: 24 * 90,// 最多保留 30 天份的 Log 檔案
-//                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}",
-//                    rollOnFileSizeLimit: false,
-//                    fileSizeLimitBytes: null
-//                    ))
-//    //只有 AGVSystem.ApiLoggingMiddleware 
-//    .WriteTo.Logger(lc => lc
-//                    .WriteTo.Console()
-//                    .Filter.ByIncludingOnly(Matching.FromSource("AGVSystem.ApiLoggingMiddleware"))
-//                    .WriteTo.File(
-//                        path: $"{logRootFolder}/AGVS/api/log-.log",
-//                        rollingInterval: RollingInterval.Day,
-//                        retainedFileCountLimit: 24 * 90,
-//                        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}",
-//                        rollOnFileSizeLimit: false,
-//                        fileSizeLimitBytes: null
-//                    )
-//                )
-//);
-
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(opton =>
-{
-    opton.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
-    {
-        Title = "GPM 派車系統 RESTFul API",
-        Version = "V1"
-    });
-    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-    if (File.Exists(xmlPath))
-        opton.IncludeXmlComments(xmlPath);
-});
-builder.Services.AddControllers().AddJsonOptions(options => options.JsonSerializerOptions.PropertyNamingPolicy = null);
-builder.Services.AddDirectoryBrowser();
-builder.Services.Configure<JsonOptions>(options =>
-{
-    options.SerializerOptions.PropertyNamingPolicy = null;
-    options.SerializerOptions.PropertyNameCaseInsensitive = false;
-    options.SerializerOptions.WriteIndented = true;
-});
-
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(
-        options => options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters()
-        {
-            ValidateIssuer = false,
-            ValidateAudience = false,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("secret_keysecret_keysecret_key11"))
-        }
-    );
-
-
-builder.Services.AddDbContext<AGVSDbContext>(options => options.UseSqlServer(AGVSConfigulator.SysConfigs.DBConnection));
-builder.Services.AddHostedService<DatabaseBackgroundService>();
-builder.Services.AddHostedService<VehicleLocationMonitorBackgroundService>();
-builder.Services.AddHostedService<FrontEndDataCollectionBackgroundService>();
-
-builder.Services.AddScoped<MeanTimeQueryService>();
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowAll", policy =>
-    {
-        policy.AllowAnyMethod()
-                    .AllowAnyHeader()
-                     .SetIsOriginAllowed(origin => true) // 允许任何来源
-                     .AllowCredentials(); // 允许凭据
-    });
-});
-builder.Services.AddWebSockets(options =>
-{
-    options.KeepAliveInterval = TimeSpan.FromSeconds(600);
-});
-builder.Services.AddSignalR().AddJsonProtocol(options => { options.PayloadSerializerOptions.PropertyNamingPolicy = null; }); ;
-
-var app = builder.Build();
-app.UseMiddleware<ApiLoggingMiddleware>();
-
-_ = Task.Run(async () =>
-{
-    await Task.Delay(3000);
-    try
-    {
-        StaEQPManagager.InitializeAsync(new clsEQManagementConfigs
-        {
-            EQConfigPath = $"{AGVSConfigulator.SysConfigs.EQManagementConfigs.EquipmentManagementConfigFolder}//EQConfigs.json",
-            WIPConfigPath = $"{AGVSConfigulator.SysConfigs.EQManagementConfigs.EquipmentManagementConfigFolder}//WIPConfigs.json",
-            ChargeStationConfigPath = $"{AGVSConfigulator.SysConfigs.EQManagementConfigs.EquipmentManagementConfigFolder}//ChargStationConfigs.json",
-        });
-    }
-    catch (Exception ex)
-    {
-        AlarmManagerCenter.AddAlarmAsync(ALARMS.SYSTEM_EQP_MANAGEMENT_INITIALIZE_FAIL_WITH_EXCEPTION);//SYSTEM_EQP_MANAGEMENT_INITIALIZE_FAIL_WITH_EXCEPTION
-        LOG.Critical(ex);
-    }
-});
-
-AutomationManager.InitialzeDefaultTasks();
-AutomationManager.StartAllAutomationTasks();
-app.UseSwagger();
-app.UseSwaggerUI();
-app.UseCors("AllowAll"); app.UseWebSockets();
-app.UseDefaultFiles(new DefaultFilesOptions());
-app.UseStaticFiles();
-
-// 加載配置文件
-var mapFileFolderPath = app.Configuration.GetValue<string>("StaticFileOptions:MapFile:FolderPath");
-var mapFileRequestPath = app.Configuration.GetValue<string>("StaticFileOptions:MapFile:RequestPath");
-var agvImageFileFolderPath = app.Configuration.GetValue<string>("StaticFileOptions:AGVImageStoreFile:FolderPath");
-var agvImageFileRequestPath = app.Configuration.GetValue<string>("StaticFileOptions:AGVImageStoreFile:RequestPath");
-
-Directory.CreateDirectory(mapFileFolderPath);
-Directory.CreateDirectory(agvImageFileFolderPath);
-
-var mapFileProvider = new PhysicalFileProvider(mapFileFolderPath);
-var agvImageFileProvider = new PhysicalFileProvider(agvImageFileFolderPath);
-
-// Enable displaying browser links.
-app.UseStaticFiles(new StaticFileOptions
-{
-    FileProvider = mapFileProvider,
-    RequestPath = mapFileRequestPath
-});
-
-app.UseStaticFiles(new StaticFileOptions
-{
-    FileProvider = agvImageFileProvider,
-    RequestPath = agvImageFileRequestPath
-});
-
-app.UseDirectoryBrowser(new DirectoryBrowserOptions
-{
-    FileProvider = mapFileProvider,
-    RequestPath = mapFileRequestPath
-});
-CreateDefaultAGVImage();
-
-void CreateDefaultAGVImage()
-{
-    try
-    {
-        var exist_fileNames = Directory.GetFiles(agvImageFileFolderPath).Select(file => Path.GetFileName(file)).ToList();
-
-        for (int i = 0; i < 10; i++)
-        {
-            //AGV_003-Icon.png;
-            string agvImageFileName = $"AGV_00{i}-Icon.png";
-            string defaultImgFullFileName = "./Resources/AGVImages/default.png";
-            string agvImageFullFileName = Path.Combine(agvImageFileFolderPath, agvImageFileName);
-            if (!exist_fileNames.Contains(agvImageFileName))
-            {
-                File.Copy(defaultImgFullFileName, agvImageFullFileName, true);
-            }
-        }
-
-    }
-    catch (Exception ex)
-    {
-        LOG.ERROR($"Program-CreateDefaultAGVImage Error :{ex.Message}", ex);
-    }
-}
-
-
+var logger = LogManager.Setup().LoadConfigurationFromAppSettings().GetCurrentClassLogger();
 try
 {
-    Directory.CreateDirectory(AGVSConfigulator.SysConfigs.TrobleShootingFolder);
-    var trobleshootingFileRequestPath = app.Configuration.GetValue<string>("TrobleShootingFileOptions:TrobleShootingFile:RequestPath");
-    var trobleshootingFileProvider = new PhysicalFileProvider(AGVSConfigulator.SysConfigs.TrobleShootingFolder);
+
+    var builder = WebApplication.CreateBuilder(args);
+    builder.Logging.ClearProviders();
+    builder.Logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Information);
+    builder.Host.UseNLog();
+
+    string logRootFolder = AGVSConfigulator.SysConfigs.LogFolder;
+
+    //builder.Host.UseSerilog((context, services, configuration) => configuration
+    //    .ReadFrom.Services(services)
+    //    .Enrich.FromLogContext()
+    //    //全部的LOG但不包含EF Core Log與 ApiLoggingMiddleware
+    //    .WriteTo.Logger(lc => lc
+    //                .WriteTo.Console()
+    //                .Filter.ByExcluding(Matching.FromSource("Microsoft.EntityFrameworkCore")) // 過濾EF Core Log  
+    //                .Filter.ByExcluding(Matching.FromSource("AGVSystem.ApiLoggingMiddleware")) // 過濾EF Core Log
+    //                .WriteTo.File(
+    //                    path: $"{logRootFolder}/AGVS/log-.log", // 路徑
+    //                    rollingInterval: RollingInterval.Day, // 每小時一個檔案
+    //                    retainedFileCountLimit: 24 * 90,// 最多保留 30 天份的 Log 檔案
+    //                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}",
+    //                    rollOnFileSizeLimit: false,
+    //                    fileSizeLimitBytes: null
+    //                    ))
+    //    //只有 AGVSystem.ApiLoggingMiddleware 
+    //    .WriteTo.Logger(lc => lc
+    //                    .WriteTo.Console()
+    //                    .Filter.ByIncludingOnly(Matching.FromSource("AGVSystem.ApiLoggingMiddleware"))
+    //                    .WriteTo.File(
+    //                        path: $"{logRootFolder}/AGVS/api/log-.log",
+    //                        rollingInterval: RollingInterval.Day,
+    //                        retainedFileCountLimit: 24 * 90,
+    //                        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}",
+    //                        rollOnFileSizeLimit: false,
+    //                        fileSizeLimitBytes: null
+    //                    )
+    //                )
+    //);
+
+    builder.Services.AddControllers();
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSwaggerGen(opton =>
+    {
+        opton.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+        {
+            Title = "GPM 派車系統 RESTFul API",
+            Version = "V1"
+        });
+        var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+        var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+        if (File.Exists(xmlPath))
+            opton.IncludeXmlComments(xmlPath);
+    });
+    builder.Services.AddControllers().AddJsonOptions(options => options.JsonSerializerOptions.PropertyNamingPolicy = null);
+    builder.Services.AddDirectoryBrowser();
+    builder.Services.Configure<JsonOptions>(options =>
+    {
+        options.SerializerOptions.PropertyNamingPolicy = null;
+        options.SerializerOptions.PropertyNameCaseInsensitive = false;
+        options.SerializerOptions.WriteIndented = true;
+    });
+
+    builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(
+            options => options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters()
+            {
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("secret_keysecret_keysecret_key11"))
+            }
+        );
+
+
+    builder.Services.AddDbContext<AGVSDbContext>(options => options.UseSqlServer(AGVSConfigulator.SysConfigs.DBConnection));
+    builder.Services.AddHostedService<DatabaseBackgroundService>();
+    builder.Services.AddHostedService<VehicleLocationMonitorBackgroundService>();
+    builder.Services.AddHostedService<FrontEndDataCollectionBackgroundService>();
+
+    builder.Services.AddScoped<MeanTimeQueryService>();
+    builder.Services.AddCors(options =>
+    {
+        options.AddPolicy("AllowAll", policy =>
+        {
+            policy.AllowAnyMethod()
+                        .AllowAnyHeader()
+                         .SetIsOriginAllowed(origin => true) // 允许任何来源
+                         .AllowCredentials(); // 允许凭据
+        });
+    });
+    builder.Services.AddWebSockets(options =>
+    {
+        options.KeepAliveInterval = TimeSpan.FromSeconds(600);
+    });
+    builder.Services.AddSignalR().AddJsonProtocol(options => { options.PayloadSerializerOptions.PropertyNamingPolicy = null; }); ;
+
+    var app = builder.Build();
+    app.UseMiddleware<ApiLoggingMiddleware>();
+
+    _ = Task.Run(async () =>
+    {
+        await Task.Delay(3000);
+        try
+        {
+            StaEQPManagager.InitializeAsync(new clsEQManagementConfigs
+            {
+                EQConfigPath = $"{AGVSConfigulator.SysConfigs.EQManagementConfigs.EquipmentManagementConfigFolder}//EQConfigs.json",
+                WIPConfigPath = $"{AGVSConfigulator.SysConfigs.EQManagementConfigs.EquipmentManagementConfigFolder}//WIPConfigs.json",
+                ChargeStationConfigPath = $"{AGVSConfigulator.SysConfigs.EQManagementConfigs.EquipmentManagementConfigFolder}//ChargStationConfigs.json",
+            });
+        }
+        catch (Exception ex)
+        {
+            AlarmManagerCenter.AddAlarmAsync(ALARMS.SYSTEM_EQP_MANAGEMENT_INITIALIZE_FAIL_WITH_EXCEPTION);//SYSTEM_EQP_MANAGEMENT_INITIALIZE_FAIL_WITH_EXCEPTION
+            LOG.Critical(ex);
+        }
+    });
+
+    AutomationManager.InitialzeDefaultTasks();
+    AutomationManager.StartAllAutomationTasks();
+    app.UseSwagger();
+    app.UseSwaggerUI();
+    app.UseCors("AllowAll"); app.UseWebSockets();
+    app.UseDefaultFiles(new DefaultFilesOptions());
+    app.UseStaticFiles();
+
+    // 加載配置文件
+    var mapFileFolderPath = app.Configuration.GetValue<string>("StaticFileOptions:MapFile:FolderPath");
+    var mapFileRequestPath = app.Configuration.GetValue<string>("StaticFileOptions:MapFile:RequestPath");
+    var agvImageFileFolderPath = app.Configuration.GetValue<string>("StaticFileOptions:AGVImageStoreFile:FolderPath");
+    var agvImageFileRequestPath = app.Configuration.GetValue<string>("StaticFileOptions:AGVImageStoreFile:RequestPath");
+
+    Directory.CreateDirectory(mapFileFolderPath);
+    Directory.CreateDirectory(agvImageFileFolderPath);
+
+    var mapFileProvider = new PhysicalFileProvider(mapFileFolderPath);
+    var agvImageFileProvider = new PhysicalFileProvider(agvImageFileFolderPath);
 
     // Enable displaying browser links.
     app.UseStaticFiles(new StaticFileOptions
     {
-        FileProvider = trobleshootingFileProvider,
-        RequestPath = trobleshootingFileRequestPath
+        FileProvider = mapFileProvider,
+        RequestPath = mapFileRequestPath
+    });
+
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = agvImageFileProvider,
+        RequestPath = agvImageFileRequestPath
     });
 
     app.UseDirectoryBrowser(new DirectoryBrowserOptions
     {
-        FileProvider = trobleshootingFileProvider,
-        RequestPath = trobleshootingFileRequestPath
+        FileProvider = mapFileProvider,
+        RequestPath = mapFileRequestPath
     });
+    CreateDefaultAGVImage();
+
+    void CreateDefaultAGVImage()
+    {
+        try
+        {
+            var exist_fileNames = Directory.GetFiles(agvImageFileFolderPath).Select(file => Path.GetFileName(file)).ToList();
+
+            for (int i = 0; i < 10; i++)
+            {
+                //AGV_003-Icon.png;
+                string agvImageFileName = $"AGV_00{i}-Icon.png";
+                string defaultImgFullFileName = "./Resources/AGVImages/default.png";
+                string agvImageFullFileName = Path.Combine(agvImageFileFolderPath, agvImageFileName);
+                if (!exist_fileNames.Contains(agvImageFileName))
+                {
+                    File.Copy(defaultImgFullFileName, agvImageFullFileName, true);
+                }
+            }
+
+        }
+        catch (Exception ex)
+        {
+            LOG.ERROR($"Program-CreateDefaultAGVImage Error :{ex.Message}", ex);
+        }
+    }
+
+
+    try
+    {
+        Directory.CreateDirectory(AGVSConfigulator.SysConfigs.TrobleShootingFolder);
+        var trobleshootingFileRequestPath = app.Configuration.GetValue<string>("TrobleShootingFileOptions:TrobleShootingFile:RequestPath");
+        var trobleshootingFileProvider = new PhysicalFileProvider(AGVSConfigulator.SysConfigs.TrobleShootingFolder);
+
+        // Enable displaying browser links.
+        app.UseStaticFiles(new StaticFileOptions
+        {
+            FileProvider = trobleshootingFileProvider,
+            RequestPath = trobleshootingFileRequestPath
+        });
+
+        app.UseDirectoryBrowser(new DirectoryBrowserOptions
+        {
+            FileProvider = trobleshootingFileProvider,
+            RequestPath = trobleshootingFileRequestPath
+        });
+    }
+    catch (Exception ex)
+    {
+        LOG.ERROR(ex.Message, ex);
+    }
+
+
+    var agvDisplayImageFolder = Path.Combine(app.Environment.WebRootPath, @"images\AGVDisplayImages");
+    Directory.CreateDirectory(agvDisplayImageFolder);
+
+    //app.UseMiddleware<RequestResponseLoggingMiddleware>();
+    app.UseVueRouterHistory();
+    //app.UseHttpsRedirection();
+    app.UseAuthorization();
+    app.MapControllers();
+    app.MapHub<FrontEndDataHub>("/FrontEndDataHub");
+    app.Run();
+
 }
 catch (Exception ex)
 {
-    LOG.ERROR(ex.Message, ex);
+    logger.Error(ex);
 }
-
-
-var agvDisplayImageFolder = Path.Combine(app.Environment.WebRootPath, @"images\AGVDisplayImages");
-Directory.CreateDirectory(agvDisplayImageFolder);
-
-//app.UseMiddleware<RequestResponseLoggingMiddleware>();
-app.UseVueRouterHistory();
-//app.UseHttpsRedirection();
-app.UseAuthorization();
-app.MapControllers();
-app.MapHub<FrontEndDataHub>("/FrontEndDataHub");
-app.Run();
+finally
+{
+    LogManager.Shutdown();
+}
