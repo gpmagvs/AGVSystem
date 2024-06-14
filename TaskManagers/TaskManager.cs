@@ -85,7 +85,7 @@ namespace AGVSystem.TaskManagers
                     return (false, ALARMS.Station_Disabled, "目標站點非可停車點，無法指派停車任務");
             }
             #region 設備狀態檢查
-            //taskData.bypass_eq_status_check = false;
+            taskData.bypass_eq_status_check = false;
             if (!taskData.bypass_eq_status_check && (_order_action == ACTION_TYPE.Load || _order_action == ACTION_TYPE.LoadAndPark
                                                    || _order_action == ACTION_TYPE.Unload || _order_action == ACTION_TYPE.Carry))
             {

@@ -91,6 +91,11 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
 
                 RunningScriptList.Remove(script);
             }
+            else
+            {
+                var _script= HotRunScripts.FirstOrDefault(sc => sc.scriptID == scriptID);
+                _script.state = "IDLE";
+            }
         }
 
         private static void SaveSyncHotRunScripts(List<HotRunScript> newScripts)

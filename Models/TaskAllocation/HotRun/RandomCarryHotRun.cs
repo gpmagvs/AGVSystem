@@ -80,19 +80,19 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
         {
             fromTag = toTag = -1;
             IEnumerable<int> tagsOfAssignedEq = new List<int>();
-            var carryTasks = DatabaseCaches.TaskCaches.InCompletedTasks.Where(task => task.Action == ACTION_TYPE.Carry || task.Action == ACTION_TYPE.Unload || task.Action == ACTION_TYPE.Load);
+            var carryTasks = DatabaseCaches.TaskCaches.InCompletedTasks.Where(task => IsEqLDULDTask(task));
             if (carryTasks.Any())
             {
                 IEnumerable<MapPoint> assignTaskMapPoints = carryTasks.SelectMany(tk => new List<MapPoint> { tk.To_Station_Tag.GetMapPoint(), tk.From_Station_Tag.GetMapPoint() })
                                                                        .Where(pt => pt != null);
-                tagsOfAssignedEq = assignTaskMapPoints.GetTagCollection();
 
+                tagsOfAssignedEq = assignTaskMapPoints.GetTagCollection();
             }
 
-            List<EquipmentManagment.MainEquipment.clsEQ> usableEqList = StaEQPManagager.MainEQList.Where(eq => !eq.IsMaintaining && !tagsOfAssignedEq.Contains(eq.EndPointOptions.TagID)).ToList();
+            List<clsEQ> usableEqList = StaEQPManagager.MainEQList.Where(eq => IsEqUnloadable(eq, tagsOfAssignedEq)).ToList();
             Dictionary<clsEQ, IEnumerable<clsEQ>> avalidEQAndDownStreams = usableEqList.ToDictionary(eq => eq, eq => eq.DownstremEQ.Where(_downStrem => !_downStrem.IsMaintaining && !_downStrem.IsAssignedTask()));
             avalidEQAndDownStreams = avalidEQAndDownStreams.Where(pari => pari.Value.Count() != 0)
-                                                           .ToDictionary(p => p.Key, p => p.Value);
+                                                           .ToDictionary(p => p.Key, p => p.Value.Where(eq => eq.Load_Request));
 
             if (avalidEQAndDownStreams.Any())
             {
@@ -100,8 +100,13 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                 Random _random = new Random((int)DateTime.Now.Ticks);
                 int upStreamRandomIndex = _random.Next(0, avllidUpStreamEqCnt - 1);
                 var selectedUpStreamEqPair = avalidEQAndDownStreams.ToList()[upStreamRandomIndex];
+
+                if (!selectedUpStreamEqPair.Value.Any())
+                    return false;
+
                 Thread.Sleep(10);
                 Random _random2 = new Random((int)DateTime.Now.Ticks);
+
                 int downStreamRandomIndex = _random2.Next(0, selectedUpStreamEqPair.Value.Count() - 1);
                 var selectedUpStreamEq = selectedUpStreamEqPair.Key;
                 var selectedDownStreamEq = selectedUpStreamEqPair.Value.ToList()[downStreamRandomIndex];
@@ -116,6 +121,16 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
             else
             {
                 return false;
+            }
+
+            static bool IsEqUnloadable(clsEQ eq, IEnumerable<int> tagsOfAssignedEq)
+            {
+                return eq.Unload_Request && !eq.IsMaintaining && !tagsOfAssignedEq.Contains(eq.EndPointOptions.TagID);
+            }
+
+            static bool IsEqLDULDTask(clsTaskDto task)
+            {
+                return task.Action == ACTION_TYPE.Carry || task.Action == ACTION_TYPE.Unload || task.Action == ACTION_TYPE.Load;
             }
         }
     }
