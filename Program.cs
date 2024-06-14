@@ -232,11 +232,6 @@ try
     {
         LOG.ERROR(ex.Message, ex);
     }
-
-
-    var agvDisplayImageFolder = Path.Combine(app.Environment.WebRootPath, @"images\AGVDisplayImages");
-    Directory.CreateDirectory(agvDisplayImageFolder);
-
     //app.UseMiddleware<RequestResponseLoggingMiddleware>();
     app.UseVueRouterHistory();
     //app.UseHttpsRedirection();
