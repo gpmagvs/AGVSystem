@@ -194,7 +194,9 @@ namespace AGVSystem.Controllers
 
             (bool confirm, ALARMS alarm_code, string message, object obj, Type objtype) result = EQTransferTaskManager.CheckLoadUnloadStation(tag, slot, action);
             if (result.confirm == false)
-                return Ok(new clsAGVSTaskReportResponse() { confirm = false, message = $"{result.message}" });
+            {
+                return Ok(new clsAGVSTaskReportResponse() { confirm = false, message = $"{result.message}", AlarmCode = result.alarm_code });
+            }
             else
             {
                 if (result.objtype == typeof(clsEQ))
