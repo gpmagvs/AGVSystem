@@ -153,12 +153,12 @@ namespace AGVSystem.TaskManagers
             if (!MapPoint.Enable)
                 return (false, ALARMS.Station_Disabled, "站點未啟用，無法指派任務", null, null);
 
-            if (MapPoint.StationType == STATION_TYPE.EQ || MapPoint.StationType == STATION_TYPE.EQ_LD || MapPoint.StationType == STATION_TYPE.EQ_ULD || 
+            if (MapPoint.StationType == STATION_TYPE.EQ || MapPoint.StationType == STATION_TYPE.EQ_LD || MapPoint.StationType == STATION_TYPE.EQ_ULD ||
                 (MapPoint.StationType == STATION_TYPE.Buffer_EQ && LayerorSlot == 0))
             {
                 var Eq = StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == station_tag);
                 if (Eq == null)
-                    return new(false, ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, $"設備站點TAG-{station_tag},EQ-{Eq.EQName} 不存在於當前地圖", null, null);
+                    return new(false, ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, $"設備站點TAG-{station_tag},EQ不存在於當前地圖", null, null);
                 if (!Eq.IsConnected)
                     return new(false, ALARMS.Endpoint_EQ_NOT_CONNECTED, $"設備[{Eq.EQName}] 尚未連線,無法確認狀態", null, null);
                 if (actiontype == ACTION_TYPE.Unload)
@@ -219,6 +219,8 @@ namespace AGVSystem.TaskManagers
                 else
                 {
                     List<clsPortOfRack> ports = StaEQPManagager.GetRackColumnByTag(station_tag);
+                    if (ports.Count <= 0)
+                        return new(false, ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, $"WIP站點TAG-{station_tag}, 無port存在於當前地圖", null, null);
                     var Rack = ports.FirstOrDefault().GetParentRack();
                     if (Rack == null)
                         return new(false, ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, $"WIP站點TAG-{station_tag},EQ-{Rack.EQName} 不存在於當前地圖", null, null);
@@ -297,8 +299,8 @@ namespace AGVSystem.TaskManagers
         {
             List<clsPortOfRack> ports = StaEQPManagager.GetRackColumnByTag(_station_tag);
             clsPortOfRack port = ports.Where(x => x.CargoExist == false).OrderBy(x => x.Layer).FirstOrDefault();
-            return port==null ? null : port;
-            
+            return port == null ? null : port;
+
         }
 
 
