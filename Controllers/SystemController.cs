@@ -66,6 +66,11 @@ namespace AGVSystem.Controllers
         public async Task<IActionResult> HostConnMode(HOST_CONN_MODE mode)
         {
             (bool confirm, string message) response = new(false, "[HostConnMode] Fail");
+            if (SystemModes.RunMode != RUN_MODE.RUN && mode == HOST_CONN_MODE.ONLINE)
+            {
+                response = (false, "AGVS not in run mode, can not host online");
+                return Ok(new { confirm = response.confirm, message = response.message }); ;
+            }
             if (mode == HOST_CONN_MODE.ONLINE)
                 response = await MCSCIMService.Online();
             else
