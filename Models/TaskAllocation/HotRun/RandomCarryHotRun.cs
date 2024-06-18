@@ -76,7 +76,7 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
         private bool TaskUplimitReach()
         {
             int onliningVehicleCnt = DatabaseCaches.Vehicle.VehicleStates.Where(vehicle => vehicle.OnlineStatus == clsEnums.ONLINE_STATE.ONLINE).Count();
-            return DatabaseCaches.TaskCaches.InCompletedTasks.Where(t => t.TaskName.Contains("HR_")).Count() >= onliningVehicleCnt;
+            return DatabaseCaches.TaskCaches.InCompletedTasks.Where(t => t.TaskName.Contains("HR_")).Count() >= onliningVehicleCnt+1;
         }
 
         private bool TrySelectEquipmentPairTCarray(out int fromTag, out int toTag, out bool isFromRack, out bool isToRack)
