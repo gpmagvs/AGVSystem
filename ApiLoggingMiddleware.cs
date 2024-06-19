@@ -18,22 +18,25 @@ namespace AGVSystem
         {
             // 攔截請求
             var request = await FormatRequest(context.Request);
-
             // 紀錄回應前的狀態
             var originalBodyStream = context.Response.Body;
 
             using var responseBody = new MemoryStream();
             context.Response.Body = responseBody;
-
             await _next(context);
 
             // 攔截回應
             var response = await FormatResponse(context.Response);
 
+            if (context.Request.Path.Value.Contains("api/Map"))
+            {
+                await responseBody.CopyToAsync(originalBodyStream);
+                return;
+            }
+
             // 紀錄資訊
             _logger.LogInformation("Request: \n{Request}", request);
             _logger.LogInformation("Response: \n{Response}", response);
-
 
             // 將原始回應內容寫回
             await responseBody.CopyToAsync(originalBodyStream);
