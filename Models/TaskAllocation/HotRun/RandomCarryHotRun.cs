@@ -55,6 +55,7 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                     if (addTaskResult.confirm)
                     {
                         await NotifyServiceHelper.INFO($"Random Carry Task Created!");
+                        MonitorOrderExecutedTimeout(TaskName);
                     }
                     else
                     {
@@ -73,10 +74,36 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
 
         }
 
+        private async Task MonitorOrderExecutedTimeout(string taskName)
+        {
+            CancellationTokenSource cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+
+            while (!IsOrderExecuting())
+            {
+                try
+                {
+                    await Task.Delay(1000, cts.Token);
+                }
+                catch (TaskCanceledException ex)
+                {
+                    //cancel the task
+                    await TaskManager.Cancel(taskName, reason: "Hot Run Cancel It Because Waiting for Executing Spened Time Too Long");
+                    return;
+                }
+            }
+
+            bool IsOrderExecuting()
+            {
+                clsTaskDto orderInExecuting = DatabaseCaches.TaskCaches.RunningTasks.FirstOrDefault(tk => tk.TaskName == taskName);
+                return orderInExecuting != null;
+            }
+
+        }
+
         private bool TaskUplimitReach()
         {
             int onliningVehicleCnt = DatabaseCaches.Vehicle.VehicleStates.Where(vehicle => vehicle.OnlineStatus == clsEnums.ONLINE_STATE.ONLINE).Count();
-            return DatabaseCaches.TaskCaches.InCompletedTasks.Where(t => t.TaskName.Contains("HR_")).Count() >= onliningVehicleCnt+1;
+            return DatabaseCaches.TaskCaches.InCompletedTasks.Where(t => t.TaskName.Contains("HR_")).Count() >= onliningVehicleCnt + 1;
         }
 
         private bool TrySelectEquipmentPairTCarray(out int fromTag, out int toTag, out bool isFromRack, out bool isToRack)
@@ -107,7 +134,7 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
             foreach (Dictionary<int, int[]>? item in StaEQPManagager.RacksList.Select(rack => rack.RackOption.ColumnTagMap))
             {
 
-                var downstreamEqs = StaEQPManagager.MainEQList.Where(eq=> !tagsOfAssignedEq.Contains(eq.EndPointOptions.TagID))
+                var downstreamEqs = StaEQPManagager.MainEQList.Where(eq => !tagsOfAssignedEq.Contains(eq.EndPointOptions.TagID))
                                                               .Where(eq => eq.Load_Request && eq.EndPointOptions.Accept_AGV_Type == EquipmentManagment.Device.Options.VEHICLE_TYPE.FORK)
                                                               .ToList();
 
@@ -116,6 +143,8 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                     var tag = tags.First();
 
                     if (tagsOfAssignedEq.Contains(tag))
+                        continue;
+                    if (AGVSMapManager.CurrentMap.Points.Values.First(pt => pt.TagNumber == tag).StationType != MapPoint.STATION_TYPE.Buffer)
                         continue;
 
                     avalidEQAndDownStreams.Add(new clsEQ(new EquipmentManagment.Device.Options.clsEndPointOptions
