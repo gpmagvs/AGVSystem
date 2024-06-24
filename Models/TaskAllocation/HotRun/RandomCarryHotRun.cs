@@ -1,12 +1,15 @@
-﻿using AGVSystem.TaskManagers;
+﻿using AGVSystem.Models.Map;
+using AGVSystem.TaskManagers;
 using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.AGVDispatch;
 using AGVSystemCommonNet6.AGVDispatch.Messages;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.MAP;
 using AGVSystemCommonNet6.Notify;
+using EquipmentManagment.Device;
 using EquipmentManagment.MainEquipment;
 using EquipmentManagment.Manager;
+using EquipmentManagment.WIP;
 
 namespace AGVSystem.Models.TaskAllocation.HotRun
 {
@@ -32,7 +35,7 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                 if (TaskUplimitReach())
                     continue;
 
-                if (TrySelectEquipmentPairTCarray(out int fromTag, out int toTag))
+                if (TrySelectEquipmentPairTCarray(out int fromTag, out int toTag, out bool isFromRack, out bool isToRack))
                 {
                     string TaskName = $"HR_{ACTION_TYPE.Carry}_{DateTime.Now.ToString("yMdHHmmss")}";
                     (bool confirm, AGVSystemCommonNet6.Alarm.ALARMS alarm_code, string message) addTaskResult = await TaskManager.AddTask(new clsTaskDto
@@ -40,8 +43,8 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                         Action = ACTION_TYPE.Carry,
                         From_Station = fromTag.ToString(),
                         To_Station = toTag.ToString(),
-                        From_Slot = "0",
-                        To_Slot = "0",
+                        From_Slot = isFromRack ? "1" : "0",
+                        To_Slot = isToRack ? "1" : "0",
                         DispatcherName = "Hot_Run",
                         Carrier_ID = $"SIM_{DateTime.Now.ToString("ddHHmmssff")}",
                         TaskName = TaskName,
@@ -52,6 +55,7 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                     if (addTaskResult.confirm)
                     {
                         await NotifyServiceHelper.INFO($"Random Carry Task Created!");
+                        MonitorOrderExecutedTimeout(TaskName);
                     }
                     else
                     {
@@ -70,55 +74,137 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
 
         }
 
+        private async Task MonitorOrderExecutedTimeout(string taskName)
+        {
+            CancellationTokenSource cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+
+            while (!IsOrderExecuting())
+            {
+                try
+                {
+                    await Task.Delay(1000, cts.Token);
+                }
+                catch (TaskCanceledException ex)
+                {
+                    //cancel the task
+                    await TaskManager.Cancel(taskName, reason: "Hot Run Cancel It Because Waiting for Executing Spened Time Too Long");
+                    return;
+                }
+            }
+
+            bool IsOrderExecuting()
+            {
+                clsTaskDto orderInExecuting = DatabaseCaches.TaskCaches.RunningTasks.FirstOrDefault(tk => tk.TaskName == taskName);
+                return orderInExecuting != null;
+            }
+
+        }
+
         private bool TaskUplimitReach()
         {
             int onliningVehicleCnt = DatabaseCaches.Vehicle.VehicleStates.Where(vehicle => vehicle.OnlineStatus == clsEnums.ONLINE_STATE.ONLINE).Count();
-            return DatabaseCaches.TaskCaches.InCompletedTasks.Where(t => t.TaskName.Contains("HR_")).Count() >= onliningVehicleCnt;
+            return DatabaseCaches.TaskCaches.InCompletedTasks.Where(t => t.TaskName.Contains("HR_")).Count() >= onliningVehicleCnt + 1;
         }
 
-        private bool TrySelectEquipmentPairTCarray(out int fromTag, out int toTag)
+        private bool TrySelectEquipmentPairTCarray(out int fromTag, out int toTag, out bool isFromRack, out bool isToRack)
         {
+
+            isFromRack = false;
+            isToRack = false;
             fromTag = toTag = -1;
-            IEnumerable<int> tagsOfAssignedEq = new List<int>();
-            var carryTasks = DatabaseCaches.TaskCaches.InCompletedTasks.Where(task => IsEqLDULDTask(task));
-            if (carryTasks.Any())
+            try
             {
-                IEnumerable<MapPoint> assignTaskMapPoints = carryTasks.SelectMany(tk => new List<MapPoint> { tk.To_Station_Tag.GetMapPoint(), tk.From_Station_Tag.GetMapPoint() })
-                                                                       .Where(pt => pt != null);
+                IEnumerable<int> tagsOfAssignedEq = new List<int>();
+                var carryTasks = DatabaseCaches.TaskCaches.InCompletedTasks.Where(task => IsEqLDULDTask(task));
+                if (carryTasks.Any())
+                {
+                    IEnumerable<MapPoint> assignTaskMapPoints = carryTasks.SelectMany(tk => new List<MapPoint> { tk.To_Station_Tag.GetMapPoint(), tk.From_Station_Tag.GetMapPoint() })
+                                                                           .Where(pt => pt != null);
 
-                tagsOfAssignedEq = assignTaskMapPoints.GetTagCollection();
-            }
+                    tagsOfAssignedEq = assignTaskMapPoints.GetTagCollection();
+                }
+                List<EndPointDeviceAbstract> usableEqList = new List<EndPointDeviceAbstract>();
+                Dictionary<EndPointDeviceAbstract, IEnumerable<EndPointDeviceAbstract>> avalidEQAndDownStreams = new Dictionary<EndPointDeviceAbstract, IEnumerable<EndPointDeviceAbstract>>();
 
-            List<clsEQ> usableEqList = StaEQPManagager.MainEQList.Where(eq => IsEqUnloadable(eq, tagsOfAssignedEq)).ToList();
-            Dictionary<clsEQ, IEnumerable<clsEQ>> avalidEQAndDownStreams = usableEqList.ToDictionary(eq => eq, eq => eq.DownstremEQ.Where(_downStrem => !_downStrem.IsMaintaining && !_downStrem.IsAssignedTask()));
-            avalidEQAndDownStreams = avalidEQAndDownStreams.Where(pari => pari.Value.Count() != 0)
-                                                           .ToDictionary(p => p.Key, p => p.Value.Where(eq => eq.Load_Request));
+                //List<clsRack> usableRackList = StaEQPManagager.RacksList.Where(rack => !tagsOfAssignedEq.Contains(rack.EndPointOptions.TagID)).ToList();
+                List<clsEQ> usableMainEqList = StaEQPManagager.MainEQList.Where(eq => IsEqUnloadable(eq, tagsOfAssignedEq)).ToList();
 
-            if (avalidEQAndDownStreams.Any())
-            {
-                var avllidUpStreamEqCnt = avalidEQAndDownStreams.Count;
-                Random _random = new Random((int)DateTime.Now.Ticks);
-                int upStreamRandomIndex = _random.Next(0, avllidUpStreamEqCnt - 1);
-                var selectedUpStreamEqPair = avalidEQAndDownStreams.ToList()[upStreamRandomIndex];
+                Dictionary<clsEQ, IEnumerable<clsEQ>> avalidMainEQAndDownStreams = usableMainEqList.ToDictionary(eq => eq, eq => eq.DownstremEQ.Where(_downStrem => !_downStrem.IsMaintaining && !_downStrem.IsAssignedTask()));
+                avalidMainEQAndDownStreams = avalidMainEQAndDownStreams.Where(pari => pari.Value.Count() != 0)
+                                                                       .ToDictionary(p => p.Key, p => p.Value.Where(eq => eq.Load_Request));
 
-                if (!selectedUpStreamEqPair.Value.Any())
+
+                foreach (Dictionary<int, int[]>? item in StaEQPManagager.RacksList.Select(rack => rack.RackOption.ColumnTagMap))
+                {
+
+                var downstreamEqs = StaEQPManagager.MainEQList.Where(eq => !tagsOfAssignedEq.Contains(eq.EndPointOptions.TagID))
+                                                              .Where(eq => eq.Load_Request && eq.EndPointOptions.Accept_AGV_Type == EquipmentManagment.Device.Options.VEHICLE_TYPE.FORK)
+                                                              .ToList();
+
+                    foreach (var tags in item.Values)
+                    {
+                        var tag = tags.First();
+
+                        if (tagsOfAssignedEq.Contains(tag))
+                            continue;
+                    if (AGVSMapManager.CurrentMap.Points.Values.First(pt => pt.TagNumber == tag).StationType != MapPoint.STATION_TYPE.Buffer)
+                        continue;
+
+                        avalidEQAndDownStreams.Add(new clsEQ(new EquipmentManagment.Device.Options.clsEndPointOptions
+                        {
+                            TagID = tag,
+                        }),
+                        downstreamEqs
+                        );
+                    }
+                }
+
+                foreach (var item in avalidMainEQAndDownStreams)
+                {
+                    avalidEQAndDownStreams.Add(item.Key, item.Value);
+                }
+
+
+                if (avalidEQAndDownStreams.Any())
+                {
+                    avalidEQAndDownStreams = avalidEQAndDownStreams.Where(x => x.Value.Count() != 0).ToDictionary(x => x.Key, x => x.Value);
+                    var avllidUpStreamEqCnt = avalidEQAndDownStreams.Count;
+                    Random _random = new Random((int)DateTime.Now.Ticks);
+                    if (avllidUpStreamEqCnt < 1)
+                        return false;
+                    int upStreamRandomIndex = _random.Next(0, avllidUpStreamEqCnt - 1);
+                    var selectedUpStreamEqPair = avalidEQAndDownStreams.ToList()[upStreamRandomIndex];
+
+                    if (!selectedUpStreamEqPair.Value.Any())
+                        return false;
+
+                    Thread.Sleep(10);
+                    Random _random2 = new Random((int)DateTime.Now.Ticks);
+
+                    int downStreamRandomIndex = _random2.Next(0, selectedUpStreamEqPair.Value.Count() - 1);
+                    EndPointDeviceAbstract selectedUpStreamEq = selectedUpStreamEqPair.Key;
+                    var selectedDownStreamEq = selectedUpStreamEqPair.Value.ToList()[downStreamRandomIndex];
+
+                    fromTag = selectedUpStreamEq.EndPointOptions.TagID;
+                    toTag = selectedDownStreamEq.EndPointOptions.TagID;
+
+                    int _fromTag = fromTag;
+                    int _toTagg = toTag;
+
+                    isFromRack = AGVSMapManager.CurrentMap.Points.Values.First(pt => pt.TagNumber == _fromTag).StationType != MapPoint.STATION_TYPE.EQ;
+                    isToRack = AGVSMapManager.CurrentMap.Points.Values.First(pt => pt.TagNumber == _toTagg).StationType != MapPoint.STATION_TYPE.EQ;
+
+
+                    Console.WriteLine($"upStreamRandomIndex:{upStreamRandomIndex} downStreamRandomIndex:{downStreamRandomIndex}");
+
+                    return true;
+                }
+                else
+                {
                     return false;
-
-                Thread.Sleep(10);
-                Random _random2 = new Random((int)DateTime.Now.Ticks);
-
-                int downStreamRandomIndex = _random2.Next(0, selectedUpStreamEqPair.Value.Count() - 1);
-                var selectedUpStreamEq = selectedUpStreamEqPair.Key;
-                var selectedDownStreamEq = selectedUpStreamEqPair.Value.ToList()[downStreamRandomIndex];
-
-                fromTag = selectedUpStreamEq.EndPointOptions.TagID;
-                toTag = selectedDownStreamEq.EndPointOptions.TagID;
-
-                Console.WriteLine($"upStreamRandomIndex:{upStreamRandomIndex} downStreamRandomIndex:{downStreamRandomIndex}");
-
-                return true;
+                }
             }
-            else
+            catch (Exception e)
             {
                 return false;
             }
