@@ -7,6 +7,7 @@ using AGVSystemCommonNet6.Notify;
 using AGVSystemCommonNet6.Alarm;
 using AGVSystem.Models.Map;
 using AGVSystemCommonNet6.MAP;
+using AGVSystemCommonNet6.AGVDispatch;
 namespace AGVSystem.Models.EQDevices
 {
     public partial class EQDeviceEventsHandler
@@ -23,8 +24,14 @@ namespace AGVSystem.Models.EQDevices
             if (agvState != null)
             {
                 string agvName = agvState.AGV_Name;
-
                 MapPoint mapPt = AGVSMapManager.GetMapPointByTag(tag);
+
+                //判斷如果不是因為充電任務停到充電站 則返回
+
+                clsTaskDto _task = DatabaseCaches.TaskCaches.RunningTasks.FirstOrDefault(task => task.State == AGVSystemCommonNet6.AGVDispatch.Messages.TASK_RUN_STATUS.NAVIGATING && task.Action != AGVSystemCommonNet6.AGVDispatch.Messages.ACTION_TYPE.Charge);
+
+                if (_task != null)
+                    return;
 
                 NotifyServiceHelper.WARNING($"{agvName} 偵測到電池未連接!\r\n即將重新下發充電任務...");
                 AlarmManagerCenter.AddAlarmAsync(ALARMS.Battery_Not_Connect, ALARM_SOURCE.AGVS, ALARM_LEVEL.WARNING, chargeStation.EQName, mapPt.Graph.Display);

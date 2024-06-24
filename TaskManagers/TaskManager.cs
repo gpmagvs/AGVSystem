@@ -85,17 +85,15 @@ namespace AGVSystem.TaskManagers
                     return (false, ALARMS.Station_Disabled, "目標站點非可停車點，無法指派停車任務");
             }
             #region 設備狀態檢查
-            //taskData.bypass_eq_status_check = false;
-            if (!taskData.bypass_eq_status_check && (_order_action == ACTION_TYPE.Load || _order_action == ACTION_TYPE.LoadAndPark
-                                                   || _order_action == ACTION_TYPE.Unload || _order_action == ACTION_TYPE.Carry))
+            if ((taskData.bypass_eq_status_check) &&
+                (_order_action == ACTION_TYPE.Load || _order_action == ACTION_TYPE.LoadAndPark || _order_action == ACTION_TYPE.Unload || _order_action == ACTION_TYPE.Carry))
             {
                 (bool confirm, ALARMS alarm_code, string message) results = (false, ALARMS.NONE, "");
                 (bool confirm, ALARMS alarm_code, string message, object obj, Type objtype) results2;
 
-
                 if (taskData.Action == ACTION_TYPE.Unload || taskData.Action == ACTION_TYPE.Load || taskData.Action == ACTION_TYPE.LoadAndPark)
                 {
-                    results2 = EQTransferTaskManager.CheckLoadUnloadStation(destine_station_tag, Convert.ToInt16(taskData.To_Slot), ACTION_TYPE.Unload, checkRackPortCargoExistStatus: !taskData.bypass_eq_status_check);
+                    results2 = EQTransferTaskManager.CheckLoadUnloadStation(destine_station_tag, Convert.ToInt16(taskData.To_Slot), taskData.Action);
                     results.confirm = results2.confirm;
                     results.alarm_code = results2.alarm_code;
                     results.message = results2.message;
@@ -104,24 +102,18 @@ namespace AGVSystem.TaskManagers
                 }
                 else if (taskData.Action == ACTION_TYPE.Carry)
                 {
-                    results2 = EQTransferTaskManager.CheckLoadUnloadStation(source_station_tag, Convert.ToInt16(taskData.From_Slot), ACTION_TYPE.Unload, checkRackPortCargoExistStatus: !taskData.bypass_eq_status_check);
+                    results2 = EQTransferTaskManager.CheckLoadUnloadStation(source_station_tag, Convert.ToInt16(taskData.From_Slot), ACTION_TYPE.Unload);
                     results.confirm = results2.confirm;
                     results.alarm_code = results2.alarm_code;
                     results.message = results2.message;
                     if (!results.confirm)
                         return results;
-                    results2 = EQTransferTaskManager.CheckLoadUnloadStation(destine_station_tag, Convert.ToInt16(taskData.To_Slot), ACTION_TYPE.Load, checkRackPortCargoExistStatus: !taskData.bypass_eq_status_check);
+                    results2 = EQTransferTaskManager.CheckLoadUnloadStation(destine_station_tag, Convert.ToInt16(taskData.To_Slot), ACTION_TYPE.Load);
                     results.confirm = results2.confirm;
                     results.alarm_code = results2.alarm_code;
                     results.message = results2.message;
                     if (!results.confirm)
                         return results;
-                    //if (destinePoint.StationType == STATION_TYPE.EQ || destinePoint.StationType == STATION_TYPE.EQ_LD || destinePoint.StationType == STATION_TYPE.EQ_ULD)
-                    //{
-                    //    results = EQTransferTaskManager.CheckEQAcceptCargoType(taskData);
-                    //    if (!results.confirm)
-                    //        return results;
-                    //}
                 }
             }
             #endregion

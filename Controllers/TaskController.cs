@@ -192,7 +192,7 @@ namespace AGVSystem.Controllers
                 return Ok(new clsAGVSTaskReportResponse() { confirm = true, message = $"Get empty port OK", ReturnObj = port.Layer });
             }
 
-            (bool confirm, ALARMS alarm_code, string message, object obj, Type objtype) result = EQTransferTaskManager.CheckLoadUnloadStation(tag, slot, action);
+            (bool confirm, ALARMS alarm_code, string message, object obj, Type objtype) result = EQTransferTaskManager.CheckLoadUnloadStation(tag, slot, action, bypasseqandrackckeck: false);
             if (result.confirm == false)
             {
                 return Ok(new clsAGVSTaskReportResponse() { confirm = false, message = $"{result.message}", AlarmCode = result.alarm_code });
@@ -223,64 +223,6 @@ namespace AGVSystem.Controllers
                     return Ok(new clsAGVSTaskReportResponse() { confirm = false, message = "NOT EQ or RACK" });
                 }
             }
-
-            //(bool existDevice, clsEQ mainEQ, clsRack rack) result = TryGetEndDevice(tag);
-
-            //if (!result.existDevice)
-            //    return Ok(new clsAGVSTaskReportResponse() { confirm = false, message = $"[LoadUnloadTaskStart] 找不到Tag為{tag}的設備" });
-            //else
-            //{
-            //    if (result.mainEQ != null)
-            //    { // TODO 設備異常
-            //        if (action == ACTION_TYPE.Unload)
-            //        {
-            //            if (result.mainEQ.IsConnected == false)
-            //                return Ok(new clsAGVSTaskReportResponse() { confirm = false, alarmcode_int = 1000, message = $"Unload_Request={result.mainEQ.Unload_Request} cannot Unload" });//EQ_Disconnect
-            //            if (result.mainEQ.Unload_Request == false)
-            //                return Ok(new clsAGVSTaskReportResponse() { confirm = false, alarmcode_int = 1015, message = $"Unload_Request={result.mainEQ.Unload_Request} cannot Unload" });//EQ_UNLOAD_REQUEST_IS_NOT_ON
-            //            if (result.mainEQ.Port_Exist == false)
-            //                return Ok(new clsAGVSTaskReportResponse() { confirm = false, alarmcode_int = 1076, message = $"Port_Exist={result.mainEQ.Port_Exist} cannot Unload" });//EQ_UNLOAD_REQUEST_ON_BUT_NO_CARGO
-            //            if (result.mainEQ.Up_Pose == false)
-            //                return Ok(new clsAGVSTaskReportResponse() { confirm = false, alarmcode_int = 1076, message = $"Up_Pose={result.mainEQ.Up_Pose} cannot Unload" });//EQ_UNLOAD_REQUEST_ON_BUT_NO_CARGO
-            //        }
-            //        else if (action == ACTION_TYPE.Load)
-            //        {
-            //            if (result.mainEQ.IsConnected == false)
-            //                return Ok(new clsAGVSTaskReportResponse() { confirm = false, alarmcode_int = 1068, message = $"IsConnected={result.mainEQ.IsConnected} cannot Unload" });//EQ_Disconnect
-            //            if (result.mainEQ.Load_Request == false)
-            //                return Ok(new clsAGVSTaskReportResponse() { confirm = false, alarmcode_int = 1014, message = $"Load_Request={result.mainEQ.Load_Request} cannot Unload" });//EQ_LOAD_REQUEST_IS_NOT_ON
-            //            if (result.mainEQ.Port_Exist == true)
-            //                return Ok(new clsAGVSTaskReportResponse() { confirm = false, alarmcode_int = 1075, message = $"Port_Exist={result.mainEQ.Port_Exist} cannot Unload" });//EQ_LOAD_REQUEST_ON_BUT_HAS_CARGO
-            //            if (result.mainEQ.Down_Pose == false)
-            //                return Ok(new clsAGVSTaskReportResponse() { confirm = false, alarmcode_int = 1014, message = $"Down_Pose={result.mainEQ.Down_Pose} cannot Unload" });//EQ_LOAD_REQUEST_IS_NOT_ON
-            //        }
-            //    }
-            //    else if (result.rack != null)
-            //    {
-            //        // 不交握do noting
-            //    }
-            //    else
-            //    {
-            //        return Ok(new clsAGVSTaskReportResponse() { confirm = false, message = $"tag={tag}, mainEQ=null, Rack=null, cannot Unload" });
-            //    }
-            //}
-
-            //if (result.mainEQ != null)
-            //{
-            //    try
-            //    {
-            //        result.mainEQ.ReserveUp();
-            //        result.mainEQ.ToEQUp();
-            //    }
-            //    catch (Exception ex)
-            //    {
-            //        return Ok(new clsAGVSTaskReportResponse() { confirm = false, message = $"{result.mainEQ.EQName} ToEQUp DO ON的過程中發生錯誤:{ex.Message}" });
-            //    }
-            //    LOG.INFO($"Get AGV LD.ULD Task Start At Tag {tag}-Action={action}. TO Eq Up DO ON", color: ConsoleColor.Green);
-            //    return Ok(new clsAGVSTaskReportResponse() { confirm = true, message = $"{result.mainEQ.EQName} ToEQUp DO ON" });
-            //}
-            //else
-            //    return Ok(new clsAGVSTaskReportResponse() { confirm = true, message = $"{action} at {result.rack.EQName} Start" });
         }
 
         [HttpGet("StartTransferCargoReport")]
