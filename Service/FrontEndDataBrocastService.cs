@@ -70,7 +70,10 @@ namespace AGVSystem.Service
                          {
                              _foring = false;
                              _previousData = data;
-                             await _hubContext.Clients.All.SendAsync("ReceiveData", "VMS", data);
+                             _ = Task.Factory.StartNew(async () =>
+                             {
+                                 await _hubContext.Clients.All.SendAsync("ReceiveData", "VMS", data);
+                             });
                              continue;
                          }
                      }
