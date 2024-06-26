@@ -142,29 +142,31 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
             avalidMainEQAndDownStreams = avalidMainEQAndDownStreams.Where(pari => pari.Value.Count() != 0)
                                                                    .ToDictionary(p => p.Key, p => p.Value.Where(eq => eq.Load_Request));
 
-
-            foreach (Dictionary<int, int[]>? item in StaEQPManagager.RacksList.Select(rack => rack.RackOption.ColumnTagMap))
+            if (DateTime.Now.Second % 30 == 0)//間隔一段時間才加WIP任務不然如果WIP很多會被WIP的任務塞爆
             {
-
-                var downstreamEqs = StaEQPManagager.MainEQList.Where(eq => !tagsOfAssignedEq.Contains(eq.EndPointOptions.TagID))
-                                                              .Where(eq => eq.Load_Request && eq.EndPointOptions.Accept_AGV_Type == EquipmentManagment.Device.Options.VEHICLE_TYPE.FORK)
-                                                              .ToList();
-
-                foreach (var tags in item.Values)
+                foreach (Dictionary<int, int[]>? item in StaEQPManagager.RacksList.Select(rack => rack.RackOption.ColumnTagMap))
                 {
-                    var tag = tags.First();
 
-                    if (tagsOfAssignedEq.Contains(tag))
-                        continue;
-                    if (AGVSMapManager.CurrentMap.Points.Values.First(pt => pt.TagNumber == tag).StationType != MapPoint.STATION_TYPE.Buffer)
-                        continue;
+                    var downstreamEqs = StaEQPManagager.MainEQList.Where(eq => !tagsOfAssignedEq.Contains(eq.EndPointOptions.TagID))
+                                                                  .Where(eq => eq.Load_Request && eq.EndPointOptions.Accept_AGV_Type == EquipmentManagment.Device.Options.VEHICLE_TYPE.FORK)
+                                                                  .ToList();
 
-                    avalidEQAndDownStreams.Add(new clsEQ(new EquipmentManagment.Device.Options.clsEndPointOptions
+                    foreach (var tags in item.Values)
                     {
-                        TagID = tag,
-                    }),
-                    downstreamEqs
-                    );
+                        var tag = tags.First();
+
+                        if (tagsOfAssignedEq.Contains(tag))
+                            continue;
+                        if (AGVSMapManager.CurrentMap.Points.Values.First(pt => pt.TagNumber == tag).StationType != MapPoint.STATION_TYPE.Buffer)
+                            continue;
+
+                        avalidEQAndDownStreams.Add(new clsEQ(new EquipmentManagment.Device.Options.clsEndPointOptions
+                        {
+                            TagID = tag,
+                        }),
+                        downstreamEqs
+                        );
+                    }
                 }
             }
 
