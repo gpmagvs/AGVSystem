@@ -1,6 +1,7 @@
 ﻿using AGVSystem.Models.Map;
 using AGVSystem.Models.TaskAllocation;
 using AGVSystem.Models.TaskAllocation.HotRun;
+using AGVSystem.Service;
 using AGVSystem.TaskManagers;
 using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.AGVDispatch;
@@ -36,15 +37,19 @@ namespace AGVSystem.Controllers
     public partial class TaskController : ControllerBase
     {
         private AGVSDbContext _TaskDBContent;
-        public TaskController(AGVSDbContext content)
+
+        private UserValidationService UserValidation { get; }
+
+        public TaskController(AGVSDbContext content, UserValidationService userValidation)
         {
             this._TaskDBContent = content;
+            this.UserValidation = userValidation;
         }
 
         [HttpGet("Allocation")]
         public async Task<IActionResult> Test()
         {
-            if (!UserValidation())
+            if (!UserValidation.UserValidation(HttpContext))
             {
                 return Unauthorized();
             }
@@ -57,7 +62,7 @@ namespace AGVSystem.Controllers
         [HttpGet("Cancel")]
         public async Task<IActionResult> Cancel(string task_name)
         {
-            if (!UserValidation())
+            if (!UserValidation.UserValidation(HttpContext))
             {
                 return Unauthorized();
             }
@@ -69,9 +74,10 @@ namespace AGVSystem.Controllers
         }
 
         [HttpPost("move")]
+        [Authorize]
         public async Task<IActionResult> MoveTask([FromBody] clsTaskDto taskData, string user = "")
         {
-            if (!UserValidation())
+            if (!UserValidation.UserValidation(HttpContext))
             {
                 return Unauthorized();
             }
@@ -80,7 +86,7 @@ namespace AGVSystem.Controllers
         [HttpPost("measure")]
         public async Task<IActionResult> MeasureTask([FromBody] clsTaskDto taskData, string user = "")
         {
-            if (!UserValidation())
+            if (!UserValidation.UserValidation(HttpContext))
             {
                 return Unauthorized();
             }
@@ -97,7 +103,7 @@ namespace AGVSystem.Controllers
         [HttpPost("load")]
         public async Task<IActionResult> LoadTask([FromBody] clsTaskDto taskData, string user = "")
         {
-            if (!UserValidation())
+            if (!UserValidation.UserValidation(HttpContext))
             {
                 return Unauthorized();
             }
@@ -106,16 +112,17 @@ namespace AGVSystem.Controllers
         [HttpPost("unload")]
         public async Task<IActionResult> UnloadTask([FromBody] clsTaskDto taskData, string user = "")
         {
-            if (!UserValidation())
+            if (!UserValidation.UserValidation(HttpContext))
             {
                 return Unauthorized();
             }
             return Ok(await AddTask(taskData, user));
         }
         [HttpPost("carry")]
+        [Authorize]
         public async Task<IActionResult> CarryTask([FromBody] clsTaskDto taskData, string user = "")
         {
-            if (!UserValidation())
+            if (!UserValidation.UserValidation(HttpContext))
             {
                 return Unauthorized();
             }
@@ -124,7 +131,7 @@ namespace AGVSystem.Controllers
         [HttpPost("charge")]
         public async Task<IActionResult> ChargeTask([FromBody] clsTaskDto taskData, string user = "")
         {
-            if (!UserValidation())
+            if (!UserValidation.UserValidation(HttpContext))
             {
                 return Unauthorized();
             }
@@ -145,7 +152,7 @@ namespace AGVSystem.Controllers
         [HttpGet("CancelChargeTask")]
         public async Task<IActionResult> CancelChargeTask(string agv_name)
         {
-            if (!UserValidation())
+            if (!UserValidation.UserValidation(HttpContext))
             {
                 return Unauthorized();
             }
@@ -157,7 +164,7 @@ namespace AGVSystem.Controllers
         [HttpPost("ExangeBattery")]
         public async Task<IActionResult> ExangeBattery([FromBody] clsTaskDto taskData, string user = "")
         {
-            if (!UserValidation())
+            if (!UserValidation.UserValidation(HttpContext))
             {
                 return Unauthorized();
             }
@@ -166,7 +173,7 @@ namespace AGVSystem.Controllers
         [HttpPost("park")]
         public async Task<IActionResult> ParkTask([FromBody] clsTaskDto taskData, string user = "")
         {
-            if (!UserValidation())
+            if (!UserValidation.UserValidation(HttpContext))
             {
                 return Unauthorized();
             }
@@ -322,24 +329,7 @@ namespace AGVSystem.Controllers
             var result = await TaskManager.AddTask(taskData, TaskManager.TASK_RECIEVE_SOURCE.MANUAL);
             return new { confirm = result.confirm, alarm_code = result.alarm_code, message = result.message };
         }
-        private bool UserValidation()
-        {
-            var identity = HttpContext.User.Identity as ClaimsIdentity;
 
-            if (identity != null)
-            {
-                IEnumerable<Claim> claims = identity.Claims;
-                var userId = claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value;
-                var userRole = claims.FirstOrDefault(c => c.Type == "Role")?.Value;
-
-                if (userRole == ERole.VISITOR.ToString())
-                    return false;
-
-                return true;
-            }
-            else
-                return false;
-        }
 
     }
 }

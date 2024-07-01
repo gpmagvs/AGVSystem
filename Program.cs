@@ -87,6 +87,7 @@ try
         options.SerializerOptions.WriteIndented = true;
     });
 
+    builder.Services.AddScoped<UserValidationService>();
     builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(
             options => options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters()
             {
@@ -235,6 +236,7 @@ try
     //app.UseMiddleware<RequestResponseLoggingMiddleware>();
     app.UseVueRouterHistory();
     //app.UseHttpsRedirection();
+    app.UseAuthentication();
     app.UseAuthorization();
     app.MapControllers();
     app.MapHub<FrontEndDataHub>("/FrontEndDataHub");
