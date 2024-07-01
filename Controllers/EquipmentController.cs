@@ -93,6 +93,11 @@ namespace AGVSystem.Controllers
             }).ToList();
             return Ok(options);
         }
+        [HttpGet("GetEQStates")]
+        public async Task<IActionResult> GetEQStates()
+        {            
+            return Ok(StaEQPManagager.GetEQStates());
+        }
 
 
         [HttpPost("SaveEQOptions")]

@@ -17,9 +17,11 @@ namespace AGVSystem.Service
     public class FrontEndDataBrocastService : IHostedService
     {
         private readonly IHubContext<FrontEndDataHub> _hubContext;
-        public FrontEndDataBrocastService(IHubContext<FrontEndDataHub> hubContext)
+        ILogger<FrontEndDataBrocastService> logger;
+        public FrontEndDataBrocastService(IHubContext<FrontEndDataHub> hubContext, ILogger<FrontEndDataBrocastService> logger)
         {
             _hubContext = hubContext;
+            this.logger = logger;
         }
         internal static object _previousData = new object();
 
@@ -43,30 +45,43 @@ namespace AGVSystem.Service
                  while (true)
                  {
                      await Task.Delay(300);
-                     var incompleted_tasks = DatabaseCaches.TaskCaches.InCompletedTasks;
-                     var completed_tasks = DatabaseCaches.TaskCaches.CompleteTasks;
-                     var data = new
+                     try
                      {
-                         EQStatus = new
+                         var incompleted_tasks = DatabaseCaches.TaskCaches.InCompletedTasks;
+                         var completed_tasks = DatabaseCaches.TaskCaches.CompleteTasks;
+                         var data = new
                          {
-                             EQPData = StaEQPManagager.GetEQStates(),
-                             ChargeStationData = StaEQPManagager.GetChargeStationStates(),
-                             WIPsData = GetWIPDataViewModels()
-                         },
-                         VMSAliveCheck = VMSSerivces.IsAlive,
-                         AGVLocationUpload = AGVSMapManager.AGVUploadCoordinationStore,
-                         HotRun = HotRunScriptManager.HotRunScripts,
-                         UncheckedAlarm = AlarmManagerCenter.uncheckedAlarms,
-                         //VMSStatus = vmsData,
-                         TaskData = new { incompleteds = incompleted_tasks, completeds = completed_tasks }
-                     };
-                     //use json string to compare the data is changed or not
+                             EQStatus = new
+                             {
+                                 EQPData = StaEQPManagager.GetEQStates(),
+                                 ChargeStationData = StaEQPManagager.GetChargeStationStates(),
+                                 WIPsData = GetWIPDataViewModels()
+                             },
+                             VMSAliveCheck = VMSSerivces.IsAlive,
+                             AGVLocationUpload = AGVSMapManager.AGVUploadCoordinationStore,
+                             HotRun = HotRunScriptManager.HotRunScripts,
+                             UncheckedAlarm = AlarmManagerCenter.uncheckedAlarms,
+                             //VMSStatus = vmsData,
+                             TaskData = new { incompleteds = incompleted_tasks, completeds = completed_tasks }
+                         };
+                         //use json string to compare the data is changed or not
 
-                     if (_foring||!JsonConvert.SerializeObject(data).Equals(JsonConvert.SerializeObject(_previousData)))
+                         if (_foring || !JsonConvert.SerializeObject(data).Equals(JsonConvert.SerializeObject(_previousData)))
+                         {
+                             _foring = false;
+                             _previousData = data;
+                             _ = Task.Factory.StartNew(async () =>
+                             {
+                                 await _hubContext.Clients.All.SendAsync("ReceiveData", "VMS", data);
+                             });
+                             continue;
+                         }
+                     }
+                     catch (Exception ex)
                      {
-                         _foring = false;
-                         _previousData = data;
-                         await _hubContext.Clients.All.SendAsync("ReceiveData", "VMS", data);
+                         logger.LogError(ex, "FrontEndDataBrocastService Error");
+                         await _hubContext.Clients.All.SendAsync("Notify", "FrontEndDataBrocastService Error:" + ex.Message);
+                         await Task.Delay(700);
                          continue;
                      }
                  }
