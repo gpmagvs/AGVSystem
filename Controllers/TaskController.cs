@@ -1,6 +1,7 @@
 ﻿using AGVSystem.Models.Map;
 using AGVSystem.Models.TaskAllocation;
 using AGVSystem.Models.TaskAllocation.HotRun;
+using AGVSystem.Service;
 using AGVSystem.TaskManagers;
 using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.AGVDispatch;
@@ -36,15 +37,19 @@ namespace AGVSystem.Controllers
     public partial class TaskController : ControllerBase
     {
         private AGVSDbContext _TaskDBContent;
-        public TaskController(AGVSDbContext content)
+
+        private UserValidationService UserValidation { get; }
+
+        public TaskController(AGVSDbContext content, UserValidationService userValidation)
         {
             this._TaskDBContent = content;
+            this.UserValidation = userValidation;
         }
 
         [HttpGet("Allocation")]
         public async Task<IActionResult> Test()
         {
-            if (!UserValidation())
+            if (!UserValidation.UserValidation(HttpContext))
             {
                 return Unauthorized();
             }
@@ -57,7 +62,7 @@ namespace AGVSystem.Controllers
         [HttpGet("Cancel")]
         public async Task<IActionResult> Cancel(string task_name)
         {
-            if (!UserValidation())
+            if (!UserValidation.UserValidation(HttpContext))
             {
                 return Unauthorized();
             }
@@ -69,9 +74,10 @@ namespace AGVSystem.Controllers
         }
 
         [HttpPost("move")]
+        [Authorize]
         public async Task<IActionResult> MoveTask([FromBody] clsTaskDto taskData, string user = "")
         {
-            if (!UserValidation())
+            if (!UserValidation.UserValidation(HttpContext))
             {
                 return Unauthorized();
             }
@@ -80,7 +86,7 @@ namespace AGVSystem.Controllers
         [HttpPost("measure")]
         public async Task<IActionResult> MeasureTask([FromBody] clsTaskDto taskData, string user = "")
         {
-            if (!UserValidation())
+            if (!UserValidation.UserValidation(HttpContext))
             {
                 return Unauthorized();
             }
@@ -97,7 +103,7 @@ namespace AGVSystem.Controllers
         [HttpPost("load")]
         public async Task<IActionResult> LoadTask([FromBody] clsTaskDto taskData, string user = "")
         {
-            if (!UserValidation())
+            if (!UserValidation.UserValidation(HttpContext))
             {
                 return Unauthorized();
             }
@@ -106,16 +112,17 @@ namespace AGVSystem.Controllers
         [HttpPost("unload")]
         public async Task<IActionResult> UnloadTask([FromBody] clsTaskDto taskData, string user = "")
         {
-            if (!UserValidation())
+            if (!UserValidation.UserValidation(HttpContext))
             {
                 return Unauthorized();
             }
             return Ok(await AddTask(taskData, user));
         }
         [HttpPost("carry")]
+        [Authorize]
         public async Task<IActionResult> CarryTask([FromBody] clsTaskDto taskData, string user = "")
         {
-            if (!UserValidation())
+            if (!UserValidation.UserValidation(HttpContext))
             {
                 return Unauthorized();
             }
@@ -124,7 +131,7 @@ namespace AGVSystem.Controllers
         [HttpPost("charge")]
         public async Task<IActionResult> ChargeTask([FromBody] clsTaskDto taskData, string user = "")
         {
-            if (!UserValidation())
+            if (!UserValidation.UserValidation(HttpContext))
             {
                 return Unauthorized();
             }
@@ -145,7 +152,7 @@ namespace AGVSystem.Controllers
         [HttpGet("CancelChargeTask")]
         public async Task<IActionResult> CancelChargeTask(string agv_name)
         {
-            if (!UserValidation())
+            if (!UserValidation.UserValidation(HttpContext))
             {
                 return Unauthorized();
             }
@@ -157,7 +164,7 @@ namespace AGVSystem.Controllers
         [HttpPost("ExangeBattery")]
         public async Task<IActionResult> ExangeBattery([FromBody] clsTaskDto taskData, string user = "")
         {
-            if (!UserValidation())
+            if (!UserValidation.UserValidation(HttpContext))
             {
                 return Unauthorized();
             }
@@ -166,7 +173,7 @@ namespace AGVSystem.Controllers
         [HttpPost("park")]
         public async Task<IActionResult> ParkTask([FromBody] clsTaskDto taskData, string user = "")
         {
-            if (!UserValidation())
+            if (!UserValidation.UserValidation(HttpContext))
             {
                 return Unauthorized();
             }
@@ -192,9 +199,11 @@ namespace AGVSystem.Controllers
                 return Ok(new clsAGVSTaskReportResponse() { confirm = true, message = $"Get empty port OK", ReturnObj = port.Layer });
             }
 
-            (bool confirm, ALARMS alarm_code, string message, object obj, Type objtype) result = EQTransferTaskManager.CheckLoadUnloadStation(tag, slot, action);
+            (bool confirm, ALARMS alarm_code, string message, object obj, Type objtype) result = EQTransferTaskManager.CheckLoadUnloadStation(tag, slot, action, bypasseqandrackckeck: false);
             if (result.confirm == false)
-                return Ok(new clsAGVSTaskReportResponse() { confirm = false, message = $"{result.message}" });
+            {
+                return Ok(new clsAGVSTaskReportResponse() { confirm = false, message = $"{result.message}", AlarmCode = result.alarm_code });
+            }
             else
             {
                 if (result.objtype == typeof(clsEQ))
@@ -221,64 +230,6 @@ namespace AGVSystem.Controllers
                     return Ok(new clsAGVSTaskReportResponse() { confirm = false, message = "NOT EQ or RACK" });
                 }
             }
-
-            //(bool existDevice, clsEQ mainEQ, clsRack rack) result = TryGetEndDevice(tag);
-
-            //if (!result.existDevice)
-            //    return Ok(new clsAGVSTaskReportResponse() { confirm = false, message = $"[LoadUnloadTaskStart] 找不到Tag為{tag}的設備" });
-            //else
-            //{
-            //    if (result.mainEQ != null)
-            //    { // TODO 設備異常
-            //        if (action == ACTION_TYPE.Unload)
-            //        {
-            //            if (result.mainEQ.IsConnected == false)
-            //                return Ok(new clsAGVSTaskReportResponse() { confirm = false, alarmcode_int = 1000, message = $"Unload_Request={result.mainEQ.Unload_Request} cannot Unload" });//EQ_Disconnect
-            //            if (result.mainEQ.Unload_Request == false)
-            //                return Ok(new clsAGVSTaskReportResponse() { confirm = false, alarmcode_int = 1015, message = $"Unload_Request={result.mainEQ.Unload_Request} cannot Unload" });//EQ_UNLOAD_REQUEST_IS_NOT_ON
-            //            if (result.mainEQ.Port_Exist == false)
-            //                return Ok(new clsAGVSTaskReportResponse() { confirm = false, alarmcode_int = 1076, message = $"Port_Exist={result.mainEQ.Port_Exist} cannot Unload" });//EQ_UNLOAD_REQUEST_ON_BUT_NO_CARGO
-            //            if (result.mainEQ.Up_Pose == false)
-            //                return Ok(new clsAGVSTaskReportResponse() { confirm = false, alarmcode_int = 1076, message = $"Up_Pose={result.mainEQ.Up_Pose} cannot Unload" });//EQ_UNLOAD_REQUEST_ON_BUT_NO_CARGO
-            //        }
-            //        else if (action == ACTION_TYPE.Load)
-            //        {
-            //            if (result.mainEQ.IsConnected == false)
-            //                return Ok(new clsAGVSTaskReportResponse() { confirm = false, alarmcode_int = 1068, message = $"IsConnected={result.mainEQ.IsConnected} cannot Unload" });//EQ_Disconnect
-            //            if (result.mainEQ.Load_Request == false)
-            //                return Ok(new clsAGVSTaskReportResponse() { confirm = false, alarmcode_int = 1014, message = $"Load_Request={result.mainEQ.Load_Request} cannot Unload" });//EQ_LOAD_REQUEST_IS_NOT_ON
-            //            if (result.mainEQ.Port_Exist == true)
-            //                return Ok(new clsAGVSTaskReportResponse() { confirm = false, alarmcode_int = 1075, message = $"Port_Exist={result.mainEQ.Port_Exist} cannot Unload" });//EQ_LOAD_REQUEST_ON_BUT_HAS_CARGO
-            //            if (result.mainEQ.Down_Pose == false)
-            //                return Ok(new clsAGVSTaskReportResponse() { confirm = false, alarmcode_int = 1014, message = $"Down_Pose={result.mainEQ.Down_Pose} cannot Unload" });//EQ_LOAD_REQUEST_IS_NOT_ON
-            //        }
-            //    }
-            //    else if (result.rack != null)
-            //    {
-            //        // 不交握do noting
-            //    }
-            //    else
-            //    {
-            //        return Ok(new clsAGVSTaskReportResponse() { confirm = false, message = $"tag={tag}, mainEQ=null, Rack=null, cannot Unload" });
-            //    }
-            //}
-
-            //if (result.mainEQ != null)
-            //{
-            //    try
-            //    {
-            //        result.mainEQ.ReserveUp();
-            //        result.mainEQ.ToEQUp();
-            //    }
-            //    catch (Exception ex)
-            //    {
-            //        return Ok(new clsAGVSTaskReportResponse() { confirm = false, message = $"{result.mainEQ.EQName} ToEQUp DO ON的過程中發生錯誤:{ex.Message}" });
-            //    }
-            //    LOG.INFO($"Get AGV LD.ULD Task Start At Tag {tag}-Action={action}. TO Eq Up DO ON", color: ConsoleColor.Green);
-            //    return Ok(new clsAGVSTaskReportResponse() { confirm = true, message = $"{result.mainEQ.EQName} ToEQUp DO ON" });
-            //}
-            //else
-            //    return Ok(new clsAGVSTaskReportResponse() { confirm = true, message = $"{action} at {result.rack.EQName} Start" });
         }
 
         [HttpGet("StartTransferCargoReport")]
@@ -378,24 +329,7 @@ namespace AGVSystem.Controllers
             var result = await TaskManager.AddTask(taskData, TaskManager.TASK_RECIEVE_SOURCE.MANUAL);
             return new { confirm = result.confirm, alarm_code = result.alarm_code, message = result.message };
         }
-        private bool UserValidation()
-        {
-            var identity = HttpContext.User.Identity as ClaimsIdentity;
 
-            if (identity != null)
-            {
-                IEnumerable<Claim> claims = identity.Claims;
-                var userId = claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value;
-                var userRole = claims.FirstOrDefault(c => c.Type == "Role")?.Value;
-
-                if (userRole == ERole.VISITOR.ToString())
-                    return false;
-
-                return true;
-            }
-            else
-                return false;
-        }
 
     }
 }

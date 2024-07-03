@@ -1,4 +1,5 @@
-﻿using AGVSystemCommonNet6.DATABASE;
+﻿using AGVSystem.Service;
+using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.User;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection.KeyManagement;
@@ -19,17 +20,32 @@ namespace AGVSystem.Controllers
     public class AuthController : ControllerBase
     {
         private readonly AGVSDbContext _userDbContext;
+        private readonly UserValidationService userValidationService;
 
-        public AuthController(AGVSDbContext dbContext)
+        public AuthController(AGVSDbContext dbContext, UserValidationService userValidationService)
         {
             _userDbContext = dbContext;
+            this.userValidationService = userValidationService;
         }
-
+        [HttpPost("Verify")]
+        [Authorize]
+        public async Task<IActionResult> VerifyUser()
+        {
+            if (userValidationService.UserValidation(HttpContext))
+            {
+                return Ok(new { Success = true });
+            }
+            else
+            {
+                return Ok(new { Success = false });
+            }
+        }
         /// <summary>
         /// 取得用戶列表
         /// </summary>
         /// <returns>用戶列表</returns>
         [HttpGet("Users")]
+        [Authorize]
         public async Task<IActionResult> GetUsers()
         {
             return Ok(_userDbContext.Users.ToList());
@@ -69,25 +85,19 @@ namespace AGVSystem.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> Login(UserLoginRequest request)
         {
+            HttpContext.Request.Headers.TryGetValue("Authorization", out var token);
             var user = await _userDbContext.Users.FirstOrDefaultAsync(u => u.UserName == request.Username);
-            if (user == null)
+            if (user == null || user.Password != request.Password)
             {
-                return BadRequest(new { Success = false, Message = "Invalid username", UserName = "" });
+                return BadRequest(new { Success = false, Message = "Invalid User Name or Password", UserName = "" });
             }
-
-            if (user.Password != request.Password)
-            {
-                return BadRequest(new { Success = false, Message = "Invalid password", UserName = "" });
-            }
-
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes("my_secret_key");
             // TODO: 根據需要生成 JWT Token
-            var token = GenerateJwtToken(request.Username, request.Password, user.Role);
+            token = GenerateJwtToken(request.Username, request.Password, user.Role);
             // 返回 JWT Token
             return Ok(new { Success = true, token = token, Role = user.Role, UserName = request.Username });
         }
-
         /// <summary>
         /// 修改用戶設定
         /// </summary>
@@ -123,6 +133,7 @@ namespace AGVSystem.Controllers
         /// <param name="user_name">用戶名稱</param>
         /// <returns>刪除結果</returns>
         [HttpDelete("Delete")]
+        [Authorize]
         public async Task<IActionResult> DeleteUser(string user_name)
         {
             var user_ = _userDbContext.Users.FirstOrDefault(user => user.UserName == user_name);
@@ -140,6 +151,7 @@ namespace AGVSystem.Controllers
         /// <param name="new_user">新用戶</param>
         /// <returns>新增結果</returns>
         [HttpPost("Add")]
+        [Authorize]
         public async Task<IActionResult> AddUser(UserEntity new_user)
         {
             var user_ = _userDbContext.Users.FirstOrDefault(user => user.UserName == new_user.UserName);

@@ -3,6 +3,7 @@ using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.AGVDispatch.RunMode;
 using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.Log;
+using AGVSystemCommonNet6.Microservices.MCS;
 using AGVSystemCommonNet6.Microservices.VMS;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -64,16 +65,39 @@ namespace AGVSystem.Controllers
         [HttpPost("HostConn")]
         public async Task<IActionResult> HostConnMode(HOST_CONN_MODE mode)
         {
-            SystemModes.HostConnMode = mode;
-            return Ok(new { confirm = true, message = "" });
+            (bool confirm, string message) response = new(false, "[HostConnMode] Fail");
+            if (SystemModes.RunMode != RUN_MODE.RUN && mode == HOST_CONN_MODE.ONLINE)
+            {
+                response = (false, "AGVS not in run mode, can not host online");
+                return Ok(new { confirm = response.confirm, message = response.message }); ;
+            }
+            if (mode == HOST_CONN_MODE.ONLINE)
+                response = await MCSCIMService.Online();
+            else
+                response = await MCSCIMService.Offline();
+            if (response.confirm == true)
+            {
+                SystemModes.HostConnMode = mode;
+                if (SystemModes.HostConnMode == HOST_CONN_MODE.OFFLINE)
+                    SystemModes.HostOperMode = HOST_OPER_MODE.LOCAL;
+            }
+            return Ok(new { confirm = response.confirm, message = response.message });
         }
 
 
         [HttpPost("HostOperation")]
         public async Task<IActionResult> HostOperationMode(HOST_OPER_MODE mode)
         {
-            SystemModes.HostOperMode = mode;
-            return Ok(new { confirm = true, message = "" });
+            if (SystemModes.HostConnMode != HOST_CONN_MODE.ONLINE)
+                return Ok(new { confirm = false, message = $"HostConnMode is not ONLINE" });
+            (bool confirm, string message) response = new(false, "[HostOperationMode] Fail");
+            if (mode == HOST_OPER_MODE.LOCAL)
+                response = await MCSCIMService.OnlineRemote2OnlineLocal();
+            else
+                response = await MCSCIMService.OnlineLocalToOnlineRemote();
+            if (response.confirm == true)
+                SystemModes.HostOperMode = mode;
+            return Ok(new { confirm = response.confirm, message = response.message });
         }
 
 
