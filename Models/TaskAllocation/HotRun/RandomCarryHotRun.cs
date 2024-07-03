@@ -76,13 +76,13 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
 
         private async Task MonitorOrderExecutedTimeout(string taskName)
         {
-            CancellationTokenSource cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            CancellationTokenSource cts = new CancellationTokenSource(TimeSpan.FromSeconds(20));
 
             while (!IsOrderExecuting())
             {
                 try
                 {
-                    await Task.Delay(1000, cts.Token);
+                    await Task.Delay(100, cts.Token);
                 }
                 catch (TaskCanceledException ex)
                 {
