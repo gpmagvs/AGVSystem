@@ -45,9 +45,13 @@ namespace AGVSystem.TaskManagers
 
         public static async Task<(bool confirm, ALARMS alarm_code, string message)> AddTask(clsTaskDto taskData, TASK_RECIEVE_SOURCE source = TASK_RECIEVE_SOURCE.LOCAL)
         {
-            var _order_action = taskData.Action;
-            var source_station_tag = int.Parse(taskData.From_Station);
-            var destine_station_tag = int.Parse(taskData.To_Station);
+            ACTION_TYPE _order_action = taskData.Action;
+
+            bool isCarryAndSourceIsAGV = _order_action == ACTION_TYPE.Carry && taskData.IsFromAGV;
+
+            bool fromTagParsed = int.TryParse(taskData.From_Station, out int source_station_tag);
+            bool toTagParsed = int.TryParse(taskData.To_Station, out int destine_station_tag);
+
 
             AGVSystemCommonNet6.MAP.MapPoint sourcePoint = AGVSMapManager.GetMapPointByTag(source_station_tag);
             AGVSystemCommonNet6.MAP.MapPoint destinePoint = AGVSMapManager.GetMapPointByTag(destine_station_tag);
@@ -60,7 +64,7 @@ namespace AGVSystem.TaskManagers
                 IEnumerable<clsAGVStateDto> agvstates = database.tables.AgvStates;
                 clsAGVStateDto? _agv_assigned = agvstates.FirstOrDefault(agv_dat => agv_dat.AGV_Name == taskData.DesignatedAGVName);
                 VEHICLE_TYPE model = _agv_assigned.Model.ConvertToEQAcceptAGVTYPE();
-                if ((taskData.Action == ACTION_TYPE.Unload || taskData.Action == ACTION_TYPE.Carry) && _agv_assigned.CargoStatus != 0)
+                if (!isCarryAndSourceIsAGV && (taskData.Action == ACTION_TYPE.Unload || taskData.Action == ACTION_TYPE.Carry) && _agv_assigned.CargoStatus != 0)
                     return (false, ALARMS.Station_Disabled, $"{_agv_assigned.AGV_Name} with cargo can not assigned to {taskData.Action}");
                 else if (taskData.Action == ACTION_TYPE.Load && _agv_assigned.CargoStatus == 0)
                     return (false, ALARMS.Station_Disabled, $"{_agv_assigned.AGV_Name} no cargo can not assigned to {taskData.Action}");
@@ -85,8 +89,7 @@ namespace AGVSystem.TaskManagers
                     return (false, ALARMS.Station_Disabled, "目標站點非可停車點，無法指派停車任務");
             }
             #region 設備狀態檢查
-            if ((taskData.bypass_eq_status_check) &&
-                (_order_action == ACTION_TYPE.Load || _order_action == ACTION_TYPE.LoadAndPark || _order_action == ACTION_TYPE.Unload || _order_action == ACTION_TYPE.Carry))
+            if ((taskData.bypass_eq_status_check) && (_order_action == ACTION_TYPE.Load || _order_action == ACTION_TYPE.LoadAndPark || _order_action == ACTION_TYPE.Unload || _order_action == ACTION_TYPE.Carry))
             {
                 (bool confirm, ALARMS alarm_code, string message) results = (false, ALARMS.NONE, "");
                 (bool confirm, ALARMS alarm_code, string message, object obj, Type objtype) results2;
@@ -178,7 +181,7 @@ namespace AGVSystem.TaskManagers
                             // 須知道車子目前背KUAN or TRAY 再比對放貨站點可接受貨物類型                            
                         }
                     }
-                    else if (taskData.Action == ACTION_TYPE.Carry) // 先檢查From Station,如果允許再比From Station及 To Station如果兩個不同則生成轉運
+                    else if (taskData.Action == ACTION_TYPE.Carry && !isCarryAndSourceIsAGV) // 先檢查From Station,如果允許再比From Station及 To Station如果兩個不同則生成轉運
                     {
                         if (sourcePoint.StationType == STATION_TYPE.Buffer)
                         {
@@ -203,13 +206,16 @@ namespace AGVSystem.TaskManagers
                             if (!results.confirm)
                                 return results;
                         }
+
                         if (destinePoint.StationType == STATION_TYPE.Buffer)
                         {
                             if (model == VEHICLE_TYPE.SUBMERGED_SHIELD)
                                 taskData.need_change_agv = true;
                         }
                         else if (destinePoint.StationType == STATION_TYPE.Buffer_EQ && Convert.ToInt16(taskData.To_Slot) > 0 && model == VEHICLE_TYPE.SUBMERGED_SHIELD)
-                        { taskData.need_change_agv = true; }
+                        {
+                            taskData.need_change_agv = true;
+                        }
                         else
                         {
                             results = EQTransferTaskManager.CheckEQAcceptAGVType(destine_station_tag, taskData.DesignatedAGVName);
@@ -224,12 +230,17 @@ namespace AGVSystem.TaskManagers
             #region 若起點設定是AGV,則起點要設為
             //using AGVSDatabase database = new AGVSDatabase();
 
-            if (taskData.From_Station.Contains("AGV") && _order_action == ACTION_TYPE.Carry)
+            if (isCarryAndSourceIsAGV)
             {
+                //起點是AGV 確認AGV是否有貨
+                bool agv_has_cargo = database.tables.AgvStates.FirstOrDefault(agv => agv.AGV_Name == taskData.From_Station).CargoStatus != 0;
+                if (!taskData.bypass_eq_status_check && !agv_has_cargo)
+                    return (false, ALARMS.AGV_NO_Carge_Cannot_Transfer_Cargo_From_AGV_To_Desinte, "AGV車上無貨，無法指派來源為AGV的搬運任務");
+
                 var agv_name = taskData.From_Station;
                 taskData.DesignatedAGVName = agv_name;
                 var agv = database.tables.AgvStates.FirstOrDefault(d => d.AGV_Name == agv_name);
-                taskData.From_Station = agv.CurrentLocation;
+                taskData.From_Station = agv_name;
             }
             #endregion
 

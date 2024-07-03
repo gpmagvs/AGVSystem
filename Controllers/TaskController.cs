@@ -184,8 +184,11 @@ namespace AGVSystem.Controllers
         [HttpGet("LoadUnloadTaskStart")]
         public async Task<IActionResult> LoadUnloadTaskStart(int tag, int slot, ACTION_TYPE action)
         {
+
             if (action != ACTION_TYPE.Load && action != ACTION_TYPE.Unload)
                 return Ok(new clsAGVSTaskReportResponse() { confirm = false, message = "Action should equal Load or Unlaod" });
+
+
             AGVSystemCommonNet6.MAP.MapPoint MapPoint = AGVSMapManager.GetMapPointByTag(tag);
             if (MapPoint == null)
                 return Ok(new clsAGVSTaskReportResponse() { confirm = false, AlarmCode = ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, message = $"站點TAG-{tag} 不存在於當前地圖" });
@@ -287,10 +290,11 @@ namespace AGVSystem.Controllers
                 return new clsAGVSTaskReportResponse() { confirm = true, message = $"{action} from {result.rack} Finish" };
         }
         [HttpGet("LDULDOrderStart")]
-        public async Task<clsAGVSTaskReportResponse> LDULDOrderStart(int from, int FromSlot, int to, int ToSlot, ACTION_TYPE action)
+        public async Task<clsAGVSTaskReportResponse> LDULDOrderStart(int from, int FromSlot, int to, int ToSlot, ACTION_TYPE action, bool isSourceAGV)
         {
             try
             {
+
                 if (action == ACTION_TYPE.Unload || action == ACTION_TYPE.LoadAndPark || action == ACTION_TYPE.Load)
                 {
                     clsAGVSTaskReportResponse result = ((OkObjectResult)await LoadUnloadTaskStart(to, ToSlot, action)).Value as clsAGVSTaskReportResponse;
@@ -298,9 +302,12 @@ namespace AGVSystem.Controllers
                 }
                 else if (action == ACTION_TYPE.Carry)
                 {
-                    clsAGVSTaskReportResponse result_from = ((OkObjectResult)await LoadUnloadTaskStart(from, FromSlot, ACTION_TYPE.Unload)).Value as clsAGVSTaskReportResponse;
-                    if (result_from.confirm == false)
-                        return result_from;
+                    if (!isSourceAGV)
+                    {
+                        clsAGVSTaskReportResponse result_from = ((OkObjectResult)await LoadUnloadTaskStart(from, FromSlot, ACTION_TYPE.Unload)).Value as clsAGVSTaskReportResponse;
+                        if (result_from.confirm == false)
+                            return result_from;
+                    }
 
                     clsAGVSTaskReportResponse result_to = ((OkObjectResult)await LoadUnloadTaskStart(to, ToSlot, ACTION_TYPE.Load)).Value as clsAGVSTaskReportResponse;
                     return result_to;
