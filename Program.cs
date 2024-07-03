@@ -25,70 +25,130 @@ using NLog;
 using NLog.Web;
 using System.Reflection;
 using System.Text;
-Console.Title = "GPM-AGV系統(AGVs)";
-LOG.SetLogFolderName("AGVS LOG");
-LOG.INFO("AGVS System Start");
-AGVSConfigulator.Init();
-try
+
+public class Program
 {
-    AGVSDatabase.Initialize().GetAwaiter().GetResult();
-}
-catch (Exception ex)
-{
-    Console.WriteLine($"資料庫初始化異常-請確認資料庫! {ex.Message}");
-    Environment.Exit(4);
-}
-
-EQTransferTaskManager.Initialize();
-AGVSMapManager.Initialize();
-HotRunScriptManager.Initialize();
-ScheduleMeasureManager.Initialize();
-EQDeviceEventsHandler.Initialize();
-
-clsEQ.OnIOStateChanged += EQDeviceEventsHandler.HandleEQIOStateChanged;
-
-AGVSSocketHost agvs_host = new AGVSSocketHost();
-agvs_host.Start();
-AlarmManagerCenter.Initialize();
-AlarmManager.LoadVCSTrobleShootings();
-VMSSerivces.OnVMSReconnected += async (sender, e) => await VMSSerivces.RunModeSwitch(SystemModes.RunMode);
-VMSSerivces.AliveCheckWorker();
-VMSSerivces.RunModeSwitch(AGVSystemCommonNet6.AGVDispatch.RunMode.RUN_MODE.MAINTAIN);
-
-var logger = LogManager.Setup().LoadConfigurationFromAppSettings().GetCurrentClassLogger();
-try
-{
-
-    var builder = WebApplication.CreateBuilder(args);
-    builder.Logging.ClearProviders();
-    builder.Logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Information);
-    builder.Host.UseNLog();
-
-    builder.Services.AddControllers();
-    builder.Services.AddEndpointsApiExplorer();
-    builder.Services.AddSwaggerGen(opton =>
+    public static void Main(string[] args)
     {
-        opton.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+        Console.Title = "GPM-AGV系統(AGVs)";
+        Logger logger = LogManager.Setup().LoadConfigurationFromAppSettings().GetCurrentClassLogger();
+
+        try
         {
-            Title = "GPM 派車系統 RESTFul API",
-            Version = "V1"
-        });
-        var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-        var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-        if (File.Exists(xmlPath))
-            opton.IncludeXmlComments(xmlPath);
-    });
-    builder.Services.AddControllers().AddJsonOptions(options => options.JsonSerializerOptions.PropertyNamingPolicy = null);
-    builder.Services.AddDirectoryBrowser();
-    builder.Services.Configure<JsonOptions>(options =>
-    {
-        options.SerializerOptions.PropertyNamingPolicy = null;
-        options.SerializerOptions.PropertyNameCaseInsensitive = false;
-        options.SerializerOptions.WriteIndented = true;
-    });
+            LOG.SetLogFolderName("AGVS LOG");
+            logger.Info("AGVS Start");
 
-    builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(
-            options => options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters()
+            SystemInitializer.Initialize(logger);
+
+            var builder = WebApplication.CreateBuilder(args);
+            WebAppInitializer.ConfigureBuilder(builder);
+
+            var app = builder.Build();
+            WebAppInitializer.ConfigureApp(app);
+
+            app.Run();
+        }
+        catch (Exception ex)
+        {
+            logger.Error(ex);
+        }
+        finally
+        {
+            LogManager.Shutdown();
+        }
+    }
+}
+
+public static class SystemInitializer
+{
+    public static void Initialize(Logger logger)
+    {
+        AGVSConfigulator.Init();
+        InitializeDatabase(logger);
+
+        EQTransferTaskManager.Initialize();
+        AGVSMapManager.Initialize();
+        HotRunScriptManager.Initialize();
+        ScheduleMeasureManager.Initialize();
+        EQDeviceEventsHandler.Initialize();
+        clsEQ.OnIOStateChanged += EQDeviceEventsHandler.HandleEQIOStateChanged;
+
+        AGVSSocketHost agvsHost = new AGVSSocketHost();
+        agvsHost.Start();
+
+        AlarmManagerCenter.Initialize();
+        AlarmManager.LoadVCSTrobleShootings();
+        VMSSerivces.OnVMSReconnected += async (sender, e) => await VMSSerivces.RunModeSwitch(SystemModes.RunMode);
+        VMSSerivces.AliveCheckWorker();
+        VMSSerivces.RunModeSwitch(AGVSystemCommonNet6.AGVDispatch.RunMode.RUN_MODE.MAINTAIN);
+    }
+
+    private static void InitializeDatabase(Logger logger)
+    {
+        try
+        {
+            logger.Info("Database Initialize...");
+            AGVSDatabase.Initialize().GetAwaiter().GetResult();
+            logger.Info("Database Initialize...Done");
+        }
+        catch (Exception ex)
+        {
+            logger.Fatal($"資料庫初始化異常-請確認資料庫! {ex.Message}");
+            Environment.Exit(4);
+        }
+    }
+}
+
+public static class WebAppInitializer
+{
+    public static void ConfigureBuilder(WebApplicationBuilder builder)
+    {
+        builder.Logging.ClearProviders();
+        builder.Logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Information);
+        builder.Host.UseNLog();
+
+        builder.Services.AddControllers();
+        builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddSwaggerGen(options =>
+        {
+            options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+            {
+                Title = "GPM 派車系統 RESTFul API",
+                Version = "V1"
+            });
+
+            var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+            var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+            if (File.Exists(xmlPath))
+                options.IncludeXmlComments(xmlPath);
+        });
+
+        builder.Services.AddControllers().AddJsonOptions(options =>
+        {
+            options.JsonSerializerOptions.PropertyNamingPolicy = null;
+        });
+
+        builder.Services.AddDirectoryBrowser();
+        builder.Services.Configure<JsonOptions>(options =>
+        {
+            options.SerializerOptions.PropertyNamingPolicy = null;
+            options.SerializerOptions.PropertyNameCaseInsensitive = false;
+            options.SerializerOptions.WriteIndented = true;
+        });
+
+        ConfigureAuthentication(builder);
+        ConfigureDatabase(builder);
+        ConfigureHostedServices(builder);
+        ConfigureCors(builder);
+        ConfigureWebSockets(builder);
+        ConfigureSignalR(builder);
+    }
+
+    private static void ConfigureAuthentication(WebApplicationBuilder builder)
+    {
+        builder.Services.AddScoped<UserValidationService>();
+        builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(
+            options => options.TokenValidationParameters = new TokenValidationParameters()
             {
                 ValidateIssuer = false,
                 ValidateAudience = false,
@@ -97,34 +157,76 @@ try
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("secret_keysecret_keysecret_key11"))
             }
         );
+    }
 
-
-    builder.Services.AddDbContext<AGVSDbContext>(options => options.UseSqlServer(AGVSConfigulator.SysConfigs.DBConnection));
-    builder.Services.AddHostedService<DatabaseBackgroundService>();
-    builder.Services.AddHostedService<VehicleLocationMonitorBackgroundService>();
-    builder.Services.AddHostedService<FrontEndDataBrocastService>();
-
-    builder.Services.AddScoped<MeanTimeQueryService>();
-    builder.Services.AddCors(options =>
+    private static void ConfigureDatabase(WebApplicationBuilder builder)
     {
-        options.AddPolicy("AllowAll", policy =>
+        builder.Services.AddDbContext<AGVSDbContext>(options => options.UseSqlServer(AGVSConfigulator.SysConfigs.DBConnection));
+    }
+
+    private static void ConfigureHostedServices(WebApplicationBuilder builder)
+    {
+        builder.Services.AddHostedService<DatabaseBackgroundService>();
+        builder.Services.AddHostedService<VehicleLocationMonitorBackgroundService>();
+        builder.Services.AddHostedService<FrontEndDataBrocastService>();
+        builder.Services.AddScoped<MeanTimeQueryService>();
+    }
+
+    private static void ConfigureCors(WebApplicationBuilder builder)
+    {
+        builder.Services.AddCors(options =>
         {
-            policy.AllowAnyMethod()
-                        .AllowAnyHeader()
-                         .SetIsOriginAllowed(origin => true) // 允许任何来源
-                         .AllowCredentials(); // 允许凭据
+            options.AddPolicy("AllowAll", policy =>
+            {
+                policy.AllowAnyMethod()
+                      .AllowAnyHeader()
+                      .SetIsOriginAllowed(origin => true)
+                      .AllowCredentials();
+            });
         });
-    });
-    builder.Services.AddWebSockets(options =>
+    }
+
+    private static void ConfigureWebSockets(WebApplicationBuilder builder)
     {
-        options.KeepAliveInterval = TimeSpan.FromSeconds(600);
-    });
-    builder.Services.AddSignalR().AddJsonProtocol(options => { options.PayloadSerializerOptions.PropertyNamingPolicy = null; }); ;
+        builder.Services.AddWebSockets(options =>
+        {
+            options.KeepAliveInterval = TimeSpan.FromSeconds(600);
+        });
+    }
 
-    var app = builder.Build();
-    app.UseMiddleware<ApiLoggingMiddleware>();
+    private static void ConfigureSignalR(WebApplicationBuilder builder)
+    {
+        builder.Services.AddSignalR().AddJsonProtocol(options =>
+        {
+            options.PayloadSerializerOptions.PropertyNamingPolicy = null;
+        });
+    }
 
-    _ = Task.Run(async () =>
+    public static void ConfigureApp(WebApplication app)
+    {
+        app.UseMiddleware<ApiLoggingMiddleware>();
+        Task.Run(() => InitializeEquipmentManager());
+
+        AutomationManager.InitialzeDefaultTasks();
+        AutomationManager.StartAllAutomationTasks();
+
+        app.UseSwagger();
+        app.UseSwaggerUI();
+        app.UseCors("AllowAll");
+        app.UseWebSockets();
+        app.UseDefaultFiles(new DefaultFilesOptions());
+        app.UseStaticFiles();
+
+        StaticFileInitializer.Initialize(app);
+
+        app.UseVueRouterHistory();
+        app.UseAuthentication();
+        app.UseAuthorization();
+        app.MapControllers();
+        app.MapHub<FrontEndDataHub>("/FrontEndDataHub");
+    }
+
+    private static async Task InitializeEquipmentManager()
     {
         await Task.Delay(3000);
         try
@@ -138,114 +240,92 @@ try
         }
         catch (Exception ex)
         {
-            AlarmManagerCenter.AddAlarmAsync(ALARMS.SYSTEM_EQP_MANAGEMENT_INITIALIZE_FAIL_WITH_EXCEPTION);//SYSTEM_EQP_MANAGEMENT_INITIALIZE_FAIL_WITH_EXCEPTION
+            AlarmManagerCenter.AddAlarmAsync(ALARMS.SYSTEM_EQP_MANAGEMENT_INITIALIZE_FAIL_WITH_EXCEPTION);
             LOG.Critical(ex);
         }
-    });
+    }
+}
 
-    AutomationManager.InitialzeDefaultTasks();
-    AutomationManager.StartAllAutomationTasks();
-    app.UseSwagger();
-    app.UseSwaggerUI();
-    app.UseCors("AllowAll"); app.UseWebSockets();
-    app.UseDefaultFiles(new DefaultFilesOptions());
-    app.UseStaticFiles();
-
-    // 加載配置文件
-    var mapFileFolderPath = app.Configuration.GetValue<string>("StaticFileOptions:MapFile:FolderPath");
-    var mapFileRequestPath = app.Configuration.GetValue<string>("StaticFileOptions:MapFile:RequestPath");
-    var agvImageFileFolderPath = app.Configuration.GetValue<string>("StaticFileOptions:AGVImageStoreFile:FolderPath");
-    var agvImageFileRequestPath = app.Configuration.GetValue<string>("StaticFileOptions:AGVImageStoreFile:RequestPath");
-
-    Directory.CreateDirectory(mapFileFolderPath);
-    Directory.CreateDirectory(agvImageFileFolderPath);
-
-    var mapFileProvider = new PhysicalFileProvider(mapFileFolderPath);
-    var agvImageFileProvider = new PhysicalFileProvider(agvImageFileFolderPath);
-
-    // Enable displaying browser links.
-    app.UseStaticFiles(new StaticFileOptions
+public static class StaticFileInitializer
+{
+    public static void Initialize(WebApplication app)
     {
-        FileProvider = mapFileProvider,
-        RequestPath = mapFileRequestPath
-    });
+        var mapFileFolderPath = app.Configuration.GetValue<string>("StaticFileOptions:MapFile:FolderPath");
+        var mapFileRequestPath = app.Configuration.GetValue<string>("StaticFileOptions:MapFile:RequestPath");
+        var agvImageFileFolderPath = app.Configuration.GetValue<string>("StaticFileOptions:AGVImageStoreFile:FolderPath");
+        var agvImageFileRequestPath = app.Configuration.GetValue<string>("StaticFileOptions:AGVImageStoreFile:RequestPath");
 
-    app.UseStaticFiles(new StaticFileOptions
-    {
-        FileProvider = agvImageFileProvider,
-        RequestPath = agvImageFileRequestPath
-    });
+        Directory.CreateDirectory(mapFileFolderPath);
+        Directory.CreateDirectory(agvImageFileFolderPath);
 
-    app.UseDirectoryBrowser(new DirectoryBrowserOptions
-    {
-        FileProvider = mapFileProvider,
-        RequestPath = mapFileRequestPath
-    });
-    CreateDefaultAGVImage();
+        var mapFileProvider = new PhysicalFileProvider(mapFileFolderPath);
+        var agvImageFileProvider = new PhysicalFileProvider(agvImageFileFolderPath);
 
-    void CreateDefaultAGVImage()
+        app.UseStaticFiles(new StaticFileOptions
+        {
+            FileProvider = mapFileProvider,
+            RequestPath = mapFileRequestPath
+        });
+
+        app.UseStaticFiles(new StaticFileOptions
+        {
+            FileProvider = agvImageFileProvider,
+            RequestPath = agvImageFileRequestPath
+        });
+
+        app.UseDirectoryBrowser(new DirectoryBrowserOptions
+        {
+            FileProvider = mapFileProvider,
+            RequestPath = mapFileRequestPath
+        });
+
+        CreateDefaultAGVImage(agvImageFileFolderPath);
+
+        try
+        {
+            Directory.CreateDirectory(AGVSConfigulator.SysConfigs.TrobleShootingFolder);
+            var trobleshootingFileRequestPath = app.Configuration.GetValue<string>("TrobleShootingFileOptions:TrobleShootingFile:RequestPath");
+            var trobleshootingFileProvider = new PhysicalFileProvider(AGVSConfigulator.SysConfigs.TrobleShootingFolder);
+
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                FileProvider = trobleshootingFileProvider,
+                RequestPath = trobleshootingFileRequestPath
+            });
+
+            app.UseDirectoryBrowser(new DirectoryBrowserOptions
+            {
+                FileProvider = trobleshootingFileProvider,
+                RequestPath = trobleshootingFileRequestPath
+            });
+        }
+        catch (Exception ex)
+        {
+            LOG.ERROR(ex.Message, ex);
+        }
+    }
+
+    private static void CreateDefaultAGVImage(string agvImageFileFolderPath)
     {
         try
         {
-            var exist_fileNames = Directory.GetFiles(agvImageFileFolderPath).Select(file => Path.GetFileName(file)).ToList();
+            var existFileNames = Directory.GetFiles(agvImageFileFolderPath).Select(file => Path.GetFileName(file)).ToList();
 
             for (int i = 0; i < 10; i++)
             {
-                //AGV_003-Icon.png;
                 string agvImageFileName = $"AGV_00{i}-Icon.png";
                 string defaultImgFullFileName = "./Resources/AGVImages/default.png";
                 string agvImageFullFileName = Path.Combine(agvImageFileFolderPath, agvImageFileName);
-                if (!exist_fileNames.Contains(agvImageFileName))
+
+                if (!existFileNames.Contains(agvImageFileName))
                 {
                     File.Copy(defaultImgFullFileName, agvImageFullFileName, true);
                 }
             }
-
         }
         catch (Exception ex)
         {
             LOG.ERROR($"Program-CreateDefaultAGVImage Error :{ex.Message}", ex);
         }
     }
-
-
-    try
-    {
-        Directory.CreateDirectory(AGVSConfigulator.SysConfigs.TrobleShootingFolder);
-        var trobleshootingFileRequestPath = app.Configuration.GetValue<string>("TrobleShootingFileOptions:TrobleShootingFile:RequestPath");
-        var trobleshootingFileProvider = new PhysicalFileProvider(AGVSConfigulator.SysConfigs.TrobleShootingFolder);
-
-        // Enable displaying browser links.
-        app.UseStaticFiles(new StaticFileOptions
-        {
-            FileProvider = trobleshootingFileProvider,
-            RequestPath = trobleshootingFileRequestPath
-        });
-
-        app.UseDirectoryBrowser(new DirectoryBrowserOptions
-        {
-            FileProvider = trobleshootingFileProvider,
-            RequestPath = trobleshootingFileRequestPath
-        });
-    }
-    catch (Exception ex)
-    {
-        LOG.ERROR(ex.Message, ex);
-    }
-    //app.UseMiddleware<RequestResponseLoggingMiddleware>();
-    app.UseVueRouterHistory();
-    //app.UseHttpsRedirection();
-    app.UseAuthorization();
-    app.MapControllers();
-    app.MapHub<FrontEndDataHub>("/FrontEndDataHub");
-    app.Run();
-
-}
-catch (Exception ex)
-{
-    logger.Error(ex);
-}
-finally
-{
-    LogManager.Shutdown();
 }
