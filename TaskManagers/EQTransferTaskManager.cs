@@ -55,7 +55,7 @@ namespace AGVSystem.TaskManagers
         {
             LOG.WARN("Run Mode Start");
         }
-        public static (bool confirm, ALARMS alarm_code, string message, object obj, Type objtype) CheckLoadUnloadStation(int station_tag, int LayerorSlot, ACTION_TYPE actiontype, bool check_rack_move_out_is_empty_or_full = true, bool bypasseqandrackckeck = true)
+        public static (bool confirm, ALARMS alarm_code, string message, object obj, Type objtype) CheckLoadUnloadStation(int station_tag, int LayerorSlot, ACTION_TYPE actiontype, bool check_rack_move_out_is_empty_or_full = true, bool bypasseqandrackckeck = false)
         {
             if (bypasseqandrackckeck == true)
                 return new(true, ALARMS.NONE, $"By Pass EQ and Rack Check", null, null);
