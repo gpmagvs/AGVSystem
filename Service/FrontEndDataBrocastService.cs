@@ -44,7 +44,7 @@ namespace AGVSystem.Service
                  bool _foring = false;
                  while (true)
                  {
-                     await Task.Delay(300);
+                     await Task.Delay(350);
                      try
                      {
                          var incompleted_tasks = DatabaseCaches.TaskCaches.InCompletedTasks;
@@ -61,21 +61,21 @@ namespace AGVSystem.Service
                              AGVLocationUpload = AGVSMapManager.AGVUploadCoordinationStore,
                              HotRun = HotRunScriptManager.HotRunScripts,
                              UncheckedAlarm = AlarmManagerCenter.uncheckedAlarms,
-                             //VMSStatus = vmsData,
                              TaskData = new { incompleteds = incompleted_tasks, completeds = completed_tasks }
                          };
                          //use json string to compare the data is changed or not
+                         await _hubContext.Clients.All.SendAsync("ReceiveData", "VMS", data);
 
-                         if (_foring || !JsonConvert.SerializeObject(data).Equals(JsonConvert.SerializeObject(_previousData)))
-                         {
-                             _foring = false;
-                             _previousData = data;
-                             _ = Task.Factory.StartNew(async () =>
-                             {
-                                 await _hubContext.Clients.All.SendAsync("ReceiveData", "VMS", data);
-                             });
-                             continue;
-                         }
+                         //if (_foring || !JsonConvert.SerializeObject(data).Equals(JsonConvert.SerializeObject(_previousData)))
+                         //{
+                         //    _foring = false;
+                         //    _previousData = data;
+                         //    _ = Task.Factory.StartNew(async () =>
+                         //    {
+                         //        await _hubContext.Clients.All.SendAsync("ReceiveData", "VMS", data);
+                         //    });
+                         //    continue;
+                         //}
                      }
                      catch (Exception ex)
                      {

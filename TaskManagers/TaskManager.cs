@@ -390,7 +390,25 @@ namespace AGVSystem.TaskManagers
         {
             try
             {
-                await VMSSerivces.TaskCancel(task_name);
+
+                bool isOrderWaiting = DatabaseCaches.TaskCaches.WaitExecuteTasks.Any(order => order.TaskName == task_name);
+                if (isOrderWaiting)
+                {
+                    using (var agvsDb = new AGVSDatabase())
+                    {
+                        var dto = agvsDb.tables.Tasks.FirstOrDefault(od => od.TaskName == task_name);
+                        if (dto != null)
+                        {
+                            dto.State = TASK_RUN_STATUS.CANCEL;
+                            dto.FailureReason = reason;
+                            dto.FinishTime = DateTime.Now;
+                        }
+                        await agvsDb.SaveChanges();
+                    }
+                    return true;
+                }
+
+                await VMSSerivces.TaskCancel(task_name, reason);
                 //using (var db = new AGVSDatabase())
                 //{
                 //    var task = db.tables.Tasks.Where(tk => tk.TaskName == task_name).FirstOrDefault();
