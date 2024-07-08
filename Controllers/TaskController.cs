@@ -20,6 +20,7 @@ using EquipmentManagment.WIP;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Newtonsoft.Json;
 using NuGet.Configuration;
 using NuGet.Protocol;
@@ -315,6 +316,16 @@ namespace AGVSystem.Controllers
             {
                 return new clsAGVSTaskReportResponse() { confirm = false, message = $"{ex}" };
             }
+        }
+
+        [HttpPost("UpdateMaterialTransferStatus")]
+        public async Task<IActionResult> UpdateMaterialTransferStatus(Models.TaskAllocation.clsMaterialInfoDto materialInfoDto, string User = "")
+        {
+            if (!UserValidation.UserValidation(HttpContext))
+            {
+                return Unauthorized();
+            }
+            return Ok();
         }
         private (bool existDevice, clsEQ mainEQ, clsRack rack) TryGetEndDevice(int tag)
         {
