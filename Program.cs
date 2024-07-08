@@ -30,7 +30,8 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        Console.Title = "GPM-AGV系統(AGVs)";
+        var appVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
+        Console.Title = $"GPM-AGV系統(AGVs)-v{appVersion}";
         Logger logger = LogManager.Setup().LoadConfigurationFromAppSettings().GetCurrentClassLogger();
 
         try

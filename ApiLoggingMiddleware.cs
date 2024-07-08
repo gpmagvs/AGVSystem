@@ -8,6 +8,14 @@ namespace AGVSystem
 
         private readonly RequestDelegate _next;
 
+        private List<string> IngnorePath = new List<string>()
+        {
+            "/api/Map",
+            "/AGVImages",
+            "/api/Equipment/GetEQOptions"
+        };
+        private List<string> contentTypesToIgnore = new() { "image", "text/css", "text/html", "application/javascript", "font" };
+
         public ApiLoggingMiddleware(ILogger<ApiLoggingMiddleware> logger, RequestDelegate next)
         {
             _logger = logger;
@@ -28,7 +36,15 @@ namespace AGVSystem
             // 攔截回應
             var response = await FormatResponse(context.Response);
 
-            if (context.Request.Path.Value.Contains("api/Map"))
+            //如果回應的Contetn-type 是圖片、html、javascript、字體等不需要紀錄的資料，直接回傳
+            if (contentTypesToIgnore.Any(type => context.Response.ContentType?.Contains(type) == true))
+            {
+                await responseBody.CopyToAsync(originalBodyStream);
+                return;
+            }
+
+            string? _requestPath = context.Request.Path.Value;
+            if (IngnorePath.Contains(_requestPath))
             {
                 await responseBody.CopyToAsync(originalBodyStream);
                 return;
