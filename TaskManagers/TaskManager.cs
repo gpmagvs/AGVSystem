@@ -11,6 +11,7 @@ using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.DATABASE.Helpers;
 using AGVSystemCommonNet6.HttpTools;
 using AGVSystemCommonNet6.Log;
+using AGVSystemCommonNet6.Material;
 using AGVSystemCommonNet6.Microservices.ResponseModel;
 using AGVSystemCommonNet6.Microservices.VMS;
 using EquipmentManagment.Device.Options;
@@ -294,6 +295,12 @@ namespace AGVSystem.TaskManagers
                     }
                     db.tables.Tasks.Add(taskData);
                     var added = await db.SaveChanges();
+
+                    if ((taskData.Action == ACTION_TYPE.Load || taskData.Action == ACTION_TYPE.Unload || taskData.Action == ACTION_TYPE.Carry) && string.IsNullOrEmpty(taskData.Carrier_ID))
+                    {
+                        MaterialManager.AddMaterialInfo(taskData.Carrier_ID, taskData.To_Station_Tag.ToString(), MaterialInstallStatus.OK, MaterialIDStatus.Unknown, (taskData.CST_TYPE == 200 ? MaterialType.Tray : MaterialType.Frame), MaterialCondition.Wait);
+                        LOG.INFO($"Material {taskData.Action.ToString()} Mission Created, Carrier ID : {taskData.Carrier_ID}");
+                    }
                 }
                 return new(true, ALARMS.NONE, "");
             }

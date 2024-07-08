@@ -38,7 +38,7 @@ namespace AGVSystem.Models.EQDevices
 
         private static void HandleMaterialAdd(object? sender, clsMaterialInfo e)
         {
-            MaterialManager.AddMaterialInfo(e.MaterialID, e.TargetStation, e.InstallStatus, e.IDStatus, e.Type);
+            MaterialManager.AddMaterialInfo(e.MaterialID, e.TargetStation, e.InstallStatus, e.IDStatus, e.Type, e.Condition);
         }
 
         private static void HandleMaterialTransferStatusChanged(object? sender, clsMaterialInfo e)
