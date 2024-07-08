@@ -85,18 +85,16 @@ namespace AGVSystem.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> Login(UserLoginRequest request)
         {
-            HttpContext.Request.Headers.TryGetValue("Authorization", out var token);
+            HttpContext.Request.Headers.TryGetValue("Authorization", out Microsoft.Extensions.Primitives.StringValues token);
             var user = await _userDbContext.Users.FirstOrDefaultAsync(u => u.UserName == request.Username);
             if (user == null || user.Password != request.Password)
             {
                 return BadRequest(new { Success = false, Message = "Invalid User Name or Password", UserName = "" });
             }
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes("my_secret_key");
             // TODO: 根據需要生成 JWT Token
             token = GenerateJwtToken(request.Username, request.Password, user.Role);
             // 返回 JWT Token
-            return Ok(new { Success = true, token = token, Role = user.Role, UserName = request.Username });
+            return Ok(new { Success = true, token = token.FirstOrDefault(), Role = user.Role, UserName = request.Username });
         }
         /// <summary>
         /// 修改用戶設定
@@ -189,22 +187,18 @@ namespace AGVSystem.Controllers
 
         private string GenerateJwtToken(string username, string password, ERole role)
         {
-            // TODO: 根據需要生成 JWT Token
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes("secret_keysecret_keysecret_key11");
-            var tokenDescriptor = new SecurityTokenDescriptor
+            var claims = new[]
             {
-                Subject = new ClaimsIdentity(new[]
-                {
-            new Claim(ClaimTypes.Name, username),
-            new Claim("Password",password),
-            new Claim("Role",role.ToString())
-        }),
-                Expires = DateTime.UtcNow.AddDays(1),
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+                new Claim(ClaimTypes.Name, username),
+                new Claim("Password",password),
+                new Claim("Role",role.ToString())
             };
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-            return tokenHandler.WriteToken(token);
+
+            var token = new JwtSecurityToken(
+                claims: claims,
+                expires: DateTime.UtcNow.AddDays(1),
+                signingCredentials: new SigningCredentials(new SymmetricSecurityKey(Encoding.ASCII.GetBytes("secret_keysecret_keysecret_key11")), SecurityAlgorithms.HmacSha256Signature));
+            return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
     }

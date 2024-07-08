@@ -47,27 +47,19 @@ namespace AGVSystem.Controllers
         }
 
         [HttpGet("Allocation")]
+        [Authorize]
         public async Task<IActionResult> Test()
         {
-            if (!UserValidation.UserValidation(HttpContext))
-            {
-                return Unauthorized();
-            }
-
             return Ok();
         }
 
 
 
         [HttpGet("Cancel")]
+        [Authorize]
         public async Task<IActionResult> Cancel(string task_name)
         {
-            if (!UserValidation.UserValidation(HttpContext))
-            {
-                return Unauthorized();
-            }
             LOG.TRACE($"User try cancle Task-{task_name}");
-
             bool canceled = await TaskManager.Cancel(task_name, $"User manual canceled");
             LOG.TRACE($"User try cancle Task-{task_name}---{canceled}");
             return Ok(canceled);
@@ -77,19 +69,12 @@ namespace AGVSystem.Controllers
         [Authorize]
         public async Task<IActionResult> MoveTask([FromBody] clsTaskDto taskData, string user = "")
         {
-            if (!UserValidation.UserValidation(HttpContext))
-            {
-                return Unauthorized();
-            }
             return Ok(await AddTask(taskData, user));
         }
         [HttpPost("measure")]
+        [Authorize]
         public async Task<IActionResult> MeasureTask([FromBody] clsTaskDto taskData, string user = "")
         {
-            if (!UserValidation.UserValidation(HttpContext))
-            {
-                return Unauthorized();
-            }
             Map map = MapManager.LoadMapFromFile();
             if (map.Bays.TryGetValue(taskData.To_Station, out Bay bay))
             {
@@ -101,40 +86,27 @@ namespace AGVSystem.Controllers
                 return Ok(new { confirm = false, message = $"Bay - {taskData.To_Station} not found" });
         }
         [HttpPost("load")]
+        [Authorize]
         public async Task<IActionResult> LoadTask([FromBody] clsTaskDto taskData, string user = "")
         {
-            if (!UserValidation.UserValidation(HttpContext))
-            {
-                return Unauthorized();
-            }
             return Ok(await AddTask(taskData, user));
         }
         [HttpPost("unload")]
+        [Authorize]
         public async Task<IActionResult> UnloadTask([FromBody] clsTaskDto taskData, string user = "")
         {
-            if (!UserValidation.UserValidation(HttpContext))
-            {
-                return Unauthorized();
-            }
             return Ok(await AddTask(taskData, user));
         }
         [HttpPost("carry")]
         [Authorize]
         public async Task<IActionResult> CarryTask([FromBody] clsTaskDto taskData, string user = "")
         {
-            if (!UserValidation.UserValidation(HttpContext))
-            {
-                return Unauthorized();
-            }
             return Ok(await AddTask(taskData, user));
         }
         [HttpPost("charge")]
+        [Authorize]
         public async Task<IActionResult> ChargeTask([FromBody] clsTaskDto taskData, string user = "")
         {
-            if (!UserValidation.UserValidation(HttpContext))
-            {
-                return Unauthorized();
-            }
             try
             {
 
@@ -150,33 +122,24 @@ namespace AGVSystem.Controllers
         }
 
         [HttpGet("CancelChargeTask")]
+        [Authorize]
         public async Task<IActionResult> CancelChargeTask(string agv_name)
         {
-            if (!UserValidation.UserValidation(HttpContext))
-            {
-                return Unauthorized();
-            }
             var result = await TaskManager.CancelChargeTaskByAGVAsync(agv_name);
             return Ok(new { confirm = result.confirm, message = result.message });
         }
 
 
         [HttpPost("ExangeBattery")]
+        [Authorize]
         public async Task<IActionResult> ExangeBattery([FromBody] clsTaskDto taskData, string user = "")
         {
-            if (!UserValidation.UserValidation(HttpContext))
-            {
-                return Unauthorized();
-            }
             return Ok(await AddTask(taskData, user));
         }
         [HttpPost("park")]
+        [Authorize]
         public async Task<IActionResult> ParkTask([FromBody] clsTaskDto taskData, string user = "")
         {
-            if (!UserValidation.UserValidation(HttpContext))
-            {
-                return Unauthorized();
-            }
             return Ok(await AddTask(taskData, user));
         }
 
@@ -184,8 +147,11 @@ namespace AGVSystem.Controllers
         [HttpGet("LoadUnloadTaskStart")]
         public async Task<IActionResult> LoadUnloadTaskStart(int tag, int slot, ACTION_TYPE action)
         {
+
             if (action != ACTION_TYPE.Load && action != ACTION_TYPE.Unload)
                 return Ok(new clsAGVSTaskReportResponse() { confirm = false, message = "Action should equal Load or Unlaod" });
+
+
             AGVSystemCommonNet6.MAP.MapPoint MapPoint = AGVSMapManager.GetMapPointByTag(tag);
             if (MapPoint == null)
                 return Ok(new clsAGVSTaskReportResponse() { confirm = false, AlarmCode = ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, message = $"站點TAG-{tag} 不存在於當前地圖" });
@@ -287,10 +253,11 @@ namespace AGVSystem.Controllers
                 return new clsAGVSTaskReportResponse() { confirm = true, message = $"{action} from {result.rack} Finish" };
         }
         [HttpGet("LDULDOrderStart")]
-        public async Task<clsAGVSTaskReportResponse> LDULDOrderStart(int from, int FromSlot, int to, int ToSlot, ACTION_TYPE action)
+        public async Task<clsAGVSTaskReportResponse> LDULDOrderStart(int from, int FromSlot, int to, int ToSlot, ACTION_TYPE action, bool isSourceAGV)
         {
             try
             {
+
                 if (action == ACTION_TYPE.Unload || action == ACTION_TYPE.LoadAndPark || action == ACTION_TYPE.Load)
                 {
                     clsAGVSTaskReportResponse result = ((OkObjectResult)await LoadUnloadTaskStart(to, ToSlot, action)).Value as clsAGVSTaskReportResponse;
@@ -298,9 +265,12 @@ namespace AGVSystem.Controllers
                 }
                 else if (action == ACTION_TYPE.Carry)
                 {
-                    clsAGVSTaskReportResponse result_from = ((OkObjectResult)await LoadUnloadTaskStart(from, FromSlot, ACTION_TYPE.Unload)).Value as clsAGVSTaskReportResponse;
-                    if (result_from.confirm == false)
-                        return result_from;
+                    if (!isSourceAGV)
+                    {
+                        clsAGVSTaskReportResponse result_from = ((OkObjectResult)await LoadUnloadTaskStart(from, FromSlot, ACTION_TYPE.Unload)).Value as clsAGVSTaskReportResponse;
+                        if (result_from.confirm == false)
+                            return result_from;
+                    }
 
                     clsAGVSTaskReportResponse result_to = ((OkObjectResult)await LoadUnloadTaskStart(to, ToSlot, ACTION_TYPE.Load)).Value as clsAGVSTaskReportResponse;
                     return result_to;

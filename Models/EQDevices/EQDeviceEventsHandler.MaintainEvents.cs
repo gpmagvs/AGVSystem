@@ -13,6 +13,8 @@ namespace AGVSystem.Models.EQDevices
 {
     public partial class EQDeviceEventsHandler
     {
+        private static bool _disableEntryPointWhenEQMaintaining = AGVSConfigulator.SysConfigs.EQManagementConfigs.DisableEntryPointWhenEQMaintaining;
+
         private static void HandleDeviceMaintainFinish(object? sender, EndPointDeviceAbstract device)
         {
             LOG.TRACE($"{device.EQName} Maintain Signal OFF");
@@ -24,7 +26,8 @@ namespace AGVSystem.Models.EQDevices
         {
             LOG.TRACE($"{device.EQName} Maintain Signal ON");
             NotifyServiceHelper.WARNING($"設備-{device.EQName} 維修中!");
-            ChangeEnableStateOfEntryPointOfEQOfMapAndRequestVMSReload(device.EndPointOptions.TagID, false);
+            if (_disableEntryPointWhenEQMaintaining)
+                ChangeEnableStateOfEntryPointOfEQOfMapAndRequestVMSReload(device.EndPointOptions.TagID, false);
         }
 
 
