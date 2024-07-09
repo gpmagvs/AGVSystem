@@ -21,6 +21,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
+using WebSocketSharp;
 using static AGVSystemCommonNet6.MAP.MapPoint;
 using static SQLite.SQLite3;
 using static System.Collections.Specialized.BitVector32;
@@ -98,12 +99,15 @@ namespace AGVSystem.TaskManagers
                 }
                 else if (taskData.Action == ACTION_TYPE.Carry)
                 {
-                    results2 = EQTransferTaskManager.CheckLoadUnloadStation(source_station_tag, Convert.ToInt16(taskData.From_Slot), ACTION_TYPE.Unload, bypasseqandrackckeck: taskData.bypass_eq_status_check);
-                    results.confirm = results2.confirm;
-                    results.alarm_code = results2.alarm_code;
-                    results.message = results2.message;
-                    if (!results.confirm)
-                        return results;
+                    if (!isCarryAndSourceIsAGV)
+                    {
+                        results2 = EQTransferTaskManager.CheckLoadUnloadStation(source_station_tag, Convert.ToInt16(taskData.From_Slot), ACTION_TYPE.Unload, bypasseqandrackckeck: taskData.bypass_eq_status_check);
+                        results.confirm = results2.confirm;
+                        results.alarm_code = results2.alarm_code;
+                        results.message = results2.message;
+                        if (!results.confirm)
+                            return results;
+                    }
                     results2 = EQTransferTaskManager.CheckLoadUnloadStation(destine_station_tag, Convert.ToInt16(taskData.To_Slot), ACTION_TYPE.Load, bypasseqandrackckeck: taskData.bypass_eq_status_check);
                     results.confirm = results2.confirm;
                     results.alarm_code = results2.alarm_code;
@@ -392,6 +396,26 @@ namespace AGVSystem.TaskManagers
             {
 
                 bool isOrderWaiting = DatabaseCaches.TaskCaches.WaitExecuteTasks.Any(order => order.TaskName == task_name);
+
+                using (var db = new AGVSDatabase())
+                {
+                    var order = db.tables.Tasks.FirstOrDefault(order => order.TaskName == task_name);
+                    if (order != null && (!order.DesignatedAGVName.IsNullOrEmpty() || order.DesignatedAGVName != "-1"))
+                    {
+                        clsAGVStateDto vehicleState = DatabaseCaches.Vehicle.VehicleStates.FirstOrDefault(agvState => agvState.AGV_Name == order.DesignatedAGVName);
+                        if (vehicleState != null && (vehicleState.OnlineStatus == clsEnums.ONLINE_STATE.OFFLINE || vehicleState.MainStatus == clsEnums.MAIN_STATUS.DOWN))
+                        {
+                            order.State = status;
+                            order.FinishTime = DateTime.Now;
+                            order.FailureReason = reason;
+                            await db.SaveChanges();
+                            return true;
+                        }
+                    }
+                }
+
+                DatabaseCaches.TaskCaches.WaitExecuteTasks.Any(order => order.TaskName == task_name);
+
                 if (isOrderWaiting)
                 {
                     using (var agvsDb = new AGVSDatabase())
