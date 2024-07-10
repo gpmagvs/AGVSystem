@@ -7,7 +7,14 @@ using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.MAP;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
+using RosSharp.RosBridgeClient.MessageTypes.Sensor;
+using RosSharp.RosBridgeClient.MessageTypes.Std;
+using static SQLite.SQLite3;
+using System.Security.AccessControl;
+using System.Security.Cryptography;
+using System;
 
 namespace AGVSystem.Controllers
 {
@@ -15,6 +22,12 @@ namespace AGVSystem.Controllers
     [ApiController]
     public class InstrumentMeasureController : ControllerBase
     {
+        private AGVSDbContext _dbcontent;
+
+        public InstrumentMeasureController(AGVSDbContext dbcontent)
+        {
+            _dbcontent = dbcontent;
+        }
         [HttpPost]
         public async Task<IActionResult> Get([FromBody] clsMeasureResultQueryOption options)
         {
@@ -39,6 +52,110 @@ namespace AGVSystem.Controllers
 
             return Ok(result);
         }
+
+        [HttpGet("GetBayNamesMeasured")]
+        public async Task<IActionResult> GetBayNamesMeasured()
+        {
+            List<string> baynames = _dbcontent.InstrumentMeasureResult.AsNoTracking().Where(e => true)
+                                                                          .Select(e => e.BayName)
+                                                                          .Distinct()
+                                                                          .ToList();
+            return Ok(baynames);
+        }
+
+        [HttpGet("GetTagsOfBay")]
+        public async Task<IActionResult> GetTagsOfBay(string bayName)
+        {
+
+            List<int> tags = _dbcontent.InstrumentMeasureResult.AsNoTracking().Where(e => e.BayName == bayName)
+                                                                                     .Select(e => e.TagID)
+                                                                                     .Distinct().
+                                                                                     ToList();
+            return Ok(tags);
+        }
+
+        [HttpGet("GetMeasureItems")]
+        public async Task<IActionResult> GetMeasureItems()
+        {
+            Dictionary<string, string> itemMap = new Dictionary<string, string>
+            {
+                    {"illuminance","照度"},
+                    {"decibel","分貝"},
+                    {"temperature","溫度"},
+                    {"humudity","濕度"},
+                    {"IPA","IPA"},
+                    {"TVOC","TVOC"},
+                    {"Acetone","Acetone"},
+                    {"partical_03um","Partical-0.3um"},
+                    {"partical_05um","Partical-0.5um"},
+                    {"partical_10um","Partical-1um"},
+                    {"partical_30um","Partical-3um"},
+                    {"partical_50um","Partical-5um"},
+                    {"partical_100um","Partical-10um"},
+                    { "PID","" }
+            };
+            return Ok(itemMap);
+        }
+        public class ItemTrendChartQueryForm
+        {
+            public string bayName { get; set; }
+            public int tag { get; set; }
+            public string item { get; set; }
+            public string from { get; set; }
+            public string to { get; set; }
+        }
+        [HttpPost("QueryItemTrendData")]
+        public async Task<IActionResult> QueryItemTrendData([FromBody] ItemTrendChartQueryForm form)
+        {
+            DateTime fromTime = DateTime.Parse(form.from);
+            DateTime toTime = DateTime.Parse(form.to);
+            var resultOverview = _dbcontent.InstrumentMeasureResult.AsNoTracking()
+                                                .Where(d => d.StartTime >= fromTime && d.StartTime <= toTime)
+                                                .Where(d => d.BayName == form.bayName && d.TagID == form.tag)
+                                                .ToList();
+            var valList = resultOverview.OrderBy(d => d.StartTime)
+                          .Select(d => new { Time = d.StartTime, Value = getValByQueryItem(d, form.item) })
+                          .ToList();
+
+            object getValByQueryItem(clsMeasureResult d, string item)
+            {
+                switch (item)
+                {
+                    case "illuminance":
+                        return d.illuminance;
+                    case "decibel":
+                        return d.decibel;
+                    case "temperature":
+                        return d.temperature;
+                    case "humudity":
+                        return d.humudity;
+                    case "IPA":
+                        return d.IPA;
+                    case "TVOC":
+                        return d.TVOC;
+                    case "Acetone":
+                        return d.Acetone;
+                    case "partical_03um":
+                        return d.partical_03um;
+                    case "partical_05um":
+                        return d.partical_05um;
+                    case "partical_10um":
+                        return d.partical_10um;
+                    case "partical_30um":
+                        return d.partical_30um;
+                    case "partical_50um":
+                        return d.partical_50um;
+                    case "partical_100um":
+                        return d.partical_100um;
+                    case "PID":
+                        return d.BayName;
+                    default:
+                        return 0;
+                }
+            }
+            return Ok(valList);
+        }
+
 
         [HttpGet("GetBaysTableData")]
         public async Task<IActionResult> GetBaysTableData()

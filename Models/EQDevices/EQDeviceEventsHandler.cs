@@ -1,6 +1,8 @@
 ﻿using AGVSystem.Service;
 using AGVSystemCommonNet6.Alarm;
+using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.Log;
+using AGVSystemCommonNet6.Notify;
 using EquipmentManagment.ChargeStation;
 using EquipmentManagment.Device;
 using EquipmentManagment.WIP;
@@ -9,6 +11,8 @@ namespace AGVSystem.Models.EQDevices
 {
     public partial class EQDeviceEventsHandler
     {
+        private static bool _disableEntryPointWhenEQPartsReplacing = AGVSConfigulator.SysConfigs.EQManagementConfigs.DisableEntryPointWhenEQPartsReplacing;
+
         internal static void Initialize()
         {
             EndPointDeviceAbstract.OnEQDisconnected += HandleDeviceDisconnected;
@@ -26,16 +30,25 @@ namespace AGVSystem.Models.EQDevices
             clsPortOfRack.OnRackPortSensorStatusChanged += HandlePortOfRackSensorStatusChanged;
         }
 
-        private static void HandleEQFinishPartsReplace(object? sender, EndPointDeviceAbstract e)
+        private static void HandleEQFinishPartsReplace(object? sender, EndPointDeviceAbstract device)
         {
-
-            var tagOfEQInPartsReplacing = e.EndPointOptions.TagID;
+            var tagOfEQInPartsReplacing = device.EndPointOptions.TagID;
+            if (_disableEntryPointWhenEQPartsReplacing)
+            {
+                NotifyServiceHelper.SUCCESS($"設備-{device.EQName} 結束零件更換作業，開啟道路!");
+                ChangeEnableStateOfEntryPointOfEQOfMapAndRequestVMSReload(device.EndPointOptions.TagID, true);
+            }
             AGVSystemCommonNet6.Microservices.VMS.VMSSerivces.RemovePartsReplaceworkstationTag(tagOfEQInPartsReplacing);
         }
 
-        private static void HandleEQStartPartsReplace(object? sender, EndPointDeviceAbstract e)
+        private static void HandleEQStartPartsReplace(object? sender, EndPointDeviceAbstract device)
         {
-            var tagOfEQInPartsReplacing = e.EndPointOptions.TagID;
+            var tagOfEQInPartsReplacing = device.EndPointOptions.TagID;
+            if (_disableEntryPointWhenEQPartsReplacing)
+            {
+                NotifyServiceHelper.SUCCESS($"設備-{device.EQName} 開始零件更換作業，封閉道路!");
+                ChangeEnableStateOfEntryPointOfEQOfMapAndRequestVMSReload(device.EndPointOptions.TagID, false);
+            }
             AGVSystemCommonNet6.Microservices.VMS.VMSSerivces.AddPartsReplaceworkstationTag(tagOfEQInPartsReplacing);
         }
 
