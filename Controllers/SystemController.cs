@@ -49,17 +49,21 @@ namespace AGVSystem.Controllers
             }
             LOG.INFO($"[Run Mode Switch] 等待VMS回覆 {mode}模式請求");
             (bool confirm, string message) vms_response = await VMSSerivces.RunModeSwitch(mode, forecing_change);
-            if (!vms_response.confirm)
+            OkObjectResult oko = Ok(new { confirm = false, message = "" });
+            if (vms_response.confirm == false)
             {
                 SystemModes.RunMode = _previousMode;
-
-                return Ok(new { confirm = false, message = vms_response.message });
+                oko = Ok(new { confirm = vms_response.confirm, message = vms_response.message });
             }
             else
+                oko = Ok(new { confirm = vms_response.confirm, message = vms_response.message });
+            if (SystemModes.RunMode == RUN_MODE.MAINTAIN)
             {
-
-                return Ok(new { confirm = true, message = "" });
+                SystemModes.HostConnMode = HOST_CONN_MODE.OFFLINE;
+                SystemModes.HostOperMode = HOST_OPER_MODE.LOCAL;
             }
+            
+            return oko;
         }
 
         [HttpPost("HostConn")]
