@@ -43,7 +43,7 @@ namespace AGVSystem.Models.EQDevices
 
         private static void HandleMaterialTransferStatusChanged(object? sender, clsMaterialInfo e)
         {
-            MaterialManager.CreateMaterialInfo(e.MaterialID, e.Type, e.ActualID, e.SourceStation, e.TargetStation, e.TaskSourceStation, e.TaskTargetStation, e.InstallStatus, e.IDStatus, e.Condition);
+            MaterialManager.CreateMaterialInfo(e.MaterialID, e.ActualID, e.SourceStation, e.TargetStation, e.TaskSourceStation, e.TaskTargetStation, e.InstallStatus, e.IDStatus, e.Type, e.Condition);
         }
 
         private static void HandleEQFinishPartsReplace(object? sender, EndPointDeviceAbstract e)

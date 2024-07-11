@@ -295,12 +295,6 @@ namespace AGVSystem.TaskManagers
                     }
                     db.tables.Tasks.Add(taskData);
                     var added = await db.SaveChanges();
-
-                    if ((taskData.Action == ACTION_TYPE.Load || taskData.Action == ACTION_TYPE.Unload || taskData.Action == ACTION_TYPE.Carry) && string.IsNullOrEmpty(taskData.Carrier_ID))
-                    {
-                        MaterialManager.AddMaterialInfo(taskData.Carrier_ID, taskData.To_Station_Tag.ToString(), MaterialInstallStatus.OK, MaterialIDStatus.Unknown, (taskData.CST_TYPE == 200 ? MaterialType.Tray : MaterialType.Frame), MaterialCondition.Wait);
-                        LOG.INFO($"Material {taskData.Action.ToString()} Mission Created, Carrier ID : {taskData.Carrier_ID}");
-                    }
                 }
                 return new(true, ALARMS.NONE, "");
             }
