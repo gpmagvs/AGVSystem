@@ -56,13 +56,7 @@ namespace AGVSystem.Controllers
                 oko = Ok(new { confirm = vms_response.confirm, message = vms_response.message });
             }
             else
-                oko = Ok(new { confirm = vms_response.confirm, message = vms_response.message });
-            if (SystemModes.RunMode == RUN_MODE.MAINTAIN)
-            {
-                SystemModes.HostConnMode = HOST_CONN_MODE.OFFLINE;
-                SystemModes.HostOperMode = HOST_OPER_MODE.LOCAL;
-            }
-            
+                oko = Ok(new { confirm = vms_response.confirm, message = vms_response.message });           
             return oko;
         }
 
@@ -70,11 +64,7 @@ namespace AGVSystem.Controllers
         public async Task<IActionResult> HostConnMode(HOST_CONN_MODE mode)
         {
             (bool confirm, string message) response = new(false, "[HostConnMode] Fail");
-            if (SystemModes.RunMode != RUN_MODE.RUN && mode == HOST_CONN_MODE.ONLINE)
-            {
-                response = (false, "AGVS not in run mode, can not host online");
-                return Ok(new { confirm = response.confirm, message = response.message }); ;
-            }
+           
             if (mode == HOST_CONN_MODE.ONLINE)
                 response = await MCSCIMService.Online();
             else
