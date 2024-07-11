@@ -3,6 +3,7 @@ using AGVSystemCommonNet6.AGVDispatch.Messages;
 using AGVSystemCommonNet6.AGVDispatch.RunMode;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.Log;
+using AGVSystemCommonNet6.Notify;
 
 namespace AGVSystem.Models.Sys
 {
@@ -21,6 +22,7 @@ namespace AGVSystem.Models.Sys
                 if (_RunMode != value)
                 {
                     _RunMode = value;
+                    NotifyServiceHelper.INFO($"system_mode-RunMode{value}-", false);
                     switch (_RunMode)
                     {
                         case RUN_MODE.MAINTAIN:
@@ -40,8 +42,34 @@ namespace AGVSystem.Models.Sys
                 }
             }
         }
-        internal static HOST_CONN_MODE HostConnMode { get; set; }
-        internal static HOST_OPER_MODE HostOperMode { get; set; }
+        private static HOST_CONN_MODE _HostConnMode = HOST_CONN_MODE.OFFLINE;
+        private static HOST_OPER_MODE _HostOperMode = HOST_OPER_MODE.LOCAL;
+        internal static HOST_CONN_MODE HostConnMode
+        {
+            get => _HostConnMode;
+            set
+            {
+                if (_HostConnMode != value)
+                {
+                    _HostConnMode = value;
+                    NotifyServiceHelper.INFO($"system_mode-HostConnMode{value}-", false);
+
+                }
+            }
+        }
+        internal static HOST_OPER_MODE HostOperMode
+        {
+            get => _HostOperMode;
+            set
+            {
+                if (_HostOperMode != value)
+                {
+                    _HostOperMode = value;
+                    NotifyServiceHelper.INFO($"system_mode-HostOperMode{value}-", false);
+
+                }
+            }
+        }
 
         internal static TRANSFER_MODE TransferTaskMode
         {

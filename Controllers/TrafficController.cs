@@ -43,5 +43,18 @@ namespace AGVSystem.Controllers
             }
 
         }
+
+        /// <summary>
+        /// 取得正在進行零件更換的設備Tag
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("GetTagsOfEQPartsReplacing")]
+        public async Task<IActionResult> GetTagsOfEQPartsReplacing()
+        {
+            List<int> tags = StaEQPManagager.MainEQList.Where(eq => eq.IsPartsReplacing)
+                                                        .Select(eq => eq.EndPointOptions.TagID)
+                                                        .ToList();
+            return Ok(tags);
+        }
     }
 }

@@ -13,7 +13,7 @@ namespace AGVSystem.Models.EQDevices
 {
     public partial class EQDeviceEventsHandler
     {
-        private static bool _disableEntryPointWhenEQMaintaining = AGVSConfigulator.SysConfigs.EQManagementConfigs.DisableEntryPointWhenEQMaintaining;
+        private static bool _disableEntryPointWhenEQMaintaining => AGVSConfigulator.SysConfigs.EQManagementConfigs.DisableEntryPointWhenEQMaintaining;
 
         private static void HandleDeviceMaintainFinish(object? sender, EndPointDeviceAbstract device)
         {

@@ -1,18 +1,21 @@
 ﻿using AGVSystem.Service;
+using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.Log;
+using AGVSystemCommonNet6.Microservices.ResponseModel;
 using AGVSystemCommonNet6.Notify;
 using EquipmentManagment.ChargeStation;
 using EquipmentManagment.Device;
 using EquipmentManagment.WIP;
+using NLog;
 
 namespace AGVSystem.Models.EQDevices
 {
     public partial class EQDeviceEventsHandler
     {
-        private static bool _disableEntryPointWhenEQPartsReplacing = AGVSConfigulator.SysConfigs.EQManagementConfigs.DisableEntryPointWhenEQPartsReplacing;
-
+        private static bool _disableEntryPointWhenEQPartsReplacing => AGVSConfigulator.SysConfigs.EQManagementConfigs.DisableEntryPointWhenEQPartsReplacing;
+        private static Logger _logger = LogManager.GetCurrentClassLogger();
         internal static void Initialize()
         {
             EndPointDeviceAbstract.OnEQDisconnected += HandleDeviceDisconnected;
@@ -32,24 +35,39 @@ namespace AGVSystem.Models.EQDevices
 
         private static void HandleEQFinishPartsReplace(object? sender, EndPointDeviceAbstract device)
         {
-            var tagOfEQInPartsReplacing = device.EndPointOptions.TagID;
-            if (_disableEntryPointWhenEQPartsReplacing)
+            Task.Run(async () =>
             {
-                NotifyServiceHelper.SUCCESS($"設備-{device.EQName} 結束零件更換作業，開啟道路!");
-                ChangeEnableStateOfEntryPointOfEQOfMapAndRequestVMSReload(device.EndPointOptions.TagID, true);
-            }
-            AGVSystemCommonNet6.Microservices.VMS.VMSSerivces.RemovePartsReplaceworkstationTag(tagOfEQInPartsReplacing);
+                var tagOfEQInPartsReplacing = device.EndPointOptions.TagID;
+                if (_disableEntryPointWhenEQPartsReplacing)
+                {
+                    NotifyServiceHelper.SUCCESS($"設備-{device.EQName} 結束零件更換作業，開啟道路!");
+                    ChangeEnableStateOfEntryPointOfEQOfMapAndRequestVMSReload(device.EndPointOptions.TagID, true);
+                }
+
+                NotifyServiceHelper.SUCCESS($"設備-{device.EQName} 結束零件更換作業，發送設備狀態變更提示至VMS!");
+                clsResponseBase response = await AGVSystemCommonNet6.Microservices.VMS.VMSSerivces.RemovePartsReplaceworkstationTag(tagOfEQInPartsReplacing);
+                _logger.Trace($"EQ({device.EQName}-Tag=>{tagOfEQInPartsReplacing}) Finish Parts Replacing Notify to VMS. VMS Response= {response.ToJson()}");
+
+
+            });
         }
 
         private static void HandleEQStartPartsReplace(object? sender, EndPointDeviceAbstract device)
         {
-            var tagOfEQInPartsReplacing = device.EndPointOptions.TagID;
-            if (_disableEntryPointWhenEQPartsReplacing)
+            Task.Run(async () =>
             {
-                NotifyServiceHelper.SUCCESS($"設備-{device.EQName} 開始零件更換作業，封閉道路!");
-                ChangeEnableStateOfEntryPointOfEQOfMapAndRequestVMSReload(device.EndPointOptions.TagID, false);
-            }
-            AGVSystemCommonNet6.Microservices.VMS.VMSSerivces.AddPartsReplaceworkstationTag(tagOfEQInPartsReplacing);
+                var tagOfEQInPartsReplacing = device.EndPointOptions.TagID;
+                if (_disableEntryPointWhenEQPartsReplacing)
+                {
+                    NotifyServiceHelper.SUCCESS($"設備-{device.EQName} 開始零件更換作業，封閉道路!");
+                    ChangeEnableStateOfEntryPointOfEQOfMapAndRequestVMSReload(device.EndPointOptions.TagID, false);
+                }
+
+                NotifyServiceHelper.SUCCESS($"設備-{device.EQName} 開始零件更換作業，發送設備狀態變更提示至VMS!");
+                clsResponseBase response = await AGVSystemCommonNet6.Microservices.VMS.VMSSerivces.AddPartsReplaceworkstationTag(tagOfEQInPartsReplacing);
+                _logger.Trace($"EQ({device.EQName}-Tag=>{tagOfEQInPartsReplacing}) Start Parts Replacing Notify to VMS. VMS Response= {response.ToJson()}");
+
+            });
         }
 
         private static void HandleEQInputDataSizeNotEnough(object? sender, EndPointDeviceAbstract device)
@@ -63,7 +81,7 @@ namespace AGVSystem.Models.EQDevices
 
         internal static async void HandleDeviceDisconnected(object? sender, EndPointDeviceAbstract device)
         {
-            _Log($"EQ-{device.EQName} 連線中斷({device.EndPointOptions.ConnOptions.IP}:{device.EndPointOptions.ConnOptions.Port}-{device.EndPointOptions.ConnOptions.ConnMethod})", device.EQName);
+            _logger.Trace($"EQ-{device.EQName} 連線中斷({device.EndPointOptions.ConnOptions.IP}:{device.EndPointOptions.ConnOptions.Port}-{device.EndPointOptions.ConnOptions.ConnMethod})", device.EQName);
 
             _ = Task.Run(async () =>
             {
@@ -73,7 +91,7 @@ namespace AGVSystem.Models.EQDevices
 
         internal static async void HandleDeviceReconnected(object? sender, EndPointDeviceAbstract device)
         {
-            _Log($"EQ-{device.EQName} 已連線({device.EndPointOptions.ConnOptions.IP}-{device.EndPointOptions.ConnOptions.ConnMethod})", device.EQName);
+            _logger.Trace($"EQ-{device.EQName} 已連線({device.EndPointOptions.ConnOptions.IP}-{device.EndPointOptions.ConnOptions.ConnMethod})", device.EQName);
             _ = Task.Run(async () =>
             {
                 await AlarmManagerCenter.SetAlarmCheckedAsync(device.EQName, ALARMS.EQ_Disconnect, "SystemAuto");
@@ -82,16 +100,9 @@ namespace AGVSystem.Models.EQDevices
 
         internal static async void HandleEQIOStateChanged(object? sender, EndPointDeviceAbstract.IOChangedEventArgs device)
         {
-            _Log($"[{device.Device.EQName}] IO-{device.IOName} Changed To {(device.IOState ? "1" : "0")}", device.Device.EQName);
+            _logger.Trace($"[{device.Device.EQName}] IO-{device.IOName} Changed To {(device.IOState ? "1" : "0")}", device.Device.EQName);
         }
 
-        private static void _Log(string logMessage, string eqName)
-        {
-            using LogBase _logger = new LogBase(@$"AGVS LOG\EquipmentManager\{eqName}");
-            _logger.WriteLogAsync(new LogItem(LogLevel.Information, logMessage, true)
-            {
-            });
-        }
     }
 
 }
