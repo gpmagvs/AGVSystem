@@ -3,9 +3,9 @@ using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.Log;
+using AGVSystemCommonNet6.Material;
 using AGVSystemCommonNet6.Microservices.ResponseModel;
-using AGVSystemCommonNet6.Notify;
-using EquipmentManagment.ChargeStation;
+using AGVSystemCommonNet6.Notify;using EquipmentManagment.ChargeStation;
 using EquipmentManagment.Device;
 using EquipmentManagment.WIP;
 using NLog;
@@ -31,9 +31,28 @@ namespace AGVSystem.Models.EQDevices
 
             clsPortOfRack.OnRackPortSensorFlash += HandlePortOfRackSensorFlash;
             clsPortOfRack.OnRackPortSensorStatusChanged += HandlePortOfRackSensorStatusChanged;
+
+            MaterialManagerEventHandler.OnMaterialTransferStatusChange += HandleMaterialTransferStatusChanged;
+            MaterialManagerEventHandler.OnMaterialAdd += HandleMaterialAdd;
+            MaterialManagerEventHandler.OnMaterialDelete += HandleMaterialDelete;
         }
 
-        private static void HandleEQFinishPartsReplace(object? sender, EndPointDeviceAbstract device)
+        private static void HandleMaterialDelete(object? sender, clsMaterialInfo e)
+        {
+            MaterialManager.DeleteMaterialInfo(e.MaterialID, e.SourceStation, e.InstallStatus, e.IDStatus, e.Type);
+        }
+
+        private static void HandleMaterialAdd(object? sender, clsMaterialInfo e)
+        {
+            MaterialManager.AddMaterialInfo(e.MaterialID, e.TargetStation, e.InstallStatus, e.IDStatus, e.Type, e.Condition);
+        }
+
+        private static void HandleMaterialTransferStatusChanged(object? sender, clsMaterialInfo e)
+        {
+            MaterialManager.CreateMaterialInfo(e.MaterialID, e.ActualID, e.SourceStation, e.TargetStation, e.TaskSourceStation, e.TaskTargetStation, e.InstallStatus, e.IDStatus, e.Type, e.Condition);
+        }
+
+        private static void HandleEQFinishPartsReplace(object? sender, EndPointDeviceAbstract e)
         {
             Task.Run(async () =>
             {
