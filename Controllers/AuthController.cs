@@ -196,7 +196,7 @@ namespace AGVSystem.Controllers
 
             var token = new JwtSecurityToken(
                 claims: claims,
-                expires: DateTime.UtcNow.AddDays(1),
+                expires: DateTime.UtcNow.AddDays(7),
                 signingCredentials: new SigningCredentials(new SymmetricSecurityKey(Encoding.ASCII.GetBytes("secret_keysecret_keysecret_key11")), SecurityAlgorithms.HmacSha256Signature));
             return new JwtSecurityTokenHandler().WriteToken(token);
         }

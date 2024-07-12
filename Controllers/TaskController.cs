@@ -134,6 +134,7 @@ namespace AGVSystem.Controllers
         [Authorize]
         public async Task<IActionResult> ExangeBattery([FromBody] clsTaskDto taskData, string user = "")
         {
+            taskData.Priority = 100000;
             return Ok(await AddTask(taskData, user));
         }
         [HttpPost("park")]

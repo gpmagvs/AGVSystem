@@ -12,6 +12,7 @@ using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.DATABASE.BackgroundServices;
 using AGVSystemCommonNet6.Log;
 using AGVSystemCommonNet6.Microservices.VMS;
+using AGVSystemCommonNet6.Notify;
 using AGVSystemCommonNet6.Vehicle_Control.VCS_ALARM;
 using EquipmentManagment.MainEquipment;
 using EquipmentManagment.Manager;
@@ -82,8 +83,36 @@ public static class SystemInitializer
         VMSSerivces.OnVMSReconnected += async (sender, e) => await VMSSerivces.RunModeSwitch(SystemModes.RunMode);
         VMSSerivces.AliveCheckWorker();
         VMSSerivces.RunModeSwitch(AGVSystemCommonNet6.AGVDispatch.RunMode.RUN_MODE.MAINTAIN);
-    }
 
+        NotifyServiceHelper.OnMessage += NotifyServiceHelper_OnMessage;
+        void NotifyServiceHelper_OnMessage(object? sender, NotifyServiceHelper.NotifyMessage notifyMessage)
+        {
+            Logger _logger = LogManager.GetLogger("NotifierLog");
+            Task.Run(() =>
+            {
+                string msg = notifyMessage.message;
+                switch (notifyMessage.type)
+                {
+                    case NotifyServiceHelper.NotifyMessage.NOTIFY_TYPE.info:
+                        _logger.Info(msg);
+                        break;
+                    case NotifyServiceHelper.NotifyMessage.NOTIFY_TYPE.warning:
+                        _logger.Warn(msg);
+                        break;
+                    case NotifyServiceHelper.NotifyMessage.NOTIFY_TYPE.error:
+                        _logger.Error(msg);
+                        break;
+                    case NotifyServiceHelper.NotifyMessage.NOTIFY_TYPE.success:
+                        _logger.Info(msg);
+                        break;
+                    default:
+                        break;
+                }
+
+                //
+            });
+        }
+    }
     private static void InitializeDatabase(Logger logger)
     {
         try
