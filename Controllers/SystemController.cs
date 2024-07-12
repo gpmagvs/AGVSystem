@@ -49,28 +49,22 @@ namespace AGVSystem.Controllers
             }
             LOG.INFO($"[Run Mode Switch] 等待VMS回覆 {mode}模式請求");
             (bool confirm, string message) vms_response = await VMSSerivces.RunModeSwitch(mode, forecing_change);
-            if (!vms_response.confirm)
+            OkObjectResult oko = Ok(new { confirm = false, message = "" });
+            if (vms_response.confirm == false)
             {
                 SystemModes.RunMode = _previousMode;
-
-                return Ok(new { confirm = false, message = vms_response.message });
+                oko = Ok(new { confirm = vms_response.confirm, message = vms_response.message });
             }
             else
-            {
-
-                return Ok(new { confirm = true, message = "" });
-            }
+                oko = Ok(new { confirm = vms_response.confirm, message = vms_response.message });           
+            return oko;
         }
 
         [HttpPost("HostConn")]
         public async Task<IActionResult> HostConnMode(HOST_CONN_MODE mode)
         {
             (bool confirm, string message) response = new(false, "[HostConnMode] Fail");
-            if (SystemModes.RunMode != RUN_MODE.RUN && mode == HOST_CONN_MODE.ONLINE)
-            {
-                response = (false, "AGVS not in run mode, can not host online");
-                return Ok(new { confirm = response.confirm, message = response.message }); ;
-            }
+           
             if (mode == HOST_CONN_MODE.ONLINE)
                 response = await MCSCIMService.Online();
             else

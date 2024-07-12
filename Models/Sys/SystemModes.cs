@@ -3,6 +3,7 @@ using AGVSystemCommonNet6.AGVDispatch.Messages;
 using AGVSystemCommonNet6.AGVDispatch.RunMode;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.Log;
+using AGVSystemCommonNet6.Notify;
 
 namespace AGVSystem.Models.Sys
 {
@@ -21,6 +22,7 @@ namespace AGVSystem.Models.Sys
                 if (_RunMode != value)
                 {
                     _RunMode = value;
+                    NotifyServiceHelper.INFO($"system_mode-RunMode{value}-", false);
                     switch (_RunMode)
                     {
                         case RUN_MODE.MAINTAIN:
@@ -40,8 +42,34 @@ namespace AGVSystem.Models.Sys
                 }
             }
         }
-        internal static HOST_CONN_MODE HostConnMode { get; set; }
-        internal static HOST_OPER_MODE HostOperMode { get; set; }
+        private static HOST_CONN_MODE _HostConnMode = HOST_CONN_MODE.OFFLINE;
+        private static HOST_OPER_MODE _HostOperMode = HOST_OPER_MODE.LOCAL;
+        internal static HOST_CONN_MODE HostConnMode
+        {
+            get => _HostConnMode;
+            set
+            {
+                if (_HostConnMode != value)
+                {
+                    _HostConnMode = value;
+                    NotifyServiceHelper.INFO($"system_mode-HostConnMode{value}-", false);
+
+                }
+            }
+        }
+        internal static HOST_OPER_MODE HostOperMode
+        {
+            get => _HostOperMode;
+            set
+            {
+                if (_HostOperMode != value)
+                {
+                    _HostOperMode = value;
+                    NotifyServiceHelper.INFO($"system_mode-HostOperMode{value}-", false);
+
+                }
+            }
+        }
 
         internal static TRANSFER_MODE TransferTaskMode
         {
@@ -58,11 +86,11 @@ namespace AGVSystem.Models.Sys
                     List<string> list_waiting_task = new List<string>();
                     using (var db = new AGVSDatabase())
                     {
-                        list_waiting_task = db.tables.Tasks.Where(tk => tk.State == TASK_RUN_STATUS.WAIT).Select(x=>x.TaskName).ToList();
+                        list_waiting_task = db.tables.Tasks.Where(tk => tk.State == TASK_RUN_STATUS.WAIT).Select(x => x.TaskName).ToList();
                     }
                     foreach (var task_name in list_waiting_task)
-                    {                        
-                       Task< bool> canceled = TaskManager.Cancel(task_name, $"Transfer Mode Changed to {_TransferTaskMode} canceled");
+                    {
+                        Task<bool> canceled = TaskManager.Cancel(task_name, $"Transfer Mode Changed to {_TransferTaskMode} canceled");
                         canceled.Wait();
                     }
                 }
@@ -76,7 +104,7 @@ namespace AGVSystem.Models.Sys
 
             if (!forecing_change)
             {
-                bool isAnyTaskExecuting = TaskManager.InCompletedTaskList.Count() > 0;
+                bool isAnyTaskExecuting = DatabaseCaches.TaskCaches.RunningTasks.Count() > 0;
                 if (isAnyTaskExecuting)
                 {
                     Message = "尚有任務在執行中";
