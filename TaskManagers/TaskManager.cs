@@ -300,6 +300,18 @@ namespace AGVSystem.TaskManagers
                     db.tables.Tasks.Add(taskData);
                     var added = await db.SaveChanges();
                 }
+            }
+            catch (Exception ex)
+            {
+                LOG.ERROR(ex);
+                AlarmManagerCenter.AddAlarmAsync(ALARMS.Task_Add_To_Database_Fail, ALARM_SOURCE.AGVS);
+                return new(false, ALARMS.Task_Add_To_Database_Fail, ex.Message);
+            }
+            try
+            {
+                if (taskData.Action == ACTION_TYPE.Unload || taskData.Action == ACTION_TYPE.Load || taskData.Action == ACTION_TYPE.LoadAndPark || taskData.Action == ACTION_TYPE.Carry)
+                    if (taskData.Carrier_ID != string.Empty)
+                        MaterialManager.CreateMaterialInfo(taskData.Carrier_ID, materialCondition: MaterialCondition.Wait, TaskSource: taskData.From_Station, TaskTarget: taskData.To_Station);
                 return new(true, ALARMS.NONE, "");
             }
             catch (Exception ex)
