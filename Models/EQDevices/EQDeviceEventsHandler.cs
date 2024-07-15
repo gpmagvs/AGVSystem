@@ -52,7 +52,7 @@ namespace AGVSystem.Models.EQDevices
             MaterialManager.CreateMaterialInfo(e.MaterialID, e.ActualID, e.SourceStation, e.TargetStation, e.TaskSourceStation, e.TaskTargetStation, e.InstallStatus, e.IDStatus, e.Type, e.Condition);
         }
 
-        private static void HandleEQFinishPartsReplace(object? sender, EndPointDeviceAbstract e)
+        private static void HandleEQFinishPartsReplace(object? sender, EndPointDeviceAbstract device)
         {
             Task.Run(async () =>
             {
