@@ -1,198 +1,1910 @@
-[// KG
-  {"AlarmCode":210,"Description_Zh":"派車系統發生程式上的Crash造成","Description_En":"CreateCommandFail"}, //10->210{"AlarmCode": 2, "Description_Zh": "", "Description_En": "VMS_DISCONNECT"}, //"AlarmCode": 150 //"AlarmCode": 160
-  {"AlarmCode":11,"Description_Zh":"沒有選擇或是無法辨識任務命令類別","Description_En":"NoActionType"},
-  {"AlarmCode":12,"Description_Zh":"沒有選擇任務起點","Description_En":"EmptySourcePort"},
-  {"AlarmCode":13,"Description_Zh":"沒有定義或無法辨識任務起點點位","Description_En":"NoDefineSourcePort"},
-  {"AlarmCode":14,"Description_Zh":"沒有選擇任務終點","Description_En":"EmptyDestPort"},
-  {"AlarmCode":15,"Description_Zh":"沒有定義或無法辨識任務終點點位","Description_En":"NoDefineDestPort"},
-  {"AlarmCode":16,"Description_Zh":"起點的站點種類與任務命令類別匹配錯誤","Description_En":"WrongTypeOfSourcePort"},
-  {"AlarmCode":17,"Description_Zh":"起點無法找到有效之二次定位點","Description_En":"WrongTargetOfSourcePort"},
-  {"AlarmCode":19,"Description_Zh":"終點的站點種類與任務命令類別匹配錯誤","Description_En":"WrongTypeOfDestPort"},
-  {"AlarmCode":220,"Description_Zh":"終點無法找到有效之二次定位點","Description_En":"WrongTargetOfDestPort"},// 20->220
-  {"AlarmCode":221,"Description_Zh":"任務資料儲存至資料庫錯誤","Description_En":"SaveDBFail"},//21->221
-  {"AlarmCode":26,"Description_Zh":"起點指定的車子與任務指定的車子不同","Description_En":"WrongAssignVehilceID"},
-  {"AlarmCode":28,"Description_Zh":"起點為車子但無卡匣存在","Description_En":"WrongVehicleCSTStatus"},
-  {"AlarmCode":29,"Description_Zh":"檢查任務資料異常","Description_En":"DownloadTaskDataWrong"},//{"AlarmCode": 47, "Description_Zh": "", "Description_En": "Task_Status_Cant_Save_To_Database"},
-  {"AlarmCode":50,"Description_Zh":"沒有指定或指定的車子ID不存在","Description_En":"NoAssignVehicle"},
-  {"AlarmCode":55,"Description_Zh":"任務沒有指定的CarrierID","Description_En":"DownloadTaskNoCarrierID"},
-  {"AlarmCode":260,"Description_Zh":"於資料庫中找不到指定欲取消的任務","Description_En":"CannotFindCommand"},//60->260
-  {"AlarmCode":262,"Description_Zh":"於錯誤的狀態下取消任務","Description_En":"WrongStatus"},//62->262{"AlarmCode": 48, "Description_Zh": "", "Description_En": "Task_Cancel_Fail"},任務取消失敗
-  {"AlarmCode": 1,"Description_Zh": "找不到註冊碼","Description_En": "License Err"},
-  {"AlarmCode": 2,"Description_Zh": "執行階段錯誤","Description_En": "Run Time Err"},
-  {"AlarmCode": 10,"Description_Zh": "載入主設定檔時發生錯誤","Description_En": "Reload Logic.ini Err"},
-  {"AlarmCode": 20,"Description_Zh": "找不到異常碼設定檔","Description_En": "Miss Alarm.ini"},
-  {"AlarmCode": 21,"Description_Zh": "設定檔找不到指定的異常碼","Description_En": "Not Found Alarm Code"},
-  {"AlarmCode": 22,"Description_Zh": "設定檔找不到指定的異常碼描述","Description_En": "Not Found Alarm Text"},
-  {"AlarmCode": 60,"Description_Zh": "交管系統註冊路徑回傳參數找不到指定車載","Description_En": "Traffic Booking Task Cannot Find Vehicle"},
-  {"AlarmCode": 61,"Description_Zh": "系統在地圖上找不到充電站","Description_En": "Cannot Find Charge Station In Map"},//{"AlarmCode": 3035, "Description_Zh": "", "Description_En": "CANNOT_DISPATCH_CHARGE_TASK_TO_NOT_CHARGABLE_STATION"},{"AlarmCode": 102, "Description_Zh": "", "Description_En": "INVALID_CHARGE_STATION"}
-  {"AlarmCode": 62,"Description_Zh": "系統在地圖上找不到 Idle Point","Description_En": "Cannot Find Idle Point In Map"},
-  {"AlarmCode": 64,"Description_Zh": "系統在地圖上找不到停車點","Description_En": "Cannot Find Parking Point In Map"},
-  {"AlarmCode": 100,"Description_Zh": "交管系統因無法計算出可行走路徑強制停止","Description_En": "Traffic Abort By AGV Could Not Find Path"},
-  {"AlarmCode": 101,"Description_Zh": "交管系統因 AGV 不在路徑上強制停止","Description_En": "Traffic Abort By AGV Not In The Path"},
-  {"AlarmCode": 102,"Description_Zh": "交管請求註冊路徑被拒絕","Description_En": "Traffic Abort By Register Path Request Is Rejected"},
-  {"AlarmCode": 103,"Description_Zh": "交管系統檢查交叉點位時發生程式碼異常強制停止","Description_En": "Traffic Abort By Check Cross Point Exception"},
-  {"AlarmCode": 104,"Description_Zh": "交管系統接收任務但車載的交管狀態不為等待","Description_En": "Traffic Task In But Traffic State Not Idle"},
-  {"AlarmCode": 105,"Description_Zh": "交管系統接收任務但起始位置或結束位置不存在地圖上","Description_En": "Traffic Task In But Start or Target Point Not Exist"},
-  {"AlarmCode": 106,"Description_Zh": "交管系統接收任務但起始位置或結束位置為二次定位點","Description_En": "Traffic Task In But Start or Target Point Is Segment"},
-  {"AlarmCode": 107,"Description_Zh": "交管系統接收任務但車載 ID 不存在","Description_En": "Traffic Task In But Vehcle ID Not Exist"},
-  {"AlarmCode": 108,"Description_Zh": "交管系統接收任務但程式碼異常","Description_En": "Traffic Task In But Programing Exception"},
-  {"AlarmCode": 120,"Description_Zh": "交管系統因 BFS 路徑演算無法計算出路徑強制停止","Description_En": "Traffic Abort By AGV Could Not Find Path with BFS Exception"},
-  {"AlarmCode": 121,"Description_Zh": "交管系統起始點角度受限制無法移動","Description_En": "Traffic Abort By AGV Could Not Find Path with BFS Start BeRestricted"},
-  {"AlarmCode": 122,"Description_Zh": "交管系統取得路徑異常","Description_En": "Traffic Abort By AGV Could Not Find Path with BFS Exception"},
-  {"AlarmCode": 130,"Description_Zh": "取得卡匣但帳料不符","Description_En": "Get CST But CST Sensor Not Match"},//{"AlarmCode": 65, "Description_Zh": "", "Description_En": "UNLOAD_BUT_CARGO_ID_NOT_MATCHED"}
-  {"AlarmCode": 131,"Description_Zh": "放置卡匣但帳料不符","Description_En": "Put CST But CST Sensor Not Match"},
-  {"AlarmCode": 132,"Description_Zh": "任務類別出現錯誤的狀態(Unload)","Description_En": "Unload Task With Wrong Task Type"},
-  {"AlarmCode": 133,"Description_Zh": "任務類別出現錯誤的狀態(load)","Description_En": "load Task With Wrong Task Type"},
-  {"AlarmCode": 134,"Description_Zh": "收到充電任務, 但車載的狀態錯誤","Description_En": "Get Charge Task But Vehicle is Wrong State"},
-  {"AlarmCode": 135,"Description_Zh": "建立子任務失敗","Description_En": "Create Sub Job Fai"},
-  {"AlarmCode": 136,"Description_Zh": "組合移動命令失敗","Description_En": "Set Traject Fai"},
-  {"AlarmCode": 137,"Description_Zh": "組合二次移動命令失敗","Description_En": "Set Homing Traject Fai"},
-  {"AlarmCode": 140,"Description_Zh": "系統欲指派充電任務 但車載狀態不為 Idle","Description_En": "VMS Will Send Recharge Command But AGV Status Is Not At Idle"},
-  {"AlarmCode": 141,"Description_Zh": "系統欲指派充電任務 但未與車載不為 Online 狀態","Description_En": "VMS Will Send Recharge Command But System State Is Not At Online"},
-  {"AlarmCode": 142,"Description_Zh": "車載的卡匣在席檢與任務流程狀態不符","Description_En": "AGV Cargo Status Not Match With Task"},
-  {"AlarmCode": 143,"Description_Zh": "車載的卡匣 ID 與任務不符","Description_En": "AGV Carried ID Not Match With Task"},
-  {"AlarmCode": 144,"Description_Zh": "非搬運任務但車上卻有卡匣","Description_En": "Task Is Not Transfer But AGV Carrier Exist"},//{"AlarmCode": 3033, "Description_Zh": "", "Description_En": "CANNOT_DISPATCH_UNLOAD_TASK_WHEN_AGV_HAS_CARGO"}
-  {"AlarmCode": 145,"Description_Zh": "站點狀態異常無法執行取放","Description_En": "Port Status is Wrong. Can't Load/Unload"},
-  {"AlarmCode": 146,"Description_Zh": "檢查站點狀態卻找不到該任務的執行車","Description_En": "Can't Find Execute Vehicle of Task for Check Port Status"},
-  {"AlarmCode": 147,"Description_Zh": "任務起始位置為 AGV 但車載卻顯示卡匣不存在","Description_En": "SourcePort Assign AGV but Vehicle No Carrier"},
-  {"AlarmCode": 148,"Description_Zh": "任務起始位置不為 AGV 但車載卻顯示有卡匣存在","Description_En": "SourcePort Not Assign AGV but Vehicle Carrier Exist"},
-  {"AlarmCode": 149,"Description_Zh": "車載的位置無法執行此任務","Description_En": "Vehicle Cannot Execute Task At This Location"},
-  {"AlarmCode": 150,"Description_Zh": "VMS 系統與車載系統斷線","Description_En": "VMS Disconnect with Vehicle"},//  {"AlarmCode": 2, "Description_Zh": "", "Description_En": "VMS_DISCONNECT"}, 
-  {"AlarmCode": 151,"Description_Zh": "車載系統回覆交握訊息 0302 NG","Description_En": "Vehicle Reply Message 0302 NG"},
-  {"AlarmCode": 152,"Description_Zh": "車載系統交握訊息 T3 Timeout","Description_En": "Vehicle Message T3 Timeout"},
-  {"AlarmCode": 153,"Description_Zh": "因車載系統在籍狀態有料 無法指派 AutoParking 任務","Description_En": "Cannot Assign AutoParking Job Because Wrong Cargo Status"},
-  {"AlarmCode": 154,"Description_Zh": "重試下達調整角度移動任務失敗已達上限次數","Description_En": "Retry Calculate Move Angle Fail"},
-  {"AlarmCode": 160,"Description_Zh": "VMS 測試網路 IP 訊號失敗","Description_En": "VMS Test Ping IP Failed"},
-  {"AlarmCode": 164,"Description_Zh": "因車載系統在籍狀態有料 無法指派充電任務","Description_En": "Cannot Assign Charge Job Because Wrong Cargo Status"},
-  {"AlarmCode": 165,"Description_Zh": "車載系統上報目前位置有誤 車子無法上線","Description_En": "Cannot Online Vehicle Because Wrong Current Position"},//  {"AlarmCode": 27, "Description_Zh": "", "Description_En": "GET_ONLINE_REQ_BUT_AGV_LOCATION_IS_TOO_FAR_FROM_POINT"},
-  {"AlarmCode": 166,"Description_Zh": "目前位置為不可上線的站別種類 車子無法上線","Description_En": "Cannot Online Vehicle Because At Wrong Station Type"},
-  {"AlarmCode": 167,"Description_Zh": "與其他車子的路徑有衝突 車子無法上線","Description_En": "Cannot Online Vehicle Because Effect Other AGV"},
-  {"AlarmCode": 174,"Description_Zh": "車載系統回報任務完成但派車檢查位置尚未到位","Description_En": "Report Completed Task Timeout By Check Position"},
-  {"AlarmCode": 175,"Description_Zh": "車載系統回報位置已到位但尚未回報任務完成","Description_En": "Report Completed Task Timeout By Check Job Status"},
-  {"AlarmCode": 176,"Description_Zh": "車載系統狀態有誤 車子無法上線","Description_En": "Cannot Online Vehicle Because Wrong Run Status"},
-  {"AlarmCode": 177,"Description_Zh": "目前位置為虛擬點 車子無法上線","Description_En": "Cannot Online Vehicle Because At Virtual Point"},
-  {"AlarmCode": 611,"Description_Zh": "發生趕車任務但建立任務失敗","Description_En": "Traffic Drive Vehicle Away but Get Task Fail"},
-  {"AlarmCode": 612,"Description_Zh": "發生趕車任務但找不到可避車的位置","Description_En": "Traffic Drive Vehicle Away But Cannot Find Avoid Position"},
-  {"AlarmCode": 613,"Description_Zh": "發生趕車任務但等待其他車子釋放點位 Timeout","Description_En": "Traffic Drive Vehicle Away but Wait Other Vehicle Release Point Timeout"},
-  {"AlarmCode": 614,"Description_Zh": "AGV 回報移動完成但上報的 XY 座標超出 Tag 有效範圍","Description_En": "Traffic Motion Done But Coordination Over Tag Range"},
-  {"AlarmCode": 615,"Description_Zh": "AGV 回報移動完成但目前位置與任務終點不相符","Description_En": "Traffic Motion Done But CurrentPoint Not Match TaskEndPoint"},
-  {"AlarmCode": 620,"Description_Zh": "任務類別未定義","Description_En": "Download Task but Action Type Wrong"},
-  {"AlarmCode": 621,"Description_Zh": "任務指定的車載不存在","Description_En": "Download Task but Vehicle Not Exist"},
-  {"AlarmCode": 622,"Description_Zh": "此任務需指定車載","Description_En": "The Task Need to Assign Vehicle"},
-  {"AlarmCode": 623,"Description_Zh": "任務沒有來源機台","Description_En": "Download Task but No Source Port"},//{"AlarmCode": 3031, "Description_Zh": "", "Description_En": "CANNOT_DISPATCH_LOAD_TASK_TO_NOT_EQ_STATION"},
-  {"AlarmCode": 624,"Description_Zh": "找不到任務的來源機台","Description_En": "Download Task but Source Port Not Find"},
-  {"AlarmCode": 625,"Description_Zh": "任務來源自車載但與指定車載不符","Description_En": "Download Task but Assign Vehicle Not Match"},
-  {"AlarmCode": 626,"Description_Zh": "任務沒有目的機台","Description_En": "Download Task but No Dest Port"},//{"AlarmCode": 3034, "Description_Zh": "", "Description_En": "CANNOT_DISPATCH_UNLOAD_TASK_TO_NOT_EQ_STATION"},
-  {"AlarmCode": 627,"Description_Zh": "找不到任務的目的機台","Description_En": "Download Task but Dest Port Not Find"},
-  {"AlarmCode": 628,"Description_Zh": "充電任務但目的位置不是充電站","Description_En": "Charge Task but Not Charge Station"},
-  {"AlarmCode": 629,"Description_Zh": "來源機台沒有離開機台的位置","Description_En": "Source Port No Target Position"},
-  {"AlarmCode": 630,"Description_Zh": "目的機台沒有離開機台的位置","Description_En": "Dest Port No Target Position"},
-  {"AlarmCode": 631,"Description_Zh": "車載沒有在充電站","Description_En": "Vehicle Not At Charge Station"},
-  {"AlarmCode": 632,"Description_Zh": "來源機台類別與任務不符","Description_En": "Source Port Type is Wrong"},//{"AlarmCode": 3031, "Description_Zh": "", "Description_En": "CANNOT_DISPATCH_LOAD_TASK_TO_NOT_EQ_STATION"},
-  {"AlarmCode": 633,"Description_Zh": "目的機台類別與任務不符","Description_En": "Dest Port Type is Wrong"},
-  {"AlarmCode": 634,"Description_Zh": "任務類別的在席檢知錯誤","Description_En": "Download Task but Cst Sensor Wrong"},
-  {"AlarmCode": 635,"Description_Zh": "任務類別的車上卡匣資訊錯誤","Description_En": "Download Task but Cst ID Wrong"},
-  {"AlarmCode": 636,"Description_Zh": "檢查任務出現例外錯誤問題","Description_En": "Download Task Exception"},//{"AlarmCode": 93, "Description_Zh": "", "Description_En": "TASK_DOWNLOAD_TO_AGV_FAIL_SYSTEM_EXCEPTION"},
-  {"AlarmCode": 640,"Description_Zh": "在籍狀態錯誤此任務起點無法指派車載","Description_En": "Assign Source Port but Vehicle Cargo Statue Is Wrong"},
-  {"AlarmCode": 641,"Description_Zh": "詢問交管但無法取得充電站/停車點","Description_En": "Download Task but Manage Traffic Get Charge or Parking Station Fail"},
-  {"AlarmCode": 642,"Description_Zh": "此任務起點無法符合交管回傳點位","Description_En": "Download Task but Source Port Cannot Equal to Manage Traffic Return Position"},
-  {"AlarmCode": 643,"Description_Zh": "任務起始位置指定為 AGV 但車上卡匣不存在","Description_En": "Source Port Assign Vehicle but Vehicle Carrier Not Exist"},
-  {"AlarmCode": 644,"Description_Zh": "任務指定的車載卡匣狀態不符合任務 請確認車載是否有卡匣存在","Description_En": "Download Task but Vehicle Cst Status Wrong"},//{"AlarmCode": 3032, "Description_Zh": "", "Description_En": "CANNOT_DISPATCH_LOAD_TASK_WHEN_AGV_NO_CARGO"},
-  {"AlarmCode": 645,"Description_Zh": "任務起始位置為 AGV 但 AGV 目前狀態無法接收","Description_En": "Source Port Assign Vehicle But Vehicle Not Ready"},
-  {"AlarmCode": 646,"Description_Zh": "任務起始位置為 AGV 但已有相同的起始位置任務存在","Description_En": "Source Port Assign Vehicle But Other Task Source Port Is Same"},
-  {"AlarmCode": 647,"Description_Zh": "車載目前的狀態無接收此類任務","Description_En": "Vehicle Status Cannot Get The Task"},//{"AlarmCode": 43, "Description_Zh": "", "Description_En": "CANNOT_DISPATCH_TASK_WITH_ILLEAGAL_STATUS"},
-  {"AlarmCode": 655,"Description_Zh": "任務指定的車載卡匣類型不符合任務 請確認車載卡匣類型是否與任務相符","Description_En": "Download Task But Vehicle Cst Cargo Type Wrong"},
-  {"AlarmCode": 670,"Description_Zh": "上層 Host 下達任務取消","Description_En": "Task Cancel By Host"},
-  {"AlarmCode": 680,"Description_Zh": "車載交握訊息 0303 JobStatus Start 訊號 Timeout","Description_En": "Vehicle 0303 JobStatus Start Timeout"},
-  {"AlarmCode": 681,"Description_Zh": "車載交握訊息 0303 JobStatus End 訊號 Timeout","Description_En": "Vehicle 0303 JobStatus End Timeout"},
-  // GPM
-  {"AlarmCode": 1000, "Description_Zh": "", "Description_En": "NONE"},//0
-  {"AlarmCode": 1003, "Description_Zh": "", "Description_En": "AGV_DISCONNECT"}, //3
-  {"AlarmCode": 1004, "Description_Zh": "", "Description_En": "GET_ONLINE_REQ_BUT_AGV_DISCONNECT"},//4//"AlarmCode": 150 //"AlarmCode": 160
-  {"AlarmCode": 1005, "Description_Zh": "", "Description_En": "GET_OFFLINE_REQ_BUT_AGV_DISCONNECT"},//5//"AlarmCode": 150 //"AlarmCode": 160
-  {"AlarmCode": 1006, "Description_Zh": "", "Description_En": "GET_ONLINE_REQ_BUT_AGV_STATE_ERROR"}, //6
-  {"AlarmCode": 1007, "Description_Zh": "", "Description_En": "TRAFFIC_BLOCKED_NO_PATH_FOR_NAVIGATOR"}, //7//"AlarmCode": 120
-  {"AlarmCode": 1008, "Description_Zh": "", "Description_En": "NO_AVAILABLE_CHARGE_PILE"}, //8
-  {"AlarmCode": 1009, "Description_Zh": "", "Description_En": "TRAFFIC_CONTROL_CENTER_EXCEPTION_WHEN_CHECK_NAVIGATOR_PATH"},//9//"AlarmCode": 120 //{"AlarmCode": 136
-  {"AlarmCode": 1010, "Description_Zh": "", "Description_En": "GET_CHARGE_TASK_BUT_AGV_CHARGING_ALREADY"}, //10
-  {"AlarmCode": 1011, "Description_Zh": "", "Description_En": "CST_STATUS_CHECK_FAIL"},  //11
-  {"AlarmCode": 1012, "Description_Zh": "", "Description_En": "Endpoint_EQ_NOT_CONNECTED"}, //12//晶捷能只有派送任務時才會檢查EQ訊號
-  {"AlarmCode": 1014, "Description_Zh": "", "Description_En": "EQ_LOAD_REQUEST_IS_NOT_ON"}, //14//晶捷能只有派送任務時才會檢查EQ訊號
-  {"AlarmCode": 1015, "Description_Zh": "", "Description_En": "EQ_UNLOAD_REQUEST_IS_NOT_ON"},//15//晶捷能只有派送任務時才會檢查EQ訊號
-  {"AlarmCode": 1016, "Description_Zh": "", "Description_En": "TRANSFER_TASK_TO_VMS_BUT_ERROR_OCCUR"},//16//交棒任務有誤
-  {"AlarmCode": 1017, "Description_Zh": "", "Description_En": "DESTIN_TAG_IS_INVLID_FORMAT"},//17//目的點位格式錯誤{"AlarmCode": 614,
-  {"AlarmCode": 1018, "Description_Zh": "", "Description_En": "STATION_TYPE_CANNOT_USE_AUTO_SEARCH"},//18
-  {"AlarmCode": 1019, "Description_Zh": "", "Description_En": "NO_AVAILABLE_PARK_STATION"},//19
-  {"AlarmCode": 1020, "Description_Zh": "", "Description_En": "ERROR_WHEN_CREATE_NAVIGATION_JOBS_LINK"},//20
-  {"AlarmCode": 1021, "Description_Zh": "", "Description_En": "EQ_UNLOAD_REQUEST_ON_BUT_TAG_NOT_EXIST_ON_MAP"},//21
-  {"AlarmCode": 1022, "Description_Zh": "", "Description_En": "EQ_UNLOAD_REQUEST_ON_BUT_STATION_TYPE_SETTING_IS_NOT_EQ"},//22
-  {"AlarmCode": 1023, "Description_Zh": "", "Description_En": "ERROR_WHEN_FIND_TAG_OF_STATION"}, //23
-  {"AlarmCode": 1024, "Description_Zh": "", "Description_En": "MAP_POINT_NO_TARGETS"},//24
-  {"AlarmCode": 1025, "Description_Zh": "", "Description_En": "ERROR_WHEN_AGV_STATUS_WRITE_TO_DB"},//25
-  {"AlarmCode": 1026, "Description_Zh": "", "Description_En": "TRAFFIC_ABORT"},//26
-  {"AlarmCode": 1028, "Description_Zh": "", "Description_En": "GET_ONLINE_REQ_BUT_AGV_LOCATION_IS_NOT_EXIST_ON_MAP"},//28
-  {"AlarmCode": 3029, "Description_Zh": "", "Description_En": "GET_ONLINE_REQ_BUT_AGV_IS_NOT_REGISTED"},//3029
-  {"AlarmCode": 3030, "Description_Zh": "", "Description_En": "CANNOT_DISPATCH_MOVE_TASK_IN_WORKSTATION"},//3030
-  {"AlarmCode": 3036, "Description_Zh": "", "Description_En": "CANNOT_DISPATCH_ORDER_BY_AGV_BAT_STATUS_CHECK"},//3036
-  {"AlarmCode": 1036, "Description_Zh": "", "Description_En": "AGV_Task_Feedback_But_Task_Name_Not_Match"},//36
-  {"AlarmCode": 1037, "Description_Zh": "", "Description_En": "SYSTEM_ERROR"},  //37
-  {"AlarmCode": 1038, "Description_Zh": "", "Description_En": "CANNOT_DISPATCH_INTO_WORKSTATION_TASK_WHEN_AGV_HAS_CARGO"}, //38///"AlarmCode": 146 //"AlarmCode": 147
-  {"AlarmCode": 1039, "Description_Zh": "", "Description_En": "CANNOT_DISPATCH_NORMAL_MOVE_TASK_WHEN_DESTINE_IS_WORKSTATION"},//39
-  {"AlarmCode": 1040, "Description_Zh": "", "Description_En": "EQ_TAG_NOT_EXIST_IN_CURRENT_MAP"},//40
-  {"AlarmCode": 1041, "Description_Zh": "", "Description_En": "SubTask_Queue_Empty_But_Try_DownloadTask_To_AGV"},//41
-  {"AlarmCode": 1042, "Description_Zh": "", "Description_En": "AGV_STATUS_DOWN"}, //42//"AlarmCode": 150
-  {"AlarmCode": 1044, "Description_Zh": "", "Description_En": "AGV_BATTERY_LOW_LEVEL"},//44
-  {"AlarmCode": 1045, "Description_Zh": "", "Description_En": "AGV_WORKSTATION_DATA_NOT_SETTING"},//45
-  {"AlarmCode": 1046, "Description_Zh": "", "Description_En": "AGV_AT_UNKNON_TAG_LOCATION"},//46
-  {"AlarmCode": 1049, "Description_Zh": "", "Description_En": "Task_Add_To_Database_Fail"},//49
-  {"AlarmCode": 1050, "Description_Zh": "", "Description_En": "AGV_TCPIP_DISCONNECT"}, //50 //"AlarmCode": 150 //"AlarmCode": 160
-  {"AlarmCode": 1051, "Description_Zh": "", "Description_En": "Save_Measure_Data_to_DB_Fail"},//51 //"AlarmCode":21
-  {"AlarmCode": 1052, "Description_Zh": "", "Description_En": "Region_Has_No_Agv_To_Dispatch_Task"},//52
-  {"AlarmCode": 1053, "Description_Zh": "", "Description_En": "CANNOT_DISPATCH_CARRY_TASK_WHEN_AGV_HAS_CARGO"},//53
-  {"AlarmCode": 1054, "Description_Zh": "", "Description_En": "CANNOT_DISPATCH_LOCAL_AUTO_TRANSFER_TASK"},//54
-  {"AlarmCode": 1055, "Description_Zh": "", "Description_En": "Source_Eq_Unload_Request_Off"},//55//LD/ULD訊號有誤 派車拒絕任務
-  {"AlarmCode": 1056, "Description_Zh": "", "Description_En": "Destine_Eq_Load_Request_Off"},//56//LD/ULD訊號有誤  派車拒絕任務
-  {"AlarmCode": 1057, "Description_Zh": "", "Description_En": "Source_Eq_Status_Down"},//57//機台狀態down 派車拒絕任務
-  {"AlarmCode": 1058, "Description_Zh": "", "Description_En": "Destine_Eq_Status_Down"},//58//機台狀態down 派車拒絕任務
-  {"AlarmCode": 1059, "Description_Zh": "", "Description_En": "Cannot_Auto_Parking_When_AGV_Has_Cargo"}, //59//"AlarmCode": 164
-  {"AlarmCode": 1060, "Description_Zh": "", "Description_En": "Destine_Eq_Already_Has_Task_To_Excute"},//60
-  {"AlarmCode": 1061, "Description_Zh": "", "Description_En": "Destine_EQ_Has_AGV"},//61
-  {"AlarmCode": 1062, "Description_Zh": "", "Description_En": "Destine_EQ_Has_Registed"},//62
-  {"AlarmCode": 1063, "Description_Zh": "", "Description_En": "UNLOAD_BUT_AGV_NO_CARGO_MOUNTED"},//63
-  {"AlarmCode": 1064, "Description_Zh": "", "Description_En": "UNLOAD_BUT_CARGO_ID_EMPTY"},//64
-  {"AlarmCode": 1066, "Description_Zh": "", "Description_En": "TASK_DOWNLOAD_DATA_ILLEAGAL"},//66
-  {"AlarmCode": 1067, "Description_Zh": "", "Description_En": "AGV_TaskFeedback_ERROR"},//67
-  {"AlarmCode": 1068, "Description_Zh": "", "Description_En": "EQ_Disconnect"}, //68 //機台狀態down 派車拒絕任務
-  {"AlarmCode": 1069, "Description_Zh": "", "Description_En": "ERROR_WHEN_TASK_STATUS_CHAGE_DB"},//69//"AlarmCode":21
-  {"AlarmCode": 1070, "Description_Zh": "", "Description_En": "Destine_Normal_Station_Has_Task_To_Reach"},//70
-  {"AlarmCode": 1071, "Description_Zh": "", "Description_En": "Destine_Eq_Station_Has_Task_To_Park"},//71
-  {"AlarmCode": 1072, "Description_Zh": "", "Description_En": "Destine_Charge_Station_Has_AGV"},//72
-  {"AlarmCode": 1073, "Description_Zh": "", "Description_En": "PING_CHECK_FAIL"}, //73//"AlarmCode": 160
-  {"AlarmCode": 1074, "Description_Zh": "", "Description_En": "Download_Task_To_AGV_Fail"},//74
-  {"AlarmCode": 1075, "Description_Zh": "", "Description_En": "EQ_LOAD_REQUEST_ON_BUT_HAS_CARGO"},//75
-  {"AlarmCode": 1076, "Description_Zh": "", "Description_En": "EQ_UNLOAD_REQUEST_ON_BUT_NO_CARGO"},//76
-  {"AlarmCode": 1077, "Description_Zh": "", "Description_En": "EQ_UNLOAD_REQ_BUT_RACK_FULL_OR_EMPTY_IS_UNKNOWN"},//77
-  {"AlarmCode": 1078, "Description_Zh": "", "Description_En": "EQ_LOAD_REQ_BUT_RACK_FULL_OR_EMPTY_IS_UNKNOWN"},//78
-  {"AlarmCode": 1079, "Description_Zh": "", "Description_En": "AGV_Type_Is_Not_Allow_To_Execute_Task_At_Source_Equipment"},//79
-  {"AlarmCode": 1080, "Description_Zh": "", "Description_En": "AGV_Type_Is_Not_Allow_To_Execute_Task_At_Destine_Equipment"},//80
-  {"AlarmCode": 1081, "Description_Zh": "", "Description_En": "EQ_Input_Data_Not_Enough"},//81
-  {"AlarmCode": 1082, "Description_Zh": "", "Description_En": "AGV_Already_Has_Charge_Task"},//82
-  {"AlarmCode": 1083, "Description_Zh": "", "Description_En": "Charge_Station_Already_Has_Task_Assigned"},//83
-  {"AlarmCode": 1084, "Description_Zh": "", "Description_En": "Charge_Station_Already_Has_AGV_Parked"},//84
-  {"AlarmCode": 1085, "Description_Zh": "", "Description_En": "Station_Disabled"},//85
-  {"AlarmCode": 1086, "Description_Zh": "", "Description_En": "TASK_DOWNLOAD_TO_AGV_FAIL_AGV_STATUS_DOWN"},//86
-  {"AlarmCode": 1087, "Description_Zh": "", "Description_En": "TASK_DOWNLOAD_TO_AGV_FAIL"},//87
-  {"AlarmCode": 1088, "Description_Zh": "", "Description_En": "TASK_DOWNLOAD_TO_AGV_FAIL_AGV_NOT_ON_TAG"}, //88//{"AlarmCode": 614,
-  {"AlarmCode": 1089, "Description_Zh": "", "Description_En": "TASK_DOWNLOAD_TO_AGV_FAIL_WORKSTATION_NOT_SETTING_YET"},//89
-  {"AlarmCode": 1090, "Description_Zh": "", "Description_En": "TASK_DOWNLOAD_TO_AGV_FAIL_AGV_BATTERY_LOW_LEVEL"},//90
-  {"AlarmCode": 1091, "Description_Zh": "", "Description_En": "TASK_DOWNLOAD_TO_AGV_FAIL_AGV_CANNOT_GO_TO_WORKSTATION_WITH_NORMAL_MOVE_ACTION"},//91
-  {"AlarmCode": 1092, "Description_Zh": "", "Description_En": "TASK_DOWNLOAD_TO_AGV_FAIL_TASK_DOWNLOAD_DATA_ILLEAGAL"},//92
-  {"AlarmCode": 1094, "Description_Zh": "", "Description_En": "TASK_DOWNLOAD_TO_AGV_FAIL_NO_PATH_FOR_NAVIGATION"},//94
-  {"AlarmCode": 1095, "Description_Zh": "", "Description_En": "TASK_DOWNLOAD_TO_AGV_FAIL_TASK_CANCEL"},//95
-  {"AlarmCode": 1096, "Description_Zh": "", "Description_En": "TASK_DOWNLOAD_TO_AGV_FAIL_TASK_DOWN_LOAD_TIMEOUT"},//96
-  {"AlarmCode": 1097, "Description_Zh": "", "Description_En": "Task_Canceled"},//97 //"AlarmCode": 670
-  {"AlarmCode": 1098, "Description_Zh": "", "Description_En": "CANT_AUTO_SEARCH_STATION_TYPE_IS_NOT_EXCHANGE_FOR_INSPECTION_AGV"},//98
-  {"AlarmCode": 1099, "Description_Zh": "", "Description_En": "NO_AVAILABLE_BAT_EXCHANGER_USABLE"},//99
-  {"AlarmCode": 1100, "Description_Zh": "", "Description_En": "REGIST_REGIONS_TO_PARTS_SYSTEM_FAIL"},//100
-  {"AlarmCode": 1101, "Description_Zh": "", "Description_En": "SYSTEM_EQP_MANAGEMENT_INITIALIZE_FAIL_WITH_EXCEPTION"},//101
-] 
+[
+	{
+		"AlarmCode": 210,
+		"Description": "派車系統發生程式上的Crash造成(CreateCommandFail)",
+		"Description_Zh": "派車系統發生程式上的Crash造成",
+		"Description_En": "CreateCommandFail",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 11,
+		"Description": "沒有選擇或是無法辨識任務命令類別(NoActionType)",
+		"Description_Zh": "沒有選擇或是無法辨識任務命令類別",
+		"Description_En": "NoActionType",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 12,
+		"Description": "沒有選擇任務起點(EmptySourcePort)",
+		"Description_Zh": "沒有選擇任務起點",
+		"Description_En": "EmptySourcePort",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 13,
+		"Description": "沒有定義或無法辨識任務起點點位(NoDefineSourcePort)",
+		"Description_Zh": "沒有定義或無法辨識任務起點點位",
+		"Description_En": "NoDefineSourcePort",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 14,
+		"Description": "沒有選擇任務終點(EmptyDestPort)",
+		"Description_Zh": "沒有選擇任務終點",
+		"Description_En": "EmptyDestPort",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 15,
+		"Description": "沒有定義或無法辨識任務終點點位(NoDefineDestPort)",
+		"Description_Zh": "沒有定義或無法辨識任務終點點位",
+		"Description_En": "NoDefineDestPort",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 16,
+		"Description": "起點的站點種類與任務命令類別匹配錯誤(WrongTypeOfSourcePort)",
+		"Description_Zh": "起點的站點種類與任務命令類別匹配錯誤",
+		"Description_En": "WrongTypeOfSourcePort",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 17,
+		"Description": "起點無法找到有效之二次定位點(WrongTargetOfSourcePort)",
+		"Description_Zh": "起點無法找到有效之二次定位點",
+		"Description_En": "WrongTargetOfSourcePort",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 19,
+		"Description": "終點的站點種類與任務命令類別匹配錯誤(WrongTypeOfDestPort)",
+		"Description_Zh": "終點的站點種類與任務命令類別匹配錯誤",
+		"Description_En": "WrongTypeOfDestPort",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 220,
+		"Description": "終點無法找到有效之二次定位點(WrongTargetOfDestPort)",
+		"Description_Zh": "終點無法找到有效之二次定位點",
+		"Description_En": "WrongTargetOfDestPort",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 221,
+		"Description": "任務資料儲存至資料庫錯誤(SaveDBFail)",
+		"Description_Zh": "任務資料儲存至資料庫錯誤",
+		"Description_En": "SaveDBFail",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 26,
+		"Description": "起點指定的車子與任務指定的車子不同(WrongAssignVehilceID)",
+		"Description_Zh": "起點指定的車子與任務指定的車子不同",
+		"Description_En": "WrongAssignVehilceID",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 28,
+		"Description": "起點為車子但無卡匣存在(WrongVehicleCSTStatus)",
+		"Description_Zh": "起點為車子但無卡匣存在",
+		"Description_En": "WrongVehicleCSTStatus",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 29,
+		"Description": "檢查任務資料異常(DownloadTaskDataWrong)",
+		"Description_Zh": "檢查任務資料異常",
+		"Description_En": "DownloadTaskDataWrong",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 50,
+		"Description": "沒有指定或指定的車子ID不存在(NoAssignVehicle)",
+		"Description_Zh": "沒有指定或指定的車子ID不存在",
+		"Description_En": "NoAssignVehicle",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 55,
+		"Description": "任務沒有指定的CarrierID(DownloadTaskNoCarrierID)",
+		"Description_Zh": "任務沒有指定的CarrierID",
+		"Description_En": "DownloadTaskNoCarrierID",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 260,
+		"Description": "於資料庫中找不到指定欲取消的任務(CannotFindCommand)",
+		"Description_Zh": "於資料庫中找不到指定欲取消的任務",
+		"Description_En": "CannotFindCommand",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 262,
+		"Description": "於錯誤的狀態下取消任務(WrongStatus)",
+		"Description_Zh": "於錯誤的狀態下取消任務",
+		"Description_En": "WrongStatus",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1,
+		"Description": "找不到註冊碼(License Err)",
+		"Description_Zh": "找不到註冊碼",
+		"Description_En": "License Err",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 2,
+		"Description": "執行階段錯誤(Run Time Err)",
+		"Description_Zh": "執行階段錯誤",
+		"Description_En": "Run Time Err",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 10,
+		"Description": "載入主設定檔時發生錯誤(Reload Logic.ini Err)",
+		"Description_Zh": "載入主設定檔時發生錯誤",
+		"Description_En": "Reload Logic.ini Err",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 20,
+		"Description": "找不到異常碼設定檔(Miss Alarm.ini)",
+		"Description_Zh": "找不到異常碼設定檔",
+		"Description_En": "Miss Alarm.ini",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 21,
+		"Description": "設定檔找不到指定的異常碼(Not Found Alarm Code)",
+		"Description_Zh": "設定檔找不到指定的異常碼",
+		"Description_En": "Not Found Alarm Code",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 22,
+		"Description": "設定檔找不到指定的異常碼描述(Not Found Alarm Text)",
+		"Description_Zh": "設定檔找不到指定的異常碼描述",
+		"Description_En": "Not Found Alarm Text",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 60,
+		"Description": "交管系統註冊路徑回傳參數找不到指定車載(Traffic Booking Task Cannot Find Vehicle)",
+		"Description_Zh": "交管系統註冊路徑回傳參數找不到指定車載",
+		"Description_En": "Traffic Booking Task Cannot Find Vehicle",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 61,
+		"Description": "系統在地圖上找不到充電站(Cannot Find Charge Station In Map)",
+		"Description_Zh": "系統在地圖上找不到充電站",
+		"Description_En": "Cannot Find Charge Station In Map",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 62,
+		"Description": "系統在地圖上找不到 Idle Point(Cannot Find Idle Point In Map)",
+		"Description_Zh": "系統在地圖上找不到 Idle Point",
+		"Description_En": "Cannot Find Idle Point In Map",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 64,
+		"Description": "系統在地圖上找不到 Parking Point(Cannot Find Parking Point In Map)",
+		"Description_Zh": "系統在地圖上找不到 Parking Point",
+		"Description_En": "Cannot Find Parking Point In Map",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 100,
+		"Description": "交管系統強制停止(Traffic Abort)",
+		"Description_Zh": "交管系統強制停止",
+		"Description_En": "Traffic Abort",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 101,
+		"Description": "交管系統接收任務失敗(Traffic Get Task Fail)",
+		"Description_Zh": "交管系統接收任務失敗",
+		"Description_En": "Traffic Get Task Fail",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 104,
+		"Description": "交管系統接收任務但車載的交管狀態不為等待(Traffic Task In But Traffic State Not Idle)",
+		"Description_Zh": "交管系統接收任務但車載的交管狀態不為等待",
+		"Description_En": "Traffic Task In But Traffic State Not Idle",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 105,
+		"Description": "交管系統接收任務但起始位置或結束位置不存在地圖上(Traffic Task In But Start or Target Point Not Exist)",
+		"Description_Zh": "交管系統接收任務但起始位置或結束位置不存在地圖上",
+		"Description_En": "Traffic Task In But Start or Target Point Not Exist",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 106,
+		"Description": "交管系統接收任務但起始位置或結束位置為二次定位點(Traffic Task In But Start or Target Point Is Segment)",
+		"Description_Zh": "交管系統接收任務但起始位置或結束位置為二次定位點",
+		"Description_En": "Traffic Task In But Start or Target Point Is Segment",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 107,
+		"Description": "交管系統接收任務但車載 ID 不存在(Traffic Task In But Vehcle ID Not Exist)",
+		"Description_Zh": "交管系統接收任務但車載 ID 不存在",
+		"Description_En": "Traffic Task In But Vehcle ID Not Exist",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 108,
+		"Description": "交管系統接收任務但程式碼異常(Traffic Task In But Programing Exception)",
+		"Description_Zh": "交管系統接收任務但程式碼異常",
+		"Description_En": "Traffic Task In But Programing Exception",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 120,
+		"Description": "取得卡匣但帳料不符(Get CST But CST Sensor Not Match)",
+		"Description_Zh": "取得卡匣但帳料不符",
+		"Description_En": "Get CST But CST Sensor Not Match",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 121,
+		"Description": "放置卡匣但帳料不符(Put CST But CST Sensor Not Match)",
+		"Description_Zh": "放置卡匣但帳料不符",
+		"Description_En": "Put CST But CST Sensor Not Match",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 122,
+		"Description": "任務類別出現錯誤的狀態(Unload)(Unload Task With Wrong Task Type)",
+		"Description_Zh": "任務類別出現錯誤的狀態(Unload)",
+		"Description_En": "Unload Task With Wrong Task Type",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 123,
+		"Description": "任務類別出現錯誤的狀態(load)(Load Task With Wrong Task Type)",
+		"Description_Zh": "任務類別出現錯誤的狀態(load)",
+		"Description_En": "Load Task With Wrong Task Type",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 124,
+		"Description": "收到充電任務, 但車載的狀態錯誤(Get Charge Task But Vehicle is Wrong State)",
+		"Description_Zh": "收到充電任務, 但車載的狀態錯誤",
+		"Description_En": "Get Charge Task But Vehicle is Wrong State",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 125,
+		"Description": "建立子任務失敗(Create Sub Job Fail)",
+		"Description_Zh": "建立子任務失敗",
+		"Description_En": "Create Sub Job Fail",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 126,
+		"Description": "組合移動命令失敗(Set Traject Fail)",
+		"Description_Zh": "組合移動命令失敗",
+		"Description_En": "Set Traject Fail",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 127,
+		"Description": "組合二次移動命令失敗(Set Homing Traject Fail)",
+		"Description_Zh": "組合二次移動命令失敗",
+		"Description_En": "Set Homing Traject Fail",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 130,
+		"Description": "系統欲指派充電任務 但車載狀態不為Idle(VMS Will Send Recharge Command But AGV Status Is Not At Idle)",
+		"Description_Zh": "系統欲指派充電任務 但車載狀態不為Idle",
+		"Description_En": "VMS Will Send Recharge Command But AGV Status Is Not At Idle",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 131,
+		"Description": "系統欲指派充電任務 但未與車載不為Online狀態(VMS Will Send Recharge Command But System State Is Not At Online)",
+		"Description_Zh": "系統欲指派充電任務 但未與車載不為Online狀態",
+		"Description_En": "VMS Will Send Recharge Command But System State Is Not At Online",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 132,
+		"Description": "車載的卡匣在席檢與任務流程狀態不符(AGV Cargo Status Not Match With Task)",
+		"Description_Zh": "車載的卡匣在席檢與任務流程狀態不符",
+		"Description_En": "AGV Cargo Status Not Match With Task",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 133,
+		"Description": "車載的卡匣ID與任務不符(AGV Carried ID Not Match With Task)",
+		"Description_Zh": "車載的卡匣ID與任務不符",
+		"Description_En": "AGV Carried ID Not Match With Task",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 134,
+		"Description": "非搬運任務但車上卻有卡匣(Task Is Not Transfer But AGV Carrier Exist)",
+		"Description_Zh": "非搬運任務但車上卻有卡匣",
+		"Description_En": "Task Is Not Transfer But AGV Carrier Exist",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 135,
+		"Description": "站點狀態異常無法執行取放(Port Status is Wrong. Can't Load/Unload)",
+		"Description_Zh": "站點狀態異常無法執行取放",
+		"Description_En": "Port Status is Wrong. Can't Load/Unload",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 136,
+		"Description": "檢查站點狀態卻找不到該任務的執行車(Can't Find Execute Vehicle of Task for Check Port Status)",
+		"Description_Zh": "檢查站點狀態卻找不到該任務的執行車",
+		"Description_En": "Can't Find Execute Vehicle of Task for Check Port Status",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 137,
+		"Description": "任務起始位置為 AGV 但車載卻顯示卡匣不存在(SourcePort Assign AGV but Vehicle No Carrier)",
+		"Description_Zh": "任務起始位置為 AGV 但車載卻顯示卡匣不存在",
+		"Description_En": "SourcePort Assign AGV but Vehicle No Carrier",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 138,
+		"Description": "任務起始位置不為 AGV 但車載卻顯示有卡匣存在(SourcePort Not Assign AGV but Vehicle Carrier Exist)",
+		"Description_Zh": "任務起始位置不為 AGV 但車載卻顯示有卡匣存在",
+		"Description_En": "SourcePort Not Assign AGV but Vehicle Carrier Exist",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 140,
+		"Description": "VMS 系統與車載系統斷線(VMS Disconnect with Vehicle)",
+		"Description_Zh": "VMS 系統與車載系統斷線",
+		"Description_En": "VMS Disconnect with Vehicle",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 141,
+		"Description": "車載系統回覆交握訊息 0302 NG(Vehicle Reply Message 0302 NG)",
+		"Description_Zh": "車載系統回覆交握訊息 0302 NG",
+		"Description_En": "Vehicle Reply Message 0302 NG",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 142,
+		"Description": "車載系統交握訊息 T3 Timeout(Vehicle Message T3 Timeout)",
+		"Description_Zh": "車載系統交握訊息 T3 Timeout",
+		"Description_En": "Vehicle Message T3 Timeout",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 143,
+		"Description": "因車載系統在籍狀態有料 無法指派 AutoParking 任務(Cannot Assign AutoParking Job Because Wrong Cargo Status)",
+		"Description_Zh": "因車載系統在籍狀態有料 無法指派 AutoParking 任務",
+		"Description_En": "Cannot Assign AutoParking Job Because Wrong Cargo Status",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 144,
+		"Description": "重試下達調整角度移動任務失敗已達上限次數(Retry Calculate Move Angle Fail)",
+		"Description_Zh": "重試下達調整角度移動任務失敗已達上限次數",
+		"Description_En": "Retry Calculate Move Angle Fail",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 150,
+		"Description": "VMS 測試網路 IP 訊號失敗(VMS Test Ping IP Failed)",
+		"Description_Zh": "VMS 測試網路 IP 訊號失敗",
+		"Description_En": "VMS Test Ping IP Failed",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 155,
+		"Description": "重新規劃路線失敗, 系統狀態不是暫停或是非移動任務的情況(Replan Error, System State is not Paused or Job is not Moving Mission)",
+		"Description_Zh": "重新規劃路線失敗, 系統狀態不是暫停或是非移動任務的情況",
+		"Description_En": "Replan Error, System State is not Paused or Job is not Moving Mission",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 156,
+		"Description": "重新規劃路線失敗, 無法回到原本位置(Replan Error, Can not Go Back Original Position)",
+		"Description_Zh": "重新規劃路線失敗, 無法回到原本位置",
+		"Description_En": "Replan Error, Can not Go Back Original Position",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 157,
+		"Description": "重新規劃路線失敗, 無法找到路徑的下一個點(Replan Error, Can not Find Next Point)",
+		"Description_Zh": "重新規劃路線失敗, 無法找到路徑的下一個點",
+		"Description_En": "Replan Error, Can not Find Next Point",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 158,
+		"Description": "因車載系統在籍狀態有料 無法指派充電任務(Cannot Assign Charge Job Because Wrong Cargo Status)",
+		"Description_Zh": "因車載系統在籍狀態有料 無法指派充電任務",
+		"Description_En": "Cannot Assign Charge Job Because Wrong Cargo Status",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 159,
+		"Description": "車載系統上報目前位置有誤 車子無法上線(Cannot Online Vehicle Because Wrong Current Position)",
+		"Description_Zh": "車載系統上報目前位置有誤 車子無法上線",
+		"Description_En": "Cannot Online Vehicle Because Wrong Current Position",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 160,
+		"Description": "目前位置為不可上線的站別種類 車子無法上線(Cannot Online Vehicle Because At Wrong Station Type)",
+		"Description_Zh": "目前位置為不可上線的站別種類 車子無法上線",
+		"Description_En": "Cannot Online Vehicle Because At Wrong Station Type",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 161,
+		"Description": "與其他車子的路徑有衝突 車子無法上線(Cannot Online Vehicle Because Effect Other AGV)",
+		"Description_Zh": "與其他車子的路徑有衝突 車子無法上線",
+		"Description_En": "Cannot Online Vehicle Because Effect Other AGV",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 168,
+		"Description": "車載系統回報任務完成但派車檢查位置尚未到位(Report Completed Task Timeout By Check Position)",
+		"Description_Zh": "車載系統回報任務完成但派車檢查位置尚未到位",
+		"Description_En": "Report Completed Task Timeout By Check Position",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 169,
+		"Description": "車載系統回報位置已到位但尚未回報任務完成(Report Completed Task Timeout By Check Job Status)",
+		"Description_Zh": "車載系統回報位置已到位但尚未回報任務完成",
+		"Description_En": "Report Completed Task Timeout By Check Job Status",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 170,
+		"Description": "車載系統狀態有誤 車子無法上線(Cannot Online Vehicle Because Wrong Run Status)",
+		"Description_Zh": "車載系統狀態有誤 車子無法上線",
+		"Description_En": "Cannot Online Vehicle Because Wrong Run Status",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 171,
+		"Description": "目前位置為虛擬點 車子無法上線(Cannot Online Vehicle Because At Virtual Point)",
+		"Description_Zh": "目前位置為虛擬點 車子無法上線",
+		"Description_En": "Cannot Online Vehicle Because At Virtual Point",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 600,
+		"Description": "與其他車發生交叉(Traffic Cross)",
+		"Description_Zh": "與其他車發生交叉",
+		"Description_En": "Traffic Cross",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 601,
+		"Description": "發生趕車任務但建立任務失敗(Traffic Drive Vehicle Away but Get Task Fail)",
+		"Description_Zh": "發生趕車任務但建立任務失敗",
+		"Description_En": "Traffic Drive Vehicle Away but Get Task Fail",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 602,
+		"Description": "發生趕車任務但車載不是Idle狀態(Traffic Drive Vehicle Away but Vehicle Status Not Idle)",
+		"Description_Zh": "發生趕車任務但車載不是Idle狀態",
+		"Description_En": "Traffic Drive Vehicle Away but Vehicle Status Not Idle",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 603,
+		"Description": "發生趕車任務但找不到可避車的位置(Traffic Drive Vehicle Away But Cannot Find Avoid Position)",
+		"Description_Zh": "發生趕車任務但找不到可避車的位置",
+		"Description_En": "Traffic Drive Vehicle Away But Cannot Find Avoid Position",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 604,
+		"Description": "發生趕車任務但等待其他車子釋放點位 Timeout(Traffic Drive Vehicle Away but Wait Other Vehicle Release Point Timeout)",
+		"Description_Zh": "發生趕車任務但等待其他車子釋放點位 Timeout",
+		"Description_En": "Traffic Drive Vehicle Away but Wait Other Vehicle Release Point Timeout",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 620,
+		"Description": "任務類別未定義(Download Task but Action Type Wrong)",
+		"Description_Zh": "任務類別未定義",
+		"Description_En": "Download Task but Action Type Wrong",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 621,
+		"Description": "任務指定的車載不存在(Download Task but Vehicle Not Exist)",
+		"Description_Zh": "任務指定的車載不存在",
+		"Description_En": "Download Task but Vehicle Not Exist",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 622,
+		"Description": "此任務需指定車載(The Task Need to Assign Vehicle)",
+		"Description_Zh": "此任務需指定車載",
+		"Description_En": "The Task Need to Assign Vehicle",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 623,
+		"Description": "任務沒有來源機台(Download Task but No Source Port)",
+		"Description_Zh": "任務沒有來源機台",
+		"Description_En": "Download Task but No Source Port",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 624,
+		"Description": "找不到任務的來源機台(Download Task but Source Port Not Find)",
+		"Description_Zh": "找不到任務的來源機台",
+		"Description_En": "Download Task but Source Port Not Find",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 625,
+		"Description": "任務來源自車載但與指定車載不符(Download Task but Assign Vehicle Not Match)",
+		"Description_Zh": "任務來源自車載但與指定車載不符",
+		"Description_En": "Download Task but Assign Vehicle Not Match",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 626,
+		"Description": "任務沒有目的機台(Download Task but No Dest Port)",
+		"Description_Zh": "任務沒有目的機台",
+		"Description_En": "Download Task but No Dest Port",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 627,
+		"Description": "找不到任務的目的機台(Download Task but Dest Port Not Find)",
+		"Description_Zh": "找不到任務的目的機台",
+		"Description_En": "Download Task but Dest Port Not Find",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 628,
+		"Description": "充電任務但目的位置不是充電站(Charge Task but Not Charge Station)",
+		"Description_Zh": "充電任務但目的位置不是充電站",
+		"Description_En": "Charge Task but Not Charge Station",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 629,
+		"Description": "來源機台沒有離開機台的位置(Source Port No Target Position)",
+		"Description_Zh": "來源機台沒有離開機台的位置",
+		"Description_En": "Source Port No Target Position",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 630,
+		"Description": "目的機台沒有離開機台的位置(Dest Port No Target Position)",
+		"Description_Zh": "目的機台沒有離開機台的位置",
+		"Description_En": "Dest Port No Target Position",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 631,
+		"Description": "車載沒有在充電站(Vehicle Not At Charge Station)",
+		"Description_Zh": "車載沒有在充電站",
+		"Description_En": "Vehicle Not At Charge Station",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 632,
+		"Description": "來源機台類別與任務不符(Source Port Type is Wrong)",
+		"Description_Zh": "來源機台類別與任務不符",
+		"Description_En": "Source Port Type is Wrong",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 633,
+		"Description": "目的機台類別與任務不符(Dest Port Type is Wrong)",
+		"Description_Zh": "目的機台類別與任務不符",
+		"Description_En": "Dest Port Type is Wrong",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 634,
+		"Description": "任務類別的在席檢知錯誤(Download Task but Cst Sensor Wrong)",
+		"Description_Zh": "任務類別的在席檢知錯誤",
+		"Description_En": "Download Task but Cst Sensor Wrong",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 635,
+		"Description": "任務類別的車上卡匣資訊錯誤(Download Task but Cst ID Wrong)",
+		"Description_Zh": "任務類別的車上卡匣資訊錯誤",
+		"Description_En": "Download Task but Cst ID Wrong",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 636,
+		"Description": "檢查任務出現例外錯誤問題(Download Task Exception)",
+		"Description_Zh": "檢查任務出現例外錯誤問題",
+		"Description_En": "Download Task Exception",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 640,
+		"Description": "在籍狀態錯誤此任務起點無法指派車載(Assign Source Port but Vehicle Cargo Statue Is Wrong)",
+		"Description_Zh": "在籍狀態錯誤此任務起點無法指派車載",
+		"Description_En": "Assign Source Port but Vehicle Cargo Statue Is Wrong",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 641,
+		"Description": "詢問交管但無法取得充電站/停車點(Download Task but Manage Traffic Get Charge or Parking Station Fail)",
+		"Description_Zh": "詢問交管但無法取得充電站/停車點",
+		"Description_En": "Download Task but Manage Traffic Get Charge or Parking Station Fail",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 642,
+		"Description": "此任務起點無法符合交管回傳點位(Download Task but Source Port Cannot Equal to Manage Traffic Return Position)",
+		"Description_Zh": "此任務起點無法符合交管回傳點位",
+		"Description_En": "Download Task but Source Port Cannot Equal to Manage Traffic Return Position",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 643,
+		"Description": "任務起始位置指定為 AGV 但車上卡匣不存在(Source Port Assign Vehicle but Vehicle Carrier Not Exist)",
+		"Description_Zh": "任務起始位置指定為 AGV 但車上卡匣不存在",
+		"Description_En": "Source Port Assign Vehicle but Vehicle Carrier Not Exist",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 644,
+		"Description": "任務指定的車載卡匣狀態不符合任務 請確認車載是否有卡匣存在(Download Task but Vehicle Cst Status Wrong)",
+		"Description_Zh": "任務指定的車載卡匣狀態不符合任務 請確認車載是否有卡匣存在",
+		"Description_En": "Download Task but Vehicle Cst Status Wrong",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 645,
+		"Description": "任務起始位置為 AGV 但 AGV 目前狀態無法接收(Source Port Assign Vehicle But Vehicle Not Ready)",
+		"Description_Zh": "任務起始位置為 AGV 但 AGV 目前狀態無法接收",
+		"Description_En": "Source Port Assign Vehicle But Vehicle Not Ready",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 646,
+		"Description": "任務起始位置為 AGV 但已有相同的起始位置任務存在(Source Port Assign Vehicle But Other Task Source Port Is Same)",
+		"Description_Zh": "任務起始位置為 AGV 但已有相同的起始位置任務存在",
+		"Description_En": "Source Port Assign Vehicle But Other Task Source Port Is Same",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 670,
+		"Description": "上層 Host 下達任務取消(Task Cancel By Host)",
+		"Description_Zh": "上層 Host 下達任務取消",
+		"Description_En": "Task Cancel By Host",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 680,
+		"Description": "車載交握訊息 0303 JobStatus Start 訊號 Timeout(Vehicle 0303 JobStatus Start Timeout)",
+		"Description_Zh": "車載交握訊息 0303 JobStatus Start 訊號 Timeout",
+		"Description_En": "Vehicle 0303 JobStatus Start Timeout",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 681,
+		"Description": "車載交握訊息 0303 JobStatus End 訊號 Timeout(Vehicle 0303 JobStatus End Timeout)",
+		"Description_Zh": "車載交握訊息 0303 JobStatus End 訊號 Timeout",
+		"Description_En": "Vehicle 0303 JobStatus End Timeout",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1000,
+		"Description": "(NONE)",
+		"Description_Zh": "",
+		"Description_En": "NONE",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1003,
+		"Description": "(AGV_DISCONNECT)",
+		"Description_Zh": "",
+		"Description_En": "AGV_DISCONNECT",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1004,
+		"Description": "(GET_ONLINE_REQ_BUT_AGV_DISCONNECT)",
+		"Description_Zh": "",
+		"Description_En": "GET_ONLINE_REQ_BUT_AGV_DISCONNECT",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1005,
+		"Description": "(GET_OFFLINE_REQ_BUT_AGV_DISCONNECT)",
+		"Description_Zh": "",
+		"Description_En": "GET_OFFLINE_REQ_BUT_AGV_DISCONNECT",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1006,
+		"Description": "(GET_ONLINE_REQ_BUT_AGV_STATE_ERROR)",
+		"Description_Zh": "",
+		"Description_En": "GET_ONLINE_REQ_BUT_AGV_STATE_ERROR",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1007,
+		"Description": "(TRAFFIC_BLOCKED_NO_PATH_FOR_NAVIGATOR)",
+		"Description_Zh": "",
+		"Description_En": "TRAFFIC_BLOCKED_NO_PATH_FOR_NAVIGATOR",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1008,
+		"Description": "(NO_AVAILABLE_CHARGE_PILE)",
+		"Description_Zh": "",
+		"Description_En": "NO_AVAILABLE_CHARGE_PILE",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1009,
+		"Description": "(TRAFFIC_CONTROL_CENTER_EXCEPTION_WHEN_CHECK_NAVIGATOR_PATH)",
+		"Description_Zh": "",
+		"Description_En": "TRAFFIC_CONTROL_CENTER_EXCEPTION_WHEN_CHECK_NAVIGATOR_PATH",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1010,
+		"Description": "(GET_CHARGE_TASK_BUT_AGV_CHARGING_ALREADY)",
+		"Description_Zh": "",
+		"Description_En": "GET_CHARGE_TASK_BUT_AGV_CHARGING_ALREADY",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1011,
+		"Description": "(CST_STATUS_CHECK_FAIL)",
+		"Description_Zh": "",
+		"Description_En": "CST_STATUS_CHECK_FAIL",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1012,
+		"Description": "(Endpoint_EQ_NOT_CONNECTED)",
+		"Description_Zh": "",
+		"Description_En": "Endpoint_EQ_NOT_CONNECTED",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1014,
+		"Description": "(EQ_LOAD_REQUEST_IS_NOT_ON)",
+		"Description_Zh": "",
+		"Description_En": "EQ_LOAD_REQUEST_IS_NOT_ON",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1015,
+		"Description": "(EQ_UNLOAD_REQUEST_IS_NOT_ON)",
+		"Description_Zh": "",
+		"Description_En": "EQ_UNLOAD_REQUEST_IS_NOT_ON",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1016,
+		"Description": "(TRANSFER_TASK_TO_VMS_BUT_ERROR_OCCUR)",
+		"Description_Zh": "",
+		"Description_En": "TRANSFER_TASK_TO_VMS_BUT_ERROR_OCCUR",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1017,
+		"Description": "(DESTIN_TAG_IS_INVLID_FORMAT)",
+		"Description_Zh": "",
+		"Description_En": "DESTIN_TAG_IS_INVLID_FORMAT",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1018,
+		"Description": "(STATION_TYPE_CANNOT_USE_AUTO_SEARCH)",
+		"Description_Zh": "",
+		"Description_En": "STATION_TYPE_CANNOT_USE_AUTO_SEARCH",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1019,
+		"Description": "(NO_AVAILABLE_PARK_STATION)",
+		"Description_Zh": "",
+		"Description_En": "NO_AVAILABLE_PARK_STATION",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1020,
+		"Description": "(ERROR_WHEN_CREATE_NAVIGATION_JOBS_LINK)",
+		"Description_Zh": "",
+		"Description_En": "ERROR_WHEN_CREATE_NAVIGATION_JOBS_LINK",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1021,
+		"Description": "(EQ_UNLOAD_REQUEST_ON_BUT_TAG_NOT_EXIST_ON_MAP)",
+		"Description_Zh": "",
+		"Description_En": "EQ_UNLOAD_REQUEST_ON_BUT_TAG_NOT_EXIST_ON_MAP",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1022,
+		"Description": "(EQ_UNLOAD_REQUEST_ON_BUT_STATION_TYPE_SETTING_IS_NOT_EQ)",
+		"Description_Zh": "",
+		"Description_En": "EQ_UNLOAD_REQUEST_ON_BUT_STATION_TYPE_SETTING_IS_NOT_EQ",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1023,
+		"Description": "(ERROR_WHEN_FIND_TAG_OF_STATION)",
+		"Description_Zh": "",
+		"Description_En": "ERROR_WHEN_FIND_TAG_OF_STATION",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1024,
+		"Description": "(MAP_POINT_NO_TARGETS)",
+		"Description_Zh": "",
+		"Description_En": "MAP_POINT_NO_TARGETS",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1025,
+		"Description": "(ERROR_WHEN_AGV_STATUS_WRITE_TO_DB)",
+		"Description_Zh": "",
+		"Description_En": "ERROR_WHEN_AGV_STATUS_WRITE_TO_DB",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1026,
+		"Description": "(TRAFFIC_ABORT)",
+		"Description_Zh": "",
+		"Description_En": "TRAFFIC_ABORT",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1027,
+		"Description": "(GET_ONLINE_REQ_BUT_AGV_LOCATION_IS_TOO_FAR_FROM_POINT)",
+		"Description_Zh": "",
+		"Description_En": "GET_ONLINE_REQ_BUT_AGV_LOCATION_IS_TOO_FAR_FROM_POINT",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1028,
+		"Description": "(GET_ONLINE_REQ_BUT_AGV_LOCATION_IS_NOT_EXIST_ON_MAP)",
+		"Description_Zh": "",
+		"Description_En": "GET_ONLINE_REQ_BUT_AGV_LOCATION_IS_NOT_EXIST_ON_MAP",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 3029,
+		"Description": "(GET_ONLINE_REQ_BUT_AGV_IS_NOT_REGISTED)",
+		"Description_Zh": "",
+		"Description_En": "GET_ONLINE_REQ_BUT_AGV_IS_NOT_REGISTED",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 3030,
+		"Description": "(CANNOT_DISPATCH_MOVE_TASK_IN_WORKSTATION)",
+		"Description_Zh": "",
+		"Description_En": "CANNOT_DISPATCH_MOVE_TASK_IN_WORKSTATION",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 3031,
+		"Description": "(CANNOT_DISPATCH_LOAD_TASK_TO_NOT_EQ_STATION)",
+		"Description_Zh": "",
+		"Description_En": "CANNOT_DISPATCH_LOAD_TASK_TO_NOT_EQ_STATION",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 3032,
+		"Description": "(CANNOT_DISPATCH_LOAD_TASK_WHEN_AGV_NO_CARGO)",
+		"Description_Zh": "",
+		"Description_En": "CANNOT_DISPATCH_LOAD_TASK_WHEN_AGV_NO_CARGO",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 3033,
+		"Description": "(CANNOT_DISPATCH_UNLOAD_TASK_WHEN_AGV_HAS_CARGO)",
+		"Description_Zh": "",
+		"Description_En": "CANNOT_DISPATCH_UNLOAD_TASK_WHEN_AGV_HAS_CARGO",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 3034,
+		"Description": "(CANNOT_DISPATCH_UNLOAD_TASK_TO_NOT_EQ_STATION)",
+		"Description_Zh": "",
+		"Description_En": "CANNOT_DISPATCH_UNLOAD_TASK_TO_NOT_EQ_STATION",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 3035,
+		"Description": "(CANNOT_DISPATCH_CHARGE_TASK_TO_NOT_CHARGABLE_STATION)",
+		"Description_Zh": "",
+		"Description_En": "CANNOT_DISPATCH_CHARGE_TASK_TO_NOT_CHARGABLE_STATION",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 3036,
+		"Description": "(CANNOT_DISPATCH_ORDER_BY_AGV_BAT_STATUS_CHECK)",
+		"Description_Zh": "",
+		"Description_En": "CANNOT_DISPATCH_ORDER_BY_AGV_BAT_STATUS_CHECK",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1036,
+		"Description": "(AGV_Task_Feedback_But_Task_Name_Not_Match)",
+		"Description_Zh": "",
+		"Description_En": "AGV_Task_Feedback_But_Task_Name_Not_Match",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1037,
+		"Description": "(SYSTEM_ERROR)",
+		"Description_Zh": "",
+		"Description_En": "SYSTEM_ERROR",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1038,
+		"Description": "(CANNOT_DISPATCH_INTO_WORKSTATION_TASK_WHEN_AGV_HAS_CARGO)",
+		"Description_Zh": "",
+		"Description_En": "CANNOT_DISPATCH_INTO_WORKSTATION_TASK_WHEN_AGV_HAS_CARGO",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1039,
+		"Description": "(CANNOT_DISPATCH_NORMAL_MOVE_TASK_WHEN_DESTINE_IS_WORKSTATION)",
+		"Description_Zh": "",
+		"Description_En": "CANNOT_DISPATCH_NORMAL_MOVE_TASK_WHEN_DESTINE_IS_WORKSTATION",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1040,
+		"Description": "(EQ_TAG_NOT_EXIST_IN_CURRENT_MAP)",
+		"Description_Zh": "",
+		"Description_En": "EQ_TAG_NOT_EXIST_IN_CURRENT_MAP",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1041,
+		"Description": "(SubTask_Queue_Empty_But_Try_DownloadTask_To_AGV)",
+		"Description_Zh": "",
+		"Description_En": "SubTask_Queue_Empty_But_Try_DownloadTask_To_AGV",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1042,
+		"Description": "(AGV_STATUS_DOWN)",
+		"Description_Zh": "",
+		"Description_En": "AGV_STATUS_DOWN",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1043,
+		"Description": "(CANNOT_DISPATCH_TASK_WITH_ILLEAGAL_STATUS)",
+		"Description_Zh": "",
+		"Description_En": "CANNOT_DISPATCH_TASK_WITH_ILLEAGAL_STATUS",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1044,
+		"Description": "(AGV_BATTERY_LOW_LEVEL)",
+		"Description_Zh": "",
+		"Description_En": "AGV_BATTERY_LOW_LEVEL",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1045,
+		"Description": "(AGV_WORKSTATION_DATA_NOT_SETTING)",
+		"Description_Zh": "",
+		"Description_En": "AGV_WORKSTATION_DATA_NOT_SETTING",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1046,
+		"Description": "(AGV_AT_UNKNON_TAG_LOCATION)",
+		"Description_Zh": "",
+		"Description_En": "AGV_AT_UNKNON_TAG_LOCATION",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1047,
+		"Description": "(Task_Status_Cant_Save_To_Database)",
+		"Description_Zh": "",
+		"Description_En": "Task_Status_Cant_Save_To_Database",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1048,
+		"Description": "(Task_Cancel_Fail)",
+		"Description_Zh": "",
+		"Description_En": "Task_Cancel_Fail",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1049,
+		"Description": "(Task_Add_To_Database_Fail)",
+		"Description_Zh": "",
+		"Description_En": "Task_Add_To_Database_Fail",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1050,
+		"Description": "(AGV_TCPIP_DISCONNECT)",
+		"Description_Zh": "",
+		"Description_En": "AGV_TCPIP_DISCONNECT",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1051,
+		"Description": "(Save_Measure_Data_to_DB_Fail)",
+		"Description_Zh": "",
+		"Description_En": "Save_Measure_Data_to_DB_Fail",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1052,
+		"Description": "(Region_Has_No_Agv_To_Dispatch_Task)",
+		"Description_Zh": "",
+		"Description_En": "Region_Has_No_Agv_To_Dispatch_Task",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1053,
+		"Description": "(CANNOT_DISPATCH_CARRY_TASK_WHEN_AGV_HAS_CARGO)",
+		"Description_Zh": "",
+		"Description_En": "CANNOT_DISPATCH_CARRY_TASK_WHEN_AGV_HAS_CARGO",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1054,
+		"Description": "(CANNOT_DISPATCH_LOCAL_AUTO_TRANSFER_TASK)",
+		"Description_Zh": "",
+		"Description_En": "CANNOT_DISPATCH_LOCAL_AUTO_TRANSFER_TASK",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1055,
+		"Description": "(Source_Eq_Unload_Request_Off)",
+		"Description_Zh": "",
+		"Description_En": "Source_Eq_Unload_Request_Off",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1056,
+		"Description": "(Destine_Eq_Load_Request_Off)",
+		"Description_Zh": "",
+		"Description_En": "Destine_Eq_Load_Request_Off",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1057,
+		"Description": "(Source_Eq_Status_Down)",
+		"Description_Zh": "",
+		"Description_En": "Source_Eq_Status_Down",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1058,
+		"Description": "(Destine_Eq_Status_Down)",
+		"Description_Zh": "",
+		"Description_En": "Destine_Eq_Status_Down",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1059,
+		"Description": "(Cannot_Auto_Parking_When_AGV_Has_Cargo)",
+		"Description_Zh": "",
+		"Description_En": "Cannot_Auto_Parking_When_AGV_Has_Cargo",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1060,
+		"Description": "(Destine_Eq_Already_Has_Task_To_Excute)",
+		"Description_Zh": "",
+		"Description_En": "Destine_Eq_Already_Has_Task_To_Excute",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1061,
+		"Description": "(Destine_EQ_Has_AGV)",
+		"Description_Zh": "",
+		"Description_En": "Destine_EQ_Has_AGV",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1062,
+		"Description": "(Destine_EQ_Has_Registed)",
+		"Description_Zh": "",
+		"Description_En": "Destine_EQ_Has_Registed",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1063,
+		"Description": "(UNLOAD_BUT_AGV_NO_CARGO_MOUNTED)",
+		"Description_Zh": "",
+		"Description_En": "UNLOAD_BUT_AGV_NO_CARGO_MOUNTED",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1064,
+		"Description": "(UNLOAD_BUT_CARGO_ID_EMPTY)",
+		"Description_Zh": "",
+		"Description_En": "UNLOAD_BUT_CARGO_ID_EMPTY",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1065,
+		"Description": "(UNLOAD_BUT_CARGO_ID_NOT_MATCHED)",
+		"Description_Zh": "",
+		"Description_En": "UNLOAD_BUT_CARGO_ID_NOT_MATCHED",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1066,
+		"Description": "(TASK_DOWNLOAD_DATA_ILLEAGAL)",
+		"Description_Zh": "",
+		"Description_En": "TASK_DOWNLOAD_DATA_ILLEAGAL",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1067,
+		"Description": "(AGV_TaskFeedback_ERROR)",
+		"Description_Zh": "",
+		"Description_En": "AGV_TaskFeedback_ERROR",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1068,
+		"Description": "(EQ_Disconnect)",
+		"Description_Zh": "",
+		"Description_En": "EQ_Disconnect",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1069,
+		"Description": "(ERROR_WHEN_TASK_STATUS_CHAGE_DB)",
+		"Description_Zh": "",
+		"Description_En": "ERROR_WHEN_TASK_STATUS_CHAGE_DB",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1070,
+		"Description": "(Destine_Normal_Station_Has_Task_To_Reach)",
+		"Description_Zh": "",
+		"Description_En": "Destine_Normal_Station_Has_Task_To_Reach",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1071,
+		"Description": "(Destine_Eq_Station_Has_Task_To_Park)",
+		"Description_Zh": "",
+		"Description_En": "Destine_Eq_Station_Has_Task_To_Park",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1072,
+		"Description": "(Destine_Charge_Station_Has_AGV)",
+		"Description_Zh": "",
+		"Description_En": "Destine_Charge_Station_Has_AGV",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1073,
+		"Description": "(PING_CHECK_FAIL)",
+		"Description_Zh": "",
+		"Description_En": "PING_CHECK_FAIL",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1074,
+		"Description": "(Download_Task_To_AGV_Fail)",
+		"Description_Zh": "",
+		"Description_En": "Download_Task_To_AGV_Fail",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1075,
+		"Description": "(EQ_LOAD_REQUEST_ON_BUT_HAS_CARGO)",
+		"Description_Zh": "",
+		"Description_En": "EQ_LOAD_REQUEST_ON_BUT_HAS_CARGO",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1076,
+		"Description": "(EQ_UNLOAD_REQUEST_ON_BUT_NO_CARGO)",
+		"Description_Zh": "",
+		"Description_En": "EQ_UNLOAD_REQUEST_ON_BUT_NO_CARGO",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1077,
+		"Description": "(EQ_UNLOAD_REQ_BUT_RACK_FULL_OR_EMPTY_IS_UNKNOWN)",
+		"Description_Zh": "",
+		"Description_En": "EQ_UNLOAD_REQ_BUT_RACK_FULL_OR_EMPTY_IS_UNKNOWN",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1078,
+		"Description": "(EQ_LOAD_REQ_BUT_RACK_FULL_OR_EMPTY_IS_UNKNOWN)",
+		"Description_Zh": "",
+		"Description_En": "EQ_LOAD_REQ_BUT_RACK_FULL_OR_EMPTY_IS_UNKNOWN",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1079,
+		"Description": "(AGV_Type_Is_Not_Allow_To_Execute_Task_At_Source_Equipment)",
+		"Description_Zh": "",
+		"Description_En": "AGV_Type_Is_Not_Allow_To_Execute_Task_At_Source_Equipment",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1080,
+		"Description": "(AGV_Type_Is_Not_Allow_To_Execute_Task_At_Destine_Equipment)",
+		"Description_Zh": "",
+		"Description_En": "AGV_Type_Is_Not_Allow_To_Execute_Task_At_Destine_Equipment",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1081,
+		"Description": "(EQ_Input_Data_Not_Enough)",
+		"Description_Zh": "",
+		"Description_En": "EQ_Input_Data_Not_Enough",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1082,
+		"Description": "(AGV_Already_Has_Charge_Task)",
+		"Description_Zh": "",
+		"Description_En": "AGV_Already_Has_Charge_Task",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1083,
+		"Description": "(Charge_Station_Already_Has_Task_Assigned)",
+		"Description_Zh": "",
+		"Description_En": "Charge_Station_Already_Has_Task_Assigned",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1084,
+		"Description": "(Charge_Station_Already_Has_AGV_Parked)",
+		"Description_Zh": "",
+		"Description_En": "Charge_Station_Already_Has_AGV_Parked",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1085,
+		"Description": "(Station_Disabled)",
+		"Description_Zh": "",
+		"Description_En": "Station_Disabled",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1086,
+		"Description": "(TASK_DOWNLOAD_TO_AGV_FAIL_AGV_STATUS_DOWN)",
+		"Description_Zh": "",
+		"Description_En": "TASK_DOWNLOAD_TO_AGV_FAIL_AGV_STATUS_DOWN",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1087,
+		"Description": "(TASK_DOWNLOAD_TO_AGV_FAIL)",
+		"Description_Zh": "",
+		"Description_En": "TASK_DOWNLOAD_TO_AGV_FAIL",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1088,
+		"Description": "(TASK_DOWNLOAD_TO_AGV_FAIL_AGV_NOT_ON_TAG)",
+		"Description_Zh": "",
+		"Description_En": "TASK_DOWNLOAD_TO_AGV_FAIL_AGV_NOT_ON_TAG",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1089,
+		"Description": "(TASK_DOWNLOAD_TO_AGV_FAIL_WORKSTATION_NOT_SETTING_YET)",
+		"Description_Zh": "",
+		"Description_En": "TASK_DOWNLOAD_TO_AGV_FAIL_WORKSTATION_NOT_SETTING_YET",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1090,
+		"Description": "(TASK_DOWNLOAD_TO_AGV_FAIL_AGV_BATTERY_LOW_LEVEL)",
+		"Description_Zh": "",
+		"Description_En": "TASK_DOWNLOAD_TO_AGV_FAIL_AGV_BATTERY_LOW_LEVEL",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1091,
+		"Description": "(TASK_DOWNLOAD_TO_AGV_FAIL_AGV_CANNOT_GO_TO_WORKSTATION_WITH_NORMAL_MOVE_ACTION)",
+		"Description_Zh": "",
+		"Description_En": "TASK_DOWNLOAD_TO_AGV_FAIL_AGV_CANNOT_GO_TO_WORKSTATION_WITH_NORMAL_MOVE_ACTION",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1092,
+		"Description": "(TASK_DOWNLOAD_TO_AGV_FAIL_TASK_DOWNLOAD_DATA_ILLEAGAL)",
+		"Description_Zh": "",
+		"Description_En": "TASK_DOWNLOAD_TO_AGV_FAIL_TASK_DOWNLOAD_DATA_ILLEAGAL",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1093,
+		"Description": "(TASK_DOWNLOAD_TO_AGV_FAIL_SYSTEM_EXCEPTION)",
+		"Description_Zh": "",
+		"Description_En": "TASK_DOWNLOAD_TO_AGV_FAIL_SYSTEM_EXCEPTION",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1094,
+		"Description": "(TASK_DOWNLOAD_TO_AGV_FAIL_NO_PATH_FOR_NAVIGATION)",
+		"Description_Zh": "",
+		"Description_En": "TASK_DOWNLOAD_TO_AGV_FAIL_NO_PATH_FOR_NAVIGATION",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1095,
+		"Description": "(TASK_DOWNLOAD_TO_AGV_FAIL_TASK_CANCEL)",
+		"Description_Zh": "",
+		"Description_En": "TASK_DOWNLOAD_TO_AGV_FAIL_TASK_CANCEL",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1096,
+		"Description": "(TASK_DOWNLOAD_TO_AGV_FAIL_TASK_DOWN_LOAD_TIMEOUT)",
+		"Description_Zh": "",
+		"Description_En": "TASK_DOWNLOAD_TO_AGV_FAIL_TASK_DOWN_LOAD_TIMEOUT",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1097,
+		"Description": "(Task_Canceled)",
+		"Description_Zh": "",
+		"Description_En": "Task_Canceled",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1098,
+		"Description": "(CANT_AUTO_SEARCH_STATION_TYPE_IS_NOT_EXCHANGE_FOR_INSPECTION_AGV)",
+		"Description_Zh": "",
+		"Description_En": "CANT_AUTO_SEARCH_STATION_TYPE_IS_NOT_EXCHANGE_FOR_INSPECTION_AGV",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1099,
+		"Description": "(NO_AVAILABLE_BAT_EXCHANGER_USABLE)",
+		"Description_Zh": "",
+		"Description_En": "NO_AVAILABLE_BAT_EXCHANGER_USABLE",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1100,
+		"Description": "(REGIST_REGIONS_TO_PARTS_SYSTEM_FAIL)",
+		"Description_Zh": "",
+		"Description_En": "REGIST_REGIONS_TO_PARTS_SYSTEM_FAIL",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1101,
+		"Description": "(SYSTEM_EQP_MANAGEMENT_INITIALIZE_FAIL_WITH_EXCEPTION)",
+		"Description_Zh": "",
+		"Description_En": "SYSTEM_EQP_MANAGEMENT_INITIALIZE_FAIL_WITH_EXCEPTION",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 1102,
+		"Description": "(INVALID_CHARGE_STATION)",
+		"Description_Zh": "",
+		"Description_En": "INVALID_CHARGE_STATION",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 3037,
+		"Description": "(Battery_Not_Connect)",
+		"Description_Zh": "",
+		"Description_En": "Battery_Not_Connect",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 3038,
+		"Description": "(Rack_Port_Sensor_Flash)",
+		"Description_Zh": "",
+		"Description_En": "Rack_Port_Sensor_Flash",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 3039,
+		"Description": "(Transfer_Tags_Not_Found)",
+		"Description_Zh": "",
+		"Description_En": "Transfer_Tags_Not_Found",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 3040,
+		"Description": "(No_Transfer_Station_To_Work)",
+		"Description_Zh": "",
+		"Description_En": "No_Transfer_Station_To_Work",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 3041,
+		"Description": "(Task_Aborted)",
+		"Description_Zh": "",
+		"Description_En": "Task_Aborted",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 3042,
+		"Description": "(CANNOT_DISPATCH_CHARGE_TASK_WHEN_AGV_HAS_CARGO)",
+		"Description_Zh": "",
+		"Description_En": "CANNOT_DISPATCH_CHARGE_TASK_WHEN_AGV_HAS_CARGO",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 3043,
+		"Description": "(VEHICLES_TRAJECTORY_CONFLIC)",
+		"Description_Zh": "",
+		"Description_En": "VEHICLES_TRAJECTORY_CONFLIC",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 3044,
+		"Description": "(REGION_NOT_ENTERABLE)",
+		"Description_Zh": "",
+		"Description_En": "REGION_NOT_ENTERABLE",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 3045,
+		"Description": "(From_To_Of_Transfer_Task_Is_Incorrectly)",
+		"Description_Zh": "",
+		"Description_En": "From_To_Of_Transfer_Task_Is_Incorrectly",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
+		"AlarmCode": 3046,
+		"Description": "(AGV_NO_Carge_Cannot_Transfer_Cargo_From_AGV_To_Desinte)",
+		"Description_Zh": "",
+		"Description_En": "AGV_NO_Carge_Cannot_Transfer_Cargo_From_AGV_To_Desinte",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	}
+]
