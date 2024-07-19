@@ -13,6 +13,7 @@ using AGVSystemCommonNet6.DATABASE.BackgroundServices;
 using AGVSystemCommonNet6.Log;
 using AGVSystemCommonNet6.Microservices.VMS;
 using AGVSystemCommonNet6.Notify;
+using AGVSystemCommonNet6.Sys;
 using AGVSystemCommonNet6.Vehicle_Control.VCS_ALARM;
 using EquipmentManagment.MainEquipment;
 using EquipmentManagment.Manager;
@@ -36,7 +37,7 @@ public class Program
         var appVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
         Console.Title = $"GPM-AGV系統(AGVs)-v{appVersion}";
         Logger logger = LogManager.Setup().LoadConfigurationFromAppSettings().GetCurrentClassLogger();
-
+        EnvironmentVariables.AddUserVariable("AGVSystemInstall", Environment.CurrentDirectory);
         try
         {
             LOG.SetLogFolderName("AGVS LOG");
