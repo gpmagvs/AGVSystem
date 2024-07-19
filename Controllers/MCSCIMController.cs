@@ -43,10 +43,9 @@ namespace AGVSystem.Controllers
             return Ok(response);
         }
         [HttpPost("AlarmReporterSwitch")]
-        public async Task<IActionResult> TaskReporter(bool truetoenable)
+        public async Task<IActionResult> AlarmReporterSwitch(bool truetoenable)
         {
             clsAGVSTaskReportResponse response = new clsAGVSTaskReportResponse() { confirm = true, AlarmCode = AGVSystemCommonNet6.Alarm.ALARMS.NONE, message = "OK" };
-
             AlarmManagerCenter.IsReportAlarmToHostON = truetoenable;
             return Ok(response);
         }

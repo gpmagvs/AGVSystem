@@ -1,6 +1,9 @@
 ﻿using AGVSystem.Models.Map;
 using AGVSystem.TaskManagers;
 using AGVSystemCommonNet6.DATABASE;
+using AGVSystemCommonNet6.HttpTools;
+using AGVSystemCommonNet6.Material;
+using AGVSystemCommonNet6.Microservices.ResponseModel;
 using EquipmentManagment.ChargeStation;
 using EquipmentManagment.Connection;
 using EquipmentManagment.Device.Options;
@@ -95,7 +98,7 @@ namespace AGVSystem.Controllers
         }
         [HttpGet("GetEQStates")]
         public async Task<IActionResult> GetEQStates()
-        {            
+        {
             return Ok(StaEQPManagager.GetEQStates());
         }
 
@@ -299,6 +302,19 @@ namespace AGVSystem.Controllers
             return Ok(new { confirm, message });
         }
 
+        [HttpGet("QueryMaterial")]
+        public async Task<IActionResult> QueryMaterial()
+        {
+            List<clsMaterialInfo> materialInfos = new List<clsMaterialInfo>();
+            return Ok(AGVSystemCommonNet6.Material.MaterialManager.MaterialInfoQuery(DateTime.Now, DateTime.Now.AddDays(-3)));
+        }
+
+        [HttpGet("GetNgPort")]
+        public async Task<IActionResult> GetNgPort()
+        {
+            clsTransferMaterial r = MaterialManager.NgMaterialTransferTarget();
+            return Ok(new clsResponseBase() { confirm = true, message = "Get Ng port OK", ReturnObj = r });
+        }
     }
 
 }
