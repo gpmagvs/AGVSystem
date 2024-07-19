@@ -1863,15 +1863,6 @@
 		"TrobleShootingFilePath": ""
 	},
 	{
-		"AlarmCode": 3042,
-		"Description": "(CANNOT_DISPATCH_CHARGE_TASK_WHEN_AGV_HAS_CARGO)",
-		"Description_Zh": "",
-		"Description_En": "CANNOT_DISPATCH_CHARGE_TASK_WHEN_AGV_HAS_CARGO",
-		"En_TrobleShootingDescription": "",
-		"ZH_TrobleShootingDescription": "",
-		"TrobleShootingFilePath": ""
-	},
-	{
 		"AlarmCode": 3043,
 		"Description": "(VEHICLES_TRAJECTORY_CONFLIC)",
 		"Description_Zh": "",
