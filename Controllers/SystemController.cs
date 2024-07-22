@@ -45,6 +45,7 @@ namespace AGVSystem.Controllers
             bool agvs_confirm = SystemModes.RunModeSwitch(mode, out string message, forecing_change);
             if (!agvs_confirm)
             {
+                SystemModes.RunMode = _previousMode;
                 return Ok(new { confirm = false, message = message });
             }
             LOG.INFO($"[Run Mode Switch] 等待VMS回覆 {mode}模式請求");
@@ -56,7 +57,7 @@ namespace AGVSystem.Controllers
                 oko = Ok(new { confirm = vms_response.confirm, message = vms_response.message });
             }
             else
-                oko = Ok(new { confirm = vms_response.confirm, message = vms_response.message });           
+                oko = Ok(new { confirm = vms_response.confirm, message = vms_response.message });
             return oko;
         }
 
@@ -64,7 +65,7 @@ namespace AGVSystem.Controllers
         public async Task<IActionResult> HostConnMode(HOST_CONN_MODE mode)
         {
             (bool confirm, string message) response = new(false, "[HostConnMode] Fail");
-           
+
             if (mode == HOST_CONN_MODE.ONLINE)
                 response = await MCSCIMService.Online();
             else

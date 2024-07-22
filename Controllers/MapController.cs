@@ -291,6 +291,14 @@ namespace AGVSystem.Controllers
             var file = Request.Form.Files[0];
             if (file.Length > 0)
             {
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".bmp" };
+                var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+
+                if (!allowedExtensions.Contains(extension))
+                {
+                    return BadRequest("無效的文件類型。只接受 jpg, jpeg, png, gif, bmp 圖像文件。");
+                }
+
                 var fileName = Path.Combine(mapFileFolder, file.FileName);
                 //var imageFolder = Path.Combine(Environment.CurrentDirectory, "wwwroot");
                 //var filePath = imageFolder + fileName;

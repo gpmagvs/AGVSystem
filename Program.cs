@@ -14,6 +14,7 @@ using AGVSystemCommonNet6.Log;
 using AGVSystemCommonNet6.Material;
 using AGVSystemCommonNet6.Microservices.VMS;
 using AGVSystemCommonNet6.Notify;
+using AGVSystemCommonNet6.Sys;
 using AGVSystemCommonNet6.Vehicle_Control.VCS_ALARM;
 using EquipmentManagment.MainEquipment;
 using EquipmentManagment.Manager;
@@ -25,6 +26,8 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using NLog;
 using NLog.Web;
+using System;
+using System.Net;
 using System.Reflection;
 using System.Text;
 
@@ -35,7 +38,7 @@ public class Program
         var appVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
         Console.Title = $"GPM-AGV系統(AGVs)-v{appVersion}";
         Logger logger = LogManager.Setup().LoadConfigurationFromAppSettings().GetCurrentClassLogger();
-
+        EnvironmentVariables.AddUserVariable("AGVSystemInstall", Environment.CurrentDirectory);
         try
         {
             LOG.SetLogFolderName("AGVS LOG");
@@ -135,6 +138,10 @@ public static class WebAppInitializer
 {
     public static void ConfigureBuilder(WebApplicationBuilder builder)
     {
+        builder.WebHost.ConfigureKestrel(serverOptions =>
+        {
+            serverOptions.AddServerHeader = false;
+        });
         builder.Logging.ClearProviders();
         builder.Logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Information);
         builder.Host.UseNLog();
@@ -206,13 +213,27 @@ public static class WebAppInitializer
 
     private static void ConfigureCors(WebApplicationBuilder builder)
     {
+
+        // 動態獲取本機所有 IP 地址
+        List<string>? localIPs = Dns.GetHostEntry(Dns.GetHostName())
+                            .AddressList
+                            .Where(ip => ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)?
+                            .Select(address => address.ToString())
+                            .ToList();
+
+        List<string> allowedOrigins = new List<string> { "http://localhost:8080" };
+        foreach (var ip in localIPs)
+        {
+            allowedOrigins.Add($"{ip}:5216");
+            allowedOrigins.Add($"{ip}:5036");
+        }
         builder.Services.AddCors(options =>
         {
             options.AddPolicy("AllowAll", policy =>
             {
-                policy.AllowAnyMethod()
+                policy.WithOrigins(allowedOrigins.ToArray())
+                      .AllowAnyMethod()
                       .AllowAnyHeader()
-                      .SetIsOriginAllowed(origin => true)
                       .AllowCredentials();
             });
         });
@@ -236,6 +257,27 @@ public static class WebAppInitializer
 
     public static void ConfigureApp(WebApplication app)
     {
+
+        // 動態獲取本機所有 IP 地址
+        string connectSrc = "";
+        List<string>? localIPs = Dns.GetHostEntry(Dns.GetHostName())
+                            .AddressList
+                            .Where(ip => ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)?
+                            .Select(address => address.ToString())
+                            .ToList();
+        foreach (var ip in localIPs)
+        {
+            connectSrc += $"ws://{ip}:5036 http://{ip}:5036 ws://{ip}:5216 http://{ip}:5216 ";
+        }
+
+        app.Use(async (context, next) =>
+        {
+            context.Response.Headers.Add("X-Content-Type-Options", "nosniff");
+            context.Response.Headers.Add("Content-Security-Policy", $"");
+            context.Response.Headers.Remove("Server");
+            await next();
+        });
+
         app.UseMiddleware<ApiLoggingMiddleware>();
         Task.Run(() => InitializeEquipmentManager());
 
@@ -293,11 +335,16 @@ public static class StaticFileInitializer
         var mapFileProvider = new PhysicalFileProvider(mapFileFolderPath);
         var agvImageFileProvider = new PhysicalFileProvider(agvImageFileFolderPath);
 
-        app.UseStaticFiles(new StaticFileOptions
-        {
-            FileProvider = mapFileProvider,
-            RequestPath = mapFileRequestPath
-        });
+        //app.UseDirectoryBrowser(new DirectoryBrowserOptions
+        //{
+        //    FileProvider = mapFileProvider,
+        //    RequestPath = mapFileRequestPath
+        //});
+        //app.UseStaticFiles(new StaticFileOptions
+        //{
+        //    FileProvider = mapFileProvider,
+        //    RequestPath = mapFileRequestPath
+        //});
 
         app.UseStaticFiles(new StaticFileOptions
         {
@@ -305,11 +352,6 @@ public static class StaticFileInitializer
             RequestPath = agvImageFileRequestPath
         });
 
-        app.UseDirectoryBrowser(new DirectoryBrowserOptions
-        {
-            FileProvider = mapFileProvider,
-            RequestPath = mapFileRequestPath
-        });
 
         CreateDefaultAGVImage(agvImageFileFolderPath);
 
