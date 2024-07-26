@@ -313,7 +313,7 @@ namespace AGVSystem.Controllers
         public async Task<IActionResult> GetNgPort()
         {
             clsTransferMaterial r = MaterialManager.NgMaterialTransferTarget();
-            return Ok(new clsResponseBase() { confirm = true, message = "Get Ng port OK", ReturnObj = r });
+            return Ok(new clsResponseBase() { confirm = true, message = r!=null?r.message:$"No NG port", ReturnObj = r });
         }
     }
 

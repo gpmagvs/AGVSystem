@@ -1,6 +1,7 @@
 ﻿using AGVSystem.TaskManagers;
 using AGVSystemCommonNet6.AGVDispatch.Messages;
 using AGVSystemCommonNet6.AGVDispatch.RunMode;
+using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.Log;
 using AGVSystemCommonNet6.Notify;
@@ -28,13 +29,17 @@ namespace AGVSystem.Models.Sys
                         case RUN_MODE.MAINTAIN:
                             OnRunModeOFF();
                             TransferTaskMode = TRANSFER_MODE.MANUAL;
+                            AGVSConfigulator.SysConfigs.MaterialBufferLevelMonitor.MonitorSwitch = false;
                             break;
                         case RUN_MODE.RUN:
                             OnRunModeON();
+                            AGVSConfigulator.SysConfigs.MaterialBufferLevelMonitor.MonitorSwitch = true;
                             break;
                         case RUN_MODE.SWITCH_TO_MAITAIN_ING:
+                            AGVSConfigulator.SysConfigs.MaterialBufferLevelMonitor.MonitorSwitch = false;
                             break;
                         case RUN_MODE.SWITCH_TO_RUN_ING:
+                            AGVSConfigulator.SysConfigs.MaterialBufferLevelMonitor.MonitorSwitch = false;
                             break;
                         default:
                             break;

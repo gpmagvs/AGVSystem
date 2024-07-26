@@ -11,6 +11,7 @@ using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.DATABASE.BackgroundServices;
 using AGVSystemCommonNet6.Log;
+using AGVSystemCommonNet6.Material;
 using AGVSystemCommonNet6.Microservices.VMS;
 using AGVSystemCommonNet6.Notify;
 using AGVSystemCommonNet6.Sys;
@@ -77,6 +78,7 @@ public static class SystemInitializer
         ScheduleMeasureManager.Initialize();
         EQDeviceEventsHandler.Initialize();
         clsEQ.OnIOStateChanged += EQDeviceEventsHandler.HandleEQIOStateChanged;
+        clsEQ.OnPortExistChangeed += MaterialManager.HandlePortExistChanged;
 
         AGVSSocketHost agvsHost = new AGVSSocketHost();
         agvsHost.Start();
