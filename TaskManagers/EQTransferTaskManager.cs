@@ -23,12 +23,14 @@ using static AGVSystemCommonNet6.MAP.MapPoint;
 using EquipmentManagment.WIP;
 using static AGVSystemCommonNet6.GPMRosMessageNet.Services.EquipmentStateRequest;
 using NuGet.Protocol;
+using NLog;
 
 namespace AGVSystem.TaskManagers
 {
     public class EQTransferTaskManager
     {
         public static bool AutoRunning { get; private set; } = false;
+        private static Logger logger = LogManager.GetCurrentClassLogger();
         public static void Initialize()
         {
             //clsEQ.OnEqUnloadRequesting += ClsEQ_OnEqUnloadRequesting;
@@ -68,9 +70,12 @@ namespace AGVSystem.TaskManagers
             if (MapPoint.StationType == STATION_TYPE.EQ || MapPoint.StationType == STATION_TYPE.EQ_LD || MapPoint.StationType == STATION_TYPE.EQ_ULD ||
                 (MapPoint.StationType == STATION_TYPE.Buffer_EQ && LayerorSlot == 0))
             {
-                var Eq = StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == station_tag);
+                clsEQ? Eq = StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == station_tag);
                 if (Eq == null)
                     return new(false, ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, $"設備站點TAG-{station_tag},EQ不存在於當前地圖", null, null);
+
+                logger.Trace($"AGV請求[{actiontype}]於設備-{MapPoint.Graph.Display}(Tag={station_tag}),設備狀態=>\r\n{Eq.GetStatusDescription()}");
+
                 if (!Eq.IsConnected)
                     return new(false, ALARMS.Endpoint_EQ_NOT_CONNECTED, $"設備[{Eq.EQName}] 尚未連線,無法確認狀態", null, null);
                 if (actiontype == ACTION_TYPE.Unload)

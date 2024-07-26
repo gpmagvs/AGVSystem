@@ -129,5 +129,34 @@ namespace AGVSystem.Controllers
 
             return Ok(new { confirm, message });
         }
+
+
+        [HttpGet("Emu/SetUpPose")]
+        public async Task<IActionResult> SetUpPose(string EqName)
+        {
+            if (StaEQPEmulatorsManagager.TryGetEQEmuByName(EqName, out clsDIOModuleEmu? EQ))
+            {
+                EQ.SetUpPose();
+            }
+            return Ok();
+        }
+        [HttpGet("Emu/SetDownPose")]
+        public async Task<IActionResult> SetDownPose(string EqName)
+        {
+            if (StaEQPEmulatorsManagager.TryGetEQEmuByName(EqName, out clsDIOModuleEmu? EQ))
+            {
+                EQ.SetDownPose();
+            }
+            return Ok();
+        }
+        [HttpGet("Emu/SetUnknownPose")]
+        public async Task<IActionResult> SetUnknownPose(string EqName)
+        {
+            if (StaEQPEmulatorsManagager.TryGetEQEmuByName(EqName, out clsDIOModuleEmu? EQ))
+            {
+                EQ.SetUnknownPose();
+            }
+            return Ok();
+        }
     }
 }
