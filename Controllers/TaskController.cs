@@ -20,6 +20,7 @@ using EquipmentManagment.WIP;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Newtonsoft.Json;
 using NuGet.Configuration;
 using NuGet.Protocol;
@@ -158,7 +159,7 @@ namespace AGVSystem.Controllers
                 return Ok(new clsAGVSTaskReportResponse() { confirm = false, AlarmCode = ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, message = $"站點TAG-{tag} 不存在於當前地圖" });
 
             if (!MapPoint.Enable)
-                return Ok(new clsAGVSTaskReportResponse() { confirm = false, AlarmCode = ALARMS.Station_Disabled, message = "站點未啟用，無法指派任務" });
+                return Ok(new clsAGVSTaskReportResponse() { confirm = false, AlarmCode = ALARMS.Station_Disabled, message = $"站點TAG-{tag} 未啟用，無法指派任務" });
 
             if (action == ACTION_TYPE.Load && (MapPoint.StationType == MapPoint.STATION_TYPE.Buffer_EQ || MapPoint.StationType == MapPoint.STATION_TYPE.Buffer) && slot == -2)
             {
@@ -286,6 +287,16 @@ namespace AGVSystem.Controllers
             {
                 return new clsAGVSTaskReportResponse() { confirm = false, message = $"{ex}" };
             }
+        }
+
+        [HttpPost("UpdateMaterialTransferStatus")]
+        public async Task<IActionResult> UpdateMaterialTransferStatus(Models.TaskAllocation.clsMaterialInfoDto materialInfoDto, string User = "")
+        {
+            if (!UserValidation.UserValidation(HttpContext))
+            {
+                return Unauthorized();
+            }
+            return Ok();
         }
         private (bool existDevice, clsEQ mainEQ, clsRack rack) TryGetEndDevice(int tag)
         {

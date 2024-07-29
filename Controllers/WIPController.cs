@@ -15,5 +15,13 @@ namespace AGVSystem.Controllers
 
             return Ok(new { confirm = true, message = "" });
         }
+
+        [HttpPost("RemoveCargoID")]
+        public async Task<IActionResult> RemoveCargoID(string WIPID, string PortID)
+        {
+            StaEQPManagager.WIPController.RemoveCargoID(WIPID, PortID);
+
+            return Ok(new { confirm = true, message = "" });
+        }
     }
 }

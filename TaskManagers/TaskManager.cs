@@ -11,6 +11,7 @@ using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.DATABASE.Helpers;
 using AGVSystemCommonNet6.HttpTools;
 using AGVSystemCommonNet6.Log;
+using AGVSystemCommonNet6.Material;
 using AGVSystemCommonNet6.Microservices.ResponseModel;
 using AGVSystemCommonNet6.Microservices.VMS;
 using EquipmentManagment.Device.Options;
@@ -59,12 +60,20 @@ namespace AGVSystem.TaskManagers
                 clsAGVStateDto? _agv_assigned = agvstates.FirstOrDefault(agv_dat => agv_dat.AGV_Name == taskData.DesignatedAGVName);
                 VEHICLE_TYPE model = _agv_assigned.Model.ConvertToEQAcceptAGVTYPE();
                 if (!isCarryAndSourceIsAGV && (taskData.Action == ACTION_TYPE.Unload || taskData.Action == ACTION_TYPE.Carry) && _agv_assigned.CargoStatus != 0)
-                    return (false, ALARMS.Station_Disabled, $"{_agv_assigned.AGV_Name} with cargo can not assigned to {taskData.Action}");
+                {
+                    AlarmManagerCenter.AddAlarmAsync(ALARMS.CANNOT_DISPATCH_CARRY_TASK_WHEN_AGV_HAS_CARGO);
+                    return (false, ALARMS.CANNOT_DISPATCH_CARRY_TASK_WHEN_AGV_HAS_CARGO, $"{_agv_assigned.AGV_Name} with cargo can not assigned to {taskData.Action}");
+                }
                 else if (taskData.Action == ACTION_TYPE.Load && _agv_assigned.CargoStatus == 0)
-                    return (false, ALARMS.Station_Disabled, $"{_agv_assigned.AGV_Name} no cargo can not assigned to {taskData.Action}");
-
+                {
+                    AlarmManagerCenter.AddAlarmAsync(ALARMS.AGV_NO_Carge_Cannot_Transfer_Cargo_From_AGV_To_Desinte);
+                    return (false, ALARMS.AGV_NO_Carge_Cannot_Transfer_Cargo_From_AGV_To_Desinte, $"{_agv_assigned.AGV_Name} no cargo can not assigned to {taskData.Action}");
+                }
                 if (taskData.Action == ACTION_TYPE.Charge && _agv_assigned.Model != clsEnums.AGV_TYPE.SUBMERGED_SHIELD && (_agv_assigned.CargoStatus != 0 || _agv_assigned.CurrentCarrierID != ""))
-                    return (false, ALARMS.Destine_Eq_Station_Has_Task_To_Park, $"車型非{clsEnums.AGV_TYPE.SUBMERGED_SHIELD}車上有貨不行進行充電任務");
+                {
+                    AlarmManagerCenter.AddAlarmAsync(ALARMS.CannotAssignChargeJobBecauseWrongCargoStatus);
+                    return (false, ALARMS.CannotAssignChargeJobBecauseWrongCargoStatus, $"車型非{clsEnums.AGV_TYPE.SUBMERGED_SHIELD}車上有貨不行進行充電任務");
+                }
             }
             #endregion
 
@@ -72,9 +81,15 @@ namespace AGVSystem.TaskManagers
             bool destine_station_disabled = destinePoint == null || destine_station_tag == -1 ? false : !destinePoint.Enable;
             bool destine_station_isequipment = destinePoint == null || destine_station_tag == -1 ? false : destinePoint.IsEquipment;
             if (source_station_disabled)
+            {
+                AlarmManagerCenter.AddAlarmAsync(ALARMS.Station_Disabled);
                 return (false, ALARMS.Station_Disabled, "來源站點未啟用，無法指派任務");
+            }
             if (destine_station_disabled)
+            {
+                AlarmManagerCenter.AddAlarmAsync(ALARMS.Station_Disabled);
                 return (false, ALARMS.Station_Disabled, "目標站點未啟用，無法指派任務");
+            }
             if (destine_station_isequipment == true)
             {
                 if (_order_action == ACTION_TYPE.None)
@@ -225,15 +240,15 @@ namespace AGVSystem.TaskManagers
             #endregion
 
             #region 若起點設定是AGV,則起點要設為
-            //using AGVSDatabase database = new AGVSDatabase();
-
             if (isCarryAndSourceIsAGV)
             {
                 //起點是AGV 確認AGV是否有貨
                 bool agv_has_cargo = database.tables.AgvStates.FirstOrDefault(agv => agv.AGV_Name == taskData.From_Station).CargoStatus != 0;
                 if (!taskData.bypass_eq_status_check && !agv_has_cargo)
+                {
+                    AlarmManagerCenter.AddAlarmAsync(ALARMS.AGV_NO_Carge_Cannot_Transfer_Cargo_From_AGV_To_Desinte, ALARM_SOURCE.AGVS, level: ALARM_LEVEL.WARNING);
                     return (false, ALARMS.AGV_NO_Carge_Cannot_Transfer_Cargo_From_AGV_To_Desinte, "AGV車上無貨，無法指派來源為AGV的搬運任務");
-
+                }
                 var agv_name = taskData.From_Station;
                 taskData.DesignatedAGVName = agv_name;
                 var agv = database.tables.AgvStates.FirstOrDefault(d => d.AGV_Name == agv_name);
@@ -262,14 +277,14 @@ namespace AGVSystem.TaskManagers
             #endregion
             try
             {
-                #region AGV電量確認
-
-                #endregion
                 if (taskData.DesignatedAGVName != "")
                 {
                     clsResponseBase checkReuslt = await VMSSerivces.TASK_DISPATCH.CheckOutAGVBatteryAndChargeStatus(taskData.DesignatedAGVName, taskData.Action);
                     if (!checkReuslt.confirm)
+                    {
+                        AlarmManagerCenter.AddAlarmAsync(ALARMS.CANNOT_DISPATCH_ORDER_BY_AGV_BAT_STATUS_CHECK, ALARM_SOURCE.AGVS, level: ALARM_LEVEL.WARNING);
                         return (false, ALARMS.CANNOT_DISPATCH_ORDER_BY_AGV_BAT_STATUS_CHECK, checkReuslt.message);
+                    }
                 }
 
                 taskData.RecieveTime = DateTime.Now;
@@ -299,6 +314,18 @@ namespace AGVSystem.TaskManagers
                     db.tables.Tasks.Add(taskData);
                     var added = await db.SaveChanges();
                 }
+            }
+            catch (Exception ex)
+            {
+                LOG.ERROR(ex);
+                AlarmManagerCenter.AddAlarmAsync(ALARMS.Task_Add_To_Database_Fail, ALARM_SOURCE.AGVS);
+                return new(false, ALARMS.Task_Add_To_Database_Fail, ex.Message);
+            }
+            try
+            {
+                if (taskData.Action == ACTION_TYPE.Unload || taskData.Action == ACTION_TYPE.Load || taskData.Action == ACTION_TYPE.LoadAndPark || taskData.Action == ACTION_TYPE.Carry)
+                    if (taskData.Carrier_ID != string.Empty)
+                        MaterialManager.CreateMaterialInfo(taskData.Carrier_ID, materialCondition: MaterialCondition.Wait, TaskSource: taskData.From_Station, TaskTarget: taskData.To_Station);
                 return new(true, ALARMS.NONE, "");
             }
             catch (Exception ex)
