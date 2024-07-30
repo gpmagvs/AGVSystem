@@ -30,8 +30,8 @@ namespace AGVSystem.Controllers
     public class clsAGVStateViewModel : clsAGVStateDto
     {
         public string StationName { get; set; } = "";
-        public string TaskSourceStationName { get; set; } = "AS";
-        public string TaskDestineStationName { get; set; } = "BB";
+        public string TaskSourceStationName { get; set; } = "";
+        public string TaskDestineStationName { get; set; } = "";
         public ACTION_TYPE OrderAction { get; set; } = ACTION_TYPE.None;
         public string IP { get; set; } = "";
         public int Port { get; set; } = 0;
