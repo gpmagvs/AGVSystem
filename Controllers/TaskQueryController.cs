@@ -19,13 +19,13 @@ namespace AGVSystem.Controllers
     public class TaskQueryController : ControllerBase
     {
         [HttpGet("TaskQuery")]
-        public async Task<IActionResult> TaskQuery(int currentpage, string StartTime, string EndTime, string? AGV_Name = "ALL", string? TaskName = "ALL", string Result = "ALL", string ActionType = "ALL")
+        public async Task<IActionResult> TaskQuery(int currentpage, string StartTime, string EndTime, string? AGV_Name = "ALL", string? TaskName = "ALL", string Result = "ALL", string ActionType = "ALL",string? failurereason="ALL")
         {
             DateTime start = DateTime.Parse(StartTime);
             DateTime end = DateTime.Parse(EndTime);
             using (var taskDb = new TaskDatabaseHelper())
             {
-                taskDb.TaskQuery(out int count, currentpage, start, end, AGV_Name, TaskName, Result, ActionType, out List<clsTaskDto>? tasks);
+                taskDb.TaskQuery(out int count, currentpage, start, end, AGV_Name, TaskName, Result, ActionType, failurereason,out List<clsTaskDto>? tasks);
 
                 tasks.ForEach(task =>
                 {
