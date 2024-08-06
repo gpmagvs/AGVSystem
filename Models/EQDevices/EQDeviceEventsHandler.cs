@@ -1,11 +1,10 @@
-﻿using AGVSystem.Service;
-using AGVSystemCommonNet6;
+﻿using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.Configuration;
-using AGVSystemCommonNet6.Log;
 using AGVSystemCommonNet6.Material;
 using AGVSystemCommonNet6.Microservices.ResponseModel;
-using AGVSystemCommonNet6.Notify;using EquipmentManagment.ChargeStation;
+using AGVSystemCommonNet6.Notify;
+using EquipmentManagment.ChargeStation;
 using EquipmentManagment.Device;
 using EquipmentManagment.WIP;
 using NLog;
