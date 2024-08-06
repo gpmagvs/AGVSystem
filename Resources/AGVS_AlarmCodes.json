@@ -911,7 +911,7 @@
 	{
 		"AlarmCode": 1000,
 		"Description": "(NONE)",
-		"Description_Zh": "",
+		"Description_Zh": "無",
 		"Description_En": "NONE",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -920,7 +920,7 @@
 	{
 		"AlarmCode": 1003,
 		"Description": "(AGV_DISCONNECT)",
-		"Description_Zh": "",
+		"Description_Zh": "AGV 斷線",
 		"Description_En": "AGV_DISCONNECT",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -929,7 +929,7 @@
 	{
 		"AlarmCode": 1004,
 		"Description": "(GET_ONLINE_REQ_BUT_AGV_DISCONNECT)",
-		"Description_Zh": "",
+		"Description_Zh": "收到上線請求但 AGV 斷線",
 		"Description_En": "GET_ONLINE_REQ_BUT_AGV_DISCONNECT",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -938,7 +938,7 @@
 	{
 		"AlarmCode": 1005,
 		"Description": "(GET_OFFLINE_REQ_BUT_AGV_DISCONNECT)",
-		"Description_Zh": "",
+		"Description_Zh": "收到下線請求但 AGV 斷線",
 		"Description_En": "GET_OFFLINE_REQ_BUT_AGV_DISCONNECT",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -947,7 +947,7 @@
 	{
 		"AlarmCode": 1006,
 		"Description": "(GET_ONLINE_REQ_BUT_AGV_STATE_ERROR)",
-		"Description_Zh": "",
+		"Description_Zh": "收到上線請求但 AGV 狀態錯誤",
 		"Description_En": "GET_ONLINE_REQ_BUT_AGV_STATE_ERROR",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -956,7 +956,7 @@
 	{
 		"AlarmCode": 1007,
 		"Description": "(TRAFFIC_BLOCKED_NO_PATH_FOR_NAVIGATOR)",
-		"Description_Zh": "",
+		"Description_Zh": "交通阻塞，導航器無路徑",
 		"Description_En": "TRAFFIC_BLOCKED_NO_PATH_FOR_NAVIGATOR",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -965,7 +965,7 @@
 	{
 		"AlarmCode": 1008,
 		"Description": "(NO_AVAILABLE_CHARGE_PILE)",
-		"Description_Zh": "",
+		"Description_Zh": "無可用充電樁",
 		"Description_En": "NO_AVAILABLE_CHARGE_PILE",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -974,7 +974,7 @@
 	{
 		"AlarmCode": 1009,
 		"Description": "(TRAFFIC_CONTROL_CENTER_EXCEPTION_WHEN_CHECK_NAVIGATOR_PATH)",
-		"Description_Zh": "",
+		"Description_Zh": "檢查導航路徑時交通控制中心異常",
 		"Description_En": "TRAFFIC_CONTROL_CENTER_EXCEPTION_WHEN_CHECK_NAVIGATOR_PATH",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -983,7 +983,7 @@
 	{
 		"AlarmCode": 1010,
 		"Description": "(GET_CHARGE_TASK_BUT_AGV_CHARGING_ALREADY)",
-		"Description_Zh": "",
+		"Description_Zh": "收到充電任務但 AGV 已經在充電中",
 		"Description_En": "GET_CHARGE_TASK_BUT_AGV_CHARGING_ALREADY",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -992,7 +992,7 @@
 	{
 		"AlarmCode": 1011,
 		"Description": "(CST_STATUS_CHECK_FAIL)",
-		"Description_Zh": "",
+		"Description_Zh": "載具狀態檢查失敗",
 		"Description_En": "CST_STATUS_CHECK_FAIL",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1001,7 +1001,7 @@
 	{
 		"AlarmCode": 1012,
 		"Description": "(Endpoint_EQ_NOT_CONNECTED)",
-		"Description_Zh": "",
+		"Description_Zh": "端點設備未連線",
 		"Description_En": "Endpoint_EQ_NOT_CONNECTED",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1010,7 +1010,7 @@
 	{
 		"AlarmCode": 1014,
 		"Description": "(EQ_LOAD_REQUEST_IS_NOT_ON)",
-		"Description_Zh": "",
+		"Description_Zh": "設備LOAD_REQUEST未啟動",
 		"Description_En": "EQ_LOAD_REQUEST_IS_NOT_ON",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1019,7 +1019,7 @@
 	{
 		"AlarmCode": 1015,
 		"Description": "(EQ_UNLOAD_REQUEST_IS_NOT_ON)",
-		"Description_Zh": "",
+		"Description_Zh": "設備UNLOAD_REQUEST未啟動",
 		"Description_En": "EQ_UNLOAD_REQUEST_IS_NOT_ON",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1028,7 +1028,7 @@
 	{
 		"AlarmCode": 1016,
 		"Description": "(TRANSFER_TASK_TO_VMS_BUT_ERROR_OCCUR)",
-		"Description_Zh": "",
+		"Description_Zh": "轉移任務至 VMS 時發生錯誤",
 		"Description_En": "TRANSFER_TASK_TO_VMS_BUT_ERROR_OCCUR",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1037,7 +1037,7 @@
 	{
 		"AlarmCode": 1017,
 		"Description": "(DESTIN_TAG_IS_INVLID_FORMAT)",
-		"Description_Zh": "",
+		"Description_Zh": "目標TAG格式無效",
 		"Description_En": "DESTIN_TAG_IS_INVLID_FORMAT",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1046,7 +1046,7 @@
 	{
 		"AlarmCode": 1018,
 		"Description": "(STATION_TYPE_CANNOT_USE_AUTO_SEARCH)",
-		"Description_Zh": "",
+		"Description_Zh": "站點類型無法使用自動搜尋",
 		"Description_En": "STATION_TYPE_CANNOT_USE_AUTO_SEARCH",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1055,7 +1055,7 @@
 	{
 		"AlarmCode": 1019,
 		"Description": "(NO_AVAILABLE_PARK_STATION)",
-		"Description_Zh": "",
+		"Description_Zh": "無可用停車站",
 		"Description_En": "NO_AVAILABLE_PARK_STATION",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1064,7 +1064,7 @@
 	{
 		"AlarmCode": 1020,
 		"Description": "(ERROR_WHEN_CREATE_NAVIGATION_JOBS_LINK)",
-		"Description_Zh": "",
+		"Description_Zh": "創建導航任務鏈接時發生錯誤",
 		"Description_En": "ERROR_WHEN_CREATE_NAVIGATION_JOBS_LINK",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1073,7 +1073,7 @@
 	{
 		"AlarmCode": 1021,
 		"Description": "(EQ_UNLOAD_REQUEST_ON_BUT_TAG_NOT_EXIST_ON_MAP)",
-		"Description_Zh": "",
+		"Description_Zh": "設備UNLOAD_REQUEST已開啟但TAG不存在於地圖上",
 		"Description_En": "EQ_UNLOAD_REQUEST_ON_BUT_TAG_NOT_EXIST_ON_MAP",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1082,7 +1082,7 @@
 	{
 		"AlarmCode": 1022,
 		"Description": "(EQ_UNLOAD_REQUEST_ON_BUT_STATION_TYPE_SETTING_IS_NOT_EQ)",
-		"Description_Zh": "",
+		"Description_Zh": "設備UNLOAD_REQUEST已開啟但站點類型設置不為 EQ",
 		"Description_En": "EQ_UNLOAD_REQUEST_ON_BUT_STATION_TYPE_SETTING_IS_NOT_EQ",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1091,7 +1091,7 @@
 	{
 		"AlarmCode": 1023,
 		"Description": "(ERROR_WHEN_FIND_TAG_OF_STATION)",
-		"Description_Zh": "",
+		"Description_Zh": "尋找站點標籤時發生錯誤",
 		"Description_En": "ERROR_WHEN_FIND_TAG_OF_STATION",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1100,7 +1100,7 @@
 	{
 		"AlarmCode": 1024,
 		"Description": "(MAP_POINT_NO_TARGETS)",
-		"Description_Zh": "",
+		"Description_Zh": "地圖點無目標",
 		"Description_En": "MAP_POINT_NO_TARGETS",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1109,7 +1109,7 @@
 	{
 		"AlarmCode": 1025,
 		"Description": "(ERROR_WHEN_AGV_STATUS_WRITE_TO_DB)",
-		"Description_Zh": "",
+		"Description_Zh": "將 AGV 狀態寫入數據庫時發生錯誤",
 		"Description_En": "ERROR_WHEN_AGV_STATUS_WRITE_TO_DB",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1118,7 +1118,7 @@
 	{
 		"AlarmCode": 1026,
 		"Description": "(TRAFFIC_ABORT)",
-		"Description_Zh": "",
+		"Description_Zh": "交通中止",
 		"Description_En": "TRAFFIC_ABORT",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1127,7 +1127,7 @@
 	{
 		"AlarmCode": 1027,
 		"Description": "(GET_ONLINE_REQ_BUT_AGV_LOCATION_IS_TOO_FAR_FROM_POINT)",
-		"Description_Zh": "",
+		"Description_Zh": "收到上線請求但 AGV 位置距離點太遠",
 		"Description_En": "GET_ONLINE_REQ_BUT_AGV_LOCATION_IS_TOO_FAR_FROM_POINT",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1136,7 +1136,7 @@
 	{
 		"AlarmCode": 1028,
 		"Description": "(GET_ONLINE_REQ_BUT_AGV_LOCATION_IS_NOT_EXIST_ON_MAP)",
-		"Description_Zh": "",
+		"Description_Zh": "收到上線請求但 AGV 位置不存在於地圖上",
 		"Description_En": "GET_ONLINE_REQ_BUT_AGV_LOCATION_IS_NOT_EXIST_ON_MAP",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1145,7 +1145,7 @@
 	{
 		"AlarmCode": 3029,
 		"Description": "(GET_ONLINE_REQ_BUT_AGV_IS_NOT_REGISTED)",
-		"Description_Zh": "",
+		"Description_Zh": "收到上線請求但 AGV 未註冊",
 		"Description_En": "GET_ONLINE_REQ_BUT_AGV_IS_NOT_REGISTED",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1154,7 +1154,7 @@
 	{
 		"AlarmCode": 3030,
 		"Description": "(CANNOT_DISPATCH_MOVE_TASK_IN_WORKSTATION)",
-		"Description_Zh": "",
+		"Description_Zh": "無法在工作站內分派移動任務",
 		"Description_En": "CANNOT_DISPATCH_MOVE_TASK_IN_WORKSTATION",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1163,7 +1163,7 @@
 	{
 		"AlarmCode": 3031,
 		"Description": "(CANNOT_DISPATCH_LOAD_TASK_TO_NOT_EQ_STATION)",
-		"Description_Zh": "",
+		"Description_Zh": "無法將載入任務分派到非 EQ 站點",
 		"Description_En": "CANNOT_DISPATCH_LOAD_TASK_TO_NOT_EQ_STATION",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1172,7 +1172,7 @@
 	{
 		"AlarmCode": 3032,
 		"Description": "(CANNOT_DISPATCH_LOAD_TASK_WHEN_AGV_NO_CARGO)",
-		"Description_Zh": "",
+		"Description_Zh": "AGV 無貨物時無法分派載入任務",
 		"Description_En": "CANNOT_DISPATCH_LOAD_TASK_WHEN_AGV_NO_CARGO",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1181,7 +1181,7 @@
 	{
 		"AlarmCode": 3033,
 		"Description": "(CANNOT_DISPATCH_UNLOAD_TASK_WHEN_AGV_HAS_CARGO)",
-		"Description_Zh": "",
+		"Description_Zh": "AGV 有貨物時無法分派卸載任務",
 		"Description_En": "CANNOT_DISPATCH_UNLOAD_TASK_WHEN_AGV_HAS_CARGO",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1190,7 +1190,7 @@
 	{
 		"AlarmCode": 3034,
 		"Description": "(CANNOT_DISPATCH_UNLOAD_TASK_TO_NOT_EQ_STATION)",
-		"Description_Zh": "",
+		"Description_Zh": "無法將卸載任務分派到非 EQ 站點",
 		"Description_En": "CANNOT_DISPATCH_UNLOAD_TASK_TO_NOT_EQ_STATION",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1199,7 +1199,7 @@
 	{
 		"AlarmCode": 3035,
 		"Description": "(CANNOT_DISPATCH_CHARGE_TASK_TO_NOT_CHARGABLE_STATION)",
-		"Description_Zh": "",
+		"Description_Zh": "無法將充電任務分派到非充電站",
 		"Description_En": "CANNOT_DISPATCH_CHARGE_TASK_TO_NOT_CHARGABLE_STATION",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1208,7 +1208,7 @@
 	{
 		"AlarmCode": 3036,
 		"Description": "(CANNOT_DISPATCH_ORDER_BY_AGV_BAT_STATUS_CHECK)",
-		"Description_Zh": "",
+		"Description_Zh": "無法通過 AGV 電池狀態檢查分派訂單",
 		"Description_En": "CANNOT_DISPATCH_ORDER_BY_AGV_BAT_STATUS_CHECK",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1217,7 +1217,7 @@
 	{
 		"AlarmCode": 1036,
 		"Description": "(AGV_Task_Feedback_But_Task_Name_Not_Match)",
-		"Description_Zh": "",
+		"Description_Zh": "AGV 任務反饋但任務名稱不匹配",
 		"Description_En": "AGV_Task_Feedback_But_Task_Name_Not_Match",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1226,7 +1226,7 @@
 	{
 		"AlarmCode": 1037,
 		"Description": "(SYSTEM_ERROR)",
-		"Description_Zh": "",
+		"Description_Zh": "系統錯誤",
 		"Description_En": "SYSTEM_ERROR",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1235,7 +1235,7 @@
 	{
 		"AlarmCode": 1038,
 		"Description": "(CANNOT_DISPATCH_INTO_WORKSTATION_TASK_WHEN_AGV_HAS_CARGO)",
-		"Description_Zh": "",
+		"Description_Zh": "AGV 有貨物時無法分派進入工作站任務",
 		"Description_En": "CANNOT_DISPATCH_INTO_WORKSTATION_TASK_WHEN_AGV_HAS_CARGO",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1244,7 +1244,7 @@
 	{
 		"AlarmCode": 1039,
 		"Description": "(CANNOT_DISPATCH_NORMAL_MOVE_TASK_WHEN_DESTINE_IS_WORKSTATION)",
-		"Description_Zh": "",
+		"Description_Zh": "目的地是工作站時無法分派移動任務",
 		"Description_En": "CANNOT_DISPATCH_NORMAL_MOVE_TASK_WHEN_DESTINE_IS_WORKSTATION",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1253,7 +1253,7 @@
 	{
 		"AlarmCode": 1040,
 		"Description": "(EQ_TAG_NOT_EXIST_IN_CURRENT_MAP)",
-		"Description_Zh": "",
+		"Description_Zh": "當前地圖中不存在設備TAG",
 		"Description_En": "EQ_TAG_NOT_EXIST_IN_CURRENT_MAP",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1262,7 +1262,7 @@
 	{
 		"AlarmCode": 1041,
 		"Description": "(SubTask_Queue_Empty_But_Try_DownloadTask_To_AGV)",
-		"Description_Zh": "",
+		"Description_Zh": "子任務隊列為空但嘗試下載任務至 AGV",
 		"Description_En": "SubTask_Queue_Empty_But_Try_DownloadTask_To_AGV",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1271,7 +1271,7 @@
 	{
 		"AlarmCode": 1042,
 		"Description": "(AGV_STATUS_DOWN)",
-		"Description_Zh": "",
+		"Description_Zh": "AGV 狀態 DOWN",
 		"Description_En": "AGV_STATUS_DOWN",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1280,7 +1280,7 @@
 	{
 		"AlarmCode": 1043,
 		"Description": "(CANNOT_DISPATCH_TASK_WITH_ILLEAGAL_STATUS)",
-		"Description_Zh": "",
+		"Description_Zh": "無法分派狀態非法的任務",
 		"Description_En": "CANNOT_DISPATCH_TASK_WITH_ILLEAGAL_STATUS",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1289,7 +1289,7 @@
 	{
 		"AlarmCode": 1044,
 		"Description": "(AGV_BATTERY_LOW_LEVEL)",
-		"Description_Zh": "",
+		"Description_Zh": "AGV 電池電量低",
 		"Description_En": "AGV_BATTERY_LOW_LEVEL",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1298,7 +1298,7 @@
 	{
 		"AlarmCode": 1045,
 		"Description": "(AGV_WORKSTATION_DATA_NOT_SETTING)",
-		"Description_Zh": "",
+		"Description_Zh": "AGV WORKSTATION 未設定",
 		"Description_En": "AGV_WORKSTATION_DATA_NOT_SETTING",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1307,7 +1307,7 @@
 	{
 		"AlarmCode": 1046,
 		"Description": "(AGV_AT_UNKNON_TAG_LOCATION)",
-		"Description_Zh": "",
+		"Description_Zh": "AGV 位於未知TAG位置",
 		"Description_En": "AGV_AT_UNKNON_TAG_LOCATION",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1316,7 +1316,7 @@
 	{
 		"AlarmCode": 1047,
 		"Description": "(Task_Status_Cant_Save_To_Database)",
-		"Description_Zh": "",
+		"Description_Zh": "任務狀態無法保存到DB",
 		"Description_En": "Task_Status_Cant_Save_To_Database",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1325,7 +1325,7 @@
 	{
 		"AlarmCode": 1048,
 		"Description": "(Task_Cancel_Fail)",
-		"Description_Zh": "",
+		"Description_Zh": "任務取消失敗",
 		"Description_En": "Task_Cancel_Fail",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1334,7 +1334,7 @@
 	{
 		"AlarmCode": 1049,
 		"Description": "(Task_Add_To_Database_Fail)",
-		"Description_Zh": "",
+		"Description_Zh": "任務添加到DB失敗",
 		"Description_En": "Task_Add_To_Database_Fail",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1343,7 +1343,7 @@
 	{
 		"AlarmCode": 1050,
 		"Description": "(AGV_TCPIP_DISCONNECT)",
-		"Description_Zh": "",
+		"Description_Zh": "AGV TCP/IP 連線中斷",
 		"Description_En": "AGV_TCPIP_DISCONNECT",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1352,7 +1352,7 @@
 	{
 		"AlarmCode": 1051,
 		"Description": "(Save_Measure_Data_to_DB_Fail)",
-		"Description_Zh": "",
+		"Description_Zh": "測量數據保存至DB失敗",
 		"Description_En": "Save_Measure_Data_to_DB_Fail",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1361,7 +1361,7 @@
 	{
 		"AlarmCode": 1052,
 		"Description": "(Region_Has_No_Agv_To_Dispatch_Task)",
-		"Description_Zh": "",
+		"Description_Zh": "區域內無 AGV 可派遣任務",
 		"Description_En": "Region_Has_No_Agv_To_Dispatch_Task",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1370,7 +1370,7 @@
 	{
 		"AlarmCode": 1053,
 		"Description": "(CANNOT_DISPATCH_CARRY_TASK_WHEN_AGV_HAS_CARGO)",
-		"Description_Zh": "",
+		"Description_Zh": "AGV 有貨物時無法分派運輸任務",
 		"Description_En": "CANNOT_DISPATCH_CARRY_TASK_WHEN_AGV_HAS_CARGO",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1379,7 +1379,7 @@
 	{
 		"AlarmCode": 1054,
 		"Description": "(CANNOT_DISPATCH_LOCAL_AUTO_TRANSFER_TASK)",
-		"Description_Zh": "",
+		"Description_Zh": "無法分派本地自動轉移任務",
 		"Description_En": "CANNOT_DISPATCH_LOCAL_AUTO_TRANSFER_TASK",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1388,7 +1388,7 @@
 	{
 		"AlarmCode": 1055,
 		"Description": "(Source_Eq_Unload_Request_Off)",
-		"Description_Zh": "",
+		"Description_Zh": "來源設備Unload_Request關閉",
 		"Description_En": "Source_Eq_Unload_Request_Off",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1397,7 +1397,7 @@
 	{
 		"AlarmCode": 1056,
 		"Description": "(Destine_Eq_Load_Request_Off)",
-		"Description_Zh": "",
+		"Description_Zh": "目標設備Load_Request關閉",
 		"Description_En": "Destine_Eq_Load_Request_Off",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1406,7 +1406,7 @@
 	{
 		"AlarmCode": 1057,
 		"Description": "(Source_Eq_Status_Down)",
-		"Description_Zh": "",
+		"Description_Zh": "來源設備狀態故障",
 		"Description_En": "Source_Eq_Status_Down",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1415,7 +1415,7 @@
 	{
 		"AlarmCode": 1058,
 		"Description": "(Destine_Eq_Status_Down)",
-		"Description_Zh": "",
+		"Description_Zh": "目標設備狀態故障",
 		"Description_En": "Destine_Eq_Status_Down",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1424,7 +1424,7 @@
 	{
 		"AlarmCode": 1059,
 		"Description": "(Cannot_Auto_Parking_When_AGV_Has_Cargo)",
-		"Description_Zh": "",
+		"Description_Zh": "AGV 有貨物時無法自動停車",
 		"Description_En": "Cannot_Auto_Parking_When_AGV_Has_Cargo",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1433,7 +1433,7 @@
 	{
 		"AlarmCode": 1060,
 		"Description": "(Destine_Eq_Already_Has_Task_To_Excute)",
-		"Description_Zh": "",
+		"Description_Zh": "目標設備已有執行中的任務",
 		"Description_En": "Destine_Eq_Already_Has_Task_To_Excute",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1442,7 +1442,7 @@
 	{
 		"AlarmCode": 1061,
 		"Description": "(Destine_EQ_Has_AGV)",
-		"Description_Zh": "",
+		"Description_Zh": "目標設備上有 AGV",
 		"Description_En": "Destine_EQ_Has_AGV",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1451,7 +1451,7 @@
 	{
 		"AlarmCode": 1062,
 		"Description": "(Destine_EQ_Has_Registed)",
-		"Description_Zh": "",
+		"Description_Zh": "目標設備已註冊",
 		"Description_En": "Destine_EQ_Has_Registed",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1460,7 +1460,7 @@
 	{
 		"AlarmCode": 1063,
 		"Description": "(UNLOAD_BUT_AGV_NO_CARGO_MOUNTED)",
-		"Description_Zh": "",
+		"Description_Zh": "卸載但 AGV 無貨物",
 		"Description_En": "UNLOAD_BUT_AGV_NO_CARGO_MOUNTED",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1469,7 +1469,7 @@
 	{
 		"AlarmCode": 1064,
 		"Description": "(UNLOAD_BUT_CARGO_ID_EMPTY)",
-		"Description_Zh": "",
+		"Description_Zh": "卸載但貨物 ID 為空",
 		"Description_En": "UNLOAD_BUT_CARGO_ID_EMPTY",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1478,7 +1478,7 @@
 	{
 		"AlarmCode": 1065,
 		"Description": "(UNLOAD_BUT_CARGO_ID_NOT_MATCHED)",
-		"Description_Zh": "",
+		"Description_Zh": "卸載但貨物 ID 不匹配",
 		"Description_En": "UNLOAD_BUT_CARGO_ID_NOT_MATCHED",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1487,7 +1487,7 @@
 	{
 		"AlarmCode": 1066,
 		"Description": "(TASK_DOWNLOAD_DATA_ILLEAGAL)",
-		"Description_Zh": "",
+		"Description_Zh": "任務下載數據非法",
 		"Description_En": "TASK_DOWNLOAD_DATA_ILLEAGAL",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1496,7 +1496,7 @@
 	{
 		"AlarmCode": 1067,
 		"Description": "(AGV_TaskFeedback_ERROR)",
-		"Description_Zh": "",
+		"Description_Zh": "AGV TaskFeedback 錯誤",
 		"Description_En": "AGV_TaskFeedback_ERROR",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1505,7 +1505,7 @@
 	{
 		"AlarmCode": 1068,
 		"Description": "(EQ_Disconnect)",
-		"Description_Zh": "",
+		"Description_Zh": "設備斷線",
 		"Description_En": "EQ_Disconnect",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1514,7 +1514,7 @@
 	{
 		"AlarmCode": 1069,
 		"Description": "(ERROR_WHEN_TASK_STATUS_CHAGE_DB)",
-		"Description_Zh": "",
+		"Description_Zh": "更改任務狀態至數據庫時發生錯誤",
 		"Description_En": "ERROR_WHEN_TASK_STATUS_CHAGE_DB",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1523,8 +1523,8 @@
 	{
 		"AlarmCode": 1070,
 		"Description": "(Destine_Normal_Station_Has_Task_To_Reach)",
-		"Description_Zh": "",
-		"Description_En": "Destine_Normal_Station_Has_Task_To_Reach",
+		"Description_Zh": "目標站點有待完成的任務",
+		"Description_En": "Destine_Station_Has_Task_To_Reach",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
 		"TrobleShootingFilePath": ""
@@ -1532,7 +1532,7 @@
 	{
 		"AlarmCode": 1071,
 		"Description": "(Destine_Eq_Station_Has_Task_To_Park)",
-		"Description_Zh": "",
+		"Description_Zh": "目標設備站點有待停放的任務",
 		"Description_En": "Destine_Eq_Station_Has_Task_To_Park",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1541,7 +1541,7 @@
 	{
 		"AlarmCode": 1072,
 		"Description": "(Destine_Charge_Station_Has_AGV)",
-		"Description_Zh": "",
+		"Description_Zh": "目標充電站有 AGV",
 		"Description_En": "Destine_Charge_Station_Has_AGV",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1550,8 +1550,8 @@
 	{
 		"AlarmCode": 1073,
 		"Description": "(PING_CHECK_FAIL)",
-		"Description_Zh": "",
-		"Description_En": "PING_CHECK_FAIL",
+		"Description_Zh": "AGV Ping 檢查失敗",
+		"Description_En": "AGV PING CHECK FAIL",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
 		"TrobleShootingFilePath": ""
@@ -1559,7 +1559,7 @@
 	{
 		"AlarmCode": 1074,
 		"Description": "(Download_Task_To_AGV_Fail)",
-		"Description_Zh": "",
+		"Description_Zh": "下載任務至 AGV 失敗",
 		"Description_En": "Download_Task_To_AGV_Fail",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1568,7 +1568,7 @@
 	{
 		"AlarmCode": 1075,
 		"Description": "(EQ_LOAD_REQUEST_ON_BUT_HAS_CARGO)",
-		"Description_Zh": "",
+		"Description_Zh": "設備載入請求已開啟但已有貨物",
 		"Description_En": "EQ_LOAD_REQUEST_ON_BUT_HAS_CARGO",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1577,7 +1577,7 @@
 	{
 		"AlarmCode": 1076,
 		"Description": "(EQ_UNLOAD_REQUEST_ON_BUT_NO_CARGO)",
-		"Description_Zh": "",
+		"Description_Zh": "設備卸載請求已開啟但無貨物",
 		"Description_En": "EQ_UNLOAD_REQUEST_ON_BUT_NO_CARGO",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1586,7 +1586,7 @@
 	{
 		"AlarmCode": 1077,
 		"Description": "(EQ_UNLOAD_REQ_BUT_RACK_FULL_OR_EMPTY_IS_UNKNOWN)",
-		"Description_Zh": "",
+		"Description_Zh": "設備卸載請求已開啟但料架滿或空的狀態未知",
 		"Description_En": "EQ_UNLOAD_REQ_BUT_RACK_FULL_OR_EMPTY_IS_UNKNOWN",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1595,7 +1595,7 @@
 	{
 		"AlarmCode": 1078,
 		"Description": "(EQ_LOAD_REQ_BUT_RACK_FULL_OR_EMPTY_IS_UNKNOWN)",
-		"Description_Zh": "",
+		"Description_Zh": "設備載入請求已開啟但料架滿或空的狀態未知",
 		"Description_En": "EQ_LOAD_REQ_BUT_RACK_FULL_OR_EMPTY_IS_UNKNOWN",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1604,7 +1604,7 @@
 	{
 		"AlarmCode": 1079,
 		"Description": "(AGV_Type_Is_Not_Allow_To_Execute_Task_At_Source_Equipment)",
-		"Description_Zh": "",
+		"Description_Zh": "AGV 類型不允許在源設備執行任務",
 		"Description_En": "AGV_Type_Is_Not_Allow_To_Execute_Task_At_Source_Equipment",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1613,7 +1613,7 @@
 	{
 		"AlarmCode": 1080,
 		"Description": "(AGV_Type_Is_Not_Allow_To_Execute_Task_At_Destine_Equipment)",
-		"Description_Zh": "",
+		"Description_Zh": "AGV 類型不允許在目標設備執行任務",
 		"Description_En": "AGV_Type_Is_Not_Allow_To_Execute_Task_At_Destine_Equipment",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1622,7 +1622,7 @@
 	{
 		"AlarmCode": 1081,
 		"Description": "(EQ_Input_Data_Not_Enough)",
-		"Description_Zh": "",
+		"Description_Zh": "設備輸入數據不足",
 		"Description_En": "EQ_Input_Data_Not_Enough",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1631,7 +1631,7 @@
 	{
 		"AlarmCode": 1082,
 		"Description": "(AGV_Already_Has_Charge_Task)",
-		"Description_Zh": "",
+		"Description_Zh": "AGV 已經有充電任務",
 		"Description_En": "AGV_Already_Has_Charge_Task",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1640,7 +1640,7 @@
 	{
 		"AlarmCode": 1083,
 		"Description": "(Charge_Station_Already_Has_Task_Assigned)",
-		"Description_Zh": "",
+		"Description_Zh": "充電站已被分配任務",
 		"Description_En": "Charge_Station_Already_Has_Task_Assigned",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1649,7 +1649,7 @@
 	{
 		"AlarmCode": 1084,
 		"Description": "(Charge_Station_Already_Has_AGV_Parked)",
-		"Description_Zh": "",
+		"Description_Zh": "充電站已有 AGV 停放",
 		"Description_En": "Charge_Station_Already_Has_AGV_Parked",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1658,7 +1658,7 @@
 	{
 		"AlarmCode": 1085,
 		"Description": "(Station_Disabled)",
-		"Description_Zh": "",
+		"Description_Zh": "站點已停用",
 		"Description_En": "Station_Disabled",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1667,7 +1667,7 @@
 	{
 		"AlarmCode": 1086,
 		"Description": "(TASK_DOWNLOAD_TO_AGV_FAIL_AGV_STATUS_DOWN)",
-		"Description_Zh": "",
+		"Description_Zh": "任務下載至 AGV 失敗，AGV 狀態 DOWN",
 		"Description_En": "TASK_DOWNLOAD_TO_AGV_FAIL_AGV_STATUS_DOWN",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1676,7 +1676,7 @@
 	{
 		"AlarmCode": 1087,
 		"Description": "(TASK_DOWNLOAD_TO_AGV_FAIL)",
-		"Description_Zh": "",
+		"Description_Zh": "任務下載至 AGV 失敗",
 		"Description_En": "TASK_DOWNLOAD_TO_AGV_FAIL",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1685,7 +1685,7 @@
 	{
 		"AlarmCode": 1088,
 		"Description": "(TASK_DOWNLOAD_TO_AGV_FAIL_AGV_NOT_ON_TAG)",
-		"Description_Zh": "",
+		"Description_Zh": "任務下載至 AGV 失敗，AGV 不在TAG上",
 		"Description_En": "TASK_DOWNLOAD_TO_AGV_FAIL_AGV_NOT_ON_TAG",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1694,7 +1694,7 @@
 	{
 		"AlarmCode": 1089,
 		"Description": "(TASK_DOWNLOAD_TO_AGV_FAIL_WORKSTATION_NOT_SETTING_YET)",
-		"Description_Zh": "",
+		"Description_Zh": "任務下載至 AGV 失敗，工作站尚未設置",
 		"Description_En": "TASK_DOWNLOAD_TO_AGV_FAIL_WORKSTATION_NOT_SETTING_YET",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1703,7 +1703,7 @@
 	{
 		"AlarmCode": 1090,
 		"Description": "(TASK_DOWNLOAD_TO_AGV_FAIL_AGV_BATTERY_LOW_LEVEL)",
-		"Description_Zh": "",
+		"Description_Zh": "任務下載至 AGV 失敗，AGV 電池電量低",
 		"Description_En": "TASK_DOWNLOAD_TO_AGV_FAIL_AGV_BATTERY_LOW_LEVEL",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1712,7 +1712,7 @@
 	{
 		"AlarmCode": 1091,
 		"Description": "(TASK_DOWNLOAD_TO_AGV_FAIL_AGV_CANNOT_GO_TO_WORKSTATION_WITH_NORMAL_MOVE_ACTION)",
-		"Description_Zh": "",
+		"Description_Zh": "任務下載至 AGV 失敗，AGV 無法以正常移動動作前往工作站",
 		"Description_En": "TASK_DOWNLOAD_TO_AGV_FAIL_AGV_CANNOT_GO_TO_WORKSTATION_WITH_NORMAL_MOVE_ACTION",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1721,7 +1721,7 @@
 	{
 		"AlarmCode": 1092,
 		"Description": "(TASK_DOWNLOAD_TO_AGV_FAIL_TASK_DOWNLOAD_DATA_ILLEAGAL)",
-		"Description_Zh": "",
+		"Description_Zh": "任務下載至 AGV 失敗，任務下載數據非法",
 		"Description_En": "TASK_DOWNLOAD_TO_AGV_FAIL_TASK_DOWNLOAD_DATA_ILLEAGAL",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1730,7 +1730,7 @@
 	{
 		"AlarmCode": 1093,
 		"Description": "(TASK_DOWNLOAD_TO_AGV_FAIL_SYSTEM_EXCEPTION)",
-		"Description_Zh": "",
+		"Description_Zh": "任務下載至 AGV 失敗，系統異常",
 		"Description_En": "TASK_DOWNLOAD_TO_AGV_FAIL_SYSTEM_EXCEPTION",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1739,7 +1739,7 @@
 	{
 		"AlarmCode": 1094,
 		"Description": "(TASK_DOWNLOAD_TO_AGV_FAIL_NO_PATH_FOR_NAVIGATION)",
-		"Description_Zh": "",
+		"Description_Zh": "任務下載至 AGV 失敗，導航無路徑",
 		"Description_En": "TASK_DOWNLOAD_TO_AGV_FAIL_NO_PATH_FOR_NAVIGATION",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1748,7 +1748,7 @@
 	{
 		"AlarmCode": 1095,
 		"Description": "(TASK_DOWNLOAD_TO_AGV_FAIL_TASK_CANCEL)",
-		"Description_Zh": "",
+		"Description_Zh": "任務下載至 AGV 失敗，任務取消",
 		"Description_En": "TASK_DOWNLOAD_TO_AGV_FAIL_TASK_CANCEL",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1757,7 +1757,7 @@
 	{
 		"AlarmCode": 1096,
 		"Description": "(TASK_DOWNLOAD_TO_AGV_FAIL_TASK_DOWN_LOAD_TIMEOUT)",
-		"Description_Zh": "",
+		"Description_Zh": "任務下載至 AGV 失敗，任務下載超時",
 		"Description_En": "TASK_DOWNLOAD_TO_AGV_FAIL_TASK_DOWN_LOAD_TIMEOUT",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1766,7 +1766,7 @@
 	{
 		"AlarmCode": 1097,
 		"Description": "(Task_Canceled)",
-		"Description_Zh": "",
+		"Description_Zh": "任務已取消",
 		"Description_En": "Task_Canceled",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1775,7 +1775,7 @@
 	{
 		"AlarmCode": 1098,
 		"Description": "(CANT_AUTO_SEARCH_STATION_TYPE_IS_NOT_EXCHANGE_FOR_INSPECTION_AGV)",
-		"Description_Zh": "",
+		"Description_Zh": "無法自動搜索，站點類型不是檢驗 AGV 的交換站",
 		"Description_En": "CANT_AUTO_SEARCH_STATION_TYPE_IS_NOT_EXCHANGE_FOR_INSPECTION_AGV",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1784,7 +1784,7 @@
 	{
 		"AlarmCode": 1099,
 		"Description": "(NO_AVAILABLE_BAT_EXCHANGER_USABLE)",
-		"Description_Zh": "",
+		"Description_Zh": "沒有可用的電池交換站",
 		"Description_En": "NO_AVAILABLE_BAT_EXCHANGER_USABLE",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1793,7 +1793,7 @@
 	{
 		"AlarmCode": 1100,
 		"Description": "(REGIST_REGIONS_TO_PARTS_SYSTEM_FAIL)",
-		"Description_Zh": "",
+		"Description_Zh": "將區域註冊到PARTS 系統失敗",
 		"Description_En": "REGIST_REGIONS_TO_PARTS_SYSTEM_FAIL",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1802,7 +1802,7 @@
 	{
 		"AlarmCode": 1101,
 		"Description": "(SYSTEM_EQP_MANAGEMENT_INITIALIZE_FAIL_WITH_EXCEPTION)",
-		"Description_Zh": "",
+		"Description_Zh": "系統設備管理初始化失敗並出現異常",
 		"Description_En": "SYSTEM_EQP_MANAGEMENT_INITIALIZE_FAIL_WITH_EXCEPTION",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1811,7 +1811,7 @@
 	{
 		"AlarmCode": 1102,
 		"Description": "(INVALID_CHARGE_STATION)",
-		"Description_Zh": "",
+		"Description_Zh": "無效的充電站",
 		"Description_En": "INVALID_CHARGE_STATION",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1819,9 +1819,9 @@
 	},
 	{
 		"AlarmCode": 3037,
-		"Description": "(Battery_Not_Connect)",
-		"Description_Zh": "",
-		"Description_En": "Battery_Not_Connect",
+		"Description": "(ChargeStation_Not_Connect)",
+		"Description_Zh": "充電站未連線",
+		"Description_En": "ChargeStation_Not_Connect",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
 		"TrobleShootingFilePath": ""
@@ -1829,7 +1829,7 @@
 	{
 		"AlarmCode": 3038,
 		"Description": "(Rack_Port_Sensor_Flash)",
-		"Description_Zh": "",
+		"Description_Zh": "料架Sensor閃爍",
 		"Description_En": "Rack_Port_Sensor_Flash",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1838,7 +1838,7 @@
 	{
 		"AlarmCode": 3039,
 		"Description": "(Transfer_Tags_Not_Found)",
-		"Description_Zh": "",
+		"Description_Zh": "未找到轉換站TAG",
 		"Description_En": "Transfer_Tags_Not_Found",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1847,7 +1847,7 @@
 	{
 		"AlarmCode": 3040,
 		"Description": "(No_Transfer_Station_To_Work)",
-		"Description_Zh": "",
+		"Description_Zh": "無工作轉移站",
 		"Description_En": "No_Transfer_Station_To_Work",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1856,7 +1856,7 @@
 	{
 		"AlarmCode": 3041,
 		"Description": "(Task_Aborted)",
-		"Description_Zh": "",
+		"Description_Zh": "任務中止",
 		"Description_En": "Task_Aborted",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1865,7 +1865,7 @@
 	{
 		"AlarmCode": 3043,
 		"Description": "(VEHICLES_TRAJECTORY_CONFLIC)",
-		"Description_Zh": "",
+		"Description_Zh": "車輛軌跡衝突",
 		"Description_En": "VEHICLES_TRAJECTORY_CONFLIC",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1874,7 +1874,7 @@
 	{
 		"AlarmCode": 3044,
 		"Description": "(REGION_NOT_ENTERABLE)",
-		"Description_Zh": "",
+		"Description_Zh": "區域不可進入",
 		"Description_En": "REGION_NOT_ENTERABLE",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1883,7 +1883,7 @@
 	{
 		"AlarmCode": 3045,
 		"Description": "(From_To_Of_Transfer_Task_Is_Incorrectly)",
-		"Description_Zh": "",
+		"Description_Zh": "轉移任務的起點和終點錯誤",
 		"Description_En": "From_To_Of_Transfer_Task_Is_Incorrectly",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
@@ -1892,7 +1892,7 @@
 	{
 		"AlarmCode": 3046,
 		"Description": "(AGV_NO_Carge_Cannot_Transfer_Cargo_From_AGV_To_Desinte)",
-		"Description_Zh": "",
+		"Description_Zh": "AGV 無貨物，無法從 AGV 轉移貨物至目標",
 		"Description_En": "AGV_NO_Carge_Cannot_Transfer_Cargo_From_AGV_To_Desinte",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
