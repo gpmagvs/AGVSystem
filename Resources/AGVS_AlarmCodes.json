@@ -524,8 +524,8 @@
 	{
 		"AlarmCode": 155,
 		"Description": "重新規劃路線失敗, 系統狀態不是暫停或是非移動任務的情況(Replan Error, System State is not Paused or Job is not Moving Mission)",
-		"Description_Zh": "重新規劃路線失敗, 系統狀態不是暫停或是非移動任務的情況",
-		"Description_En": "Replan Error, System State is not Paused or Job is not Moving Mission",
+		"Description_Zh": "重新規劃路線失敗. 系統狀態不是暫停或是非移動任務的情況",
+		"Description_En": "Replan Error. System State is not Paused or Job is not Moving Mission",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
 		"TrobleShootingFilePath": ""
@@ -533,8 +533,8 @@
 	{
 		"AlarmCode": 156,
 		"Description": "重新規劃路線失敗, 無法回到原本位置(Replan Error, Can not Go Back Original Position)",
-		"Description_Zh": "重新規劃路線失敗, 無法回到原本位置",
-		"Description_En": "Replan Error, Can not Go Back Original Position",
+		"Description_Zh": "重新規劃路線失敗. 無法回到原本位置",
+		"Description_En": "Replan Error. Can not Go Back Original Position",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
 		"TrobleShootingFilePath": ""
@@ -542,8 +542,8 @@
 	{
 		"AlarmCode": 157,
 		"Description": "重新規劃路線失敗, 無法找到路徑的下一個點(Replan Error, Can not Find Next Point)",
-		"Description_Zh": "重新規劃路線失敗, 無法找到路徑的下一個點",
-		"Description_En": "Replan Error, Can not Find Next Point",
+		"Description_Zh": "重新規劃路線失敗. 無法找到路徑的下一個點",
+		"Description_En": "Replan Error. Can not Find Next Point",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
 		"TrobleShootingFilePath": ""
