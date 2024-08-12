@@ -12,7 +12,7 @@ namespace AGVSystem.Models.Automation
                 var interval = _GetQueryInterval();
                 DateTime starttime = interval.startTime;
                 DateTime endtime = interval.endtime;
-                string filePath = AlarmManagerCenter.SaveTocsv(starttime, endtime, "ALL", null);
+                string filePath = AlarmManagerCenter.AutoSaveTocsv(starttime, endtime, "ALL", null);
                 return (true, $"異常歷史自動匯出任務已完成->{filePath}");
             }
             catch (Exception ex)
@@ -23,22 +23,23 @@ namespace AGVSystem.Models.Automation
 
         protected (DateTime startTime, DateTime endtime) _GetQueryInterval()
         {
-            DateTime endTime = DateTime.Now;
-            DateTime startTime = endTime;
+            DateTime originalDate = DateTime.Now;
             switch (this.options.Period)
             {
                 case AutomationOptions.PERIOD.WEEKLY:
-                    startTime = endTime.AddDays(-7);
+                    originalDate = originalDate.AddDays(-7);
                     break;
                 case AutomationOptions.PERIOD.DAILY:
-                    startTime = endTime.AddDays(-1);
+                    originalDate = originalDate.AddDays(-1);
                     break;
                 case AutomationOptions.PERIOD.HOURLY:
-                    startTime = endTime.AddHours(-1);
+                    originalDate = originalDate.AddHours(-1);
                     break;
                 default:
                     break;
             }
+            DateTime endTime = new DateTime(originalDate.Year, originalDate.Month, originalDate.Day, 23, 59, 59);
+            DateTime startTime = new DateTime(originalDate.Year, originalDate.Month, originalDate.Day, 00, 00, 00);
             return (startTime, endTime);
         }
     }
