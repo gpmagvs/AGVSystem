@@ -158,5 +158,14 @@ namespace AGVSystem.Controllers
             }
             return Ok();
         }
+        [HttpGet("Emu/SetPortType")]
+        public async Task<IActionResult> SetPortType(string EqName, int PortType)
+        {
+            if (StaEQPEmulatorsManagager.TryGetEQEmuByName(EqName, out clsDIOModuleEmu? EQ))
+            {
+                EQ.SetPortType(PortType);
+            }
+            return Ok();
+        }
     }
 }
