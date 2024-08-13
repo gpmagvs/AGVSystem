@@ -1,6 +1,7 @@
 ﻿using EquipmentManagment.Emu;
 using EquipmentManagment.Manager;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json.Linq;
 
 namespace AGVSystem.Controllers
 {
@@ -56,12 +57,25 @@ namespace AGVSystem.Controllers
             {
                 if (StaEQPEmulatorsManagager.TryGetEQEmuByName(EqName, out clsDIOModuleEmu? EQ))
                 {
+
+
+                    var anotherPortEq = StaEQPEmulatorsManagager.EqEmulators.Values.FirstOrDefault(eq => eq.options.TagID == EQ.options.AnotherPortTagNumber);
+
                     if (State == "busy")
+                    {
                         confirm = EQ.SetStatusBUSY();
+                        anotherPortEq?.SetStatusBUSY();
+                    }
                     if (State == "load")
+                    {
                         confirm = EQ.SetStatusLoadable();
+                        anotherPortEq?.SetStatusLoadable();
+                    }
                     if (State == "unload")
+                    {
                         confirm = EQ.SetStatusUnloadable();
+                        anotherPortEq?.SetStatusUnloadable();
+                    }
                 }
                 else
                 {
@@ -164,6 +178,11 @@ namespace AGVSystem.Controllers
             if (StaEQPEmulatorsManagager.TryGetEQEmuByName(EqName, out clsDIOModuleEmu? EQ))
             {
                 EQ.SetPortType(PortType);
+                var anotherPortEq = StaEQPEmulatorsManagager.EqEmulators.Values.FirstOrDefault(eq => eq.options.TagID == EQ.options.AnotherPortTagNumber);
+                if (anotherPortEq != null)
+                {
+                    anotherPortEq.SetPortType(PortType);
+                }
             }
             return Ok();
         }
