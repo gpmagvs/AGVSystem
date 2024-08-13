@@ -11,6 +11,7 @@ using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.Log;
 using AGVSystemCommonNet6.MAP;
+using AGVSystemCommonNet6.Microservices.MCS;
 using AGVSystemCommonNet6.Microservices.ResponseModel;
 using AGVSystemCommonNet6.User;
 using AGVSystemCommonNet6.Vehicle_Control.VCS_ALARM;
@@ -181,6 +182,15 @@ namespace AGVSystem.Controllers
                     {
                         mainEQ.ReserveUp();
                         mainEQ.ToEQUp();
+                        if (mainEQ.EndPointOptions.IsOneOfDualPorts)
+                        {
+                            bool isForkAGVOnlyPort = mainEQ.EndPointOptions.Accept_AGV_Type == EquipmentManagment.Device.Options.VEHICLE_TYPE.FORK;
+                            bool isSubmarineAGVOnlyPort = mainEQ.EndPointOptions.Accept_AGV_Type == EquipmentManagment.Device.Options.VEHICLE_TYPE.SUBMERGED_SHIELD;
+                            if (isForkAGVOnlyPort)
+                                await GPMCIMService.ChangePortTypeOfEq(mainEQ.EndPointOptions.TagID, 0);
+                            if (isSubmarineAGVOnlyPort)
+                                await GPMCIMService.ChangePortTypeOfEq(mainEQ.EndPointOptions.TagID, 1);
+                        }
                     }
                     catch (Exception ex)
                     {
