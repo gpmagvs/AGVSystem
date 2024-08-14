@@ -213,6 +213,15 @@ namespace AGVSystem.TaskManagers
 
             clsAGVStateDto? _agv_assigned = agvstates.FirstOrDefault(agv_dat => agv_dat.AGV_Name == _agv_name);
             VEHICLE_TYPE model = _agv_assigned.Model.ConvertToEQAcceptAGVTYPE();
+            MapPoint mapPoint = AGVSMapManager.GetMapPointByTag(station_tag);
+
+            clsRack? wip = StaEQPManagager.RacksList.FirstOrDefault(rack => rack.RackOption.ColumnTagMap.Values.SelectMany(k => k).Contains(station_tag));
+
+            bool isWIP = wip != null;
+            if (isWIP && model == VEHICLE_TYPE.FORK)
+            {
+                return (true, ALARMS.NONE, "");
+            }
             clsEQ equipment = StaEQPManagager.GetEQByTag(station_tag);
             if (equipment == null)
                 return new(false, ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, $"設備站點TAG-{station_tag} 不存在於當前地圖");
