@@ -46,5 +46,22 @@ namespace AGVSystem.Controllers
             _dbContext.SaveChangesAsync();
             return Ok();
         }
+
+        [HttpDelete("Delete")]
+        public async Task<IActionResult> DeleteAlarm(DateTime time)
+        {
+            clsAlarmDto? alarm = _dbContext.SystemAlarms.FirstOrDefault(al => al.Time == time);
+            if (alarm != null)
+            {
+                _dbContext.SystemAlarms.Remove(alarm);
+                _dbContext.SaveChanges();
+                return Ok();
+            }
+            else
+            {
+                return BadRequest();
+            }
+            //_dbContext.SystemAlarms.Remove();
+        }
     }
 }
