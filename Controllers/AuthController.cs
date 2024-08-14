@@ -1,6 +1,7 @@
 ﻿using AGVSystem.Service;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.User;
+using AGVSystemCommonNet6.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.AspNetCore.Identity;
@@ -91,10 +92,15 @@ namespace AGVSystem.Controllers
             {
                 return BadRequest(new { Success = false, Message = "Invalid User Name or Password", UserName = "" });
             }
-            // TODO: 根據需要生成 JWT Token
             token = GenerateJwtToken(request.Username, request.Password, user.Role);
-            // 返回 JWT Token
-            return Ok(new { Success = true, token = token.FirstOrDefault(), Role = user.Role, UserName = request.Username });
+            return Ok(new
+            {
+                Success = true,
+                token = token.FirstOrDefault(),
+                Role = user.Role,
+                UserName = request.Username,
+                Permission = user.WebFunctionPermissions
+            });
         }
         /// <summary>
         /// 修改用戶設定
@@ -184,7 +190,28 @@ namespace AGVSystem.Controllers
             //else
             return Ok();
         }
-
+        [HttpGet("GetPermissionSettings")]
+        public async Task<IActionResult> GetPermissionSettings(string userName)
+        {
+            var user = _userDbContext.Users.FirstOrDefault(u => u.UserName == userName);
+            if (user == null)
+            {
+                return BadRequest();
+            }
+            return Ok(user.WebFunctionPermissions);
+        }
+        [HttpPost("SavePermissionSettings")]
+        public async Task<IActionResult> SavePermissionSettings(string userName, [FromBody] WebFunctionViewPermissions permissionSettings)
+        {
+            var user = _userDbContext.Users.FirstOrDefault(u => u.UserName == userName);
+            if (user == null)
+            {
+                return BadRequest();
+            }
+            user.WebFunctionPermissionsJson = permissionSettings.ToString();
+            _userDbContext.SaveChanges();
+            return Ok();
+        }
         private string GenerateJwtToken(string username, string password, ERole role)
         {
             var claims = new[]
