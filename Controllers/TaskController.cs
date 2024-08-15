@@ -232,10 +232,10 @@ namespace AGVSystem.Controllers
                 }
                 else
                 {
-                    RACK_CONTENT_STATE rack_content_state = StaEQPManagager.CargoStartTransferToDestineHandler(sourceEQ, destineEQ);
-                    if (rack_content_state == RACK_CONTENT_STATE.UNKNOWN)
+                    RACK_CONTENT_STATE rackContentStateOfSourceEQ = StaEQPManagager.CargoStartTransferToDestineHandler(sourceEQ, destineEQ);
+                    if (rackContentStateOfSourceEQ == RACK_CONTENT_STATE.UNKNOWN)
                     {
-                        return new clsAGVSTaskReportResponse() { confirm = false, message = $"Task Abort_起點設備RACK空框/實框狀態未知" };
+                        return new clsAGVSTaskReportResponse() { confirm = false, AlarmCode = ALARMS.EQ_LOAD_REQ_BUT_RACK_FULL_OR_EMPTY_IS_UNKNOWN, message = $"Task Abort_起點設備RACK空框/實框狀態未知" };
                     }
                     else
                     {
