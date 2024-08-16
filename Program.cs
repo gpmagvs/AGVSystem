@@ -33,8 +33,26 @@ using System.Text;
 
 public class Program
 {
+    static bool hotRunEnabled = false;
+    static string hotRunScriptName = string.Empty;
     public static void Main(string[] args)
     {
+
+        Console.WriteLine("args:" + string.Join(",", args));
+        foreach (var arg in args)
+        {
+            if (arg.Equals("--hotrun", StringComparison.OrdinalIgnoreCase))
+            {
+                hotRunEnabled = true;
+                Console.WriteLine("Auto HotRun enabled");
+            }
+            else if (arg.StartsWith("--script=", StringComparison.OrdinalIgnoreCase))
+            {
+                hotRunScriptName = arg.Substring("--script=".Length);
+                Console.WriteLine("hotRunScriptName = " + hotRunScriptName);
+            }
+        }
+
         var appVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
         Console.Title = $"GPM-AGV系統(AGVs)-v{appVersion}";
         Logger logger = LogManager.Setup().LoadConfigurationFromAppSettings().GetCurrentClassLogger();
@@ -51,6 +69,16 @@ public class Program
 
             var app = builder.Build();
             WebAppInitializer.ConfigureApp(app);
+
+            if (hotRunEnabled)
+            {
+                Task.Run(async () =>
+                {
+                    await Task.Delay(3000);
+                    (bool, string) result = HotRunScriptManager.Run(hotRunScriptName);
+                    logger.Info($"HotRunScriptManager.Run({hotRunScriptName}) result: {result.Item1}, {result.Item2}");
+                });
+            }
 
             app.Run();
         }

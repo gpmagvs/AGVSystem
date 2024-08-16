@@ -77,7 +77,7 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                 return StartHotRun(script);
             }
             else
-                return (false, "");
+                return (false, "Script not exist");
         }
 
         internal static void Stop(string scriptID)
