@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationIcon>favicon.ico</ApplicationIcon>
 	<GenerateDocumentationFile>true</GenerateDocumentationFile>
-	<AssemblyVersion>1.1.222.1</AssemblyVersion>
+	<AssemblyVersion>1.1.232.4</AssemblyVersion>
 
   </PropertyGroup>
 
@@ -78,6 +78,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="agvs-system-config-folder-backup.cmd">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="Resources\AGVS_TrobleShooting.csv">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
