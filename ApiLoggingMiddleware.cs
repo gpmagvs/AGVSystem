@@ -14,7 +14,7 @@ namespace AGVSystem
             "/AGVImages",
             "/api/Equipment/GetEQOptions"
         };
-        private List<string> contentTypesToIgnore = new() { "image", "text/css", "text/html", "application/javascript", "font" };
+        private List<string> contentTypesToIgnore = new() { "image", "text/css", "text/html", "application/javascript", "application/zip", "application/x-zip-compressed", "font" };
 
         public ApiLoggingMiddleware(ILogger<ApiLoggingMiddleware> logger, RequestDelegate next)
         {

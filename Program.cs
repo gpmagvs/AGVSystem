@@ -237,6 +237,7 @@ public static class WebAppInitializer
         builder.Services.AddHostedService<VehicleLocationMonitorBackgroundService>();
         builder.Services.AddHostedService<FrontEndDataBrocastService>();
         builder.Services.AddScoped<MeanTimeQueryService>();
+        builder.Services.AddScoped<LogDownlodService>();
     }
 
     private static void ConfigureCors(WebApplicationBuilder builder)
@@ -380,9 +381,7 @@ public static class StaticFileInitializer
             RequestPath = agvImageFileRequestPath
         });
 
-
         CreateDefaultAGVImage(agvImageFileFolderPath);
-
         try
         {
             Directory.CreateDirectory(AGVSConfigulator.SysConfigs.TrobleShootingFolder);
@@ -400,11 +399,32 @@ public static class StaticFileInitializer
                 FileProvider = trobleshootingFileProvider,
                 RequestPath = trobleshootingFileRequestPath
             });
+
         }
         catch (Exception ex)
         {
-            LOG.ERROR(ex.Message, ex);
+            Console.WriteLine(ex.Message + ex.StackTrace);
         }
+
+        try
+        {
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                FileProvider = new PhysicalFileProvider(Path.GetTempPath()),
+                RequestPath = "/Download"
+            });
+            app.UseDirectoryBrowser(new DirectoryBrowserOptions
+            {
+                FileProvider = new PhysicalFileProvider(Path.GetTempPath()),
+                RequestPath = "/Download"
+            });
+
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message + ex.StackTrace);
+        }
+
     }
 
     private static void CreateDefaultAGVImage(string agvImageFileFolderPath)
