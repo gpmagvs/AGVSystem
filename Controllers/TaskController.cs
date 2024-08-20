@@ -211,7 +211,7 @@ namespace AGVSystem.Controllers
         }
 
         [HttpGet("StartTransferCargoReport")]
-        public async Task<clsAGVSTaskReportResponse> StartTransferCargoReport(string AGVName, int SourceTag, int DestineTag)
+        public async Task<clsAGVSTaskReportResponse> StartTransferCargoReport(string AGVName, int SourceTag, int DestineTag, bool IsSourceAGV = false)
         {
             var _response = new clsAGVSTaskReportResponse();
 
@@ -224,14 +224,19 @@ namespace AGVSystem.Controllers
             }
             else
             {
+                if (IsSourceAGV)
+                {
+                    return new clsAGVSTaskReportResponse { confirm = true };
+                }
                 sourceEQ = StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == SourceTag);
                 if (sourceEQ == null)
                 {
                     return new clsAGVSTaskReportResponse() { confirm = false, message = $"[StartTransferCargoReport] 找不到Tag為{SourceTag}的起點設備" };
 
                 }
-                else
+                else if (sourceEQ.EndPointOptions.CheckRackContentStateIOSignal || destineEQ.EndPointOptions.CheckRackContentStateIOSignal)
                 {
+
                     RACK_CONTENT_STATE rackContentStateOfSourceEQ = StaEQPManagager.CargoStartTransferToDestineHandler(sourceEQ, destineEQ);
                     if (rackContentStateOfSourceEQ == RACK_CONTENT_STATE.UNKNOWN)
                     {
@@ -242,6 +247,10 @@ namespace AGVSystem.Controllers
                     {
                         return new clsAGVSTaskReportResponse { confirm = true };
                     }
+                }
+                else
+                {
+                    return new clsAGVSTaskReportResponse { confirm = true };
                 }
             }
         }
@@ -320,7 +329,18 @@ namespace AGVSystem.Controllers
         {
             taskData.DispatcherName = user;
             var result = await TaskManager.AddTask(taskData, TaskManager.TASK_RECIEVE_SOURCE.MANUAL);
-            return new { confirm = result.confirm, alarm_code = result.alarm_code, message = result.message };
+            bool showEmptyOrFullContentCheck = false;
+            if (result.alarm_code == ALARMS.EQ_UNLOAD_REQ_BUT_RACK_FULL_OR_EMPTY_IS_UNKNOWN)
+            {
+                int eqTag = taskData.Action == ACTION_TYPE.Unload ? taskData.To_Station_Tag : taskData.From_Station_Tag;
+                //MapPoint mapPoint = AGVSMapManager.GetMapPointByTag(eqTag);
+                clsEQ eq = StaEQPManagager.GetEQByTag(eqTag);
+                if (eq.EndPointOptions.IsFullEmptyUnloadAsVirtualInput)
+                {
+                    showEmptyOrFullContentCheck = true;
+                }
+            }
+            return new { confirm = result.confirm, alarm_code = result.alarm_code, message = result.message, showEmptyOrFullContentCheck = showEmptyOrFullContentCheck };
         }
 
 
