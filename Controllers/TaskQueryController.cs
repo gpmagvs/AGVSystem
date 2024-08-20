@@ -18,14 +18,19 @@ namespace AGVSystem.Controllers
     [ApiController]
     public class TaskQueryController : ControllerBase
     {
+        AGVSDbContext dbcontext;
+        public TaskQueryController(AGVSDbContext dbcontext)
+        {
+            this.dbcontext = dbcontext;
+        }
         [HttpGet("TaskQuery")]
-        public async Task<IActionResult> TaskQuery(int currentpage, string StartTime, string EndTime, string? AGV_Name = "ALL", string? TaskName = "ALL", string Result = "ALL", string ActionType = "ALL",string? failurereason="ALL")
+        public async Task<IActionResult> TaskQuery(int currentpage, string StartTime, string EndTime, string? AGV_Name = "ALL", string? TaskName = "ALL", string Result = "ALL", string ActionType = "ALL", string? failurereason = "ALL")
         {
             DateTime start = DateTime.Parse(StartTime);
             DateTime end = DateTime.Parse(EndTime);
             using (var taskDb = new TaskDatabaseHelper())
             {
-                taskDb.TaskQuery(out int count, currentpage, start, end, AGV_Name, TaskName, Result, ActionType, failurereason,out List<clsTaskDto>? tasks);
+                taskDb.TaskQuery(out int count, currentpage, start, end, AGV_Name, TaskName, Result, ActionType, failurereason, out List<clsTaskDto>? tasks);
 
                 tasks.ForEach(task =>
                 {
@@ -101,6 +106,17 @@ namespace AGVSystem.Controllers
             }
 
 
+        }
+        [HttpGet("DeleteTask")]
+        public async Task<IActionResult> DeleteTask(string taskID)
+        {
+            var taskFound = dbcontext.Tasks.FirstOrDefault(tk => tk.TaskName == taskID);
+            if (taskFound != null)
+            {
+                dbcontext.Tasks.Remove(taskFound);
+                await dbcontext.SaveChangesAsync();
+            }
+            return Ok();
         }
 
     }
