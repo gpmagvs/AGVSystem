@@ -337,6 +337,30 @@ namespace AGVSystem.Controllers
         }
 
 
+
+        [HttpPost("SetToFullRackStatusByEqTag")]
+        public async Task<IActionResult> SetToFullRackStatusByEqTag(int eqTag, bool state)
+        {
+            var EQ = StaEQPManagager.GetEQByTag(eqTag);
+            if (EQ != null)
+            {
+                EQ.To_EQ_Full_CST = state;
+            }
+            return Ok();
+        }
+
+        [HttpPost("SetToEmptyRackStatusByEqTag")]
+        public async Task<IActionResult> SetToEmptyRackStatusByEqTag(int eqTag, bool state)
+        {
+            var EQ = StaEQPManagager.GetEQByTag(eqTag);
+            if (EQ != null)
+            {
+                EQ.To_EQ_Empty_CST = state;
+            }
+            return Ok();
+        }
+
+
     }
 
 }

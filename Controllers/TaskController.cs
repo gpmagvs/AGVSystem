@@ -320,7 +320,18 @@ namespace AGVSystem.Controllers
         {
             taskData.DispatcherName = user;
             var result = await TaskManager.AddTask(taskData, TaskManager.TASK_RECIEVE_SOURCE.MANUAL);
-            return new { confirm = result.confirm, alarm_code = result.alarm_code, message = result.message };
+            bool showEmptyOrFullContentCheck = false;
+            if (result.alarm_code == ALARMS.EQ_UNLOAD_REQ_BUT_RACK_FULL_OR_EMPTY_IS_UNKNOWN)
+            {
+                int eqTag = taskData.Action == ACTION_TYPE.Unload ? taskData.To_Station_Tag : taskData.From_Station_Tag;
+                //MapPoint mapPoint = AGVSMapManager.GetMapPointByTag(eqTag);
+                clsEQ eq = StaEQPManagager.GetEQByTag(eqTag);
+                if (eq.EndPointOptions.IsFullEmptyUnloadAsVirtualInput)
+                {
+                    showEmptyOrFullContentCheck = true;
+                }
+            }
+            return new { confirm = result.confirm, alarm_code = result.alarm_code, message = result.message, showEmptyOrFullContentCheck = showEmptyOrFullContentCheck };
         }
 
 
