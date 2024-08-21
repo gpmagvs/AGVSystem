@@ -918,6 +918,15 @@
 		"TrobleShootingFilePath": ""
 	},
 	{
+		"AlarmCode": 1003,
+		"Description": "",
+		"Description_Zh": "AGVS 與 VMS 斷線",
+		"Description_En": "AGVS_DISCONNECT_WITH_VMS",
+		"En_TrobleShootingDescription": "",
+		"ZH_TrobleShootingDescription": "",
+		"TrobleShootingFilePath": ""
+	},
+	{
 		"AlarmCode": 1004,
 		"Description": "(GET_ONLINE_REQ_BUT_AGV_DISCONNECT)",
 		"Description_Zh": "收到上線請求但 AGV 斷線",
