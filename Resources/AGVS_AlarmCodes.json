@@ -919,9 +919,9 @@
 	},
 	{
 		"AlarmCode": 1003,
-		"Description": "(AGV_DISCONNECT)",
-		"Description_Zh": "AGV 斷線",
-		"Description_En": "AGV_DISCONNECT",
+		"Description": "",
+		"Description_Zh": "AGVS 與 VMS 斷線",
+		"Description_En": "AGVS_DISCONNECT_WITH_VMS",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
 		"TrobleShootingFilePath": ""
@@ -1543,15 +1543,6 @@
 		"Description": "(Destine_Charge_Station_Has_AGV)",
 		"Description_Zh": "目標充電站有 AGV",
 		"Description_En": "Destine_Charge_Station_Has_AGV",
-		"En_TrobleShootingDescription": "",
-		"ZH_TrobleShootingDescription": "",
-		"TrobleShootingFilePath": ""
-	},
-	{
-		"AlarmCode": 1073,
-		"Description": "(PING_CHECK_FAIL)",
-		"Description_Zh": "AGV Ping 檢查失敗",
-		"Description_En": "AGV PING CHECK FAIL",
 		"En_TrobleShootingDescription": "",
 		"ZH_TrobleShootingDescription": "",
 		"TrobleShootingFilePath": ""
