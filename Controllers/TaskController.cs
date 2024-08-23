@@ -62,6 +62,13 @@ namespace AGVSystem.Controllers
         public async Task<IActionResult> Cancel(string task_name)
         {
             LOG.TRACE($"User try cancle Task-{task_name}");
+
+            if (AGVSConfigulator.SysConfigs.BaseOnKGSWebAGVSystem)
+            {
+                await KGSWebAGVSystemAPI.TaskOrder.OrderAPI.CancelTask(task_name);
+                return Ok(true);
+            }
+
             bool canceled = await TaskManager.Cancel(task_name, $"User manual canceled");
             LOG.TRACE($"User try cancle Task-{task_name}---{canceled}");
             return Ok(canceled);
