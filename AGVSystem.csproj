@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationIcon>favicon.ico</ApplicationIcon>
 	<GenerateDocumentationFile>true</GenerateDocumentationFile>
-	<AssemblyVersion>1.1.233.10</AssemblyVersion>
+	<AssemblyVersion>1.1.236.22</AssemblyVersion>
 
   </PropertyGroup>
 
@@ -69,6 +69,7 @@
   <ItemGroup>
     <ProjectReference Include="..\AGVSystemCommonNet6\AGVSystemCommonNet6.csproj" />
     <ProjectReference Include="..\EquipmentManagment\EquipmentManagment.csproj" />
+    <ProjectReference Include="..\KGSWebAGVSystemAPI\KGSWebAGVSystemAPI.csproj" />
   </ItemGroup>
 
   <ItemGroup>
