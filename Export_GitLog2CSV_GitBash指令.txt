@@ -1,0 +1,33 @@
+# 如果有人要整理版本履歷資料, 可以參考以下指令, 
+# 指令適用於 Git Bash 
+## 雖然有用UTF-8輸出, 但還是需要透過notepad++轉換成 UTF-8-BOM 才能用excel正常開啟 
+
+# 派車的前端與後端 
+cd AGVS_UI
+git -c core.quotepath=false log --pretty=format:"%h,%ad,%an,%s" --date=format:"%Y/%m/%d"  | iconv -f utf-8 -t utf-8 > ../AGVS_UI_Log.csv
+cd ../
+
+cd AGVSystem
+git -c core.quotepath=false log --pretty=format:"%h,%ad,%an,%s" --date=format:"%Y/%m/%d"  | iconv -f utf-8 -t utf-8 > ../AGVSystem_Log.csv
+cd ../
+
+cd VMSystem
+git -c core.quotepath=false log --pretty=format:"%h,%ad,%an,%s" --date=format:"%Y/%m/%d"  | iconv -f utf-8 -t utf-8 > ../VMSystem_Log.csv
+cd ../
+
+
+# 車載的前端與後端
+
+cd AGV_UI
+git -c core.quotepath=false log --pretty=format:"%h,%ad,%an,%s" --date=format:"%Y/%m/%d"  | iconv -f utf-8 -t utf-8 > ../AGV_UI_Log.csv
+cd ../
+
+cd GPMVehicleControlSystem
+git -c core.quotepath=false log --pretty=format:"%h,%ad,%an,%s" --date=format:"%Y/%m/%d"  | iconv -f utf-8 -t utf-8 > ../GPMVehicleControlSystem_Log.csv
+cd ../
+
+
+# CIM 
+cd GPMCasstteConvertCIM
+git -c core.quotepath=false log --pretty=format:"%h,%ad,%an,%s" --date=format:"%Y/%m/%d"  | iconv -f utf-8 -t utf-8 > ../GPMCasstteConvertCIM_Log.csv
+cd ../
