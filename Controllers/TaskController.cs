@@ -211,11 +211,17 @@ namespace AGVSystem.Controllers
         }
 
         [HttpGet("StartTransferCargoReport")]
-        public async Task<clsAGVSTaskReportResponse> StartTransferCargoReport(string AGVName, int SourceTag, int DestineTag, bool IsSourceAGV = false)
+        public async Task<clsAGVSTaskReportResponse> StartTransferCargoReport(string AGVName, int SourceTag, int DestineTag, string SourceSlot, string DestineSlot, bool IsSourceAGV = false)
         {
             var _response = new clsAGVSTaskReportResponse();
 
-            clsEQ? destineEQ = StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == DestineTag);
+            int _FromSlot = 0;
+            int _ToSlot = 0;
+
+            int.TryParse(SourceSlot, out _FromSlot);
+            int.TryParse(DestineSlot, out _ToSlot);
+
+            clsEQ? destineEQ = StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == DestineTag && eq.EndPointOptions.Height == _ToSlot);
             clsEQ sourceEQ = null;
             if (destineEQ == null)
             {
@@ -228,7 +234,7 @@ namespace AGVSystem.Controllers
                 {
                     return new clsAGVSTaskReportResponse { confirm = true };
                 }
-                sourceEQ = StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == SourceTag);
+                sourceEQ = StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == SourceTag && eq.EndPointOptions.Height == _FromSlot);
                 if (sourceEQ == null)
                 {
                     return new clsAGVSTaskReportResponse() { confirm = false, message = $"[StartTransferCargoReport] 找不到Tag為{SourceTag}的起點設備" };
