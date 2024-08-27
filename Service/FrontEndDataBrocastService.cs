@@ -32,8 +32,9 @@ namespace AGVSystem.Service
                 WIPName = wip.EQName,
                 Columns = wip.RackOption.Columns,
                 Rows = wip.RackOption.Rows,
-                Ports = wip.PortsStatus.ToList(),
-                ColumnsTagMap = wip.RackOption.ColumnTagMap
+                Ports = wip.RackOption.MaterialInfoFromEquipment ? wip.GetPortStatusWithEqInfo().ToList() : wip.PortsStatus.ToList(),
+                ColumnsTagMap = wip.RackOption.ColumnTagMap,
+                IsOvenAsRacks = wip.RackOption.MaterialInfoFromEquipment
             }).ToList();
         }
 
