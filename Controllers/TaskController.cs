@@ -49,6 +49,13 @@ namespace AGVSystem.Controllers
         public async Task<IActionResult> Cancel(string task_name)
         {
             logger.Info($"User try cancle Task-{task_name}");
+
+            if (AGVSConfigulator.SysConfigs.BaseOnKGSWebAGVSystem)
+            {
+                await KGSWebAGVSystemAPI.TaskOrder.OrderAPI.CancelTask(task_name);
+                return Ok(true);
+            }
+
             bool canceled = await TaskManager.Cancel(task_name, $"User manual canceled");
             logger.Info($"User try cancle Task-{task_name}---{canceled}");
             return Ok(canceled);
@@ -320,6 +327,21 @@ namespace AGVSystem.Controllers
 
         private async Task<object> AddTask(clsTaskDto taskData, string user = "")
         {
+
+            if (AGVSConfigulator.SysConfigs.BaseOnKGSWebAGVSystem)
+            {
+                KGSWebAGVSystemAPI.TaskOrder.MissionRequestParams kgMissionRequest = taskData.ToKGSMissionRequestParam();
+                try
+                {
+                    await KGSWebAGVSystemAPI.TaskOrder.OrderAPI.AddTask(kgMissionRequest);
+                    return new { confirm = true };
+                }
+                catch (Exception ex)
+                {
+                    return new { confirm = false, message = ex.Message };
+                }
+            }
+
             taskData.DispatcherName = user;
             var result = await TaskManager.AddTask(taskData, TaskManager.TASK_RECIEVE_SOURCE.MANUAL);
             bool showEmptyOrFullContentCheck = false;

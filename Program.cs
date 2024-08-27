@@ -18,6 +18,7 @@ using AGVSystemCommonNet6.Sys;
 using AGVSystemCommonNet6.Vehicle_Control.VCS_ALARM;
 using EquipmentManagment.MainEquipment;
 using EquipmentManagment.Manager;
+using KGSWebAGVSystemAPI.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.AspNetCore.WebSockets;
@@ -30,6 +31,7 @@ using System;
 using System.Net;
 using System.Reflection;
 using System.Text;
+using Task = System.Threading.Tasks.Task;
 
 public class Program
 {
@@ -229,6 +231,10 @@ public static class WebAppInitializer
     private static void ConfigureDatabase(WebApplicationBuilder builder)
     {
         builder.Services.AddDbContext<AGVSDbContext>(options => options.UseSqlServer(AGVSConfigulator.SysConfigs.DBConnection));
+        if (AGVSConfigulator.SysConfigs.BaseOnKGSWebAGVSystem)
+        {
+            builder.Services.AddDbContext<WebAGVSystemContext>(options => options.UseSqlServer(AGVSConfigulator.SysConfigs.KGSWebAGVSystemDBConnection));
+        }
     }
 
     private static void ConfigureHostedServices(WebApplicationBuilder builder)
@@ -336,6 +342,7 @@ public static class WebAppInitializer
         await Task.Delay(3000);
         try
         {
+            clsEQ.WirteOuputEnabled = !AGVSConfigulator.SysConfigs.BaseOnKGSWebAGVSystem;
             StaEQPManagager.InitializeAsync(new clsEQManagementConfigs
             {
                 EQConfigPath = $"{AGVSConfigulator.SysConfigs.EQManagementConfigs.EquipmentManagementConfigFolder}//EQConfigs.json",

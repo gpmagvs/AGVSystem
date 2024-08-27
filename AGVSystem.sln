@@ -13,6 +13,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RosBridgeClient", "..\RosBr
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VMSystem", "..\VMSystem\VMSystem.csproj", "{B6150AF2-FE2D-48C2-83E5-2F879CFB2104}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KGSWebAGVSystemAPI", "..\KGSWebAGVSystemAPI\KGSWebAGVSystemAPI.csproj", "{921A686F-E79A-4455-A8AF-8F2C52EDFFDA}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KGSWebAGVSystemAPITests", "..\KGSWebAGVSystemAPITests\KGSWebAGVSystemAPITests.csproj", "{51379ECB-3151-4424-A20C-7754D4735123}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +43,14 @@ Global
 		{B6150AF2-FE2D-48C2-83E5-2F879CFB2104}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B6150AF2-FE2D-48C2-83E5-2F879CFB2104}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B6150AF2-FE2D-48C2-83E5-2F879CFB2104}.Release|Any CPU.Build.0 = Release|Any CPU
+		{921A686F-E79A-4455-A8AF-8F2C52EDFFDA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{921A686F-E79A-4455-A8AF-8F2C52EDFFDA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{921A686F-E79A-4455-A8AF-8F2C52EDFFDA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{921A686F-E79A-4455-A8AF-8F2C52EDFFDA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{51379ECB-3151-4424-A20C-7754D4735123}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{51379ECB-3151-4424-A20C-7754D4735123}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{51379ECB-3151-4424-A20C-7754D4735123}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{51379ECB-3151-4424-A20C-7754D4735123}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -116,7 +116,7 @@ namespace AGVSystem.Controllers
             var website_config = new
             {
                 AGVSConfigulator.SysConfigs.WebUserLogoutExipreTime,
-                AGVSConfigulator.SysConfigs.FieldName,
+                FieldName = AGVSConfigulator.SysConfigs.BaseOnKGSWebAGVSystem ? $"{AGVSConfigulator.SysConfigs.FieldName}(Middleware)" : AGVSConfigulator.SysConfigs.FieldName,
                 APPVersion = GetAppVersion()
             };
             return Ok(website_config);
