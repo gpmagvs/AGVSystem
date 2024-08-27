@@ -343,6 +343,7 @@ public static class WebAppInitializer
         await Task.Delay(3000);
         try
         {
+            clsEQ.WirteOuputEnabled = !AGVSConfigulator.SysConfigs.BaseOnKGSWebAGVSystem;
             StaEQPManagager.InitializeAsync(new clsEQManagementConfigs
             {
                 EQConfigPath = $"{AGVSConfigulator.SysConfigs.EQManagementConfigs.EquipmentManagementConfigFolder}//EQConfigs.json",

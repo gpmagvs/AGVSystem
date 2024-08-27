@@ -70,7 +70,7 @@ namespace AGVSystem.TaskManagers
             if (MapPoint.StationType == STATION_TYPE.EQ || MapPoint.StationType == STATION_TYPE.EQ_LD || MapPoint.StationType == STATION_TYPE.EQ_ULD ||
                 (MapPoint.StationType == STATION_TYPE.Buffer_EQ && LayerorSlot == 0))
             {
-                clsEQ? Eq = StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == station_tag);
+                clsEQ? Eq = StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == station_tag && eq.EndPointOptions.Height == LayerorSlot);
                 if (Eq == null)
                     return new(false, ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, $"設備站點TAG-{station_tag},EQ不存在於當前地圖", null, null);
 
@@ -102,7 +102,7 @@ namespace AGVSystem.TaskManagers
                     //    return new(false, ALARMS.EQ_LOAD_REQ_BUT_RACK_FULL_OR_EMPTY_IS_UNKNOWN, $"設備[{Eq.EQName}] 無法確定要載入空框或實框", null, null);
                 }
                 ////檢查貨物轉向機構位置狀態(例如平對平設備)
-                if (Eq.EndPointOptions.HasCstSteeringMechanism && Eq.TB_Down_Pose != false)
+                if (Eq.EndPointOptions.HasCstSteeringMechanism && Eq.TB_Down_Pose != true)
                 {
                     return new(false, ALARMS.EQ_LOAD_REQUEST_ON_BUT_POSE_NOT_DOWN, $"設備[{Eq.EQName}] 貨物轉向機構位置非位於低位", null, null);
                 }
