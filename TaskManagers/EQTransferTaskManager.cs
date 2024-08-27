@@ -102,7 +102,7 @@ namespace AGVSystem.TaskManagers
                     //    return new(false, ALARMS.EQ_LOAD_REQ_BUT_RACK_FULL_OR_EMPTY_IS_UNKNOWN, $"設備[{Eq.EQName}] 無法確定要載入空框或實框", null, null);
                 }
                 ////檢查貨物轉向機構位置狀態(例如平對平設備)
-                if (Eq.EndPointOptions.HasCstSteeringMechanism && Eq.TB_Down_Pose != false)
+                if (Eq.EndPointOptions.HasCstSteeringMechanism && Eq.TB_Down_Pose != true)
                 {
                     return new(false, ALARMS.EQ_LOAD_REQUEST_ON_BUT_POSE_NOT_DOWN, $"設備[{Eq.EQName}] 貨物轉向機構位置非位於低位", null, null);
                 }
