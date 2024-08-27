@@ -239,6 +239,7 @@ public static class WebAppInitializer
         builder.Services.AddHostedService<PCPerformanceService>();
         builder.Services.AddScoped<MeanTimeQueryService>();
         builder.Services.AddScoped<LogDownlodService>();
+        builder.Services.AddScoped<StationSelectService>();
     }
 
     private static void ConfigureCors(WebApplicationBuilder builder)
