@@ -1,6 +1,4 @@
 ﻿using AGVSystem.Models.Map;
-using AGVSystem.Models.TaskAllocation;
-using AGVSystem.Models.TaskAllocation.HotRun;
 using AGVSystem.Service;
 using AGVSystem.TaskManagers;
 using AGVSystemCommonNet6;
@@ -9,28 +7,15 @@ using AGVSystemCommonNet6.AGVDispatch.Messages;
 using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.DATABASE;
-using AGVSystemCommonNet6.Log;
 using AGVSystemCommonNet6.MAP;
 using AGVSystemCommonNet6.Microservices.MCS;
 using AGVSystemCommonNet6.Microservices.ResponseModel;
-using AGVSystemCommonNet6.User;
-using AGVSystemCommonNet6.Vehicle_Control.VCS_ALARM;
 using EquipmentManagment.MainEquipment;
 using EquipmentManagment.Manager;
 using EquipmentManagment.WIP;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using Newtonsoft.Json;
-using NuGet.Configuration;
-using NuGet.Protocol;
-using RosSharp.RosBridgeClient.MessageTypes.ObjectRecognition;
-using System.Data;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
-using static SQLite.SQLite3;
+using NLog;
 
 namespace AGVSystem.Controllers
 {
@@ -41,6 +26,8 @@ namespace AGVSystem.Controllers
         private AGVSDbContext _TaskDBContent;
 
         private UserValidationService UserValidation { get; }
+
+        private Logger logger = LogManager.GetCurrentClassLogger();
 
         public TaskController(AGVSDbContext content, UserValidationService userValidation)
         {
@@ -61,9 +48,9 @@ namespace AGVSystem.Controllers
         [Authorize]
         public async Task<IActionResult> Cancel(string task_name)
         {
-            LOG.TRACE($"User try cancle Task-{task_name}");
+            logger.Info($"User try cancle Task-{task_name}");
             bool canceled = await TaskManager.Cancel(task_name, $"User manual canceled");
-            LOG.TRACE($"User try cancle Task-{task_name}---{canceled}");
+            logger.Info($"User try cancle Task-{task_name}---{canceled}");
             return Ok(canceled);
         }
 
@@ -196,7 +183,7 @@ namespace AGVSystem.Controllers
                     {
                         return Ok(new clsAGVSTaskReportResponse() { confirm = false, message = $"{mainEQ.EQName} ToEQUp DO ON的過程中發生錯誤:{ex.Message}" });
                     }
-                    LOG.INFO($"Get AGV LD.ULD Task Start At Tag {tag}-Action={action}. TO Eq Up DO ON", color: ConsoleColor.Green);
+                    logger.Info($"Get AGV LD.ULD Task Start At Tag {tag}-Action={action}. TO Eq Up DO ON");
                     return Ok(new clsAGVSTaskReportResponse() { confirm = true, message = $"{mainEQ.EQName} ToEQUp DO ON" });
                 }
                 else if (result.objtype == typeof(clsPortOfRack))
@@ -274,7 +261,7 @@ namespace AGVSystem.Controllers
             {
                 result.mainEQ.CancelToEQUpAndLow();
                 result.mainEQ.CancelReserve();
-                LOG.INFO($"Get AGV LD.ULD Task Finish At Tag {tag}-Action={action}. TO Eq DO ALL OFF", color: ConsoleColor.Green);
+                logger.Info($"Get AGV LD.ULD Task Finish At Tag {tag}-Action={action}. TO Eq DO ALL OFF");
                 return new clsAGVSTaskReportResponse() { confirm = true, message = $"{result.mainEQ.EQName} ToEQUp DO OFF" };
             }
             else
