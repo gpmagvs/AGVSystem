@@ -8,13 +8,16 @@ using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.MAP;
+using AGVSystemCommonNet6.Material;
 using AGVSystemCommonNet6.Microservices.MCS;
 using AGVSystemCommonNet6.Microservices.ResponseModel;
+using EquipmentManagment.Device;
 using EquipmentManagment.MainEquipment;
 using EquipmentManagment.Manager;
 using EquipmentManagment.WIP;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using NLog;
 
 namespace AGVSystem.Controllers
@@ -256,7 +259,7 @@ namespace AGVSystem.Controllers
         }
 
         [HttpGet("LoadUnloadTaskFinish")]
-        public async Task<clsAGVSTaskReportResponse> LoadUnloadTaskFinish(int tag, ACTION_TYPE action)
+        public async Task<clsAGVSTaskReportResponse> LoadUnloadTaskFinish(string taskID, int tag, ACTION_TYPE action)
         {
             if (action != ACTION_TYPE.Load && action != ACTION_TYPE.Unload)
                 return new clsAGVSTaskReportResponse() { confirm = false, message = "Action should equal Load or Unlaod" };
@@ -264,15 +267,39 @@ namespace AGVSystem.Controllers
             (bool existDevice, clsEQ mainEQ, clsRack rack) result = TryGetEndDevice(tag);
             if (!result.existDevice)
                 return new clsAGVSTaskReportResponse() { confirm = false, message = $"[LoadUnloadTaskFinish] 找不到Tag為{tag}的設備" };
-            if (result.mainEQ != null)
+
+            EndPointDeviceAbstract endPoint = null;
+            try
             {
-                result.mainEQ.CancelToEQUpAndLow();
-                result.mainEQ.CancelReserve();
-                logger.Info($"Get AGV LD.ULD Task Finish At Tag {tag}-Action={action}. TO Eq DO ALL OFF");
-                return new clsAGVSTaskReportResponse() { confirm = true, message = $"{result.mainEQ.EQName} ToEQUp DO OFF" };
+                if (result.mainEQ != null)
+                {
+                    endPoint = result.mainEQ;
+                    result.mainEQ.CancelToEQUpAndLow();
+                    result.mainEQ.CancelReserve();
+                    logger.Info($"Get AGV LD.ULD Task Finish At Tag {tag}-Action={action}. TO Eq DO ALL OFF");
+                    return new clsAGVSTaskReportResponse() { confirm = true, message = $"{result.mainEQ.EQName} ToEQUp DO OFF" };
+                }
+                else
+                {
+                    endPoint = result.rack;
+                    return new clsAGVSTaskReportResponse() { confirm = true, message = $"{action} from {result.rack} Finish" };
+                }
             }
-            else
-                return new clsAGVSTaskReportResponse() { confirm = true, message = $"{action} from {result.rack} Finish" };
+            finally
+            {
+                clsTaskDto? order = _TaskDBContent.Tasks.AsNoTracking().FirstOrDefault(od => od.TaskName == taskID);
+                if (order != null && order.State == TASK_RUN_STATUS.NAVIGATING || order.State == TASK_RUN_STATUS.ACTION_FINISH)
+                {
+                    string? carrierID = action == ACTION_TYPE.Unload ? "" : order?.Actual_Carrier_ID;
+                    string slot = "";
+                    if (order.Action == ACTION_TYPE.Carry)
+                        slot = action == ACTION_TYPE.Unload ? order.From_Slot : order.To_Slot;
+                    else
+                        slot = order.To_Slot;
+                    endPoint.UpdateCarrierInfo(tag, carrierID, int.Parse(slot));
+                }
+                //endPoint.UpdateCarrierInfo(tag,)
+            }
         }
         [HttpGet("LDULDOrderStart")]
         public async Task<clsAGVSTaskReportResponse> LDULDOrderStart(int from, int FromSlot, int to, int ToSlot, ACTION_TYPE action, bool isSourceAGV)
