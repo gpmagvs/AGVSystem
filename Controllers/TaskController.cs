@@ -1,4 +1,5 @@
 ﻿using AGVSystem.Models.Map;
+using AGVSystem.Models.Sys;
 using AGVSystem.Service;
 using AGVSystem.TaskManagers;
 using AGVSystemCommonNet6;
@@ -235,9 +236,20 @@ namespace AGVSystem.Controllers
                 if (sourceEQ == null)
                 {
                     return new clsAGVSTaskReportResponse() { confirm = false, message = $"[StartTransferCargoReport] 找不到Tag為{SourceTag}的起點設備" };
-
                 }
-                else if (sourceEQ.EndPointOptions.CheckRackContentStateIOSignal || destineEQ.EndPointOptions.CheckRackContentStateIOSignal)
+
+                if (SystemModes.TransferTaskMode == AGVSystemCommonNet6.AGVDispatch.RunMode.TRANSFER_MODE.LOCAL_AUTO && sourceEQ.EndPointOptions.IsEmulation)
+                {
+                    var eqEmu = StaEQPEmulatorsManagager.GetEQEmuByName(sourceEQ.EQName);
+                    eqEmu.SetStatusBUSY();
+                    _ = Task.Run(async () =>
+                    {
+                        await Task.Delay(1000);
+                        eqEmu.SetStatusLoadable();
+                    });
+                }
+
+                if (sourceEQ.EndPointOptions.CheckRackContentStateIOSignal || destineEQ.EndPointOptions.CheckRackContentStateIOSignal)
                 {
 
                     RACK_CONTENT_STATE rackContentStateOfSourceEQ = StaEQPManagager.CargoStartTransferToDestineHandler(sourceEQ, destineEQ);
@@ -261,6 +273,9 @@ namespace AGVSystem.Controllers
         [HttpGet("LoadUnloadTaskFinish")]
         public async Task<clsAGVSTaskReportResponse> LoadUnloadTaskFinish(string taskID, int tag, ACTION_TYPE action)
         {
+            clsTaskDto? order = _TaskDBContent.Tasks.AsNoTracking().FirstOrDefault(od => od.TaskName == taskID);
+            if (order == null)
+                return new clsAGVSTaskReportResponse() { confirm = false, message = $"Task ID={taskID} not at task table of database" };
             if (action != ACTION_TYPE.Load && action != ACTION_TYPE.Unload)
                 return new clsAGVSTaskReportResponse() { confirm = false, message = "Action should equal Load or Unlaod" };
 
@@ -269,13 +284,20 @@ namespace AGVSystem.Controllers
                 return new clsAGVSTaskReportResponse() { confirm = false, message = $"[LoadUnloadTaskFinish] 找不到Tag為{tag}的設備" };
 
             EndPointDeviceAbstract endPoint = null;
+            bool DelayReserveCancel = SystemModes.RunMode == AGVSystemCommonNet6.AGVDispatch.RunMode.RUN_MODE.RUN &&
+                                                             SystemModes.TransferTaskMode == AGVSystemCommonNet6.AGVDispatch.RunMode.TRANSFER_MODE.LOCAL_AUTO &&
+                                                             order?.Action == ACTION_TYPE.Carry;
             try
             {
                 if (result.mainEQ != null)
                 {
                     endPoint = result.mainEQ;
-                    result.mainEQ.CancelToEQUpAndLow();
-                    result.mainEQ.CancelReserve();
+                    _ = Task.Run(async () =>
+                    {
+                        result.mainEQ.CancelToEQUpAndLow();
+                        await Task.Delay(DelayReserveCancel ? 1000 : 1);
+                        result.mainEQ.CancelReserve();
+                    });
                     logger.Info($"Get AGV LD.ULD Task Finish At Tag {tag}-Action={action}. TO Eq DO ALL OFF");
                     return new clsAGVSTaskReportResponse() { confirm = true, message = $"{result.mainEQ.EQName} ToEQUp DO OFF" };
                 }
@@ -287,7 +309,21 @@ namespace AGVSystem.Controllers
             }
             finally
             {
-                clsTaskDto? order = _TaskDBContent.Tasks.AsNoTracking().FirstOrDefault(od => od.TaskName == taskID);
+
+                if (order.Action == ACTION_TYPE.Carry && action == ACTION_TYPE.Load)
+                {
+                    EQTransferTaskManager.HandleTransferOrderFinish(order);
+                }
+                if (SystemModes.TransferTaskMode == AGVSystemCommonNet6.AGVDispatch.RunMode.TRANSFER_MODE.LOCAL_AUTO && action == ACTION_TYPE.Load && endPoint.EndPointOptions.IsEmulation)
+                {
+                    var eqEmu = StaEQPEmulatorsManagager.GetEQEmuByName(endPoint.EQName);
+                    eqEmu.SetStatusBUSY();
+                    _ = Task.Run(async () =>
+                    {
+                        await Task.Delay(1000);
+                        //eqEmu.SetStatusUnloadable();
+                    });
+                }
                 if (order != null && order.State == TASK_RUN_STATUS.NAVIGATING || order.State == TASK_RUN_STATUS.ACTION_FINISH)
                 {
                     string? carrierID = action == ACTION_TYPE.Unload ? "" : order?.Actual_Carrier_ID;
