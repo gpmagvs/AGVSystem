@@ -1,29 +1,19 @@
 ﻿using AGVSystem.Models.Map;
 using AGVSystem.Models.Sys;
+using AGVSystemCommonNet6;
+using AGVSystemCommonNet6.AGVDispatch;
 using AGVSystemCommonNet6.AGVDispatch.Messages;
+using AGVSystemCommonNet6.AGVDispatch.RunMode;
 using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.DATABASE;
-
-using AGVSystemCommonNet6;
-using static AGVSystemCommonNet6.clsEnums;
-using AGVSystemCommonNet6.Log;
 using AGVSystemCommonNet6.MAP;
-using AGVSystemCommonNet6.DATABASE.Helpers;
-using AGVSystemCommonNet6.AGVDispatch.RunMode;
-using EquipmentManagment.MainEquipment;
-using EquipmentManagment.Device;
-using EquipmentManagment.Manager;
-using AGVSystemCommonNet6.AGVDispatch;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.CodeAnalysis.Emit;
-using AGVSystemCommonNet6.Microservices.VMS;
 using EquipmentManagment.Device.Options;
-using static AGVSystemCommonNet6.MAP.MapPoint;
+using EquipmentManagment.MainEquipment;
+using EquipmentManagment.Manager;
 using EquipmentManagment.WIP;
-using static AGVSystemCommonNet6.GPMRosMessageNet.Services.EquipmentStateRequest;
-using NuGet.Protocol;
+using Microsoft.EntityFrameworkCore;
 using NLog;
+using static AGVSystemCommonNet6.MAP.MapPoint;
 
 namespace AGVSystem.TaskManagers
 {
@@ -36,7 +26,11 @@ namespace AGVSystem.TaskManagers
             //clsEQ.OnEqUnloadRequesting += ClsEQ_OnEqUnloadRequesting;
             SystemModes.OnRunModeON += SwitchToRunMode;
             SystemModes.OnRunModeOFF += SwitchToMaintainMode;
+            TransferTaskPairWorker();
         }
+        /// <summary>
+        /// 儲存自動搬運任務, key=> SourceEQ , value=>DestineEQ
+        /// </summary>
         public static Dictionary<clsEQ, clsEQ> UnloadEQQueueing { get; private set; } = new Dictionary<clsEQ, clsEQ>();
         internal static async void SwitchToMaintainMode()
         {
@@ -44,7 +38,7 @@ namespace AGVSystem.TaskManagers
             {
                 await Task.Delay(1);
             }
-            LOG.WARN("Maintain Mode Start");
+            logger.Warn("Maintain Mode Start");
             //取消預約所有機台
             StaEQPManagager.MainEQList.FindAll(eq => eq.CMD_Reserve_Low | eq.CMD_Reserve_Up).ForEach(eq =>
             {
@@ -55,7 +49,7 @@ namespace AGVSystem.TaskManagers
 
         internal static async void SwitchToRunMode()
         {
-            LOG.WARN("Run Mode Start");
+            logger.Warn("Run Mode Start");
         }
         public static (bool confirm, ALARMS alarm_code, string message, object obj, Type objtype) CheckLoadUnloadStation(int station_tag, int LayerorSlot, ACTION_TYPE actiontype, bool check_rack_move_out_is_empty_or_full = true, bool bypasseqandrackckeck = false)
         {
@@ -233,6 +227,109 @@ namespace AGVSystem.TaskManagers
                 else
                     return new(true, ALARMS.NONE, "");
             }
+        }
+
+
+        public static void HandleTransferOrderFinish(clsTaskDto TransferOrder)
+        {
+            KeyValuePair<clsEQ, clsEQ> storedTransferEQPair = UnloadEQQueueing.FirstOrDefault(kp => kp.Key.EndPointOptions.TagID == TransferOrder.From_Station_Tag && kp.Value.EndPointOptions.TagID == TransferOrder.To_Station_Tag);
+            if (storedTransferEQPair.Key != null && storedTransferEQPair.Value != null)
+            {
+                UnloadEQQueueing.Remove(storedTransferEQPair.Key);
+            }
+        }
+
+        static async Task TransferTaskPairWorker()
+        {
+            _ = Task.Run(async () =>
+            {
+                while (true)
+                {
+                    await Task.Delay(10);
+                    if (SystemModes.RunMode == RUN_MODE.MAINTAIN || SystemModes.TransferTaskMode == TRANSFER_MODE.MANUAL)
+                    {
+                        UnloadEQQueueing.Clear();
+                        AutoRunning = false;
+                        continue;
+                    }
+                    AutoRunning = true;
+
+                    List<string> waitOrRunningSouceEQTagStrList = DatabaseCaches.TaskCaches.InCompletedTasks.Select(task => task.From_Station)
+                                                                                                       .ToList();
+                    List<clsEQ> unload_req_eq_list = StaEQPManagager.MainEQList.FindAll(eq => eq.lduld_type == EQLDULD_TYPE.ULD || eq.lduld_type == EQLDULD_TYPE.LDULD)
+                                                                                .FindAll(eq => eq.IsCreateUnloadTaskAble() && !UnloadEQQueueing.TryGetValue(eq, out clsEQ _eq))
+                                                                                .Where(eq => !waitOrRunningSouceEQTagStrList.Contains(eq.EndPointOptions.TagID + ""))
+                                                                                .OrderBy(eq => eq.UnloadRequestRaiseTime).ToList();
+
+                    if (unload_req_eq_list.Count > 0)
+                    {
+                        foreach (clsEQ sourceEQ in unload_req_eq_list)
+                        {
+                            List<clsEQ> downstreamLoadableEQList = sourceEQ.DownstremEQ.FindAll(downstrem_eq => downstrem_eq.IsCreateLoadTaskAble());
+                            List<string> waitOrRunningEQTagStrList = DatabaseCaches.TaskCaches.InCompletedTasks.Select(task => task.To_Station)
+                                                                                                                .ToList();
+                            downstreamLoadableEQList = downstreamLoadableEQList.Where(item => !waitOrRunningEQTagStrList.Contains(item.EndPointOptions.TagID.ToString())).ToList();
+
+                            if (sourceEQ.EndPointOptions.CheckRackContentStateIOSignal)
+                            {
+                                downstreamLoadableEQList = downstreamLoadableEQList.Where(downstreamEQ => downstreamEQ.EndPointOptions.IsFullEmptyUnloadAsVirtualInput ? true : (sourceEQ.Full_RACK_To_LDULD == downstreamEQ.Full_RACK_To_LDULD) || (sourceEQ.Empty_RACK_To_LDULD == downstreamEQ.Empty_RACK_To_LDULD))
+                                                                                   .ToList();
+                            }
+
+                            if (downstreamLoadableEQList.Count == 0)
+                                continue;
+                            clsEQ destineEQ = downstreamLoadableEQList.OrderBy(eq => _CalculateDistanceFromSourceToDestine(eq, sourceEQ)).First();
+
+                            double _CalculateDistanceFromSourceToDestine(clsEQ destineEQ, clsEQ sourceEQ)
+                            {
+                                MapPoint destinePt = AGVSMapManager.CurrentMap.Points.Values.FirstOrDefault(pt => pt.TagNumber == destineEQ.EndPointOptions.TagID);
+                                MapPoint sourcePt = AGVSMapManager.CurrentMap.Points.Values.FirstOrDefault(pt => pt.TagNumber == sourceEQ.EndPointOptions.TagID);
+                                double diffX = destinePt.X - sourcePt.X;
+                                double diffY = destinePt.Y - sourcePt.Y;
+                                return Math.Sqrt(diffX * diffX + diffY * diffY);
+                            }
+
+                            var taskOrder = new clsTaskDto
+                            {
+                                Action = ACTION_TYPE.Carry,
+                                DesignatedAGVName = "",
+                                From_Station = sourceEQ.EndPointOptions.TagID.ToString(),
+                                To_Station = destineEQ.EndPointOptions.TagID.ToString(),
+                                TaskName = $"*Local-{DateTime.Now.ToString("yyyyMMddHHmmssffff")}",
+                                DispatcherName = "Local_Auto",
+                                From_Slot = sourceEQ.EndPointOptions.Height + "",
+                                To_Slot = destineEQ.EndPointOptions.Height + "",
+                                Priority = 80,
+                                Height = destineEQ.EndPointOptions.Height
+                            };
+                            var taskAddedResult = await TaskManager.AddTask(taskOrder);
+                            if (taskAddedResult.confirm)
+                            {
+                                UnloadEQQueueing.Add(sourceEQ, destineEQ); ;
+                                logger.Info($"[Local Auto EQ Transfer] Task-{taskOrder.TaskName}-(From={taskOrder.From_Station} To={taskOrder.To_Station}>> Execute AGV={taskOrder.DesignatedAGVName}) is added.");
+                            }
+                            else
+                            {
+                                logger.Error($"[Local Auto EQ Transfer] Task-{taskOrder.TaskName}-(From={taskOrder.From_Station} To={taskOrder.To_Station}>> Execute AGV={taskOrder.DesignatedAGVName}) add FAILURE,{taskAddedResult.alarm_code}");
+                                AlarmManagerCenter.AddAlarmAsync(new clsAlarmDto
+                                {
+                                    Time = DateTime.Now,
+                                    AlarmCode = (int)taskAddedResult.alarm_code,
+                                    Description_Zh = taskAddedResult.alarm_code.ToString(),
+                                    Description_En = taskAddedResult.alarm_code.ToString(),
+                                    Level = ALARM_LEVEL.ALARM,
+                                    Task_Name = taskOrder.TaskName,
+                                    Source = ALARM_SOURCE.AGVS,
+                                    Equipment_Name = taskOrder.DesignatedAGVName,
+                                });
+                            }
+                        }
+
+                    }
+
+                }
+                AutoRunning = false;
+            });
         }
 
     }
