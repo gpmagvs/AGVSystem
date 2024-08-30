@@ -27,5 +27,10 @@ namespace AGVSystem.Controllers
         {
             return stationSelectService.GetDestineStationOptions(userRole);
         }
+        [HttpGet("GetDestineStationOptionsWithDestineSelected")]
+        public async Task<List<StationSelectOption>> GetDestineStationOptionsWithDestineSelected(ERole userRole, int sourceTag, int sourceSlot)
+        {
+            return stationSelectService.GetDestineStationOptions(userRole);
+        }
     }
 }
