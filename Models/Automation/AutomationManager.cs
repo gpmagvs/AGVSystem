@@ -47,6 +47,16 @@ namespace AGVSystem.Models.Automation
                     ImmediateStart = true,
                 }
             });
+            AddAutomationTask(new AvailabilitysSaveAutomation()
+            {
+                options = new AutomationOptions()
+                {
+                    TaskName = "Availabilitys Report Save Automaiton",
+                    Period = AutomationOptions.PERIOD.DAILY,
+                    HourInDaily = AGVSConfigulator.SysConfigs.AutoSendDailyData.SaveTime,
+                    ImmediateStart = true,
+                }
+            });
         }
 
         private static void Automation_OnAutomationTaskStart(object? sender, EventArgs e)
