@@ -342,7 +342,7 @@ public static class WebAppInitializer
                 ChargeStationConfigPath = $"{AGVSConfigulator.SysConfigs.EQManagementConfigs.EquipmentManagementConfigFolder}//ChargStationConfigs.json",
             });
 
-            //await clsStationInfoManager.ScanWIP_EQ();
+            await clsStationInfoManager.ScanWIP_EQ();
         }
         catch (Exception ex)
         {
