@@ -58,6 +58,12 @@ namespace AGVSystem.Models.Automation
                 return (false, ex.Message);
             }
         }
+        /// <summary>
+        /// 寫出csv檔
+        /// </summary>
+        /// <param name="dataTable"></param>
+        /// <param name="filePath"></param>
+        /// <param name="encoding"></param>
         private void WriteDataTableToCsv(DataTable dataTable, string filePath, Encoding encoding)
         {
             using (StreamWriter writer = new StreamWriter(filePath, false, encoding))
