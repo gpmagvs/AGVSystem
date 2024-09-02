@@ -212,51 +212,26 @@ namespace AGVSystem.Controllers
         public async Task<clsAGVSTaskReportResponse> StartTransferCargoReport(string AGVName, int SourceTag, int DestineTag, string SourceSlot, string DestineSlot, bool IsSourceAGV = false)
         {
             var _response = new clsAGVSTaskReportResponse();
-
-            int _FromSlot = 0;
-            int _ToSlot = 0;
-
-            int.TryParse(SourceSlot, out _FromSlot);
-            int.TryParse(DestineSlot, out _ToSlot);
-
-            clsEQ? destineEQ = StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == DestineTag && eq.EndPointOptions.Height == _ToSlot);
-            clsEQ sourceEQ = null;
-            if (destineEQ == null)
-            {
-
+            (bool existDevice, clsEQ mainEQ, clsRack rack) destineDevice = TryGetEndDevice(DestineTag);
+            if (destineDevice.existDevice == false)
                 return new clsAGVSTaskReportResponse() { confirm = false, message = $"[StartTransferCargoReport] 找不到Tag為{DestineTag}的終點設備" };
-            }
             else
             {
                 if (IsSourceAGV)
-                {
                     return new clsAGVSTaskReportResponse { confirm = true };
-                }
-                sourceEQ = StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == SourceTag && eq.EndPointOptions.Height == _FromSlot);
-                if (sourceEQ == null)
-                {
+                (bool existDevice, clsEQ mainEQ, clsRack rack) sourceDevice = TryGetEndDevice(SourceTag);
+                if (sourceDevice.existDevice == false)
                     return new clsAGVSTaskReportResponse() { confirm = false, message = $"[StartTransferCargoReport] 找不到Tag為{SourceTag}的起點設備" };
-                }
-
-                if (SystemModes.TransferTaskMode == AGVSystemCommonNet6.AGVDispatch.RunMode.TRANSFER_MODE.LOCAL_AUTO && sourceEQ.EndPointOptions.IsEmulation)
+                else if (sourceDevice.rack != null)
+                    return new clsAGVSTaskReportResponse { confirm = true };
+                else if (destineDevice.rack != null)
+                    return new clsAGVSTaskReportResponse { confirm = true };
+                else if (sourceDevice.mainEQ.EndPointOptions.CheckRackContentStateIOSignal || destineDevice.mainEQ.EndPointOptions.CheckRackContentStateIOSignal)
                 {
-                    var eqEmu = StaEQPEmulatorsManagager.GetEQEmuByName(sourceEQ.EQName);
-                    eqEmu.SetStatusBUSY();
-                    _ = Task.Run(async () =>
-                    {
-                        await Task.Delay(1000);
-                        eqEmu.SetStatusLoadable();
-                    });
-                }
-
-                if (sourceEQ.EndPointOptions.CheckRackContentStateIOSignal || destineEQ.EndPointOptions.CheckRackContentStateIOSignal)
-                {
-
-                    RACK_CONTENT_STATE rackContentStateOfSourceEQ = StaEQPManagager.CargoStartTransferToDestineHandler(sourceEQ, destineEQ);
+                    RACK_CONTENT_STATE rackContentStateOfSourceEQ = StaEQPManagager.CargoStartTransferToDestineHandler(sourceDevice.mainEQ, destineDevice.mainEQ);
                     if (rackContentStateOfSourceEQ == RACK_CONTENT_STATE.UNKNOWN)
                     {
                         return new clsAGVSTaskReportResponse() { confirm = false, AlarmCode = ALARMS.EQ_LOAD_REQ_BUT_RACK_FULL_OR_EMPTY_IS_UNKNOWN, message = $"Task Abort_起點設備RACK空框/實框狀態未知" };
-                        //return new clsAGVSTaskReportResponse() { confirm = true, AlarmCode = ALARMS.EQ_LOAD_REQ_BUT_RACK_FULL_OR_EMPTY_IS_UNKNOWN, message = $"Task Abort_起點設備RACK空框/實框狀態未知" };
                     }
                     else
                     {
@@ -264,9 +239,7 @@ namespace AGVSystem.Controllers
                     }
                 }
                 else
-                {
-                    return new clsAGVSTaskReportResponse { confirm = true };
-                }
+                { return new clsAGVSTaskReportResponse { confirm = true }; }
             }
         }
 
@@ -384,7 +357,7 @@ namespace AGVSystem.Controllers
         private (bool existDevice, clsEQ mainEQ, clsRack rack) TryGetEndDevice(int tag)
         {
             var Eq = StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == tag);
-            var Rack = StaEQPManagager.RacksList.FirstOrDefault(eq => eq.EndPointOptions.TagID == tag);
+            var Rack = StaEQPManagager.RacksList.FirstOrDefault(x => x.PortsStatus.Any(p => p.TagNumbers.Contains(tag)));
             return (Eq != null || Rack != null, Eq, Rack);
         }
 

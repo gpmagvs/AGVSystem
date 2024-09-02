@@ -32,7 +32,7 @@ namespace AGVSystem.Models.Automation
                     TaskName = "Alarm Report Save Automaiton",
                     Period = AutomationOptions.PERIOD.DAILY,
                     HourInDaily = AGVSConfigulator.SysConfigs.AutoSendDailyData.SaveTime,
-                    ImmediateStart = true,
+                    ImmediateStart = false,
                 }
             });
 
@@ -44,7 +44,17 @@ namespace AGVSystem.Models.Automation
                     TaskName = "Task History Report Save Automaiton",
                     Period = AutomationOptions.PERIOD.DAILY,
                     HourInDaily = AGVSConfigulator.SysConfigs.AutoSendDailyData.SaveTime,
-                    ImmediateStart = true,
+                    ImmediateStart = false,
+                }
+            });
+            AddAutomationTask(new AvailabilitysSaveAutomation()
+            {
+                options = new AutomationOptions()
+                {
+                    TaskName = "Availabilitys Report Save Automaiton",
+                    Period = AutomationOptions.PERIOD.DAILY,
+                    HourInDaily = AGVSConfigulator.SysConfigs.AutoSendDailyData.SaveTime,
+                    ImmediateStart = false,
                 }
             });
         }
