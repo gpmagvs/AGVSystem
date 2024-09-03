@@ -17,6 +17,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KGSWebAGVSystemAPI", "..\KG
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KGSWebAGVSystemAPITests", "..\KGSWebAGVSystemAPITests\KGSWebAGVSystemAPITests.csproj", "{51379ECB-3151-4424-A20C-7754D4735123}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AGVSystemTests", "..\AGVSystemTests\AGVSystemTests.csproj", "{9ABAA41E-2BBD-414A-BC0F-3EE686663E70}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,6 +53,10 @@ Global
 		{51379ECB-3151-4424-A20C-7754D4735123}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{51379ECB-3151-4424-A20C-7754D4735123}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{51379ECB-3151-4424-A20C-7754D4735123}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9ABAA41E-2BBD-414A-BC0F-3EE686663E70}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9ABAA41E-2BBD-414A-BC0F-3EE686663E70}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9ABAA41E-2BBD-414A-BC0F-3EE686663E70}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9ABAA41E-2BBD-414A-BC0F-3EE686663E70}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
