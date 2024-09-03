@@ -5,6 +5,7 @@ using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.Log;
 using AGVSystemCommonNet6.Microservices.MCS;
 using AGVSystemCommonNet6.Microservices.VMS;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
@@ -120,6 +121,12 @@ namespace AGVSystem.Controllers
                 APPVersion = GetAppVersion()
             };
             return Ok(website_config);
+        }
+
+        [HttpGet("SystemConfigs")]
+        public async Task<IActionResult> SystemConfigs()
+        {
+            return Ok(AGVSConfigulator.SysConfigs);
         }
         private string GetAppVersion()
         {
