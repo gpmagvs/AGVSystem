@@ -239,6 +239,7 @@ public static class WebAppInitializer
 
     private static void ConfigureHostedServices(WebApplicationBuilder builder)
     {
+        builder.Services.AddHostedService<ThirdPartyProgramStartService>();
         builder.Services.AddHostedService<DatabaseBackgroundService>();
         builder.Services.AddHostedService<VehicleLocationMonitorBackgroundService>();
         builder.Services.AddHostedService<FrontEndDataBrocastService>();

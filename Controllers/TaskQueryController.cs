@@ -65,13 +65,6 @@ namespace AGVSystem.Controllers
             fileContentResult.FileDownloadName = "filename.ext";
             return fileContentResult;
         }
-        public class Taskquery_options
-        {
-            public DateTime StartTime { get; set; }
-            public DateTime EndTime { get; set; }
-
-            public string AGV_Name { get; set; } = "ALL";
-        }
 
         [HttpGet("GetTaskStateByID")]
         public async Task<IActionResult> GetTaskStateByID(string TaskName)
@@ -118,6 +111,13 @@ namespace AGVSystem.Controllers
             }
             return Ok();
         }
-
+        [HttpPost("CreateTodayTaskHistory")]
+        public async Task<IActionResult> CreateTodayTaskHistory()
+        {
+            DateTime start = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, 0, 0, 0);
+            DateTime end = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, 23, 59, 59);
+            TaskDatabaseHelper.AutoSaveTocsv(start, end);
+            return Ok();
+        }
     }
 }
