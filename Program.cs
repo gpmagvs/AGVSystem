@@ -344,11 +344,15 @@ public static class WebAppInitializer
         try
         {
             clsEQ.WirteOuputEnabled = !AGVSConfigulator.SysConfigs.BaseOnKGSWebAGVSystem;
+
+            string eqConfigsStoreFolder = AGVSConfigulator.SysConfigs.EQManagementConfigs.EquipmentManagementConfigFolder;
+
             StaEQPManagager.InitializeAsync(new clsEQManagementConfigs
             {
-                EQConfigPath = $"{AGVSConfigulator.SysConfigs.EQManagementConfigs.EquipmentManagementConfigFolder}//EQConfigs.json",
-                WIPConfigPath = $"{AGVSConfigulator.SysConfigs.EQManagementConfigs.EquipmentManagementConfigFolder}//WIPConfigs.json",
-                ChargeStationConfigPath = $"{AGVSConfigulator.SysConfigs.EQManagementConfigs.EquipmentManagementConfigFolder}//ChargStationConfigs.json",
+                EQConfigPath = $"{eqConfigsStoreFolder}//EQConfigs.json",
+                WIPConfigPath = $"{eqConfigsStoreFolder}//WIPConfigs.json",
+                ChargeStationConfigPath = $"{eqConfigsStoreFolder}//ChargStationConfigs.json",
+                EQGroupConfigPath = $"{eqConfigsStoreFolder}//EQGroupConfigs.json",
             });
 
             await clsStationInfoManager.ScanWIP_EQ();
