@@ -10,6 +10,8 @@ namespace AGVSystem.Models.Automation
         public event EventHandler OnAutomationTaskStart;
         public event EventHandler<string> OnAutomationTaskExecuteFail;
         public event EventHandler<string> OnAutomationTaskExecuteSuccess;
+        public int retryCnt { get; internal set; } = 0;
+
         public async Task Start()
         {
 
@@ -22,6 +24,7 @@ namespace AGVSystem.Models.Automation
             {
                 if (_IsTimeMatch())
                 {
+                    retryCnt = 0;
                     ExecuteTaskAndInvokeReulst();
                 }
                 await Task.Delay(_GetDelayTimespan());
@@ -30,10 +33,36 @@ namespace AGVSystem.Models.Automation
 
         public abstract Task<(bool result, string message)> AutomationTaskAsync();
 
-        private async Task ExecuteTaskAndInvokeReulst()
+        public async Task<(bool result, string message)> ExecuteTaskAndInvokeReulst(bool autoRetry = true)
         {
-            (bool result, string message) result = await AutomationTaskAsync();
+            (bool success, string message) result = await AutomationTaskAsync();
+            if (!result.success && autoRetry)
+            {
+                if (retryCnt < options.retryCntMax)
+                {
+                    result.message += $"(即將在{options.retryIntervalTimeSpan.Seconds}秒後重新嘗試執行-{retryCnt + 1})";
+                    _InvokeAutomationResult(result);
+
+                    _ = Task.Run(async () =>
+                    {
+                        await Task.Delay(options.retryIntervalTimeSpan);
+                        retryCnt++;
+                        ExecuteTaskAndInvokeReulst();
+                    });
+
+                    return result;
+                }
+                else
+                {
+                    result.message += $"重新嘗試執行自動化任務已達上限({options.retryCntMax}))";
+                    _InvokeAutomationResult(result);
+                    retryCnt = 0;
+                    return result;
+                }
+            }
+            retryCnt = 0;
             _InvokeAutomationResult(result);
+            return result;
         }
         private void _InvokeAutomationResult((bool reuslt, string message) executeResult)
         {
@@ -96,6 +125,10 @@ namespace AGVSystem.Models.Automation
         /// </summary>
 
         public bool ImmediateStart { get; set; } = false;
+
+        public int retryCntMax = 10;
+        public TimeSpan retryIntervalTimeSpan = TimeSpan.FromSeconds(3);
+
         public enum PERIOD
         {
             WEEKLY,
