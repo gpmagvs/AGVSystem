@@ -376,16 +376,16 @@ public static class StaticFileInitializer
         var mapFileProvider = new PhysicalFileProvider(mapFileFolderPath);
         var agvImageFileProvider = new PhysicalFileProvider(agvImageFileFolderPath);
 
-        //app.UseDirectoryBrowser(new DirectoryBrowserOptions
-        //{
-        //    FileProvider = mapFileProvider,
-        //    RequestPath = mapFileRequestPath
-        //});
-        //app.UseStaticFiles(new StaticFileOptions
-        //{
-        //    FileProvider = mapFileProvider,
-        //    RequestPath = mapFileRequestPath
-        //});
+        app.UseDirectoryBrowser(new DirectoryBrowserOptions
+        {
+            FileProvider = mapFileProvider,
+            RequestPath = mapFileRequestPath
+        });
+        app.UseStaticFiles(new StaticFileOptions
+        {
+            FileProvider = mapFileProvider,
+            RequestPath = mapFileRequestPath
+        });
 
         app.UseStaticFiles(new StaticFileOptions
         {
