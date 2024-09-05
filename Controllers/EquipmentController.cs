@@ -102,6 +102,11 @@ namespace AGVSystem.Controllers
             return Ok(StaEQPManagager.GetEQStates());
         }
 
+        [HttpPost("UpdateStationInfo")]
+        public async Task<IActionResult> UpdateStationInfo(clsStationStatus stationStatus)
+        {
+            return Ok(await clsStationInfoManager.AssignStationInfo(stationStatus));
+        }
 
         [HttpPost("SaveEQOptions")]
         public async Task<IActionResult> SaveEQOptions(List<clsEndPointOptions> datas)
