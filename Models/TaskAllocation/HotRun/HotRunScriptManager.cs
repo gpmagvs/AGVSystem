@@ -60,8 +60,7 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                     }
                 }
 
-                if (_AnyScriptIDCreated)
-                    Save(HotRunScripts);
+                Save(HotRunScripts);
             }
         }
         public static void Initialize()
