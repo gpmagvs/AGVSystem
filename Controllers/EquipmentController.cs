@@ -9,6 +9,7 @@ using EquipmentManagment.Connection;
 using EquipmentManagment.Device.Options;
 using EquipmentManagment.Emu;
 using EquipmentManagment.MainEquipment;
+using EquipmentManagment.MainEquipment.EQGroup;
 using EquipmentManagment.Manager;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -365,6 +366,21 @@ namespace AGVSystem.Controllers
             return Ok();
         }
 
+        [HttpGet("EqGroups")]
+        public async Task<IActionResult> GetEQGroupOptions()
+        {
+            var configures = StaEQPManagager.EQGroupsStore.Select(group => group.configuration);
+
+            return Ok(configures);
+        }
+
+
+        [HttpPost("SaveEqGroupsConfigs")]
+        public async Task<IActionResult> SaveEqGroupsConfigs([FromBody] List<EqGroupConfiguration> groupsConfigs)
+        {
+            StaEQPManagager.ConfigurateEqGroupStore(groupsConfigs);
+            return Ok();
+        }
 
     }
 
