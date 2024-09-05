@@ -1,13 +1,16 @@
 ﻿using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.Configuration;
-using AGVSystemCommonNet6.Log;
 using Microsoft.Extensions.Options;
+using NLog;
 
 namespace AGVSystem.Models.Automation
 {
     public static class AutomationManager
     {
         public static List<AutomationBase> AutomationTasks { get; private set; } = new List<AutomationBase>();
+
+        private static Logger _logger = LogManager.GetCurrentClassLogger();
+
         public static void AddAutomationTask(AutomationBase automation)
         {
             AutomationTasks.Add(automation);
@@ -62,19 +65,19 @@ namespace AGVSystem.Models.Automation
         private static void Automation_OnAutomationTaskStart(object? sender, EventArgs e)
         {
             AutomationBase automation = (AutomationBase)sender;
-            LOG.TRACE($"Automation Task-{automation.options.TaskName} START. {automation.options.ToJson(Newtonsoft.Json.Formatting.None)}");
+            _logger.Info($"Automation Task-{automation.options.TaskName} START. {automation.options.ToJson(Newtonsoft.Json.Formatting.None)}");
         }
 
         private static void Automation_OnAutomationTaskExecuteFail(object? sender, string message)
         {
             AutomationBase automation = (AutomationBase)sender;
-            LOG.WARN(automation.options.TaskName + $"Task Executed Fail-{message}");
+            _logger.Error(automation.options.TaskName + $"Task Executed Fail-{message}");
         }
 
         private static void Automation_OnAutomationTaskExecuteSuccess(object? sender, string message)
         {
             AutomationBase automation = (AutomationBase)sender;
-            LOG.INFO(automation.options.TaskName + "Task Executed Success");
+            _logger.Info(automation.options.TaskName + "Task Executed Success");
         }
     }
 }
