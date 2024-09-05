@@ -77,7 +77,7 @@ namespace AGVSystem.Models.Automation
         private static void Automation_OnAutomationTaskExecuteSuccess(object? sender, string message)
         {
             AutomationBase automation = (AutomationBase)sender;
-            _logger.Info(automation.options.TaskName + "Task Executed Success");
+            _logger.Info(automation.options.TaskName + $"Task Executed Success=>{message}");
         }
     }
 }

@@ -114,10 +114,42 @@ namespace AGVSystem.Controllers
         [HttpPost("CreateTodayTaskHistory")]
         public async Task<IActionResult> CreateTodayTaskHistory()
         {
-            DateTime start = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, 0, 0, 0);
-            DateTime end = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, 23, 59, 59);
-            TaskDatabaseHelper.AutoSaveTocsv(start, end);
+            TaskDatabaseHelper.AutoExportYesterdayHistoryToDestine();
             return Ok();
+        }
+        [HttpPost("ExportTaskHistoryDataOfDay")]
+        public async Task<IActionResult> ExportTaskHistoryDataOfDay(DateTime date)
+        {
+            try
+            {
+                TaskDatabaseHelper.ExportSpeficDateHistoryToDestine(date);
+                return Ok(new { confirm = true, message = "" });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { confirm = false, message = ex.Message });
+            }
+        }
+        [HttpPost("ExportTaskHistoryDataOfDays")]
+        public async Task<IActionResult> ExportTaskHistoryDataOfDay(DateTime from_date, DateTime to_date)
+        {
+            try
+            {
+                int totalDays = (to_date - from_date).Days + 1;
+                List<string> filePathes = new List<string>();
+                for (int i = 0; i < totalDays; i++)
+                {
+                    DateTime _date = from_date.AddDays(i);
+                    string path = TaskDatabaseHelper.ExportSpeficDateHistoryToDestine(_date);
+                    filePathes.Add(path);
+                }
+                string message = $"<div style=\"width:400px\">{filePathes.Last()} <br/>與其他 {filePathes.Count - 1} 個檔案<div>";
+                return Ok(new { confirm = true, message = message });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { confirm = false, message = ex.Message });
+            }
         }
     }
 }
