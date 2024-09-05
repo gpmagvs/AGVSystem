@@ -15,26 +15,36 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
 {
     public class RandomCarryHotRun
     {
-        private HotRunScript script;
+        protected HotRunScript script;
 
         public RandomCarryHotRun(HotRunScript script)
         {
             this.script = script;
         }
 
-        public async Task StartAsync()
+        public virtual async Task StartAsync()
         {
             script.state = "Running";
 
             await NotifyServiceHelper.INFO($"隨機搬運任務HOT RUN 開始!");
             script.StopFlag = false;
+            await HotRun();
+            script.state = "IDLE";
+            script.UpdateRealTimeMessage("", false, notification: false);
+            await NotifyServiceHelper.INFO($"隨機搬運任務 HOT RUN 已結束");
+
+
+        }
+
+        protected virtual async Task HotRun()
+        {
             while (!script.StopFlag)
             {
                 await Task.Delay(1000);
 
                 if (TaskUplimitReach())
                     continue;
-                (bool success,TransferEQPairSelectResult result ) = await TrySelectEquipmentPairTCarray();
+                (bool success, TransferEQPairSelectResult result) = await TrySelectEquipmentPairTCarray();
                 if (success)
                 {
                     string TaskName = $"HR_{ACTION_TYPE.Carry}_{DateTime.Now.ToString("yMdHHmmss")}";
@@ -44,7 +54,7 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                         From_Station = result.FromTag.ToString(),
                         To_Station = result.ToTag.ToString(),
                         From_Slot = result.IsFromRack ? "1" : "0",
-                        To_Slot = result.IsToRack? "1" : "0",
+                        To_Slot = result.IsToRack ? "1" : "0",
                         DispatcherName = "Hot_Run",
                         Carrier_ID = $"SIM_{DateTime.Now.ToString("ddHHmmssff")}",
                         TaskName = TaskName,
@@ -67,11 +77,6 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                     //script.UpdateRealTimeMessage("等待有可搬運的設備...", false);
                 }
             }
-            script.state = "IDLE";
-            script.UpdateRealTimeMessage("", false, notification: false);
-            await NotifyServiceHelper.INFO($"隨機搬運任務 HOT RUN 已結束");
-
-
         }
 
         private async Task MonitorOrderExecutedTimeout(string taskName)
@@ -185,7 +190,7 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
 
                 if (!selectedUpStreamEqPair.Value.Any())
                 {
-                    return (false,new ());
+                    return (false, new());
                 }
                 await Task.Delay(120);
                 Random _random2 = new Random((int)DateTime.Now.Ticks);
@@ -193,9 +198,9 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                 int downStreamRandomIndex = _random2.Next(0, selectedUpStreamEqPair.Value.Count() - 1);
                 EndPointDeviceAbstract selectedUpStreamEq = selectedUpStreamEqPair.Key;
                 var selectedDownStreamEq = selectedUpStreamEqPair.Value.ToList()[downStreamRandomIndex];
-                
-                result.FromTag= selectedUpStreamEq.EndPointOptions.TagID;
-                result.ToTag= selectedDownStreamEq.EndPointOptions.TagID;
+
+                result.FromTag = selectedUpStreamEq.EndPointOptions.TagID;
+                result.ToTag = selectedDownStreamEq.EndPointOptions.TagID;
 
                 int _fromTag = result.FromTag;
                 int _toTagg = result.ToTag;
@@ -206,11 +211,11 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
 
                 Console.WriteLine($"upStreamRandomIndex:{upStreamRandomIndex} downStreamRandomIndex:{downStreamRandomIndex}");
 
-                return (true,result);
+                return (true, result);
             }
             else
             {
-                return (false,new());
+                return (false, new());
             }
 
             static bool IsEqUnloadable(clsEQ eq, IEnumerable<int> tagsOfAssignedEq)

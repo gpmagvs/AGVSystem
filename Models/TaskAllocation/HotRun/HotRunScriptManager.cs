@@ -24,6 +24,9 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
     {
         public static List<HotRunScript> HotRunScripts { get; set; } = new List<HotRunScript>();
         public static List<HotRunScript> RunningScriptList = new List<HotRunScript>();
+
+        public static bool IsRegularUnloadRequstHotRunRunning { get; set; } = false;
+
         public static bool Save(List<HotRunScript> settings)
         {
             SaveSyncHotRunScripts(settings);
@@ -73,7 +76,10 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
             if (script != null)
             {
                 script.cancellationTokenSource = new CancellationTokenSource();
-                return StartHotRun(script);
+                (bool success, string message) = StartHotRun(script);
+                if (success)
+                    IsRegularUnloadRequstHotRunRunning = script.IsRegularUnloadRequst;
+                return (success, message);
             }
             else
                 return (false, "Script not exist");
@@ -88,7 +94,10 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                 script.cancellationTokenSource?.Cancel();
                 script.cancellationTokenSource = null;
 
-                RunningScriptList.Remove(script);
+                if (RunningScriptList.Remove(script))
+                {
+                    IsRegularUnloadRequstHotRunRunning = script.IsRegularUnloadRequst ? false : IsRegularUnloadRequstHotRunRunning;
+                }
             }
             else
             {
@@ -113,8 +122,9 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                 IEnumerable<HotRunScript> remainOldScripts = HotRunScripts.Where(script => !deletedScripts.Contains(script));
                 foreach (HotRunScript script in remainOldScripts)
                 {
-                    HotRunScript editedScriptFound = newScripts.First(editedScript => editedScript.scriptID == script.scriptID);
-                    script.SyncSetting(editedScriptFound);
+                    HotRunScript editedScriptFound = newScripts.FirstOrDefault(editedScript => editedScript.scriptID == script.scriptID);
+                    if (editedScriptFound != null)
+                        script.SyncSetting(editedScriptFound);
                 }
 
                 //new scripts
@@ -150,7 +160,10 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
             {
                 return StartRandomCarryHotRun(script);
             }
-
+            if (script.IsRegularUnloadRequst)
+            {
+                return StartReqularUnloadHotRun(script);
+            }
             clsAGVStateDto GetAGVState()
             {
                 return DatabaseCaches.Vehicle.VehicleStates.FirstOrDefault(s => s.AGV_Name == script.agv_name);
@@ -291,6 +304,14 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
             RandomCarryHotRun randomCarryHotRun = new RandomCarryHotRun(script);
             RunningScriptList.Add(script);
             randomCarryHotRun.StartAsync();
+            return (true, "");
+        }
+
+        private static (bool confirm, string message) StartReqularUnloadHotRun(HotRunScript script)
+        {
+            RegularUnloadHotRun regularUnloadHotRun = new RegularUnloadHotRun(script);
+            RunningScriptList.Add(script);
+            regularUnloadHotRun.StartAsync();
             return (true, "");
         }
 
