@@ -26,7 +26,7 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
         public static List<HotRunScript> RunningScriptList = new List<HotRunScript>();
 
         public static bool IsRegularUnloadRequstHotRunRunning { get; set; } = false;
-
+        public static RegularUnloadHotRun RegularUnloadHotRunner;
         public static bool Save(List<HotRunScript> settings)
         {
             SaveSyncHotRunScripts(settings);
@@ -309,9 +309,9 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
 
         private static (bool confirm, string message) StartReqularUnloadHotRun(HotRunScript script)
         {
-            RegularUnloadHotRun regularUnloadHotRun = new RegularUnloadHotRun(script);
+            RegularUnloadHotRunner = new RegularUnloadHotRun(script);
             RunningScriptList.Add(script);
-            regularUnloadHotRun.StartAsync();
+            RegularUnloadHotRunner.StartAsync();
             return (true, "");
         }
 

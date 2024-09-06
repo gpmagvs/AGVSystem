@@ -55,7 +55,23 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
 
         public string comment { get; set; } = "Description";
         internal CancellationTokenSource cancellationTokenSource;
-        internal bool StopFlag { get; set; } = false;
+        internal event EventHandler OnScriptStopRequest;
+        internal bool _StopFlag = false;
+        internal bool StopFlag
+        {
+            get => _StopFlag;
+            set
+            {
+                if (_StopFlag != value)
+                {
+                    _StopFlag = value;
+                    if (value)
+                    {
+                        OnScriptStopRequest?.Invoke(this, EventArgs.Empty);
+                    }
+                }
+            }
+        }
 
         private string _RealTimeMessage = "";
         public string RealTimeMessage => _RealTimeMessage;

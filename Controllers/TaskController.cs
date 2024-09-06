@@ -1,5 +1,6 @@
 ﻿using AGVSystem.Models.Map;
 using AGVSystem.Models.Sys;
+using AGVSystem.Models.TaskAllocation.HotRun;
 using AGVSystem.Service;
 using AGVSystem.TaskManagers;
 using AGVSystemCommonNet6;
@@ -247,6 +248,9 @@ namespace AGVSystem.Controllers
         public async Task<clsAGVSTaskReportResponse> LoadUnloadTaskFinish(string taskID, int tag, ACTION_TYPE action)
         {
             clsTaskDto? order = _TaskDBContent.Tasks.AsNoTracking().FirstOrDefault(od => od.TaskName == taskID);
+
+            clsAGVStateDto? executingAGVState = _TaskDBContent.AgvStates.FirstOrDefault(agv => agv.TaskName == taskID);
+
             if (order == null)
                 return new clsAGVSTaskReportResponse() { confirm = false, message = $"Task ID={taskID} not at task table of database" };
             if (action != ACTION_TYPE.Load && action != ACTION_TYPE.Unload)
@@ -287,15 +291,27 @@ namespace AGVSystem.Controllers
                 {
                     EQTransferTaskManager.HandleTransferOrderFinish(order);
                 }
-                if (SystemModes.TransferTaskMode == AGVSystemCommonNet6.AGVDispatch.RunMode.TRANSFER_MODE.LOCAL_AUTO && action == ACTION_TYPE.Load && endPoint.EndPointOptions.IsEmulation)
+
+                if (SystemModes.TransferTaskMode == AGVSystemCommonNet6.AGVDispatch.RunMode.TRANSFER_MODE.LOCAL_AUTO && endPoint.EndPointOptions.IsEmulation)
                 {
-                    var eqEmu = StaEQPEmulatorsManagager.GetEQEmuByName(endPoint.EQName);
-                    eqEmu.SetStatusBUSY();
-                    _ = Task.Run(async () =>
+                    if (action == ACTION_TYPE.Load)
                     {
-                        await Task.Delay(1000);
-                        //eqEmu.SetStatusUnloadable();
-                    });
+
+                    }
+                    else if (action == ACTION_TYPE.Unload && HotRunScriptManager.IsRegularUnloadRequstHotRunRunning)
+                    {
+
+                        bool isAGVLocateIsSecondaryPtOfUnloadEQ = executingAGVState?.TransferProcess == VehicleMovementStage.WorkingAtSource;
+                        if (isAGVLocateIsSecondaryPtOfUnloadEQ)
+                            HotRunScriptManager.RegularUnloadHotRunner.SetUnloadEqAsBusy(result.mainEQ.EQName);
+                    }
+                    //var eqEmu = StaEQPEmulatorsManagager.GetEQEmuByName(endPoint.EQName);
+                    //eqEmu.SetStatusBUSY();
+                    //_ = Task.Run(async () =>
+                    //{
+                    //    await Task.Delay(1000);
+                    //    //eqEmu.SetStatusUnloadable();
+                    //});
                 }
                 if (order != null && order.State == TASK_RUN_STATUS.NAVIGATING || order.State == TASK_RUN_STATUS.ACTION_FINISH)
                 {

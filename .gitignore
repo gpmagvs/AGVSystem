@@ -221,3 +221,4 @@ project.lock.json
 /wwwroot/images/AGVDisplayImage
 /Properties/PublishProfiles/FolderProfile1.pubxml.user
 /internal-nlog-AspNetCore.txt
+/EQGroupConfigs.json
