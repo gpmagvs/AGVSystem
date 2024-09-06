@@ -61,7 +61,7 @@ namespace AGVSystem.Controllers
         [HttpGet("GetEQOptions")]
         public async Task<IActionResult> GetEQOptions()
         {
-            clsEndPointOptions[] MainEQs = StaEQPManagager.MainEQList.Select(eq => eq.EndPointOptions).ToArray();
+            clsEndPointOptions[] MainEQs = StaEQPManagager.MainEQList.Select(eq => eq.EndPointOptions).OrderBy(eq => eq.Name).ToArray();
             return Ok(MainEQs);
         }
         [HttpGet("GetWIPOptions")]
