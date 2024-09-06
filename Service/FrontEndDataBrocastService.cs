@@ -35,11 +35,14 @@ namespace AGVSystem.Service
                 Ports = wip.RackOption.MaterialInfoFromEquipment ? wip.GetPortStatusWithEqInfo().ToList() : wip.PortsStatus.ToList(),
                 ColumnsTagMap = wip.RackOption.ColumnTagMap,
                 IsOvenAsRacks = wip.RackOption.MaterialInfoFromEquipment
-            }).ToList();
+            }).OrderBy(wip => wip.WIPName).ToList();
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
+            HotRunScriptManager.FrontendHub = this._hubContext;
+
+
             _ = Task.Run(async () =>
              {
                  bool _foring = false;

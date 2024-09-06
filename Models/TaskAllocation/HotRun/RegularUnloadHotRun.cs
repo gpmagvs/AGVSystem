@@ -1,6 +1,8 @@
 ﻿
 using EquipmentManagment.Manager;
+using Microsoft.AspNetCore.SignalR;
 using System.Collections.Concurrent;
+using System.Xml.Linq;
 
 namespace AGVSystem.Models.TaskAllocation.HotRun
 {
@@ -44,7 +46,15 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
             }
         }
 
-        private ConcurrentDictionary<string, ManualResetEvent> UnloadFinishWaitSignals = new ConcurrentDictionary<string, ManualResetEvent>();
+        public class UnloaderState
+        {
+            public ManualResetEvent waitSigals = new ManualResetEvent(false);
+            internal DateTime nextUnloadTime = DateTime.MinValue;
+        }
+
+        private ConcurrentDictionary<string, UnloaderState> UnloaderStatesStore = new ConcurrentDictionary<string, UnloaderState>();
+
+        public IHubContext<FrontEndDataHub> FrontendHub { get; internal set; }
 
         protected override async Task HotRun()
         {
@@ -55,11 +65,45 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                 Task.Run(async () =>
                 {
                     ManualResetEvent _waitUnloadFinishResetEvent = await _UnloaderRegularProcess(unloader);
-                    UnloadFinishWaitSignals.TryAdd(unloader.EqName, _waitUnloadFinishResetEvent);
+                    UnloaderStatesStore.TryAdd(unloader.EqName, new UnloaderState()
+                    {
+                        waitSigals = _waitUnloadFinishResetEvent
+                    });
                 });
             }
-
+            DataPushOutUseFrontendHub();
             _waitDoneResetEvent.WaitOne();
+
+        }
+
+        private async Task DataPushOutUseFrontendHub()
+        {
+            while (!script.StopFlag)
+            {
+                await Task.Delay(1000);
+                if (FrontendHub != null)
+                {
+                    try
+                    {
+                        var unloaderStates = UnloaderStatesStore.OrderBy(ke => ke.Key).ToDictionary(keypair => keypair.Key, keypair => new
+                        {
+                            nextUnloadTime = keypair.Value.nextUnloadTime,
+                            timeRemain = TimeSpan.FromSeconds((keypair.Value.nextUnloadTime - DateTime.Now).Seconds).ToString()
+                        });
+
+                        await FrontendHub.Clients.All.SendAsync("RegularHotRunInfo", new
+                        {
+                            state = "running",
+                            scriptID = script.scriptID,
+                            unloaderStates = unloaderStates
+                        });
+                    }
+                    catch (Exception ex)
+                    {
+                    }
+                }
+            }
+            await FrontendHub.Clients.All.SendAsync("RegularHotRunInfo", new { state = "stopped" });
 
         }
 
@@ -79,6 +123,12 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                     _waitUnloadFinishResetEvent.Reset();
                     _waitUnloadFinishResetEvent.WaitOne();
                     _emu.SetStatusBUSY();
+
+                    if (UnloaderStatesStore.TryGetValue(unloader.EqName, out UnloaderState? unloaderState))
+                    {
+                        DateTime nextUnloadTime = DateTime.Now.AddSeconds(unloader.UnloadRequestInterval);
+                        unloaderState.nextUnloadTime = nextUnloadTime;
+                    }
                     await Task.Delay(TimeSpan.FromSeconds(unloader.UnloadRequestInterval));
                 }
             });
@@ -87,9 +137,9 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
 
         internal void SetUnloadEqAsBusy(string eQName)
         {
-            if (UnloadFinishWaitSignals.TryGetValue(eQName, out ManualResetEvent? pauseSignal))
+            if (UnloaderStatesStore.TryGetValue(eQName, out UnloaderState? underState))
             {
-                pauseSignal.Set();
+                underState?.waitSigals.Set();
             }
         }
     }

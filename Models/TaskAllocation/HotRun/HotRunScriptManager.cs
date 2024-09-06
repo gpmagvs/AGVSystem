@@ -8,6 +8,7 @@ using AGVSystemCommonNet6.DATABASE.Helpers;
 using AGVSystemCommonNet6.Microservices.VMS;
 using AGVSystemCommonNet6.Notify;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Build.ObjectModelRemoting;
 using Microsoft.CodeAnalysis.Scripting;
 using Microsoft.EntityFrameworkCore.Update;
@@ -26,6 +27,8 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
         public static List<HotRunScript> RunningScriptList = new List<HotRunScript>();
 
         public static bool IsRegularUnloadRequstHotRunRunning { get; set; } = false;
+        public static IHubContext<FrontEndDataHub> FrontendHub { get; internal set; }
+
         public static RegularUnloadHotRun RegularUnloadHotRunner;
         public static bool Save(List<HotRunScript> settings)
         {
@@ -311,6 +314,7 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
         {
             RegularUnloadHotRunner = new RegularUnloadHotRun(script);
             RunningScriptList.Add(script);
+            RegularUnloadHotRunner.FrontendHub = FrontendHub;
             RegularUnloadHotRunner.StartAsync();
             return (true, "");
         }
