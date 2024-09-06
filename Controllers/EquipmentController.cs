@@ -125,6 +125,9 @@ namespace AGVSystem.Controllers
 
             //StaEQPManagager.DisposeEQs();
             StaEQPManagager.SaveEqConfigs();
+
+            StaEQPManagager.TryRemoveAndCreateNewEQ();
+
             //StaEQPManagager.InitializeAsync();
 
             return Ok(new { confirm = true, message = "" });
