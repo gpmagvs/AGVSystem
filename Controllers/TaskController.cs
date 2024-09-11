@@ -181,6 +181,19 @@ namespace AGVSystem.Controllers
                     {
                         mainEQ.ReserveUp();
                         mainEQ.ToEQUp();
+
+                        if (action == ACTION_TYPE.Unload)
+                        {
+                            clsTaskDto? taskExist = DatabaseCaches.TaskCaches.RunningTasks.FirstOrDefault(task => task.From_Station_Tag == mainEQ.EndPointOptions.TagID);
+                            if (taskExist != null && taskExist.Action == ACTION_TYPE.Carry)
+                            {
+                                clsEQ destineDevice = StaEQPManagager.GetEQByTag(taskExist.To_Station_Tag);
+                                RACK_CONTENT_STATE rackContentStateOfSourceEQ = StaEQPManagager.CargoStartTransferToDestineHandler(mainEQ, destineDevice);
+                            }
+
+                        }
+
+
                         if (mainEQ.EndPointOptions.IsOneOfDualPorts)
                         {
                             bool isForkAGVOnlyPort = mainEQ.EndPointOptions.Accept_AGV_Type == EquipmentManagment.Device.Options.VEHICLE_TYPE.FORK;
@@ -227,20 +240,10 @@ namespace AGVSystem.Controllers
                     return new clsAGVSTaskReportResponse { confirm = true };
                 else if (destineDevice.rack != null)
                     return new clsAGVSTaskReportResponse { confirm = true };
-                else if (sourceDevice.mainEQ.EndPointOptions.CheckRackContentStateIOSignal || destineDevice.mainEQ.EndPointOptions.CheckRackContentStateIOSignal)
-                {
-                    RACK_CONTENT_STATE rackContentStateOfSourceEQ = StaEQPManagager.CargoStartTransferToDestineHandler(sourceDevice.mainEQ, destineDevice.mainEQ);
-                    if (rackContentStateOfSourceEQ == RACK_CONTENT_STATE.UNKNOWN)
-                    {
-                        return new clsAGVSTaskReportResponse() { confirm = false, AlarmCode = ALARMS.EQ_LOAD_REQ_BUT_RACK_FULL_OR_EMPTY_IS_UNKNOWN, message = $"Task Abort_起點設備RACK空框/實框狀態未知" };
-                    }
-                    else
-                    {
-                        return new clsAGVSTaskReportResponse { confirm = true };
-                    }
-                }
                 else
-                { return new clsAGVSTaskReportResponse { confirm = true }; }
+                {
+                    return new clsAGVSTaskReportResponse { confirm = true };
+                }
             }
         }
 
