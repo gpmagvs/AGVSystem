@@ -36,13 +36,13 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
         private string _state = "IDLE";
         public string state
         {
-            get=> _state; 
+            get => _state;
             set
             {
                 if (_state != value)
                 {
                     _state = value;
-                    OnHotRunScriptChanged?.Invoke(this, null);  
+                    OnHotRunScriptChanged?.Invoke(this, null);
                 }
             }
         }
@@ -51,14 +51,34 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
         public List<HotRunAction> actions { get; set; } = new List<HotRunAction>();
         [NonSerialized]
         internal HotRunAction RunningAction = new HotRunAction();
+        public RegularUnloadConfiguration RegularLoadSettings { get; set; } = new RegularUnloadConfiguration();
+
         public string comment { get; set; } = "Description";
         internal CancellationTokenSource cancellationTokenSource;
-        internal bool StopFlag { get; set; } = false;
+        internal event EventHandler OnScriptStopRequest;
+        internal bool _StopFlag = false;
+        internal bool StopFlag
+        {
+            get => _StopFlag;
+            set
+            {
+                if (_StopFlag != value)
+                {
+                    _StopFlag = value;
+                    if (value)
+                    {
+                        OnScriptStopRequest?.Invoke(this, EventArgs.Empty);
+                    }
+                }
+            }
+        }
 
         private string _RealTimeMessage = "";
         public string RealTimeMessage => _RealTimeMessage;
 
         public bool IsRandomCarryRun { get; set; } = false;
+
+        public bool IsRegularUnloadRequst { get; set; } = false;
 
         internal void SyncSetting(HotRunScript script)
         {
@@ -80,6 +100,35 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                 NotifyServiceHelper.INFO(_RealTimeMessage);
         }
     }
+
+    public class RegularUnloadConfiguration
+    {
+        /// <summary>
+        /// 總是保持LoadRequest的設備
+        /// </summary>
+        public List<string> LoadRequestAlwaysOnEqNames { get; set; } = new List<string>();
+
+        /// <summary>
+        ///  出料請求設定
+        /// </summary>
+        public List<UnloadRequestEQSettings> UnloadRequestsSettings { get; set; } = new List<UnloadRequestEQSettings>();
+        public class UnloadRequestEQSettings
+        {
+            public string EqName { get; set; } = "";
+
+            /// <summary>
+            /// 當出料完成後延遲多久再發送UnloadRequest
+            /// </summary>
+            public double UnloadRequestInterval { get; set; } = 10;
+
+            /// <summary>
+            ///  當腳本開始執行時延遲多久再發送UnloadRequest
+            /// </summary>
+            public double DelayTimeWhenScriptStart { get; set; } = 3;
+        }
+
+    }
+
     public class HotRunAction
     {
         public int no { get; set; }

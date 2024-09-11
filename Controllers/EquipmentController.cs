@@ -9,6 +9,7 @@ using EquipmentManagment.Connection;
 using EquipmentManagment.Device.Options;
 using EquipmentManagment.Emu;
 using EquipmentManagment.MainEquipment;
+using EquipmentManagment.MainEquipment.EQGroup;
 using EquipmentManagment.Manager;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -60,7 +61,7 @@ namespace AGVSystem.Controllers
         [HttpGet("GetEQOptions")]
         public async Task<IActionResult> GetEQOptions()
         {
-            clsEndPointOptions[] MainEQs = StaEQPManagager.MainEQList.Select(eq => eq.EndPointOptions).ToArray();
+            clsEndPointOptions[] MainEQs = StaEQPManagager.MainEQList.Select(eq => eq.EndPointOptions).OrderBy(eq => eq.Name).ToArray();
             return Ok(MainEQs);
         }
         [HttpGet("GetWIPOptions")]
@@ -124,6 +125,9 @@ namespace AGVSystem.Controllers
 
             //StaEQPManagager.DisposeEQs();
             StaEQPManagager.SaveEqConfigs();
+
+            StaEQPManagager.TryRemoveAndCreateNewEQ();
+
             //StaEQPManagager.InitializeAsync();
 
             return Ok(new { confirm = true, message = "" });
@@ -365,6 +369,21 @@ namespace AGVSystem.Controllers
             return Ok();
         }
 
+        [HttpGet("EqGroups")]
+        public async Task<IActionResult> GetEQGroupOptions()
+        {
+            var configures = StaEQPManagager.EQGroupsStore.Select(group => group.configuration);
+
+            return Ok(configures);
+        }
+
+
+        [HttpPost("SaveEqGroupsConfigs")]
+        public async Task<IActionResult> SaveEqGroupsConfigs([FromBody] List<EqGroupConfiguration> groupsConfigs)
+        {
+            StaEQPManagager.ConfigurateEqGroupStore(groupsConfigs);
+            return Ok();
+        }
 
     }
 

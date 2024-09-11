@@ -259,11 +259,19 @@ public static class WebAppInitializer
                             .Select(address => address.ToString())
                             .ToList();
 
-        List<string> allowedOrigins = new List<string> { "http://localhost:8080" };
+        List<string> allowedOrigins = new List<string> {
+            "http://localhost:8080",
+            "http://127.0.0.1:8080"
+        };
         foreach (var ip in localIPs)
         {
             allowedOrigins.Add($"{ip}:5216");
             allowedOrigins.Add($"{ip}:5036");
+            allowedOrigins.Add($"{ip}:8080");
+            allowedOrigins.Add($"{ip}:8081");
+            allowedOrigins.Add($"{ip}:8082");
+            allowedOrigins.Add($"{ip}:8083");
+            allowedOrigins.Add($"{ip}:8084");
         }
         builder.Services.AddCors(options =>
         {
@@ -344,11 +352,15 @@ public static class WebAppInitializer
         try
         {
             clsEQ.WirteOuputEnabled = !AGVSConfigulator.SysConfigs.BaseOnKGSWebAGVSystem;
+
+            string eqConfigsStoreFolder = AGVSConfigulator.SysConfigs.EQManagementConfigs.EquipmentManagementConfigFolder;
+
             StaEQPManagager.InitializeAsync(new clsEQManagementConfigs
             {
-                EQConfigPath = $"{AGVSConfigulator.SysConfigs.EQManagementConfigs.EquipmentManagementConfigFolder}//EQConfigs.json",
-                WIPConfigPath = $"{AGVSConfigulator.SysConfigs.EQManagementConfigs.EquipmentManagementConfigFolder}//WIPConfigs.json",
-                ChargeStationConfigPath = $"{AGVSConfigulator.SysConfigs.EQManagementConfigs.EquipmentManagementConfigFolder}//ChargStationConfigs.json",
+                EQConfigPath = $"{eqConfigsStoreFolder}//EQConfigs.json",
+                WIPConfigPath = $"{eqConfigsStoreFolder}//WIPConfigs.json",
+                ChargeStationConfigPath = $"{eqConfigsStoreFolder}//ChargStationConfigs.json",
+                EQGroupConfigPath = $"{eqConfigsStoreFolder}//EQGroupConfigs.json",
             });
 
             await clsStationInfoManager.ScanWIP_EQ();
