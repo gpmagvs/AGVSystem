@@ -36,17 +36,23 @@ namespace AGVSystem.Controllers
                 {
                     if (task.From_Station_Tag != -1)
                     {
-                        var fromPoint = AGVSMapManager.GetMapPointByTag(task.From_Station_Tag);
-                        task.From_Station_Display = fromPoint == null ? task.From_Station_Tag + "" : fromPoint.Graph.Display;
+                        task.From_Station_Display = _GetDisplayOfTag(task.From_Station_Tag);
                     }
                     if (task.To_Station_Tag != -1)
                     {
-                        var toPoint = AGVSMapManager.GetMapPointByTag(task.To_Station_Tag);
-                        task.To_Station_Display = toPoint == null ? task.To_Station_Tag + "" : toPoint.Graph.Display;
+                        task.To_Station_Display = _GetDisplayOfTag(task.To_Station_Tag);
                     }
+                    task.StartLocationDisplay = _GetDisplayOfTag(task.StartLocationTag);
                 });
 
                 return Ok(new { count, tasks });
+            }
+
+
+            string _GetDisplayOfTag(int tag)
+            {
+                var toPoint = AGVSMapManager.GetMapPointByTag(tag);
+                return toPoint == null ? tag + "" : toPoint.Graph.Display;
             }
         }
         [HttpGet("SaveTocsv")]
