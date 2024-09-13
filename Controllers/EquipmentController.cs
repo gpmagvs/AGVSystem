@@ -385,6 +385,27 @@ namespace AGVSystem.Controllers
             return Ok();
         }
 
+        /// <summary>
+        /// 取得在圖資上設置圍設備但沒有建立設備的資訊
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("CheckMapPointsIsEqTypeButNoEqSetup")]
+        public async Task<IActionResult> CheckMapPointsIsEqTypeButNoEqSetup()
+        {
+            //
+
+            Dictionary<int, string> eqsSetupInMap = AGVSMapManager.CurrentMap.Points.Values.Where(pt => pt.IsEquipment && pt.StationType != STATION_TYPE.Buffer && pt.StationType != STATION_TYPE.Charge_Buffer).ToDictionary(pt => pt.TagNumber, pt => pt.Graph.Display);
+            List<int> tagsOfCurrentEquipments = StaEQPManagager.MainEQList.Select(eq => eq.EndPointOptions.TagID).ToList();
+            Dictionary<int, string> tagsOfEqNoBuild = eqsSetupInMap.Keys.Where(tag => !tagsOfCurrentEquipments.Contains(tag))
+                                                          .ToDictionary(tag => tag, tag => eqsSetupInMap[tag]);
+
+            return Ok(new
+            {
+                isNormal = !tagsOfEqNoBuild.Any(),
+                noBuildPointInfo = tagsOfEqNoBuild.OrderBy(pt => pt.Key).Select(pt => new { tag = pt.Key, name = pt.Value }).ToList()
+            });
+        }
+
     }
 
 }
