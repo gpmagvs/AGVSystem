@@ -105,6 +105,12 @@
 		<None Update="Resources\AOI_SOP_100_AGV_手動充電%28電池喚醒%29.pdf">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
+		<None Update="Resources\Reference Documents\[GPM SPEC] [新版] IO交握流程規範_V1.2.pdf">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="Resources\Reference Documents\[GPM SPEC] [舊版] IO交握流程規範_V1.06.pdf">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
 		<None Update="Resources\VCS_TrobleShooting.csv">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>

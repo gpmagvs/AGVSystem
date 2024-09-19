@@ -35,5 +35,17 @@ call git checkout master
 call git pull github master 
 cd ../
 
+cd KGSWebAGVSystemAPI
+call git fetch
+call git checkout master
+call git pull github master 
+cd ../
+
+cd KGSWebAGVSystemAPITests
+call git fetch
+call git checkout master
+call git pull github master 
+cd ../
+
 
 pause

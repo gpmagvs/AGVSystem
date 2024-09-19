@@ -449,6 +449,27 @@ public static class StaticFileInitializer
             Console.WriteLine(ex.Message + ex.StackTrace);
         }
 
+        try
+        {
+            PhysicalFileProvider resourcesFileProvider = new PhysicalFileProvider(Path.Combine(Environment.CurrentDirectory, "Resources"));
+
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                FileProvider = resourcesFileProvider,
+                RequestPath = "/Resources"
+            });
+
+            app.UseDirectoryBrowser(new DirectoryBrowserOptions
+            {
+                FileProvider = resourcesFileProvider,
+                RequestPath = "/Resources"
+            });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message + ex.StackTrace);
+        }
+
     }
 
     private static void CreateDefaultAGVImage(string agvImageFileFolderPath)
