@@ -72,6 +72,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<Content Update="appsettings.json">
+		  <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+		</Content>
 		<Content Update="Resources\AGVS_AlarmCodes.json">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Content>
