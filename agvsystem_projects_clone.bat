@@ -8,4 +8,5 @@ git clone https://github.com/gpmagvs/VMSystem.git
 git clone https://github.com/gpmagvs/KGSWebAGVSystemAPI.git
 git clone https://github.com/gpmagvs/KGSWebAGVSystemAPITests.git
 
+git clone https://github.com/gpmagvs/AGVSystemTests.git
 pause
