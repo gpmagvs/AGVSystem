@@ -30,43 +30,6 @@ namespace AGVSystem.Models.Map
         public static void Initialize()
         {
             CurrentMap = MapManager.LoadMapFromFile();
-            _LoadMapRegionConfig();
-        }
-
-        public static bool TryCreateNewMapRegion(string name, out clsMapRegion newRegion, out string errorMsg)
-        {
-            newRegion = null;
-            errorMsg = string.Empty;
-
-            if (MapRegions.Any(_region => _region.RegionName == name))
-            {
-                errorMsg = $"已經存在名稱為 {name} 的區域";
-                return false;
-            }
-
-            newRegion = new clsMapRegion
-            {
-                RegionDescription = name,
-            };
-            MapRegions.Add(newRegion);
-            return true;
-        }
-
-        private static void _SaveMapRegionConfig()
-        {
-            Directory.CreateDirectory(Path.GetDirectoryName(AGVSConfigulator.SysConfigs.MapConfigs.MapRegionConfigFile));
-            File.WriteAllText(AGVSConfigulator.SysConfigs.MapConfigs.MapRegionConfigFile, JsonConvert.SerializeObject(MapRegions, Formatting.Indented));
-        }
-        private static void _LoadMapRegionConfig()
-        {
-            if (File.Exists(AGVSConfigulator.SysConfigs.MapConfigs.MapRegionConfigFile))
-            {
-                MapRegions = JsonConvert.DeserializeObject<List<clsMapRegion>>(File.ReadAllText(AGVSConfigulator.SysConfigs.MapConfigs.MapRegionConfigFile));
-            }
-            else
-            {
-                _SaveMapRegionConfig();
-            }
         }
 
         internal static async Task SyncEQRegionSetting(List<MapPoint> mapStations)

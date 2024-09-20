@@ -99,7 +99,9 @@ public static class SystemInitializer
 {
     public static void Initialize(Logger logger)
     {
-        AGVSConfigulator.Init();
+        WebApplicationBuilder builder = WebApplication.CreateBuilder();
+        string configRootFolder = builder.Configuration.GetValue<string>("AGVSConfigFolder");
+        AGVSConfigulator.Init(configRootFolder);
         InitializeDatabase(logger);
 
         EQTransferTaskManager.Initialize();
@@ -353,7 +355,7 @@ public static class WebAppInitializer
         {
             clsEQ.WirteOuputEnabled = !AGVSConfigulator.SysConfigs.BaseOnKGSWebAGVSystem;
 
-            string eqConfigsStoreFolder = AGVSConfigulator.SysConfigs.EQManagementConfigs.EquipmentManagementConfigFolder;
+            string eqConfigsStoreFolder = AGVSConfigulator.SysConfigs.PATHES_STORE[SystemConfigs.PATH_ENUMS.EQ_CONFIGS_FOLDER_PATH];
 
             StaEQPManagager.InitializeAsync(new clsEQManagementConfigs
             {
@@ -377,10 +379,15 @@ public static class StaticFileInitializer
 {
     public static void Initialize(WebApplication app)
     {
-        var mapFileFolderPath = app.Configuration.GetValue<string>("StaticFileOptions:MapFile:FolderPath");
-        var mapFileRequestPath = app.Configuration.GetValue<string>("StaticFileOptions:MapFile:RequestPath");
-        var agvImageFileFolderPath = app.Configuration.GetValue<string>("StaticFileOptions:AGVImageStoreFile:FolderPath");
-        var agvImageFileRequestPath = app.Configuration.GetValue<string>("StaticFileOptions:AGVImageStoreFile:RequestPath");
+        string configRootFolder = app.Configuration.GetValue<string>("AGVSConfigFolder");
+        string mapFileFolderRelativePath = app.Configuration.GetValue<string>("StaticFileOptions:MapFile:FolderPath");
+        string mapFileRequestPath = app.Configuration.GetValue<string>("StaticFileOptions:MapFile:RequestPath");
+
+        string agvImageFileFolderRelativePath = app.Configuration.GetValue<string>("StaticFileOptions:AGVImageStoreFile:FolderPath");
+        string agvImageFileRequestPath = app.Configuration.GetValue<string>("StaticFileOptions:AGVImageStoreFile:RequestPath");
+
+        string mapFileFolderPath = Path.Combine(configRootFolder, mapFileRequestPath.Trim('/'));
+        string agvImageFileFolderPath = Path.Combine(configRootFolder, agvImageFileFolderRelativePath.Trim('/'));
 
         Directory.CreateDirectory(mapFileFolderPath);
         Directory.CreateDirectory(agvImageFileFolderPath);

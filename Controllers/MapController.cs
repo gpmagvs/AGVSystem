@@ -23,11 +23,11 @@ namespace AGVSystem.Controllers
     [ApiController]
     public partial class MapController : ControllerBase
     {
-        internal string local_map_file_path => AGVSConfigulator.SysConfigs.MapConfigs.MapFileFullName;
+        internal string local_map_file_path => AGVSConfigulator.SysConfigs.PATHES_STORE[SystemConfigs.PATH_ENUMS.CURRENT_MAP_FILE_PATH];
         private string tempMapFilePath = "";
         private IConfiguration configuration;
-        private string mapFileFolder => configuration.GetValue<string>("StaticFileOptions:MapFile:FolderPath");
-        private string agvImageFileFolder => configuration.GetValue<string>("StaticFileOptions:AGVImageStoreFile:FolderPath");
+        private string mapFileFolder => Path.Combine(configuration.GetValue<string>("AGVSConfigFolder"), configuration.GetValue<string>("StaticFileOptions:MapFile:FolderPath").Trim('/'));
+        private string agvImageFileFolder => Path.Combine(configuration.GetValue<string>("AGVSConfigFolder"), configuration.GetValue<string>("StaticFileOptions:AGVImageStoreFile:FolderPath").Trim('/'));
         public MapController(IConfiguration configuration)
         {
             this.configuration = configuration;
@@ -260,7 +260,7 @@ namespace AGVSystem.Controllers
                 var currentMap = MapManager.LoadMapFromFile(false, false);
                 currentMap.Options.EQIcons.Add(fileName);
                 currentMap.Options.EQIcons = currentMap.Options.EQIcons.Distinct().ToList();
-                MapManager.SaveMapToFile(currentMap, AGVSConfigulator.SysConfigs.MapConfigs.MapFileFullName);
+                MapManager.SaveMapToFile(currentMap, AGVSConfigulator.SysConfigs.PATHES_STORE[SystemConfigs.PATH_ENUMS.CURRENT_MAP_FILE_PATH]);
                 return Ok(new { filename = fileName });
             }
 
@@ -278,7 +278,7 @@ namespace AGVSystem.Controllers
             }
             var _map = MapManager.LoadMapFromFile(false, false);
             _map.Options.EQIcons.Remove(filePath);
-            MapManager.SaveMapToFile(_map, AGVSConfigulator.SysConfigs.MapConfigs.MapFileFullName);
+            MapManager.SaveMapToFile(_map, AGVSConfigulator.SysConfigs.PATHES_STORE[SystemConfigs.PATH_ENUMS.CURRENT_MAP_FILE_PATH]);
             return Ok("ok");
         }
 
