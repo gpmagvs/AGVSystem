@@ -26,7 +26,7 @@ namespace AGVSystem.Controllers
         internal string local_map_file_path => AGVSConfigulator.SysConfigs.PATHES_STORE[SystemConfigs.PATH_ENUMS.CURRENT_MAP_FILE_PATH];
         private string tempMapFilePath = "";
         private IConfiguration configuration;
-        private string mapFileFolder => Path.Combine(configuration.GetValue<string>("AGVSConfigFolder"), configuration.GetValue<string>("StaticFileOptions:MapFile:FolderPath").Trim('/'));
+        private string mapFileFolder => AGVSConfigulator.SysConfigs.PATHES_STORE[SystemConfigs.PATH_ENUMS.MAP_FOLDER];
         private string agvImageFileFolder => Path.Combine(configuration.GetValue<string>("AGVSConfigFolder"), configuration.GetValue<string>("StaticFileOptions:AGVImageStoreFile:FolderPath").Trim('/'));
         public MapController(IConfiguration configuration)
         {

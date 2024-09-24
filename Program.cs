@@ -101,6 +101,7 @@ public static class SystemInitializer
     {
         WebApplicationBuilder builder = WebApplication.CreateBuilder();
         string configRootFolder = builder.Configuration.GetValue<string>("AGVSConfigFolder");
+        configRootFolder = string.IsNullOrEmpty(configRootFolder) ? @"C:\AGVS" : configRootFolder;
         AGVSConfigulator.Init(configRootFolder);
         InitializeDatabase(logger);
 
@@ -380,6 +381,7 @@ public static class StaticFileInitializer
     public static void Initialize(WebApplication app)
     {
         string configRootFolder = app.Configuration.GetValue<string>("AGVSConfigFolder");
+        configRootFolder = string.IsNullOrEmpty(configRootFolder) ? @"C:\AGVS" : configRootFolder;
         string mapFileFolderRelativePath = app.Configuration.GetValue<string>("StaticFileOptions:MapFile:FolderPath");
         string mapFileRequestPath = app.Configuration.GetValue<string>("StaticFileOptions:MapFile:RequestPath");
 
