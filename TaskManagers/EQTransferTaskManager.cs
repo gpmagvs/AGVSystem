@@ -72,6 +72,11 @@ namespace AGVSystem.TaskManagers
 
                 if (!Eq.IsConnected)
                     return new(false, ALARMS.Endpoint_EQ_NOT_CONNECTED, $"設備[{Eq.EQName}] 尚未連線,無法確認狀態", null, null);
+                if (!Eq.IS_EQ_STATUS_NORMAL_IDLE)
+                {
+                    string description = Eq.EndPointOptions.IOLocation.STATUS_IO_SPEC_VERSION == clsEQIOLocation.STATUS_IO_DEFINED_VERSION.V1 ? "EQP_STATUS_IDLE 訊號未ON" : "EQP_STATUS_DOWN 訊號未ON";
+                    return new(false, ALARMS.PortStatusisWrongCannottLoadUnload, $"設備[{Eq.EQName}] 狀態錯誤[{description}]", null, null);
+                }
                 if (actiontype == ACTION_TYPE.Unload)
                 {
                     if (Eq.Unload_Request == false)
