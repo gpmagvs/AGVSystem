@@ -380,43 +380,44 @@ public static class StaticFileInitializer
 {
     public static void Initialize(WebApplication app)
     {
-        string configRootFolder = app.Configuration.GetValue<string>("AGVSConfigFolder");
-        configRootFolder = string.IsNullOrEmpty(configRootFolder) ? @"C:\AGVS" : configRootFolder;
-        string mapFileFolderRelativePath = app.Configuration.GetValue<string>("StaticFileOptions:MapFile:FolderPath");
-        string mapFileRequestPath = app.Configuration.GetValue<string>("StaticFileOptions:MapFile:RequestPath");
-
-        string agvImageFileFolderRelativePath = app.Configuration.GetValue<string>("StaticFileOptions:AGVImageStoreFile:FolderPath");
-        string agvImageFileRequestPath = app.Configuration.GetValue<string>("StaticFileOptions:AGVImageStoreFile:RequestPath");
-
-        string mapFileFolderPath = Path.Combine(configRootFolder, mapFileRequestPath.Trim('/'));
-        string agvImageFileFolderPath = Path.Combine(configRootFolder, agvImageFileFolderRelativePath.Trim('/'));
-
-        Directory.CreateDirectory(mapFileFolderPath);
-        Directory.CreateDirectory(agvImageFileFolderPath);
-
-        var mapFileProvider = new PhysicalFileProvider(mapFileFolderPath);
-        var agvImageFileProvider = new PhysicalFileProvider(agvImageFileFolderPath);
-
-        app.UseDirectoryBrowser(new DirectoryBrowserOptions
-        {
-            FileProvider = mapFileProvider,
-            RequestPath = mapFileRequestPath
-        });
-        app.UseStaticFiles(new StaticFileOptions
-        {
-            FileProvider = mapFileProvider,
-            RequestPath = mapFileRequestPath
-        });
-
-        app.UseStaticFiles(new StaticFileOptions
-        {
-            FileProvider = agvImageFileProvider,
-            RequestPath = agvImageFileRequestPath
-        });
-
-        CreateDefaultAGVImage(agvImageFileFolderPath);
         try
         {
+            string configRootFolder = app.Configuration.GetValue<string>("AGVSConfigFolder");
+            configRootFolder = string.IsNullOrEmpty(configRootFolder) ? @"C:\AGVS" : configRootFolder;
+            string mapFileFolderRelativePath = app.Configuration.GetValue<string>("StaticFileOptions:MapFile:FolderPath");
+            string mapFileRequestPath = app.Configuration.GetValue<string>("StaticFileOptions:MapFile:RequestPath");
+
+            string agvImageFileFolderRelativePath = app.Configuration.GetValue<string>("StaticFileOptions:AGVImageStoreFile:FolderPath");
+            string agvImageFileRequestPath = app.Configuration.GetValue<string>("StaticFileOptions:AGVImageStoreFile:RequestPath");
+
+            string mapFileFolderPath = Path.Combine(configRootFolder, mapFileRequestPath.Trim('/'));
+            string agvImageFileFolderPath = Path.Combine(configRootFolder, agvImageFileFolderRelativePath.Trim('/'));
+
+            Directory.CreateDirectory(mapFileFolderPath);
+            Directory.CreateDirectory(agvImageFileFolderPath);
+
+            var mapFileProvider = new PhysicalFileProvider(mapFileFolderPath);
+            var agvImageFileProvider = new PhysicalFileProvider(agvImageFileFolderPath);
+
+            app.UseDirectoryBrowser(new DirectoryBrowserOptions
+            {
+                FileProvider = mapFileProvider,
+                RequestPath = mapFileRequestPath
+            });
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                FileProvider = mapFileProvider,
+                RequestPath = mapFileRequestPath
+            });
+
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                FileProvider = agvImageFileProvider,
+                RequestPath = agvImageFileRequestPath
+            });
+
+            CreateDefaultAGVImage(agvImageFileFolderPath);
+
             Directory.CreateDirectory(AGVSConfigulator.SysConfigs.TrobleShootingFolder);
             var trobleshootingFileRequestPath = app.Configuration.GetValue<string>("TrobleShootingFileOptions:TrobleShootingFile:RequestPath");
             var trobleshootingFileProvider = new PhysicalFileProvider(AGVSConfigulator.SysConfigs.TrobleShootingFolder);
