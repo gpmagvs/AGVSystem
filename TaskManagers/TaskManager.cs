@@ -249,6 +249,10 @@ namespace AGVSystem.TaskManagers
                     AlarmManagerCenter.AddAlarmAsync(ALARMS.AGV_NO_Carge_Cannot_Transfer_Cargo_From_AGV_To_Desinte, ALARM_SOURCE.AGVS, level: ALARM_LEVEL.WARNING);
                     return (false, ALARMS.AGV_NO_Carge_Cannot_Transfer_Cargo_From_AGV_To_Desinte, "AGV車上無貨，無法指派來源為AGV的搬運任務");
                 }
+                (bool confirm, ALARMS alarm_code, string message) results = EQTransferTaskManager.CheckEQAcceptAGVType(destine_station_tag, taskData.DesignatedAGVName);
+                if (!results.confirm)
+                    return results;
+
                 var agv_name = taskData.From_Station;
                 taskData.DesignatedAGVName = agv_name;
                 var agv = database.tables.AgvStates.FirstOrDefault(d => d.AGV_Name == agv_name);

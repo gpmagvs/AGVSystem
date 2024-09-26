@@ -179,18 +179,17 @@ namespace AGVSystem.Controllers
                     clsEQ mainEQ = (clsEQ)result.obj;
                     try
                     {
-                        mainEQ.ReserveUp();
-                        mainEQ.ToEQUp();
+                        mainEQ.Reserve();
+                        mainEQ.ToEQ();
 
                         if (action == ACTION_TYPE.Unload)
                         {
-                            clsTaskDto? taskExist = DatabaseCaches.TaskCaches.RunningTasks.FirstOrDefault(task => task.From_Station_Tag == mainEQ.EndPointOptions.TagID);
-                            if (taskExist != null && taskExist.Action == ACTION_TYPE.Carry)
-                            {
-                                clsEQ destineDevice = StaEQPManagager.GetEQByTag(taskExist.To_Station_Tag);
-                                RACK_CONTENT_STATE rackContentStateOfSourceEQ = StaEQPManagager.CargoStartTransferToDestineHandler(mainEQ, destineDevice);
-                            }
+                            clsTaskDto? taskExist = DatabaseCaches.TaskCaches.RunningTasks.FirstOrDefault(task => task.From_Station_Tag == mainEQ.EndPointOptions.TagID && task.Action == ACTION_TYPE.Carry);
 
+                            if (taskExist != null && StaEQPManagager.TryGetEQByTag(taskExist.To_Station_Tag, out clsEQ destineDevice))
+                            {
+                                RACK_CONTENT_STATE rackContentStateOfSourceEQ = StaEQPManagager.CargoContentTypeCheckWhenStartTransferToDestineHandler(mainEQ, destineDevice);
+                            }
                         }
 
 

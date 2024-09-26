@@ -72,6 +72,11 @@ namespace AGVSystem.TaskManagers
 
                 if (!Eq.IsConnected)
                     return new(false, ALARMS.Endpoint_EQ_NOT_CONNECTED, $"設備[{Eq.EQName}] 尚未連線,無法確認狀態", null, null);
+                if (!Eq.IS_EQ_STATUS_NORMAL_IDLE)
+                {
+                    string description = Eq.EndPointOptions.IOLocation.STATUS_IO_SPEC_VERSION == clsEQIOLocation.STATUS_IO_DEFINED_VERSION.V1 ? "EQP_STATUS_IDLE 訊號未ON" : "EQP_STATUS_DOWN 訊號未ON";
+                    return new(false, ALARMS.PortStatusisWrongCannottLoadUnload, $"設備[{Eq.EQName}] 狀態錯誤[{description}]", null, null);
+                }
                 if (actiontype == ACTION_TYPE.Unload)
                 {
                     if (Eq.Unload_Request == false)
@@ -218,12 +223,12 @@ namespace AGVSystem.TaskManagers
             }
             clsEQ equipment = StaEQPManagager.GetEQByTag(station_tag);
             if (equipment == null)
-                return new(false, ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, $"設備站點TAG-{station_tag} 不存在於當前地圖");
+                return new(false, ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, $"設備站點 [{equipment.EndPointOptions.Name}] TAG-{station_tag} 不存在於當前地圖");
             else
             {
                 VEHICLE_TYPE eq_accept_agv_model = equipment.EndPointOptions.Accept_AGV_Type;
                 if (eq_accept_agv_model != VEHICLE_TYPE.ALL && eq_accept_agv_model != model)
-                    return (false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Source_Equipment, $"設備TAG-{station_tag}不允許{model}車種進行任務");
+                    return (false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Source_Equipment, $"設備 [{equipment.EndPointOptions.Name}] TAG-{station_tag}不允許{model}車種進行任務");
                 else
                     return new(true, ALARMS.NONE, "");
             }
