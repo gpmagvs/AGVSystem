@@ -6,7 +6,7 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<ApplicationIcon>favicon.ico</ApplicationIcon>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
-		<AssemblyVersion>1.1.248.6</AssemblyVersion>
+		<AssemblyVersion>1.1.270.0</AssemblyVersion>
 
 	</PropertyGroup>
 
@@ -73,7 +73,7 @@
 
 	<ItemGroup>
 		<Content Update="appsettings.json">
-		  <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
 		</Content>
 		<Content Update="Resources\AGVS_AlarmCodes.json">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -109,10 +109,10 @@
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
 		<None Update="Resources\Reference Documents\[GPM SPEC] [新版] IO交握流程規範_V1.2.pdf">
-		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 		<None Update="Resources\Reference Documents\[GPM SPEC] [舊版] IO交握流程規範_V1.06.pdf">
-		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 		<None Update="Resources\VCS_TrobleShooting.csv">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
