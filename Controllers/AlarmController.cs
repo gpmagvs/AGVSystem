@@ -1,5 +1,6 @@
 ﻿using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.DATABASE;
+using AGVSystemCommonNet6.Microservices.AudioPlay;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
@@ -62,6 +63,11 @@ namespace AGVSystem.Controllers
                 return BadRequest();
             }
             //_dbContext.SystemAlarms.Remove();
+        }
+        [HttpPost("StopBuzzer")]
+        public async Task StopBuzzer()
+        {
+            await AudioPlayService.StopAll();
         }
     }
 }
