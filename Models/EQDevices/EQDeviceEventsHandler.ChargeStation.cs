@@ -8,10 +8,17 @@ using AGVSystemCommonNet6.Alarm;
 using AGVSystem.Models.Map;
 using AGVSystemCommonNet6.MAP;
 using AGVSystemCommonNet6.AGVDispatch;
+using AGVSystemCommonNet6.Configuration;
+using AGVSystemCommonNet6.Microservices.AudioPlay;
 namespace AGVSystem.Models.EQDevices
 {
     public partial class EQDeviceEventsHandler
     {
+
+        private static string ChargerSmokeDetectedAudioFilePath => Path.Combine(AGVSConfigulator.ConfigsFilesFolder, "Sounds/charger-smoke-detected-alarm.mp3");
+        private static string ChargerAirErrorAudioFilePath => Path.Combine(AGVSConfigulator.ConfigsFilesFolder, "Sounds/charger-air-error-alarm.mp3");
+        private static string ChargerEMOAudioFilePath => Path.Combine(AGVSConfigulator.ConfigsFilesFolder, "Sounds/charger-emo-alarm.mp3");
+
         /// <summary>
         /// 處理充電站偵測到電池未連接的事件
         /// </summary>
@@ -76,6 +83,25 @@ namespace AGVSystem.Models.EQDevices
             {
                 return (tag, mapPt, "");
             }
+        }
+
+
+        private static void ChargerIOSynchronizer_OnSmokeDetected(object? sender, string chargerName)
+        {
+            AudioPlayService.AddAudioToPlayQueue(ChargerSmokeDetectedAudioFilePath);
+            AlarmManagerCenter.AddAlarmAsync(ALARMS.Charge_Station_Smoke_Detected, Equipment_Name: chargerName);
+        }
+
+        private static void ChargerIOSynchronizer_OnAirError(object? sender, string chargerName)
+        {
+            AudioPlayService.AddAudioToPlayQueue(ChargerAirErrorAudioFilePath);
+            AlarmManagerCenter.AddAlarmAsync(ALARMS.Charge_Station_Air_Error, Equipment_Name: chargerName);
+        }
+
+        private static void ChargerIOSynchronizer_OnEMO(object? sender, string chargerName)
+        {
+            AudioPlayService.AddAudioToPlayQueue(ChargerEMOAudioFilePath);
+            AlarmManagerCenter.AddAlarmAsync(ALARMS.Charge_Station_EMO, Equipment_Name: chargerName);
         }
     }
 }
