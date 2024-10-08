@@ -114,9 +114,6 @@ public static class SystemInitializer
         clsEQ.OnIOStateChanged += EQDeviceEventsHandler.HandleEQIOStateChanged;
         clsEQ.OnPortExistChangeed += MaterialManager.HandlePortExistChanged;
 
-        AGVSSocketHost agvsHost = new AGVSSocketHost();
-        agvsHost.Start();
-
         AlarmManagerCenter.Initialize();
         AlarmManager.LoadVCSTrobleShootings();
         VMSSerivces.OnVMSReconnected += async (sender, e) => await VMSSerivces.RunModeSwitch(SystemModes.RunMode);
