@@ -39,6 +39,12 @@ public class Program
     static string hotRunScriptName = string.Empty;
     public static void Main(string[] args)
     {
+        if (ProcessTools.IsProcessRunning("AGVSystem", out List<int> pids))
+        {
+            Console.WriteLine($"AGVSystem Program is already running({string.Join(",", pids)})");
+            Console.WriteLine("Press any key to exit...");
+            Console.ReadKey(true);
+        }
 
         Console.WriteLine("args:" + string.Join(",", args));
         foreach (var arg in args)

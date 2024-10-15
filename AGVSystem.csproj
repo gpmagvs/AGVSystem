@@ -6,8 +6,8 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<ApplicationIcon>favicon.ico</ApplicationIcon>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
-		<AssemblyVersion>1.1.283.1</AssemblyVersion>
-		<FileVersion>1.1.283.1</FileVersion>
+		<AssemblyVersion>1.1.289.0</AssemblyVersion>
+		<FileVersion>1.1.289.1</FileVersion>
 
 	</PropertyGroup>
 
