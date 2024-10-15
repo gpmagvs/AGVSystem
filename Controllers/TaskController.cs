@@ -61,7 +61,7 @@ namespace AGVSystem.Controllers
                 return Ok(true);
             }
 
-            bool canceled = await TaskManager.Cancel(task_name, $"User manual canceled");
+            bool canceled = await TaskManager.Cancel(task_name, $"用戶取消任務(User manual canceled)");
             logger.Info($"User try cancle Task-{task_name}---{canceled}");
             return Ok(canceled);
         }
