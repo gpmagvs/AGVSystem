@@ -51,6 +51,9 @@ namespace AGVSystem.TaskManagers
             AGVSystemCommonNet6.MAP.MapPoint sourcePoint = AGVSMapManager.GetMapPointByTag(source_station_tag);
             AGVSystemCommonNet6.MAP.MapPoint destinePoint = AGVSMapManager.GetMapPointByTag(destine_station_tag);
 
+
+
+
             using AGVSDatabase database = new AGVSDatabase();
             #region   AGV 狀態檢查
             // AGV 有貨不可派取貨or搬運, 無貨不可派放貨, 有貨不能去充電(非潛盾車型)
@@ -59,6 +62,20 @@ namespace AGVSystem.TaskManagers
                 IEnumerable<clsAGVStateDto> agvstates = database.tables.AgvStates;
                 clsAGVStateDto? _agv_assigned = agvstates.FirstOrDefault(agv_dat => agv_dat.AGV_Name == taskData.DesignatedAGVName);
                 VEHICLE_TYPE model = _agv_assigned.Model.ConvertToEQAcceptAGVTYPE();
+
+                //一班移動任務 檢查
+                if (_order_action == ACTION_TYPE.None && _IsMoveDestineIsForbidden(model, destine_station_tag))
+                {
+                    return (false, ALARMS.Navigation_Path_Contain_Forbidden_Point, $"目的地({destine_station_tag})已被設為{model}車款禁止停車或通過", $"Destine Tag({destine_station_tag}) is not allow {model} AGV to reach or pass");
+                }
+
+                bool _IsMoveDestineIsForbidden(VEHICLE_TYPE model, int destineTag)
+                {
+                    var forbidenTagMap = model == VEHICLE_TYPE.FORK ? AGVSMapManager.CurrentMap.TagNoStopOfForkAGV : AGVSMapManager.CurrentMap.TagNoStopOfSubmarineAGV;
+                    return forbidenTagMap.Contains(destineTag);
+                }
+
+
                 if (!isCarryAndSourceIsAGV && (taskData.Action == ACTION_TYPE.Unload || taskData.Action == ACTION_TYPE.Carry) && _agv_assigned.CargoStatus != 0)
                 {
                     AlarmManagerCenter.AddAlarmAsync(ALARMS.CANNOT_DISPATCH_CARRY_TASK_WHEN_AGV_HAS_CARGO);
