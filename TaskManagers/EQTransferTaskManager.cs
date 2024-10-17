@@ -7,6 +7,7 @@ using AGVSystemCommonNet6.AGVDispatch.RunMode;
 using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.MAP;
+using EquipmentManagment.Device;
 using EquipmentManagment.Device.Options;
 using EquipmentManagment.MainEquipment;
 using EquipmentManagment.Manager;
@@ -207,7 +208,7 @@ namespace AGVSystem.TaskManagers
         }
 
 
-        public static (bool confirm, ALARMS alarm_code, string message, string message_en) CheckEQAcceptAGVType(int station_tag, string _agv_name)
+        public static (bool confirm, ALARMS alarm_code, string message, string message_en) CheckEQAcceptAGVType(int station_tag, int slot, string _agv_name, bool isNeedChangeAGV)
         {
             using AGVSDatabase database = new AGVSDatabase();
             IEnumerable<clsAGVStateDto> agvstates = database.tables.AgvStates;
@@ -216,24 +217,37 @@ namespace AGVSystem.TaskManagers
             VEHICLE_TYPE model = _agv_assigned.Model.ConvertToEQAcceptAGVTYPE();
             MapPoint mapPoint = AGVSMapManager.GetMapPointByTag(station_tag);
 
-            clsRack? wip = StaEQPManagager.RacksList.FirstOrDefault(rack => rack.RackOption.ColumnTagMap.Values.SelectMany(k => k).Contains(station_tag));
+            (bool confirm, ALARMS alarm_code, string message, string message_en) mapPointTagNotExistReturn = new(false, ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, $"設備站點 TAG-{station_tag} 不存在於當前地圖", $"EQ TAG-{station_tag} not exist on current map");
 
-            bool isWIP = wip != null;
-            if (isWIP && model == VEHICLE_TYPE.FORK)
-            {
-                return (true, ALARMS.NONE, "", "");
-            }
-            clsEQ equipment = StaEQPManagager.GetEQByTag(station_tag);
-            if (equipment == null)
-                return new(false, ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, $"設備站點 [{equipment.EndPointOptions.Name}] TAG-{station_tag} 不存在於當前地圖", $"EQ [{equipment.EndPointOptions.Name}] TAG-{station_tag} not exist on current map");
+            if (mapPoint == null)
+                return mapPointTagNotExistReturn;
+
+            EndPointDeviceAbstract device = null;
+
+            bool isStationWIP = mapPoint.StationType == STATION_TYPE.Buffer || mapPoint.StationType == STATION_TYPE.Charge_Buffer || (mapPoint.StationType == STATION_TYPE.Buffer_EQ && slot > 0);
+            if (isStationWIP)
+                device = StaEQPManagager.RacksList.FirstOrDefault(rack => rack.RackOption.ColumnTagMap.Values.SelectMany(k => k).Contains(station_tag));
             else
-            {
-                VEHICLE_TYPE eq_accept_agv_model = equipment.EndPointOptions.Accept_AGV_Type;
-                if (eq_accept_agv_model != VEHICLE_TYPE.ALL && eq_accept_agv_model != model)
-                    return (false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Source_Equipment, $"設備 [{equipment.EndPointOptions.Name}] TAG-{station_tag}不允許{model}車種進行任務", $"EQ [{equipment.EndPointOptions.Name}] (TAG-{station_tag}) not allowed {model} to execute task");
-                else
-                    return new(true, ALARMS.NONE, "", "");
-            }
+                device = StaEQPManagager.GetEQByTag(station_tag, slot);
+
+            if (device == null)
+                return mapPointTagNotExistReturn;
+
+            (bool confirm, ALARMS alarm_code, string message, string message_en) vehicleModelNotAcceptReturn = new(false, ALARMS.AGV_Type_Is_Not_Allow_To_Execute_Task_At_Source_Equipment, $"設備 [{device.EndPointOptions.Name}] TAG-{station_tag}不允許{model}車種進行任務", $"EQ [{device.EndPointOptions.Name}] (TAG-{station_tag}) not allowed {model} to execute task");
+
+            if (isNeedChangeAGV)
+                return (true, ALARMS.NONE, "", "");
+
+            if ((isStationWIP || slot > 0) && model == VEHICLE_TYPE.SUBMERGED_SHIELD)
+                return vehicleModelNotAcceptReturn;
+
+            bool isAcceptVehicleModelMatch = device.EndPointOptions.Accept_AGV_Type == VEHICLE_TYPE.ALL || device.EndPointOptions.Accept_AGV_Type == model;
+
+            if (!isAcceptVehicleModelMatch)
+                return vehicleModelNotAcceptReturn;
+            else
+                return (true, ALARMS.NONE, "", "");
+
         }
 
 

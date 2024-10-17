@@ -171,7 +171,7 @@ namespace AGVSystem.TaskManagers
                         }
                         else
                         {
-                            results = EQTransferTaskManager.CheckEQAcceptAGVType(destine_station_tag, taskData.DesignatedAGVName);
+                            results = EQTransferTaskManager.CheckEQAcceptAGVType(destine_station_tag, taskData.GetToSlotInt(), taskData.DesignatedAGVName, taskData.need_change_agv);
                             if (!results.confirm)
                                 return results;
                         }
@@ -187,7 +187,7 @@ namespace AGVSystem.TaskManagers
                         { taskData.need_change_agv = true; }
                         else
                         {
-                            results = EQTransferTaskManager.CheckEQAcceptAGVType(destine_station_tag, taskData.DesignatedAGVName);
+                            results = EQTransferTaskManager.CheckEQAcceptAGVType(destine_station_tag, taskData.GetToSlotInt(), taskData.DesignatedAGVName, taskData.need_change_agv);
                             if (!results.confirm)
                                 taskData.need_change_agv = true;
 
@@ -195,30 +195,34 @@ namespace AGVSystem.TaskManagers
                             // 須知道車子目前背KUAN or TRAY 再比對放貨站點可接受貨物類型                            
                         }
                     }
-                    else if (taskData.Action == ACTION_TYPE.Carry && !isCarryAndSourceIsAGV) // 先檢查From Station,如果允許再比From Station及 To Station如果兩個不同則生成轉運
+                    else if (taskData.Action == ACTION_TYPE.Carry) // 先檢查From Station,如果允許再比From Station及 To Station如果兩個不同則生成轉運
                     {
-                        if (sourcePoint.StationType == STATION_TYPE.Buffer)
+                        if (!isCarryAndSourceIsAGV)
                         {
-                            if (model == VEHICLE_TYPE.SUBMERGED_SHIELD)
+
+                            if (sourcePoint?.StationType == STATION_TYPE.Buffer)
                             {
-                                results = (false, ALARMS.NONE, $"AGV為潛盾無法指派站點類型為[Buffer]的任務", $"Station Type = {sourcePoint.StationType} can not accept car model = {model}");
+                                if (model == VEHICLE_TYPE.SUBMERGED_SHIELD)
+                                {
+                                    results = (false, ALARMS.NONE, $"AGV為潛盾無法指派站點類型為[Buffer]的任務", $"Station Type = {sourcePoint.StationType} can not accept car model = {model}");
+                                    return results;
+                                }
+                                else
+                                {
+                                    // Do nothing
+                                }
+                            }
+                            else if (sourcePoint.StationType == STATION_TYPE.Buffer_EQ && (Convert.ToInt16(taskData.To_Slot) > 0 && model == VEHICLE_TYPE.SUBMERGED_SHIELD))
+                            {
+                                results = (false, ALARMS.NONE, $"無法指派潛盾AGV進行在 Buffer_EQ 第一層以上的取放任務", $"Station Type = {sourcePoint.StationType} can not accept car model = {model} to {ACTION_TYPE.Unload} at slot {taskData.To_Slot}");
                                 return results;
                             }
                             else
                             {
-                                // Do nothing
+                                results = EQTransferTaskManager.CheckEQAcceptAGVType(source_station_tag, taskData.GetFromSlotInt(), taskData.DesignatedAGVName, taskData.need_change_agv);
+                                if (!results.confirm)
+                                    return results;
                             }
-                        }
-                        else if (sourcePoint.StationType == STATION_TYPE.Buffer_EQ && (Convert.ToInt16(taskData.To_Slot) > 0 && model == VEHICLE_TYPE.SUBMERGED_SHIELD))
-                        {
-                            results = (false, ALARMS.NONE, $"無法指派潛盾AGV進行在 Buffer_EQ 第一層以上的取放任務", $"Station Type = {sourcePoint.StationType} can not accept car model = {model} to {ACTION_TYPE.Unload} at slot {taskData.To_Slot}");
-                            return results;
-                        }
-                        else
-                        {
-                            results = EQTransferTaskManager.CheckEQAcceptAGVType(source_station_tag, taskData.DesignatedAGVName);
-                            if (!results.confirm)
-                                return results;
                         }
 
                         if (destinePoint.StationType == STATION_TYPE.Buffer)
@@ -232,7 +236,7 @@ namespace AGVSystem.TaskManagers
                         }
                         else
                         {
-                            results = EQTransferTaskManager.CheckEQAcceptAGVType(destine_station_tag, taskData.DesignatedAGVName);
+                            results = EQTransferTaskManager.CheckEQAcceptAGVType(destine_station_tag, taskData.GetToSlotInt(), taskData.DesignatedAGVName, taskData.need_change_agv);
                             if (results.confirm == false)
                                 taskData.need_change_agv = true;
                         }
@@ -251,7 +255,7 @@ namespace AGVSystem.TaskManagers
                     AlarmManagerCenter.AddAlarmAsync(ALARMS.AGV_NO_Carge_Cannot_Transfer_Cargo_From_AGV_To_Desinte, ALARM_SOURCE.AGVS, level: ALARM_LEVEL.WARNING);
                     return (false, ALARMS.AGV_NO_Carge_Cannot_Transfer_Cargo_From_AGV_To_Desinte, "AGV車上無貨，無法指派來源為AGV的搬運任務", "Not any cargo on AGV, cannot assign a transport task with AGV as the source.");
                 }
-                (bool confirm, ALARMS alarm_code, string message, string message_en) results = EQTransferTaskManager.CheckEQAcceptAGVType(destine_station_tag, taskData.DesignatedAGVName);
+                (bool confirm, ALARMS alarm_code, string message, string message_en) results = EQTransferTaskManager.CheckEQAcceptAGVType(destine_station_tag, taskData.GetToSlotInt(), taskData.DesignatedAGVName, taskData.need_change_agv);
                 if (!results.confirm)
                     return results;
 

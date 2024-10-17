@@ -400,19 +400,35 @@ namespace AGVSystem.Controllers
             }
 
             taskData.DispatcherName = user;
-            var result = await TaskManager.AddTask(taskData, TaskManager.TASK_RECIEVE_SOURCE.MANUAL);
-            bool showEmptyOrFullContentCheck = false;
-            if (result.alarm_code == ALARMS.EQ_UNLOAD_REQ_BUT_RACK_FULL_OR_EMPTY_IS_UNKNOWN)
+            try
             {
-                int eqTag = taskData.Action == ACTION_TYPE.Unload ? taskData.To_Station_Tag : taskData.From_Station_Tag;
-                //MapPoint mapPoint = AGVSMapManager.GetMapPointByTag(eqTag);
-                clsEQ eq = StaEQPManagager.GetEQByTag(eqTag);
-                if (eq.EndPointOptions.IsFullEmptyUnloadAsVirtualInput)
+                (bool confirm, ALARMS alarm_code, string message, string message_en) result = await TaskManager.AddTask(taskData, TaskManager.TASK_RECIEVE_SOURCE.MANUAL);
+
+                if (!result.confirm && string.IsNullOrEmpty(result.message))
                 {
-                    showEmptyOrFullContentCheck = true;
+
                 }
+
+                bool showEmptyOrFullContentCheck = false;
+                if (result.alarm_code == ALARMS.EQ_UNLOAD_REQ_BUT_RACK_FULL_OR_EMPTY_IS_UNKNOWN)
+                {
+                    int eqTag = taskData.Action == ACTION_TYPE.Unload ? taskData.To_Station_Tag : taskData.From_Station_Tag;
+                    //MapPoint mapPoint = AGVSMapManager.GetMapPointByTag(eqTag);
+                    clsEQ eq = StaEQPManagager.GetEQByTag(eqTag);
+                    if (eq.EndPointOptions.IsFullEmptyUnloadAsVirtualInput)
+                    {
+                        showEmptyOrFullContentCheck = true;
+                    }
+                }
+                return new { confirm = result.confirm, alarm_code = result.alarm_code, message = result.message, message_en = result.message_en, showEmptyOrFullContentCheck = showEmptyOrFullContentCheck };
+
+
             }
-            return new { confirm = result.confirm, alarm_code = result.alarm_code, message = result.message, message_en = result.message_en, showEmptyOrFullContentCheck = showEmptyOrFullContentCheck };
+            catch (Exception exc)
+            {
+
+                throw exc;
+            }
         }
 
 
