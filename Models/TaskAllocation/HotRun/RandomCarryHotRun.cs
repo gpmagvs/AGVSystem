@@ -48,7 +48,7 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                 if (success)
                 {
                     string TaskName = $"HR_{ACTION_TYPE.Carry}_{DateTime.Now.ToString("yMdHHmmss")}";
-                    (bool confirm, AGVSystemCommonNet6.Alarm.ALARMS alarm_code, string message) addTaskResult = await TaskManager.AddTask(new clsTaskDto
+                    (bool confirm, AGVSystemCommonNet6.Alarm.ALARMS alarm_code, string message, string message_en) addTaskResult = await TaskManager.AddTask(new clsTaskDto
                     {
                         Action = ACTION_TYPE.Carry,
                         From_Station = result.FromTag.ToString(),

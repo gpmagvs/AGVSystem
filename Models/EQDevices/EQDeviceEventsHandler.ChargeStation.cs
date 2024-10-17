@@ -42,7 +42,7 @@ namespace AGVSystem.Models.EQDevices
 
                 NotifyServiceHelper.WARNING($"{agvName} 偵測到電池未連接!\r\n即將重新下發充電任務...");
                 AlarmManagerCenter.AddAlarmAsync(ALARMS.Battery_Not_Connect, ALARM_SOURCE.AGVS, ALARM_LEVEL.WARNING, chargeStation.EQName, mapPt.Graph.Display);
-                (bool confirm, ALARMS alarm_code, string message) AddTaskResult = await TaskManager.AddTask(new AGVSystemCommonNet6.AGVDispatch.clsTaskDto
+                (bool confirm, ALARMS alarm_code, string message, string message_en) AddTaskResult = await TaskManager.AddTask(new AGVSystemCommonNet6.AGVDispatch.clsTaskDto
                 {
                     TaskName = $"Charge-{DateTime.Now.ToString("yyyyMMdd_HHmmssfff")}",//20240529_090159358
                     Action = AGVSystemCommonNet6.AGVDispatch.Messages.ACTION_TYPE.Charge,

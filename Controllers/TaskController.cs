@@ -167,10 +167,10 @@ namespace AGVSystem.Controllers
                 return Ok(new clsAGVSTaskReportResponse() { confirm = true, message = $"Get empty port OK", ReturnObj = port.Layer });
             }
 
-            (bool confirm, ALARMS alarm_code, string message, object obj, Type objtype) result = EQTransferTaskManager.CheckLoadUnloadStation(tag, slot, action, bypasseqandrackckeck: false);
+            (bool confirm, ALARMS alarm_code, string message, string message_en, object obj, Type objtype) result = EQTransferTaskManager.CheckLoadUnloadStation(tag, slot, action, bypasseqandrackckeck: false);
             if (result.confirm == false)
             {
-                return Ok(new clsAGVSTaskReportResponse() { confirm = false, message = $"{result.message}", AlarmCode = result.alarm_code });
+                return Ok(new clsAGVSTaskReportResponse() { confirm = false, message = $"{result.message}", message_en = result.message_en, AlarmCode = result.alarm_code });
             }
             else
             {
@@ -412,7 +412,7 @@ namespace AGVSystem.Controllers
                     showEmptyOrFullContentCheck = true;
                 }
             }
-            return new { confirm = result.confirm, alarm_code = result.alarm_code, message = result.message, showEmptyOrFullContentCheck = showEmptyOrFullContentCheck };
+            return new { confirm = result.confirm, alarm_code = result.alarm_code, message = result.message, message_en = result.message_en, showEmptyOrFullContentCheck = showEmptyOrFullContentCheck };
         }
 
 
