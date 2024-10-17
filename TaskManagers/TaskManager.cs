@@ -71,7 +71,7 @@ namespace AGVSystem.TaskManagers
 
                 bool _IsMoveDestineIsForbidden(VEHICLE_TYPE model, int destineTag)
                 {
-                    var forbidenTagMap = model == VEHICLE_TYPE.FORK ? AGVSMapManager.CurrentMap.TagNoStopOfForkAGV : AGVSMapManager.CurrentMap.TagNoStopOfSubmarineAGV;
+                    var forbidenTagMap = model == VEHICLE_TYPE.FORK ? AGVSMapManager.CurrentMap.TagForbiddenForForkAGV : AGVSMapManager.CurrentMap.TagForbiddenForSubMarineAGV;
                     return forbidenTagMap.Contains(destineTag);
                 }
 
