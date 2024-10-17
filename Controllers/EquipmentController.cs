@@ -174,7 +174,7 @@ namespace AGVSystem.Controllers
                     }
                     else
                     {
-                        success = chargeStation.SetCCAsync(Value, out message);
+                        (success, message) = await chargeStation.SetCCAsync(Value);
                     }
                 }
                 if (_item == "CV")
@@ -186,7 +186,7 @@ namespace AGVSystem.Controllers
                         message = result.Item2;
                     }
                     else
-                        success = chargeStation.SetCVAsync(Value, out message);
+                        (success, message) = await chargeStation.SetCVAsync(Value);
                 }
                 if (_item == "FV")
                 {
@@ -197,7 +197,7 @@ namespace AGVSystem.Controllers
                         message = result.Item2;
                     }
                     else
-                        success = chargeStation.SetFV(Value, out message);
+                        (success, message) = await chargeStation.SetFV(Value);
                 }
                 if (_item == "TC")
                 {
@@ -208,7 +208,7 @@ namespace AGVSystem.Controllers
                         message = result.Item2;
                     }
                     else
-                        success = chargeStation.SetTCAsync(Value, out message);
+                        (success, message) = await chargeStation.SetTCAsync(Value);
                 }
                 return Ok(new { confirm = success, message = message });
             }

@@ -39,6 +39,12 @@ public class Program
     static string hotRunScriptName = string.Empty;
     public static void Main(string[] args)
     {
+        if (ProcessTools.IsProcessRunning("AGVSystem", out List<int> pids))
+        {
+            Console.WriteLine($"AGVSystem Program is already running({string.Join(",", pids)})");
+            Console.WriteLine("Press any key to exit...");
+            Console.ReadKey(true);
+        }
 
         Console.WriteLine("args:" + string.Join(",", args));
         foreach (var arg in args)
@@ -87,6 +93,7 @@ public class Program
         catch (Exception ex)
         {
             logger.Error(ex);
+            Environment.Exit(ex.GetHashCode());
         }
         finally
         {
@@ -112,9 +119,6 @@ public static class SystemInitializer
         EQDeviceEventsHandler.Initialize();
         clsEQ.OnIOStateChanged += EQDeviceEventsHandler.HandleEQIOStateChanged;
         clsEQ.OnPortExistChangeed += MaterialManager.HandlePortExistChanged;
-
-        AGVSSocketHost agvsHost = new AGVSSocketHost();
-        agvsHost.Start();
 
         AlarmManagerCenter.Initialize();
         AlarmManager.LoadVCSTrobleShootings();
@@ -380,10 +384,11 @@ public static class StaticFileInitializer
 {
     public static void Initialize(WebApplication app)
     {
+
+        string configRootFolder = app.Configuration.GetValue<string>("AGVSConfigFolder");
+        configRootFolder = string.IsNullOrEmpty(configRootFolder) ? @"C:\AGVS" : configRootFolder;
         try
         {
-            string configRootFolder = app.Configuration.GetValue<string>("AGVSConfigFolder");
-            configRootFolder = string.IsNullOrEmpty(configRootFolder) ? @"C:\AGVS" : configRootFolder;
             string mapFileFolderRelativePath = app.Configuration.GetValue<string>("StaticFileOptions:MapFile:FolderPath");
             string mapFileRequestPath = app.Configuration.GetValue<string>("StaticFileOptions:MapFile:RequestPath");
 
@@ -418,6 +423,14 @@ public static class StaticFileInitializer
 
             CreateDefaultAGVImage(agvImageFileFolderPath);
 
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message + ex.StackTrace);
+        }
+
+        try
+        {
             Directory.CreateDirectory(AGVSConfigulator.SysConfigs.TrobleShootingFolder);
             var trobleshootingFileRequestPath = app.Configuration.GetValue<string>("TrobleShootingFileOptions:TrobleShootingFile:RequestPath");
             var trobleshootingFileProvider = new PhysicalFileProvider(AGVSConfigulator.SysConfigs.TrobleShootingFolder);

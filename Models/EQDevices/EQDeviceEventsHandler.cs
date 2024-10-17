@@ -28,6 +28,10 @@ namespace AGVSystem.Models.EQDevices
             clsChargeStation.OnBatteryNotConnected += HandleChargeStationBatteryNotConnectEvent;
             clsChargeStation.OnBatteryChargeFull += HandleChargeFullEvent;
 
+            ChargerIOSynchronizer.OnEMO += ChargerIOSynchronizer_OnEMO;
+            ChargerIOSynchronizer.OnAirError += ChargerIOSynchronizer_OnAirError;
+            ChargerIOSynchronizer.OnSmokeDetected += ChargerIOSynchronizer_OnSmokeDetected;
+
             clsPortOfRack.OnRackPortSensorFlash += HandlePortOfRackSensorFlash;
             clsPortOfRack.OnRackPortSensorStatusChanged += HandlePortOfRackSensorStatusChanged;
 
@@ -35,6 +39,7 @@ namespace AGVSystem.Models.EQDevices
             MaterialManagerEventHandler.OnMaterialAdd += HandleMaterialAdd;
             MaterialManagerEventHandler.OnMaterialDelete += HandleMaterialDelete;
         }
+
 
         private static void HandleMaterialDelete(object? sender, clsMaterialInfo e)
         {

@@ -45,7 +45,37 @@ namespace AGVSystem.Controllers
             List<string> chargerNames = StaEQPManagager.ChargeStations.Select(charger => charger.EndPointOptions.Name)
                                                            .ToList();
             return Ok(chargerNames);
+        }
 
+
+
+        [HttpPost("EMOEmu")]
+        public async Task EMOEmu(string chargerName, bool isEmo)
+        {
+            EquipmentManagment.ChargeStation.clsChargeStation? charger = StaEQPManagager.ChargeStations.FirstOrDefault(ch => ch.EndPointOptions.Name == chargerName);
+            if (charger != null && charger.chargerOptions.hasIOModule && charger.chargerOptions.IsEmulation)
+            {
+                charger.chargerIOSynchronizer.EMOEmulate(isEmo);
+            }
+        }
+
+        [HttpPost("SmokeDetectEmu")]
+        public async Task SmokeDetectEmu(string chargerName, bool isSmokeDetected)
+        {
+            EquipmentManagment.ChargeStation.clsChargeStation? charger = StaEQPManagager.ChargeStations.FirstOrDefault(ch => ch.EndPointOptions.Name == chargerName);
+            if (charger != null && charger.chargerOptions.hasIOModule && charger.chargerOptions.IsEmulation)
+            {
+                charger.chargerIOSynchronizer.SmokeDetectedEmulate(isSmokeDetected);
+            }
+        }
+        [HttpPost("AirErrorEmu")]
+        public async Task AirErrorEmu(string chargerName, bool isAirError)
+        {
+            EquipmentManagment.ChargeStation.clsChargeStation? charger = StaEQPManagager.ChargeStations.FirstOrDefault(ch => ch.EndPointOptions.Name == chargerName);
+            if (charger != null && charger.chargerOptions.hasIOModule && charger.chargerOptions.IsEmulation)
+            {
+                charger.chargerIOSynchronizer.AirErrorEmulate(isAirError);
+            }
         }
     }
 }

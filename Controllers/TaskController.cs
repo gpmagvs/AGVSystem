@@ -61,7 +61,7 @@ namespace AGVSystem.Controllers
                 return Ok(true);
             }
 
-            bool canceled = await TaskManager.Cancel(task_name, $"User manual canceled");
+            bool canceled = await TaskManager.Cancel(task_name, $"用戶取消任務(User manual canceled)");
             logger.Info($"User try cancle Task-{task_name}---{canceled}");
             return Ok(canceled);
         }
@@ -258,8 +258,10 @@ namespace AGVSystem.Controllers
             if (action != ACTION_TYPE.Load && action != ACTION_TYPE.Unload)
                 return new clsAGVSTaskReportResponse() { confirm = false, message = "Action should equal Load or Unlaod" };
 
-            (bool existDevice, clsEQ mainEQ, clsRack rack) result = TryGetEndDevice(tag);
-            if (!result.existDevice)
+            bool isUnloadFromAGV = (tag == -1 || order.IsFromAGV) && action == ACTION_TYPE.Unload;
+
+            (bool existDevice, clsEQ mainEQ, clsRack rack) = isUnloadFromAGV ? (true, null, null) : TryGetEndDevice(tag);
+            if (!existDevice)
                 return new clsAGVSTaskReportResponse() { confirm = false, message = $"[LoadUnloadTaskFinish] 找不到Tag為{tag}的設備" };
 
             EndPointDeviceAbstract endPoint = null;
@@ -268,23 +270,24 @@ namespace AGVSystem.Controllers
                                                              order?.Action == ACTION_TYPE.Carry;
             try
             {
-                if (result.mainEQ != null)
+                if (mainEQ != null)
                 {
-                    endPoint = result.mainEQ;
+                    endPoint = mainEQ;
                     _ = Task.Run(async () =>
                     {
-                        result.mainEQ.CancelToEQUpAndLow();
+                        mainEQ.CancelToEQUpAndLow();
                         await Task.Delay(DelayReserveCancel ? 1000 : 1);
-                        result.mainEQ.CancelReserve();
+                        mainEQ.CancelReserve();
                     });
                     logger.Info($"Get AGV LD.ULD Task Finish At Tag {tag}-Action={action}. TO Eq DO ALL OFF");
-                    return new clsAGVSTaskReportResponse() { confirm = true, message = $"{result.mainEQ.EQName} ToEQUp DO OFF" };
+                    return new clsAGVSTaskReportResponse() { confirm = true, message = $"{mainEQ.EQName} ToEQUp DO OFF" };
                 }
-                else
+                if (rack != null)
                 {
-                    endPoint = result.rack;
-                    return new clsAGVSTaskReportResponse() { confirm = true, message = $"{action} from {result.rack} Finish" };
+                    endPoint = rack;
+                    return new clsAGVSTaskReportResponse() { confirm = true, message = $"{action} from {rack} Finish" };
                 }
+                return new clsAGVSTaskReportResponse() { confirm = true, message = $"{action} from {order.From_Station} Finish" };
             }
             finally
             {
@@ -305,7 +308,7 @@ namespace AGVSystem.Controllers
 
                         bool isAGVLocateIsSecondaryPtOfUnloadEQ = executingAGVState?.TransferProcess == VehicleMovementStage.WorkingAtSource;
                         if (isAGVLocateIsSecondaryPtOfUnloadEQ)
-                            HotRunScriptManager.RegularUnloadHotRunner.SetUnloadEqAsBusy(result.mainEQ.EQName);
+                            HotRunScriptManager.RegularUnloadHotRunner.SetUnloadEqAsBusy(mainEQ.EQName);
                     }
                     //var eqEmu = StaEQPEmulatorsManagager.GetEQEmuByName(endPoint.EQName);
                     //eqEmu.SetStatusBUSY();
