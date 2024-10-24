@@ -69,6 +69,22 @@ namespace AGVSystem.Models.EQDevices
             NotifyServiceHelper.SUCCESS($"{UsingChargeStationVehicleName} 已充飽電!({StationMapPoint.Graph.Display})");
         }
 
+
+
+        private static void HandleChargeStationTemperatureOverThreshoad(object? sender, clsChargeStation e)
+        {
+            (int ChargeStationTag, MapPoint StationMapPoint, string UsingChargeStationVehicleName) = _GetChargeStationAndVehicle(e);
+            string chargerName = e.EQName;
+            AlarmManagerCenter.AddAlarmAsync(ALARMS.Charge_Station_Temperature_High, ALARM_SOURCE.EQP, Equipment_Name: chargerName, location: chargerName);
+        }
+        private static void HandleChargeStationTemperatureRestoreUnderThreshoad(object? sender, clsChargeStation e)
+        {
+            (int ChargeStationTag, MapPoint StationMapPoint, string UsingChargeStationVehicleName) = _GetChargeStationAndVehicle(e);
+            string chargerName = e.EQName;
+            AlarmManagerCenter.SetAlarmCheckedAsync(chargerName, ALARMS.Charge_Station_Temperature_High);
+        }
+
+
         private static (int ChargeStationTag, MapPoint StationMapPoint, string UsingChargeStationVehicleName) _GetChargeStationAndVehicle(clsChargeStation chargeStation)
         {
             int tag = chargeStation.EndPointOptions.TagID;

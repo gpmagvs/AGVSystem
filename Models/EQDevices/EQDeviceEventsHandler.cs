@@ -27,6 +27,8 @@ namespace AGVSystem.Models.EQDevices
 
             clsChargeStation.OnBatteryNotConnected += HandleChargeStationBatteryNotConnectEvent;
             clsChargeStation.OnBatteryChargeFull += HandleChargeFullEvent;
+            clsChargeStation.OnChargeStationTemperatureOverThreshoad +=HandleChargeStationTemperatureOverThreshoad;
+            clsChargeStation.OnChargeStationTemperatureRestoreUnderThreshoad +=HandleChargeStationTemperatureRestoreUnderThreshoad;
 
             ChargerIOSynchronizer.OnEMO += ChargerIOSynchronizer_OnEMO;
             ChargerIOSynchronizer.OnAirError += ChargerIOSynchronizer_OnAirError;
