@@ -128,6 +128,16 @@ namespace AGVSystem.Controllers
         {
             return Ok(AGVSConfigulator.SysConfigs);
         }
+
+
+        [HttpGet("AliveCheck")]
+        public async Task<IActionResult> AliveCheck()
+        {
+            return Ok();
+        }
+
+
+
         private string GetAppVersion()
         {
             return Assembly.GetExecutingAssembly().GetName().Version.ToString();
