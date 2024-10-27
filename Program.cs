@@ -87,9 +87,7 @@ public class Program
                     logger.Info($"HotRunScriptManager.Run({hotRunScriptName}) result: {result.Item1}, {result.Item2}");
                 });
             }
-
-
-            SystemInitializer.WriteAppVersionToDatabaseAsync(builder, appVersion);
+            SystemInitializer.InitSysStatusDBStoreWithAppVersionAsync(builder, appVersion);
             app.Run();
         }
         catch (Exception ex)
@@ -122,7 +120,7 @@ public static class SystemInitializer
         clsEQ.OnIOStateChanged += EQDeviceEventsHandler.HandleEQIOStateChanged;
         clsEQ.OnPortExistChangeed += MaterialManager.HandlePortExistChanged;
         clsEQ.OnUnloadRequestChanged += EQDeviceEventsHandler.HandleEQUnloadRequestChanged;
-        AlarmManagerCenter.Initialize();
+        AlarmManagerCenter.InitializeAsync().GetAwaiter().GetResult();
         AlarmManager.LoadVCSTrobleShootings();
         VMSSerivces.OnVMSReconnected += async (sender, e) => await VMSSerivces.RunModeSwitch(SystemModes.RunMode);
         VMSSerivces.AliveCheckWorker();
@@ -172,15 +170,10 @@ public static class SystemInitializer
         }
     }
 
-    public static async Task WriteAppVersionToDatabaseAsync(WebApplicationBuilder build, string appVersion)
+    public static async Task InitSysStatusDBStoreWithAppVersionAsync(WebApplicationBuilder build, string appVersion)
     {
-        await build.Services.BuildServiceProvider().GetRequiredService<SystemStatusDbStoreService>().SetAppVersion(appVersion);
+        await build.Services.BuildServiceProvider().GetRequiredService<SystemStatusDbStoreService>().InitSysStatusWithAppVersion(appVersion);
 
-    }
-
-    public static async Task ResetModesStoreOfDatabase(WebApplicationBuilder build)
-    {
-        await build.Services.BuildServiceProvider().GetRequiredService<SystemStatusDbStoreService>().ResetModesStore();
     }
 }
 
