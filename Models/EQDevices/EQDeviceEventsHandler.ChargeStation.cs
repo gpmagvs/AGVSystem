@@ -10,6 +10,7 @@ using AGVSystemCommonNet6.MAP;
 using AGVSystemCommonNet6.AGVDispatch;
 using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.Microservices.AudioPlay;
+using EquipmentManagment.MainEquipment;
 namespace AGVSystem.Models.EQDevices
 {
     public partial class EQDeviceEventsHandler
@@ -119,5 +120,6 @@ namespace AGVSystem.Models.EQDevices
             AudioPlayService.AddAudioToPlayQueue(ChargerEMOAudioFilePath);
             AlarmManagerCenter.AddAlarmAsync(ALARMS.Charge_Station_EMO, Equipment_Name: chargerName);
         }
+
     }
 }

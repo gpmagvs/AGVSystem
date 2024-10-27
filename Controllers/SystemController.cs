@@ -1,4 +1,5 @@
 ﻿using AGVSystem.Models.Sys;
+using AGVSystem.Service;
 using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.AGVDispatch.RunMode;
 using AGVSystemCommonNet6.Configuration;
@@ -18,6 +19,12 @@ namespace AGVSystem.Controllers
     [ApiController]
     public class SystemController : ControllerBase
     {
+        SystemStatusDbStoreService _SystemStatusDbStoreService;
+        public SystemController(SystemStatusDbStoreService _SystemStatusDbStoreService)
+        {
+            this._SystemStatusDbStoreService = _SystemStatusDbStoreService;
+        }
+
 
         [HttpGet("OperationStates")]
         public async Task<IActionResult> OperationStates()
@@ -58,7 +65,10 @@ namespace AGVSystem.Controllers
                 oko = Ok(new { confirm = vms_response.confirm, message = vms_response.message });
             }
             else
+            {
                 oko = Ok(new { confirm = vms_response.confirm, message = vms_response.message });
+                _SystemStatusDbStoreService.ModifyRunModeStored(mode);
+            }
             return oko;
         }
 
@@ -76,6 +86,7 @@ namespace AGVSystem.Controllers
                 SystemModes.HostConnMode = mode;
                 if (SystemModes.HostConnMode == HOST_CONN_MODE.OFFLINE)
                     SystemModes.HostOperMode = HOST_OPER_MODE.LOCAL;
+                _SystemStatusDbStoreService.ModifyHostConnMode(mode);
             }
             return Ok(new { confirm = response.confirm, message = response.message });
         }
@@ -92,7 +103,11 @@ namespace AGVSystem.Controllers
             else
                 response = await MCSCIMService.OnlineLocalToOnlineRemote();
             if (response.confirm == true)
+            {
+
                 SystemModes.HostOperMode = mode;
+                _SystemStatusDbStoreService.ModifyHostOperMode(mode);
+            }
             return Ok(new { confirm = response.confirm, message = response.message });
         }
 
