@@ -257,6 +257,7 @@ public static class WebAppInitializer
         builder.Services.AddHostedService<VehicleLocationMonitorBackgroundService>();
         builder.Services.AddHostedService<FrontEndDataBrocastService>();
         builder.Services.AddHostedService<PCPerformanceService>();
+        builder.Services.AddHostedService<EquipmentsCollectBackgroundService>();
         builder.Services.AddScoped<MeanTimeQueryService>();
         builder.Services.AddScoped<LogDownlodService>();
         builder.Services.AddScoped<StationSelectService>();
