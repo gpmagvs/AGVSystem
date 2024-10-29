@@ -11,6 +11,9 @@ using Microsoft.Build.Framework;
 using AGVSystemCommonNet6.AGVDispatch;
 using AGVSystem.Models.Map;
 using AGVSystemCommonNet6.Vehicle_Control.VCSDatabase;
+using Microsoft.Build.ObjectModelRemoting;
+using AGVSystemCommonNet6.ViewModels;
+using AGVSystemCommonNet6.AGVDispatch.Messages;
 
 namespace AGVSystem.Controllers
 {
@@ -23,46 +26,42 @@ namespace AGVSystem.Controllers
         {
             this.dbcontext = dbcontext;
         }
-        [HttpGet("TaskQuery")]
-        public async Task<IActionResult> TaskQuery(int currentpage, string StartTime, string EndTime, string? AGV_Name = "ALL", string? TaskName = "ALL", string Result = "ALL", string ActionType = "ALL", string? failurereason = "ALL")
+
+        [HttpPost]
+        public async Task<IActionResult> TaskQuery([FromBody] TaskQueryCondition conditions)
         {
-            DateTime start = DateTime.Parse(StartTime);
-            DateTime end = DateTime.Parse(EndTime);
-            using (var taskDb = new TaskDatabaseHelper())
+            using var taskDBHelper = new TaskDatabaseHelper();
+            (int total, List<clsTaskDto> tasksQueryOut, int CompleteNum, int FailNum, int CancelNum) = taskDBHelper.TaskQuery(conditions);
+            tasksQueryOut.ForEach(task =>
             {
-                taskDb.TaskQuery(out int count, currentpage, start, end, AGV_Name, TaskName, Result, ActionType, failurereason, out List<clsTaskDto>? tasks);
-
-                tasks.ForEach(task =>
+                if (task.From_Station_Tag != -1)
                 {
-                    if (task.From_Station_Tag != -1)
-                    {
-                        task.From_Station_Display = _GetDisplayOfTag(task.From_Station_Tag);
-                    }
-                    if (task.To_Station_Tag != -1)
-                    {
-                        task.To_Station_Display = _GetDisplayOfTag(task.To_Station_Tag);
-                    }
-                    task.StartLocationDisplay = _GetDisplayOfTag(task.StartLocationTag);
-                });
-
-                return Ok(new { count, tasks });
-            }
-
+                    task.From_Station_Display = _GetDisplayOfTag(task.From_Station_Tag);
+                }
+                if (task.To_Station_Tag != -1)
+                {
+                    task.To_Station_Display = _GetDisplayOfTag(task.To_Station_Tag);
+                }
+                task.StartLocationDisplay = _GetDisplayOfTag(task.StartLocationTag);
+            });
 
             string _GetDisplayOfTag(int tag)
             {
                 var toPoint = AGVSMapManager.GetMapPointByTag(tag);
                 return toPoint == null ? tag + "" : toPoint.Graph.Display;
             }
+
+            return Ok(new { count = total, tasks = tasksQueryOut, CompleteNum, FailNum, CancelNum });
         }
+
         [HttpGet("SaveTocsv")]
-        public async Task<IActionResult> SaveTocsv(string StartTime, string EndTime, string? TaskName = "ALL", string Result = "ALL",string? AGV_Name = "ALL")
+        public async Task<IActionResult> SaveTocsv(string StartTime, string EndTime, string? TaskName = "", TASK_RUN_STATUS Result = TASK_RUN_STATUS.UNKNOWN, string? AGV_Name = "")
         {
             DateTime start = DateTime.Parse(StartTime);
             DateTime end = DateTime.Parse(EndTime);
             //TaskDatabaseHelper.SaveTocsv(start, end, AGV_Name, TaskName);
             //return Ok();
-            string FileName = TaskDatabaseHelper.SaveTocsv(start, end, AGV_Name, TaskName, Result );
+            string FileName = TaskDatabaseHelper.SaveTocsv(start, end, AGV_Name, TaskName, Result);
             FileStream fileStream = new FileStream(FileName, FileMode.Open, FileAccess.Read);
             // 設置回應的內容類型
             var contentType = "application/octet-stream"; // 或根據檔案類型設置適當的內容類型

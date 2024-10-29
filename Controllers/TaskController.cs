@@ -167,10 +167,10 @@ namespace AGVSystem.Controllers
                 return Ok(new clsAGVSTaskReportResponse() { confirm = true, message = $"Get empty port OK", ReturnObj = port.Layer });
             }
 
-            (bool confirm, ALARMS alarm_code, string message, object obj, Type objtype) result = EQTransferTaskManager.CheckLoadUnloadStation(tag, slot, action, bypasseqandrackckeck: false);
+            (bool confirm, ALARMS alarm_code, string message, string message_en, object obj, Type objtype) result = EQTransferTaskManager.CheckLoadUnloadStation(tag, slot, action, bypasseqandrackckeck: false);
             if (result.confirm == false)
             {
-                return Ok(new clsAGVSTaskReportResponse() { confirm = false, message = $"{result.message}", AlarmCode = result.alarm_code });
+                return Ok(new clsAGVSTaskReportResponse() { confirm = false, message = $"{result.message}", message_en = result.message_en, AlarmCode = result.alarm_code });
             }
             else
             {
@@ -225,14 +225,14 @@ namespace AGVSystem.Controllers
         public async Task<clsAGVSTaskReportResponse> StartTransferCargoReport(string AGVName, int SourceTag, int DestineTag, string SourceSlot, string DestineSlot, bool IsSourceAGV = false)
         {
             var _response = new clsAGVSTaskReportResponse();
-            (bool existDevice, clsEQ mainEQ, clsRack rack) destineDevice = TryGetEndDevice(DestineTag);
+            (bool existDevice, clsEQ mainEQ, clsRack rack) destineDevice = TryGetEndDevice(DestineTag, int.Parse(DestineSlot));
             if (destineDevice.existDevice == false)
                 return new clsAGVSTaskReportResponse() { confirm = false, message = $"[StartTransferCargoReport] 找不到Tag為{DestineTag}的終點設備" };
             else
             {
                 if (IsSourceAGV)
                     return new clsAGVSTaskReportResponse { confirm = true };
-                (bool existDevice, clsEQ mainEQ, clsRack rack) sourceDevice = TryGetEndDevice(SourceTag);
+                (bool existDevice, clsEQ mainEQ, clsRack rack) sourceDevice = TryGetEndDevice(SourceTag, int.Parse(SourceSlot));
                 if (sourceDevice.existDevice == false)
                     return new clsAGVSTaskReportResponse() { confirm = false, message = $"[StartTransferCargoReport] 找不到Tag為{SourceTag}的起點設備" };
                 else if (sourceDevice.rack != null)
@@ -260,14 +260,29 @@ namespace AGVSystem.Controllers
 
             bool isUnloadFromAGV = (tag == -1 || order.IsFromAGV) && action == ACTION_TYPE.Unload;
 
-            (bool existDevice, clsEQ mainEQ, clsRack rack) = isUnloadFromAGV ? (true, null, null) : TryGetEndDevice(tag);
+            if (isUnloadFromAGV)
+                return new clsAGVSTaskReportResponse() { confirm = true };
+
+            bool isCarryTask = order.Action == ACTION_TYPE.Carry;
+            string slotStr = "";
+
+            if (isCarryTask)
+                slotStr = action == ACTION_TYPE.Unload ? order.From_Slot : order.To_Slot;
+            else
+                slotStr = order.To_Slot;
+
+
+            int slot = int.Parse(slotStr);
+
+            (bool existDevice, clsEQ mainEQ, clsRack rack) = TryGetEndDevice(tag, slot);
+
             if (!existDevice)
                 return new clsAGVSTaskReportResponse() { confirm = false, message = $"[LoadUnloadTaskFinish] 找不到Tag為{tag}的設備" };
 
             EndPointDeviceAbstract endPoint = null;
             bool DelayReserveCancel = SystemModes.RunMode == AGVSystemCommonNet6.AGVDispatch.RunMode.RUN_MODE.RUN &&
                                                              SystemModes.TransferTaskMode == AGVSystemCommonNet6.AGVDispatch.RunMode.TRANSFER_MODE.LOCAL_AUTO &&
-                                                             order?.Action == ACTION_TYPE.Carry;
+                                                             isCarryTask;
             try
             {
                 if (mainEQ != null)
@@ -292,7 +307,7 @@ namespace AGVSystem.Controllers
             finally
             {
 
-                if (order.Action == ACTION_TYPE.Carry && action == ACTION_TYPE.Load)
+                if (isCarryTask && action == ACTION_TYPE.Load)
                 {
                     EQTransferTaskManager.HandleTransferOrderFinish(order);
                 }
@@ -321,12 +336,7 @@ namespace AGVSystem.Controllers
                 if (order != null && order.State == TASK_RUN_STATUS.NAVIGATING || order.State == TASK_RUN_STATUS.ACTION_FINISH)
                 {
                     string? carrierID = action == ACTION_TYPE.Unload ? "" : order?.Actual_Carrier_ID;
-                    string slot = "";
-                    if (order.Action == ACTION_TYPE.Carry)
-                        slot = action == ACTION_TYPE.Unload ? order.From_Slot : order.To_Slot;
-                    else
-                        slot = order.To_Slot;
-                    endPoint.UpdateCarrierInfo(tag, carrierID, int.Parse(slot));
+                    endPoint.UpdateCarrierInfo(tag, carrierID, slot);
                 }
                 //endPoint.UpdateCarrierInfo(tag,)
             }
@@ -375,10 +385,12 @@ namespace AGVSystem.Controllers
             }
             return Ok();
         }
-        private (bool existDevice, clsEQ mainEQ, clsRack rack) TryGetEndDevice(int tag)
+        private (bool existDevice, clsEQ mainEQ, clsRack rack) TryGetEndDevice(int tag, int slot)
         {
-            var Eq = StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == tag);
-            var Rack = StaEQPManagager.RacksList.FirstOrDefault(x => x.PortsStatus.Any(p => p.TagNumbers.Contains(tag)));
+            MapPoint _mapPt = AGVSMapManager.GetMapPointByTag(tag);
+            bool isPureWIP = _mapPt.StationType == MapPoint.STATION_TYPE.Buffer || _mapPt.StationType == MapPoint.STATION_TYPE.Charge_Buffer;
+            clsEQ? Eq = isPureWIP ? null : StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == tag && eq.EndPointOptions.Height == slot);
+            clsRack? Rack = StaEQPManagager.RacksList.FirstOrDefault(x => x.PortsStatus.Any(p => p.TagNumbers.Contains(tag)));
             return (Eq != null || Rack != null, Eq, Rack);
         }
 
@@ -400,19 +412,35 @@ namespace AGVSystem.Controllers
             }
 
             taskData.DispatcherName = user;
-            var result = await TaskManager.AddTask(taskData, TaskManager.TASK_RECIEVE_SOURCE.MANUAL);
-            bool showEmptyOrFullContentCheck = false;
-            if (result.alarm_code == ALARMS.EQ_UNLOAD_REQ_BUT_RACK_FULL_OR_EMPTY_IS_UNKNOWN)
+            try
             {
-                int eqTag = taskData.Action == ACTION_TYPE.Unload ? taskData.To_Station_Tag : taskData.From_Station_Tag;
-                //MapPoint mapPoint = AGVSMapManager.GetMapPointByTag(eqTag);
-                clsEQ eq = StaEQPManagager.GetEQByTag(eqTag);
-                if (eq.EndPointOptions.IsFullEmptyUnloadAsVirtualInput)
+                (bool confirm, ALARMS alarm_code, string message, string message_en) result = await TaskManager.AddTask(taskData, TaskManager.TASK_RECIEVE_SOURCE.MANUAL);
+
+                if (!result.confirm && string.IsNullOrEmpty(result.message))
                 {
-                    showEmptyOrFullContentCheck = true;
+
                 }
+
+                bool showEmptyOrFullContentCheck = false;
+                if (result.alarm_code == ALARMS.EQ_UNLOAD_REQ_BUT_RACK_FULL_OR_EMPTY_IS_UNKNOWN)
+                {
+                    int eqTag = taskData.Action == ACTION_TYPE.Unload ? taskData.To_Station_Tag : taskData.From_Station_Tag;
+                    //MapPoint mapPoint = AGVSMapManager.GetMapPointByTag(eqTag);
+                    clsEQ eq = StaEQPManagager.GetEQByTag(eqTag);
+                    if (eq.EndPointOptions.IsFullEmptyUnloadAsVirtualInput)
+                    {
+                        showEmptyOrFullContentCheck = true;
+                    }
+                }
+                return new { confirm = result.confirm, alarm_code = result.alarm_code, message = result.message, message_en = result.message_en, showEmptyOrFullContentCheck = showEmptyOrFullContentCheck };
+
+
             }
-            return new { confirm = result.confirm, alarm_code = result.alarm_code, message = result.message, showEmptyOrFullContentCheck = showEmptyOrFullContentCheck };
+            catch (Exception exc)
+            {
+
+                throw exc;
+            }
         }
 
 

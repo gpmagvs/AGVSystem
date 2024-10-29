@@ -31,6 +31,7 @@ using System;
 using System.Net;
 using System.Reflection;
 using System.Text;
+using static AGVSystemCommonNet6.MAP.Map;
 using Task = System.Threading.Tasks.Task;
 
 public class Program
@@ -61,7 +62,7 @@ public class Program
             }
         }
 
-        var appVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
+        string appVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
         Console.Title = $"GPM-AGV系統(AGVs)-v{appVersion}";
         Logger logger = LogManager.Setup().LoadConfigurationFromAppSettings().GetCurrentClassLogger();
         EnvironmentVariables.AddUserVariable("AGVSystemInstall", Environment.CurrentDirectory);
@@ -71,8 +72,7 @@ public class Program
             logger.Info("AGVS Start");
 
             SystemInitializer.Initialize(logger);
-
-            var builder = WebApplication.CreateBuilder(args);
+            WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
             WebAppInitializer.ConfigureBuilder(builder);
 
             var app = builder.Build();
@@ -87,7 +87,7 @@ public class Program
                     logger.Info($"HotRunScriptManager.Run({hotRunScriptName}) result: {result.Item1}, {result.Item2}");
                 });
             }
-
+            SystemInitializer.InitSysStatusDBStoreWithAppVersionAsync(builder, appVersion);
             app.Run();
         }
         catch (Exception ex)
@@ -119,8 +119,8 @@ public static class SystemInitializer
         EQDeviceEventsHandler.Initialize();
         clsEQ.OnIOStateChanged += EQDeviceEventsHandler.HandleEQIOStateChanged;
         clsEQ.OnPortExistChangeed += MaterialManager.HandlePortExistChanged;
-
-        AlarmManagerCenter.Initialize();
+        clsEQ.OnUnloadRequestChanged += EQDeviceEventsHandler.HandleEQUnloadRequestChanged;
+        AlarmManagerCenter.InitializeAsync().GetAwaiter().GetResult();
         AlarmManager.LoadVCSTrobleShootings();
         VMSSerivces.OnVMSReconnected += async (sender, e) => await VMSSerivces.RunModeSwitch(SystemModes.RunMode);
         VMSSerivces.AliveCheckWorker();
@@ -168,6 +168,12 @@ public static class SystemInitializer
             logger.Fatal($"資料庫初始化異常-請確認資料庫! {ex.Message}");
             Environment.Exit(4);
         }
+    }
+
+    public static async Task InitSysStatusDBStoreWithAppVersionAsync(WebApplicationBuilder build, string appVersion)
+    {
+        await build.Services.BuildServiceProvider().GetRequiredService<SystemStatusDbStoreService>().InitSysStatusWithAppVersion(appVersion);
+
     }
 }
 
@@ -254,6 +260,7 @@ public static class WebAppInitializer
         builder.Services.AddScoped<MeanTimeQueryService>();
         builder.Services.AddScoped<LogDownlodService>();
         builder.Services.AddScoped<StationSelectService>();
+        builder.Services.AddScoped<SystemStatusDbStoreService>();
     }
 
     private static void ConfigureCors(WebApplicationBuilder builder)

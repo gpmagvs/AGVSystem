@@ -10,6 +10,7 @@ using AGVSystemCommonNet6.MAP;
 using AGVSystemCommonNet6.AGVDispatch;
 using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.Microservices.AudioPlay;
+using EquipmentManagment.MainEquipment;
 namespace AGVSystem.Models.EQDevices
 {
     public partial class EQDeviceEventsHandler
@@ -42,7 +43,7 @@ namespace AGVSystem.Models.EQDevices
 
                 NotifyServiceHelper.WARNING($"{agvName} 偵測到電池未連接!\r\n即將重新下發充電任務...");
                 AlarmManagerCenter.AddAlarmAsync(ALARMS.Battery_Not_Connect, ALARM_SOURCE.AGVS, ALARM_LEVEL.WARNING, chargeStation.EQName, mapPt.Graph.Display);
-                (bool confirm, ALARMS alarm_code, string message) AddTaskResult = await TaskManager.AddTask(new AGVSystemCommonNet6.AGVDispatch.clsTaskDto
+                (bool confirm, ALARMS alarm_code, string message, string message_en) AddTaskResult = await TaskManager.AddTask(new AGVSystemCommonNet6.AGVDispatch.clsTaskDto
                 {
                     TaskName = $"Charge-{DateTime.Now.ToString("yyyyMMdd_HHmmssfff")}",//20240529_090159358
                     Action = AGVSystemCommonNet6.AGVDispatch.Messages.ACTION_TYPE.Charge,
@@ -68,6 +69,22 @@ namespace AGVSystem.Models.EQDevices
             (int ChargeStationTag, MapPoint StationMapPoint, string UsingChargeStationVehicleName) = _GetChargeStationAndVehicle(e);
             NotifyServiceHelper.SUCCESS($"{UsingChargeStationVehicleName} 已充飽電!({StationMapPoint.Graph.Display})");
         }
+
+
+
+        private static void HandleChargeStationTemperatureOverThreshoad(object? sender, clsChargeStation e)
+        {
+            (int ChargeStationTag, MapPoint StationMapPoint, string UsingChargeStationVehicleName) = _GetChargeStationAndVehicle(e);
+            string chargerName = e.EQName;
+            AlarmManagerCenter.AddAlarmAsync(ALARMS.Charge_Station_Temperature_High, ALARM_SOURCE.EQP, Equipment_Name: chargerName, location: chargerName);
+        }
+        private static void HandleChargeStationTemperatureRestoreUnderThreshoad(object? sender, clsChargeStation e)
+        {
+            (int ChargeStationTag, MapPoint StationMapPoint, string UsingChargeStationVehicleName) = _GetChargeStationAndVehicle(e);
+            string chargerName = e.EQName;
+            AlarmManagerCenter.SetAlarmCheckedAsync(chargerName, ALARMS.Charge_Station_Temperature_High);
+        }
+
 
         private static (int ChargeStationTag, MapPoint StationMapPoint, string UsingChargeStationVehicleName) _GetChargeStationAndVehicle(clsChargeStation chargeStation)
         {
@@ -103,5 +120,6 @@ namespace AGVSystem.Models.EQDevices
             AudioPlayService.AddAudioToPlayQueue(ChargerEMOAudioFilePath);
             AlarmManagerCenter.AddAlarmAsync(ALARMS.Charge_Station_EMO, Equipment_Name: chargerName);
         }
+
     }
 }
