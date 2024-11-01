@@ -6,15 +6,18 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<ApplicationIcon>favicon.ico</ApplicationIcon>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
-		<AssemblyVersion>1.1.304.0</AssemblyVersion>
-		<FileVersion>1.1.304.1</FileVersion>
+		<AssemblyVersion>1.1.306.0</AssemblyVersion>
+		<FileVersion>1.1.306.0</FileVersion>
+		<RunAnalyzersDuringLiveAnalysis>False</RunAnalyzersDuringLiveAnalysis>
+		<RunAnalyzersDuringBuild>False</RunAnalyzersDuringBuild>
+		<PackageReadmeFile></PackageReadmeFile>
 
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
 		<ShouldCreateLogs>True</ShouldCreateLogs>
 		<AdvancedSettingsExpanded>False</AdvancedSettingsExpanded>
-		<UpdateAssemblyVersion>True</UpdateAssemblyVersion>
+		<UpdateAssemblyVersion>False</UpdateAssemblyVersion>
 		<UpdateAssemblyFileVersion>True</UpdateAssemblyFileVersion>
 		<UpdateAssemblyInfoVersion>False</UpdateAssemblyInfoVersion>
 		<AssemblyVersionSettings>IncrementOnDemand.IncrementOnDemand.DayOfYearStamp.IncrementOnDemandWithResetOnIncrease</AssemblyVersionSettings>
@@ -27,14 +30,13 @@
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
 		<ShouldCreateLogs>True</ShouldCreateLogs>
 		<AdvancedSettingsExpanded>False</AdvancedSettingsExpanded>
-		<UpdateAssemblyVersion>True</UpdateAssemblyVersion>
+		<UpdateAssemblyVersion>False</UpdateAssemblyVersion>
 		<UpdateAssemblyFileVersion>True</UpdateAssemblyFileVersion>
 		<UpdateAssemblyInfoVersion>False</UpdateAssemblyInfoVersion>
 		<UpdatePackageVersion>False</UpdatePackageVersion>
 		<AssemblyInfoVersionType>SettingsVersion</AssemblyInfoVersionType>
 		<InheritWinAppVersionFrom>None</InheritWinAppVersionFrom>
-		<AssemblyVersionSettings>IncrementOnDemand.IncrementOnDemand.DayOfYearStamp.IncrementOnDemand</AssemblyVersionSettings>
-		<AssemblyFileVersionSettings>IncrementOnDemand.IncrementOnDemand.DayOfYearStamp.IncrementOnDemand</AssemblyFileVersionSettings>
+		<AssemblyFileVersionSettings>IncrementOnDemand.IncrementOnDemandWithResetOnIncrease.IncrementOnDemandWithResetOnIncrease.IncrementOnDemandWithResetOnIncrease</AssemblyFileVersionSettings>
 	</PropertyGroup>
 
 	<ItemGroup>
