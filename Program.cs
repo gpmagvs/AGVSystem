@@ -220,7 +220,7 @@ public static class WebAppInitializer
 
         ConfigureAuthentication(builder);
         ConfigureDatabase(builder);
-        ConfigureHostedServices(builder);
+        ServicesInjection(builder);
         ConfigureCors(builder);
         ConfigureWebSockets(builder);
         ConfigureSignalR(builder);
@@ -250,7 +250,7 @@ public static class WebAppInitializer
         }
     }
 
-    private static void ConfigureHostedServices(WebApplicationBuilder builder)
+    private static void ServicesInjection(WebApplicationBuilder builder)
     {
         builder.Services.AddHostedService<ThirdPartyProgramStartService>();
         builder.Services.AddHostedService<DatabaseBackgroundService>();
@@ -263,6 +263,7 @@ public static class WebAppInitializer
         builder.Services.AddScoped<LogDownlodService>();
         builder.Services.AddScoped<StationSelectService>();
         builder.Services.AddScoped<SystemStatusDbStoreService>();
+        builder.Services.AddScoped<RackCargoStatusContorlService>();
     }
 
     private static void ConfigureCors(WebApplicationBuilder builder)

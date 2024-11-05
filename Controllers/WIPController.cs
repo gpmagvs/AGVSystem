@@ -1,4 +1,5 @@
-﻿using EquipmentManagment.Manager;
+﻿using AGVSystem.Service;
+using EquipmentManagment.Manager;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,6 +9,12 @@ namespace AGVSystem.Controllers
     [ApiController]
     public class WIPController : ControllerBase
     {
+        private readonly RackCargoStatusContorlService _rackControlService;
+        public WIPController(RackCargoStatusContorlService rackControlService)
+        {
+            _rackControlService = rackControlService;
+        }
+
         [HttpPost("ModifyCargoID")]
         public async Task<IActionResult> ModifyCargoID(string WIPID, string PortID, string NewCargoID)
         {

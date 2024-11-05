@@ -52,7 +52,7 @@ namespace AGVSystem.Service
                 string _name = item.StationName;
                 string _materialID = item.MaterialID;
                 var rackport = StaEQPManagager.RacksList.Select(rack => rack.GetPortByKeyWithRackName(_name))
-                                                              .FirstOrDefault(rack => rack != null);
+                                                        .FirstOrDefault(rack => rack != null);
                 if (rackport != null)
                 {
                     rackport.CarrierID = _materialID;
