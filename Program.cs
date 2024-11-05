@@ -257,6 +257,7 @@ public static class WebAppInitializer
         builder.Services.AddHostedService<VehicleLocationMonitorBackgroundService>();
         builder.Services.AddHostedService<FrontEndDataBrocastService>();
         builder.Services.AddHostedService<PCPerformanceService>();
+        builder.Services.AddHostedService<EquipmentInitStartupService>();
         builder.Services.AddHostedService<EquipmentsCollectBackgroundService>();
         builder.Services.AddScoped<MeanTimeQueryService>();
         builder.Services.AddScoped<LogDownlodService>();
@@ -340,8 +341,6 @@ public static class WebAppInitializer
         });
 
         app.UseMiddleware<ApiLoggingMiddleware>();
-        Task.Run(() => InitializeEquipmentManager());
-
         AutomationManager.InitialzeDefaultTasks();
         AutomationManager.StartAllAutomationTasks();
 
@@ -361,31 +360,6 @@ public static class WebAppInitializer
         app.MapHub<FrontEndDataHub>("/FrontEndDataHub");
     }
 
-    private static async Task InitializeEquipmentManager()
-    {
-        await Task.Delay(3000);
-        try
-        {
-            clsEQ.WirteOuputEnabled = !AGVSConfigulator.SysConfigs.BaseOnKGSWebAGVSystem;
-
-            string eqConfigsStoreFolder = AGVSConfigulator.SysConfigs.PATHES_STORE[SystemConfigs.PATH_ENUMS.EQ_CONFIGS_FOLDER_PATH];
-
-            StaEQPManagager.InitializeAsync(new clsEQManagementConfigs
-            {
-                EQConfigPath = $"{eqConfigsStoreFolder}//EQConfigs.json",
-                WIPConfigPath = $"{eqConfigsStoreFolder}//WIPConfigs.json",
-                ChargeStationConfigPath = $"{eqConfigsStoreFolder}//ChargStationConfigs.json",
-                EQGroupConfigPath = $"{eqConfigsStoreFolder}//EQGroupConfigs.json",
-            });
-
-            await clsStationInfoManager.ScanWIP_EQ();
-        }
-        catch (Exception ex)
-        {
-            AlarmManagerCenter.AddAlarmAsync(ALARMS.SYSTEM_EQP_MANAGEMENT_INITIALIZE_FAIL_WITH_EXCEPTION);
-            LOG.Critical(ex);
-        }
-    }
 }
 
 public static class StaticFileInitializer
