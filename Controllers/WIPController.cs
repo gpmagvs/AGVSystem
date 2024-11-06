@@ -18,16 +18,16 @@ namespace AGVSystem.Controllers
         [HttpPost("ModifyCargoID")]
         public async Task<IActionResult> ModifyCargoID(string WIPID, string PortID, string NewCargoID)
         {
-            StaEQPManagager.WIPController.ModifyCargoID(WIPID, PortID, NewCargoID);
-
+            //StaEQPManagager.WIPController.ModifyCargoID(WIPID, PortID, NewCargoID);
+            _rackControlService.AddRackCargoID(WIPID, PortID, NewCargoID, this.GetType().Name);
             return Ok(new { confirm = true, message = "" });
         }
 
         [HttpPost("RemoveCargoID")]
         public async Task<IActionResult> RemoveCargoID(string WIPID, string PortID)
         {
-            StaEQPManagager.WIPController.RemoveCargoID(WIPID, PortID);
-
+            //StaEQPManagager.WIPController.RemoveCargoID(WIPID, PortID);
+            _rackControlService.RemoveRackCargoID(WIPID, PortID, this.GetType().Name);
             return Ok(new { confirm = true, message = "" });
         }
     }

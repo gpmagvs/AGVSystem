@@ -16,6 +16,15 @@ namespace AGVSystem.Service
             _dbContext = dbContext;
         }
 
+        internal async Task RemoveRackCargoID(string wIPID, string portID, string triggerBy)
+        {
+            if (TryGetPort(wIPID, portID, out clsPortOfRack port))
+            {
+                int tag = port.TagNumbers.FirstOrDefault();
+                int slot = port.Properties.Row;
+                await RemoveRackCargoID(tag, slot, triggerBy);
+            }
+        }
         internal async Task RemoveRackCargoID(int tagNumber, int slot, string triggerBy)
         {
             try
@@ -41,7 +50,15 @@ namespace AGVSystem.Service
                 dbSemaphoreSlim.Release();
             }
         }
-
+        internal async Task AddRackCargoID(string WIPID, string PortID, string cargoID, string triggerBy)
+        {
+            if (TryGetPort(WIPID, PortID, out clsPortOfRack port))
+            {
+                int tag = port.TagNumbers.FirstOrDefault();
+                int slot = port.Properties.Row;
+                await AddRackCargoID(tag, slot, cargoID, triggerBy);
+            }
+        }
         internal async Task AddRackCargoID(int tagNumber, int slot, string cargoID, string triggerBy)
         {
             try
@@ -80,6 +97,18 @@ namespace AGVSystem.Service
                 return false;
 
             port = rack.PortsStatus.FirstOrDefault(port => port.TagNumbers.Contains(tagNumber) && port.Properties.Row == slot);
+
+            return port != null;
+        }
+
+        private bool TryGetPort(string rackName, string portID, out clsPortOfRack port)
+        {
+            port = null;
+            var rack = StaEQPManagager.RacksList.FirstOrDefault(rack => rack.RackOption.Name == rackName);
+            if (rack == null)
+                return false;
+
+            port = rack.PortsStatus.FirstOrDefault(port => port.Properties.ID == portID);
 
             return port != null;
         }
