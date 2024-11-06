@@ -17,7 +17,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KGSWebAGVSystemAPI", "..\KG
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KGSWebAGVSystemAPITests", "..\KGSWebAGVSystemAPITests\KGSWebAGVSystemAPITests.csproj", "{51379ECB-3151-4424-A20C-7754D4735123}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AGVSystemTests", "..\AGVSystemTests\AGVSystemTests.csproj", "{9ABAA41E-2BBD-414A-BC0F-3EE686663E70}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AGVSystemTests", "..\AGVSystemTests\AGVSystemTests.csproj", "{9ABAA41E-2BBD-414A-BC0F-3EE686663E70}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
