@@ -5,6 +5,7 @@ using AGVSystem.Models.Map;
 using AGVSystem.Models.Sys;
 using AGVSystem.Models.TaskAllocation.HotRun;
 using AGVSystem.Service;
+using AGVSystem.Service.EquipmentStatusCheckServices;
 using AGVSystem.TaskManagers;
 using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.Configuration;
@@ -264,6 +265,7 @@ public static class WebAppInitializer
         builder.Services.AddScoped<StationSelectService>();
         builder.Services.AddScoped<SystemStatusDbStoreService>();
         builder.Services.AddScoped<RackCargoStatusContorlService>();
+        builder.Services.AddScoped<WorkStationStatusCheckService>();
     }
 
     private static void ConfigureCors(WebApplicationBuilder builder)

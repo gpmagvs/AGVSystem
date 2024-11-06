@@ -2,6 +2,7 @@
 using AGVSystem.Models.Sys;
 using AGVSystem.Models.TaskAllocation.HotRun;
 using AGVSystem.Service;
+using AGVSystem.Service.EquipmentStatusCheckServices;
 using AGVSystem.TaskManagers;
 using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.AGVDispatch;
@@ -13,6 +14,7 @@ using AGVSystemCommonNet6.MAP;
 using AGVSystemCommonNet6.Material;
 using AGVSystemCommonNet6.Microservices.MCS;
 using AGVSystemCommonNet6.Microservices.ResponseModel;
+using AGVSystemCommonNet6.Vehicle_Control.VCS_ALARM;
 using EquipmentManagment.Device;
 using EquipmentManagment.MainEquipment;
 using EquipmentManagment.Manager;
@@ -31,13 +33,18 @@ namespace AGVSystem.Controllers
         private AGVSDbContext _TaskDBContent;
 
         private UserValidationService UserValidation { get; }
+        /// <summary>
+        /// 站點檢查服務
+        /// </summary>
+        private WorkStationStatusCheckService _workStationStatusCheckService { get; }
 
         private Logger logger = LogManager.GetCurrentClassLogger();
 
-        public TaskController(AGVSDbContext content, UserValidationService userValidation)
+        public TaskController(AGVSDbContext content, UserValidationService userValidation, WorkStationStatusCheckService workStationStatusCheckService)
         {
             this._TaskDBContent = content;
             this.UserValidation = userValidation;
+            _workStationStatusCheckService = workStationStatusCheckService;
         }
 
         [HttpGet("Allocation")]
@@ -145,81 +152,6 @@ namespace AGVSystem.Controllers
             return Ok(await AddTask(taskData, user));
         }
 
-
-        [HttpGet("LoadUnloadTaskStart")]
-        public async Task<IActionResult> LoadUnloadTaskStart(int tag, int slot, ACTION_TYPE action)
-        {
-
-            if (action != ACTION_TYPE.Load && action != ACTION_TYPE.Unload)
-                return Ok(new clsAGVSTaskReportResponse() { confirm = false, message = "Action should equal Load or Unlaod" });
-
-
-            AGVSystemCommonNet6.MAP.MapPoint MapPoint = AGVSMapManager.GetMapPointByTag(tag);
-            if (MapPoint == null)
-                return Ok(new clsAGVSTaskReportResponse() { confirm = false, AlarmCode = ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, message = $"站點TAG-{tag} 不存在於當前地圖" });
-
-            if (!MapPoint.Enable)
-                return Ok(new clsAGVSTaskReportResponse() { confirm = false, AlarmCode = ALARMS.Station_Disabled, message = $"站點TAG-{tag} 未啟用，無法指派任務" });
-
-            if (action == ACTION_TYPE.Load && (MapPoint.StationType == MapPoint.STATION_TYPE.Buffer_EQ || MapPoint.StationType == MapPoint.STATION_TYPE.Buffer) && slot == -2)
-            {
-                clsPortOfRack port = EQTransferTaskManager.get_empyt_port_of_rack(tag);
-                return Ok(new clsAGVSTaskReportResponse() { confirm = true, message = $"Get empty port OK", ReturnObj = port.Layer });
-            }
-
-            (bool confirm, ALARMS alarm_code, string message, string message_en, object obj, Type objtype) result = EQTransferTaskManager.CheckLoadUnloadStation(tag, slot, action, bypasseqandrackckeck: false);
-            if (result.confirm == false)
-            {
-                return Ok(new clsAGVSTaskReportResponse() { confirm = false, message = $"{result.message}", message_en = result.message_en, AlarmCode = result.alarm_code });
-            }
-            else
-            {
-                if (result.objtype == typeof(clsEQ))
-                {
-                    clsEQ mainEQ = (clsEQ)result.obj;
-                    try
-                    {
-                        mainEQ.Reserve();
-                        mainEQ.ToEQ();
-
-                        if (action == ACTION_TYPE.Unload)
-                        {
-                            clsTaskDto? taskExist = DatabaseCaches.TaskCaches.RunningTasks.FirstOrDefault(task => task.From_Station_Tag == mainEQ.EndPointOptions.TagID && task.Action == ACTION_TYPE.Carry);
-
-                            if (taskExist != null && StaEQPManagager.TryGetEQByTag(taskExist.To_Station_Tag, out clsEQ destineDevice))
-                            {
-                                RACK_CONTENT_STATE rackContentStateOfSourceEQ = StaEQPManagager.CargoContentTypeCheckWhenStartTransferToDestineHandler(mainEQ, destineDevice);
-                            }
-                        }
-
-
-                        if (mainEQ.EndPointOptions.IsOneOfDualPorts)
-                        {
-                            bool isForkAGVOnlyPort = mainEQ.EndPointOptions.Accept_AGV_Type == EquipmentManagment.Device.Options.VEHICLE_TYPE.FORK;
-                            bool isSubmarineAGVOnlyPort = mainEQ.EndPointOptions.Accept_AGV_Type == EquipmentManagment.Device.Options.VEHICLE_TYPE.SUBMERGED_SHIELD;
-                            if (isForkAGVOnlyPort)
-                                await GPMCIMService.ChangePortTypeOfEq(mainEQ.EndPointOptions.TagID, 0);
-                            if (isSubmarineAGVOnlyPort)
-                                await GPMCIMService.ChangePortTypeOfEq(mainEQ.EndPointOptions.TagID, 1);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        return Ok(new clsAGVSTaskReportResponse() { confirm = false, message = $"{mainEQ.EQName} ToEQUp DO ON的過程中發生錯誤:{ex.Message}" });
-                    }
-                    logger.Info($"Get AGV LD.ULD Task Start At Tag {tag}-Action={action}. TO Eq Up DO ON");
-                    return Ok(new clsAGVSTaskReportResponse() { confirm = true, message = $"{mainEQ.EQName} ToEQUp DO ON" });
-                }
-                else if (result.objtype == typeof(clsPortOfRack))
-                {
-                    return Ok(new clsAGVSTaskReportResponse() { confirm = true, message = result.message });
-                }
-                else
-                {
-                    return Ok(new clsAGVSTaskReportResponse() { confirm = false, message = "NOT EQ or RACK" });
-                }
-            }
-        }
 
         [HttpGet("StartTransferCargoReport")]
         public async Task<clsAGVSTaskReportResponse> StartTransferCargoReport(string AGVName, int SourceTag, int DestineTag, string SourceSlot, string DestineSlot, bool IsSourceAGV = false)
@@ -346,34 +278,73 @@ namespace AGVSystem.Controllers
                 //endPoint.UpdateCarrierInfo(tag,)
             }
         }
-        [HttpGet("LDULDOrderStart")]
-        public async Task<clsAGVSTaskReportResponse> LDULDOrderStart(int from, int FromSlot, int to, int ToSlot, ACTION_TYPE action, bool isSourceAGV)
+
+        /// <summary>
+        /// VMS回報取放貨任務訂單開始執行
+        /// </summary>
+        /// <param name="order"></param>
+        /// <param name="action"></param>
+        /// <param name="isSourceAGV"></param>
+        /// <returns></returns>
+        [HttpPost("LDULDOrderStart")]
+        public async Task<clsAGVSTaskReportResponse> LDULDOrderStart([FromBody] clsTaskDto order, ACTION_TYPE action, bool isSourceAGV)
         {
             try
             {
+                (WorkStationCheckResult? fromStationCheckResult, WorkStationCheckResult? toStationCheckResult) = _workStationStatusCheckService.CheckWorkStationStatus(order, action);
 
-                if (action == ACTION_TYPE.Unload || action == ACTION_TYPE.LoadAndPark || action == ACTION_TYPE.Load)
-                {
-                    clsAGVSTaskReportResponse result = ((OkObjectResult)await LoadUnloadTaskStart(to, ToSlot, action)).Value as clsAGVSTaskReportResponse;
-                    return result;
-                }
-                else if (action == ACTION_TYPE.Carry)
-                {
-                    if (!isSourceAGV)
-                    {
-                        clsAGVSTaskReportResponse result_from = ((OkObjectResult)await LoadUnloadTaskStart(from, FromSlot, ACTION_TYPE.Unload)).Value as clsAGVSTaskReportResponse;
-                        if (result_from.confirm == false)
-                            return result_from;
-                    }
+                clsAGVSTaskReportResponse response = new clsAGVSTaskReportResponse();
 
-                    clsAGVSTaskReportResponse result_to = ((OkObjectResult)await LoadUnloadTaskStart(to, ToSlot, ACTION_TYPE.Load)).Value as clsAGVSTaskReportResponse;
-                    return result_to;
-                }
-                else
+                if (order.Action == ACTION_TYPE.Carry && action == ACTION_TYPE.Unload && fromStationCheckResult.alarmCode != ALARMS.NONE)
                 {
-                    // LDULDOrder not accept other action type
-                    return new clsAGVSTaskReportResponse() { confirm = false, message = $"LDULDOrder ACTION_TYPE can not be={action}" };
+                    response.AlarmCode = fromStationCheckResult.alarmCode;
+                    response.message = fromStationCheckResult.message;
+                    response.message_en = fromStationCheckResult.message_en;
+                    return response;
                 }
+
+                if (toStationCheckResult.alarmCode != ALARMS.NONE)
+                {
+                    response.AlarmCode = toStationCheckResult.alarmCode;
+                    response.message = toStationCheckResult.message;
+                    response.message_en = toStationCheckResult.message_en;
+                    return response;
+                }
+
+                try
+                {
+                    fromStationCheckResult?.TryReserveEq(out string errMsg);
+                    fromStationCheckResult?.TryToEq(out errMsg);
+                    toStationCheckResult?.TryReserveEq(out errMsg);
+                    toStationCheckResult?.TryToEq(out errMsg);
+                }
+                catch (Exception ex)
+                {
+
+                }
+                //if (action == ACTION_TYPE.Unload || action == ACTION_TYPE.LoadAndPark || action == ACTION_TYPE.Load)
+                //{
+                //    clsAGVSTaskReportResponse result = ((OkObjectResult)await LoadUnloadTaskStart(to, ToSlot, action)).Value as clsAGVSTaskReportResponse;
+                //    return result;
+                //}
+                //else if (action == ACTION_TYPE.Carry)
+                //{
+                //    if (!isSourceAGV)
+                //    {
+                //        clsAGVSTaskReportResponse result_from = ((OkObjectResult)await LoadUnloadTaskStart(from, FromSlot, ACTION_TYPE.Unload)).Value as clsAGVSTaskReportResponse;
+                //        if (result_from.confirm == false)
+                //            return result_from;
+                //    }
+
+                //    clsAGVSTaskReportResponse result_to = ((OkObjectResult)await LoadUnloadTaskStart(to, ToSlot, ACTION_TYPE.Load)).Value as clsAGVSTaskReportResponse;
+                //    return result_to;
+                //}
+                //else
+                //{
+                //    // LDULDOrder not accept other action type
+                //    return new clsAGVSTaskReportResponse() { confirm = false, message = $"LDULDOrder ACTION_TYPE can not be={action}" };
+                //}
+                return new clsAGVSTaskReportResponse() { confirm = true, message = $"" };
             }
             catch (Exception ex)
             {
@@ -381,6 +352,100 @@ namespace AGVSystem.Controllers
             }
         }
 
+
+        [HttpPost("LoadUnloadTaskStart")]
+        public async Task<clsAGVSTaskReportResponse> LoadUnloadTaskStart([FromBody] clsTaskDto order, ACTION_TYPE action)
+        {
+            (WorkStationCheckResult? fromStationCheckResult, WorkStationCheckResult? toStationCheckResult) = _workStationStatusCheckService.CheckWorkStationStatus(order, action);
+
+            clsAGVSTaskReportResponse response = new clsAGVSTaskReportResponse();
+
+            if (order.Action == ACTION_TYPE.Carry && action == ACTION_TYPE.Unload && fromStationCheckResult.alarmCode != ALARMS.NONE)
+            {
+                response.AlarmCode = fromStationCheckResult.alarmCode;
+                response.message = fromStationCheckResult.message;
+                response.message_en = fromStationCheckResult.message_en;
+                return response;
+            }
+
+            if (toStationCheckResult.alarmCode != ALARMS.NONE)
+            {
+                response.AlarmCode = toStationCheckResult.alarmCode;
+                response.message = toStationCheckResult.message;
+                response.message_en = toStationCheckResult.message_en;
+                return response;
+            }
+            //if (action != ACTION_TYPE.Load && action != ACTION_TYPE.Unload)
+            //    return Ok(new clsAGVSTaskReportResponse() { confirm = false, message = "Action should equal Load or Unlaod" });
+
+
+            //AGVSystemCommonNet6.MAP.MapPoint MapPoint = AGVSMapManager.GetMapPointByTag(tag);
+            //if (MapPoint == null)
+            //    return Ok(new clsAGVSTaskReportResponse() { confirm = false, AlarmCode = ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, message = $"站點TAG-{tag} 不存在於當前地圖" });
+
+            //if (!MapPoint.Enable)
+            //    return Ok(new clsAGVSTaskReportResponse() { confirm = false, AlarmCode = ALARMS.Station_Disabled, message = $"站點TAG-{tag} 未啟用，無法指派任務" });
+
+            //if (action == ACTION_TYPE.Load && (MapPoint.StationType == MapPoint.STATION_TYPE.Buffer_EQ || MapPoint.StationType == MapPoint.STATION_TYPE.Buffer) && slot == -2)
+            //{
+            //    clsPortOfRack port = EQTransferTaskManager.get_empyt_port_of_rack(tag);
+            //    return Ok(new clsAGVSTaskReportResponse() { confirm = true, message = $"Get empty port OK", ReturnObj = port.Layer });
+            //}
+
+            //(bool confirm, ALARMS alarm_code, string message, string message_en, object obj, Type objtype) result = EQTransferTaskManager.CheckLoadUnloadStation(tag, slot, action, bypasseqandrackckeck: false);
+            //if (result.confirm == false)
+            //{
+            //    return Ok(new clsAGVSTaskReportResponse() { confirm = false, message = $"{result.message}", message_en = result.message_en, AlarmCode = result.alarm_code });
+            //}
+            //else
+            //{
+            //    if (result.objtype == typeof(clsEQ))
+            //    {
+            //        clsEQ mainEQ = (clsEQ)result.obj;
+            //        try
+            //        {
+            //            mainEQ.Reserve();
+            //            mainEQ.ToEQ();
+
+            //            if (action == ACTION_TYPE.Unload)
+            //            {
+            //                clsTaskDto? taskExist = DatabaseCaches.TaskCaches.RunningTasks.FirstOrDefault(task => task.From_Station_Tag == mainEQ.EndPointOptions.TagID && task.Action == ACTION_TYPE.Carry);
+
+            //                if (taskExist != null && StaEQPManagager.TryGetEQByTag(taskExist.To_Station_Tag, out clsEQ destineDevice))
+            //                {
+            //                    RACK_CONTENT_STATE rackContentStateOfSourceEQ = StaEQPManagager.CargoContentTypeCheckWhenStartTransferToDestineHandler(mainEQ, destineDevice);
+            //                }
+            //            }
+
+
+            //            if (mainEQ.EndPointOptions.IsOneOfDualPorts)
+            //            {
+            //                bool isForkAGVOnlyPort = mainEQ.EndPointOptions.Accept_AGV_Type == EquipmentManagment.Device.Options.VEHICLE_TYPE.FORK;
+            //                bool isSubmarineAGVOnlyPort = mainEQ.EndPointOptions.Accept_AGV_Type == EquipmentManagment.Device.Options.VEHICLE_TYPE.SUBMERGED_SHIELD;
+            //                if (isForkAGVOnlyPort)
+            //                    await GPMCIMService.ChangePortTypeOfEq(mainEQ.EndPointOptions.TagID, 0);
+            //                if (isSubmarineAGVOnlyPort)
+            //                    await GPMCIMService.ChangePortTypeOfEq(mainEQ.EndPointOptions.TagID, 1);
+            //            }
+            //        }
+            //        catch (Exception ex)
+            //        {
+            //            return Ok(new clsAGVSTaskReportResponse() { confirm = false, message = $"{mainEQ.EQName} ToEQUp DO ON的過程中發生錯誤:{ex.Message}" });
+            //        }
+            //        logger.Info($"Get AGV LD.ULD Task Start At Tag {tag}-Action={action}. TO Eq Up DO ON");
+            //        return Ok(new clsAGVSTaskReportResponse() { confirm = true, message = $"{mainEQ.EQName} ToEQUp DO ON" });
+            //    }
+            //    else if (result.objtype == typeof(clsPortOfRack))
+            //    {
+            //        return Ok(new clsAGVSTaskReportResponse() { confirm = true, message = result.message });
+            //    }
+            //    else
+            //    {
+            //        return Ok(new clsAGVSTaskReportResponse() { confirm = false, message = "NOT EQ or RACK" });
+            //    }
+            //}
+            return new clsAGVSTaskReportResponse(true, ALARMS.NONE, "", "");
+        }
         [HttpPost("UpdateMaterialTransferStatus")]
         public async Task<IActionResult> UpdateMaterialTransferStatus(Models.TaskAllocation.clsMaterialInfoDto materialInfoDto, string User = "")
         {
@@ -395,7 +460,7 @@ namespace AGVSystem.Controllers
             MapPoint _mapPt = AGVSMapManager.GetMapPointByTag(tag);
             bool isPureWIP = _mapPt.StationType == MapPoint.STATION_TYPE.Buffer || _mapPt.StationType == MapPoint.STATION_TYPE.Charge_Buffer;
             clsEQ? Eq = isPureWIP ? null : StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == tag && eq.EndPointOptions.Height == slot);
-            if (slot > 0)
+            if (slot > 0 && _mapPt.StationType == MapPoint.STATION_TYPE.Buffer_EQ)
             {
                 //try get eq at first slot.
                 Eq = isPureWIP ? null : StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == tag && eq.EndPointOptions.Height == 0);
@@ -424,6 +489,25 @@ namespace AGVSystem.Controllers
             taskData.DispatcherName = user;
             try
             {
+
+                (WorkStationCheckResult fromStationCheckResult, WorkStationCheckResult toStationCheckResult) = _workStationStatusCheckService.CheckWorkStationStatus(taskData, taskData.Action);
+
+                if (taskData.Action == ACTION_TYPE.Carry && fromStationCheckResult != null && fromStationCheckResult.alarmCode != ALARMS.NONE)
+                {
+                    string stationName = fromStationCheckResult.workStationName;
+                    AlarmManagerCenter.AddAlarmAsync(fromStationCheckResult.alarmCode, level: ALARM_LEVEL.WARNING, Equipment_Name: stationName);
+                    return new { confirm = false, alarm_code = fromStationCheckResult.alarmCode, message = fromStationCheckResult.message, message_en = fromStationCheckResult.message_en };
+                }
+
+                if (toStationCheckResult != null && toStationCheckResult.alarmCode != ALARMS.NONE)
+                {
+                    string stationName = toStationCheckResult.workStationName;
+                    AlarmManagerCenter.AddAlarmAsync(toStationCheckResult.alarmCode, level: ALARM_LEVEL.WARNING, Equipment_Name: stationName);
+                    return new { confirm = false, alarm_code = toStationCheckResult.alarmCode, message = toStationCheckResult.message, message_en = toStationCheckResult.message_en };
+
+                }
+
+
                 (bool confirm, ALARMS alarm_code, string message, string message_en) result = await TaskManager.AddTask(taskData, TaskManager.TASK_RECIEVE_SOURCE.MANUAL);
 
                 if (!result.confirm && string.IsNullOrEmpty(result.message))
