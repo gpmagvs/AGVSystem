@@ -28,6 +28,7 @@ using Microsoft.IdentityModel.Tokens;
 using NLog;
 using NLog.Web;
 using System;
+using System.Diagnostics;
 using System.Net;
 using System.Reflection;
 using System.Text;
@@ -252,7 +253,9 @@ public static class WebAppInitializer
 
     private static void ServicesInjection(WebApplicationBuilder builder)
     {
-        builder.Services.AddHostedService<ThirdPartyProgramStartService>();
+        if (!Debugger.IsAttached)
+            builder.Services.AddHostedService<ThirdPartyProgramStartService>();
+
         builder.Services.AddHostedService<DatabaseBackgroundService>();
         builder.Services.AddHostedService<VehicleLocationMonitorBackgroundService>();
         builder.Services.AddHostedService<FrontEndDataBrocastService>();
