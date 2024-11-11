@@ -51,9 +51,6 @@ namespace AGVSystem.TaskManagers
             AGVSystemCommonNet6.MAP.MapPoint sourcePoint = AGVSMapManager.GetMapPointByTag(source_station_tag);
             AGVSystemCommonNet6.MAP.MapPoint destinePoint = AGVSMapManager.GetMapPointByTag(destine_station_tag);
 
-
-
-
             using AGVSDatabase database = new AGVSDatabase();
             #region   AGV 狀態檢查
             // AGV 有貨不可派取貨or搬運, 無貨不可派放貨, 有貨不能去充電(非潛盾車型)
@@ -319,7 +316,20 @@ namespace AGVSystem.TaskManagers
                 using (var db = new AGVSDatabase())
                 {
 
-                    if (db.tables.Tasks.AsNoTracking().Where(task => task.To_Station != "-1" && task.State == TASK_RUN_STATUS.WAIT || task.State == TASK_RUN_STATUS.NAVIGATING).Any(task => task.To_Station == taskData.To_Station))
+                    //起點確認
+                    if (_order_action == ACTION_TYPE.Carry)
+                    {
+                        if (db.tables.Tasks.AsNoTracking().Where(task => task.From_Station != "-1" && task.State == TASK_RUN_STATUS.WAIT || task.State == TASK_RUN_STATUS.NAVIGATING)
+                                                          .Any(task => task.From_Station == taskData.From_Station && task.From_Slot == taskData.From_Slot))
+                        {
+                            AlarmManagerCenter.AddAlarmAsync(ALARMS.Destine_Eq_Already_Has_Task_To_Excute, ALARM_SOURCE.AGVS);
+                            return (false, ALARMS.Destine_Eq_Already_Has_Task_To_Excute, $"來源設備已有搬運任務", "The source equipment already has a carry task.");
+                        }
+                    }
+
+                    //終點確認
+                    if (db.tables.Tasks.AsNoTracking().Where(task => task.To_Station != "-1" && task.State == TASK_RUN_STATUS.WAIT || task.State == TASK_RUN_STATUS.NAVIGATING)
+                                                      .Any(task => task.To_Station == taskData.To_Station && task.To_Slot == taskData.To_Slot))
                     {
                         if (_order_action == ACTION_TYPE.None)
                         {
