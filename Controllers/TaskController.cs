@@ -59,6 +59,7 @@ namespace AGVSystem.Controllers
             taskData.FailureReason = "";
             taskData.need_change_agv = false;
             taskData.DesignatedAGVName = autoSelectVehicle ? "" : taskData.DesignatedAGVName;
+            taskData.bypass_eq_status_check = false;
             return Ok(await AddTask(taskData, user));
         }
 
