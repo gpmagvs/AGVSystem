@@ -47,6 +47,20 @@ namespace AGVSystem.Controllers
             return Ok();
         }
 
+        [HttpPost("ReAssignTask")]
+        [Authorize]
+        public async Task<IActionResult> ReAssignTask([FromBody] clsTaskDto taskData, string user = "", bool autoSelectVehicle = false)
+        {
+            int existTaskNnm = _TaskDBContent.Tasks.Count(tk => tk.TaskName.Contains(taskData.TaskName));
+            taskData.TaskName = taskData.TaskName + $"-{existTaskNnm}";
+            taskData.RecieveTime = DateTime.Now;
+            taskData.State = TASK_RUN_STATUS.WAIT;
+            taskData.FinishTime = DateTime.MinValue;
+            taskData.FailureReason = "";
+            taskData.need_change_agv = false;
+            taskData.DesignatedAGVName = autoSelectVehicle ? "" : taskData.DesignatedAGVName;
+            return Ok(await AddTask(taskData, user));
+        }
 
 
         [HttpGet("Cancel")]
