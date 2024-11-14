@@ -51,6 +51,15 @@ namespace AGVSystem.Controllers
         [Authorize]
         public async Task<IActionResult> ReAssignTask([FromBody] clsTaskDto taskData, string user = "", bool autoSelectVehicle = false)
         {
+            if (taskData.TaskName.StartsWith("M"))
+            {
+                return Ok(new { confirm = false, message = "禁止手動重新指派MCS任務", message_en = "Can not re-assign order from MCS" });
+            }
+            if (SystemModes.TransferTaskMode != AGVSystemCommonNet6.AGVDispatch.RunMode.TRANSFER_MODE.MANUAL)
+            {
+                return Ok(new { confirm = false, message = "自動派工模式下禁止手動重新指派任務", message_en = "Can not re-assign order in AUTO DISPATCH mode" });
+            }
+
             int existTaskNnm = _TaskDBContent.Tasks.Count(tk => tk.TaskName.Contains(taskData.TaskName));
             taskData.TaskName = taskData.TaskName + $"-{existTaskNnm}";
             taskData.RecieveTime = DateTime.Now;
