@@ -1,5 +1,6 @@
 ﻿using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.Material;
+using AGVSystemCommonNet6.Microservices.MCS;
 using EquipmentManagment.Manager;
 using EquipmentManagment.WIP;
 using NLog;
@@ -39,6 +40,7 @@ namespace AGVSystem.Service
                         portStatus.MaterialID = string.Empty;
                     }
                     await _dbContext.SaveChangesAsync();
+                    await MCSCIMService.ShelfStatusChange();
                 }
             }
             catch (Exception ex)
@@ -73,6 +75,7 @@ namespace AGVSystem.Service
                         portStatus.MaterialID = cargoID;
                     }
                     await _dbContext.SaveChangesAsync();
+                    await MCSCIMService.ShelfStatusChange();
                 }
             }
             catch (Exception ex)
