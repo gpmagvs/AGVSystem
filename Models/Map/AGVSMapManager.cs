@@ -5,6 +5,7 @@ using EquipmentManagment.Device.Options;
 using EquipmentManagment.Manager;
 using Newtonsoft.Json;
 using WebSocketSharp;
+using static AGVSystemCommonNet6.MAP.MapPoint;
 
 namespace AGVSystem.Models.Map
 {
@@ -137,6 +138,17 @@ namespace AGVSystem.Models.Map
                 return new List<int>();
 
             return eqPoint.Target.Keys.SelectMany(index => CurrentMap.Points.Where(pt => pt.Key == index).Select(pt => pt.Value.TagNumber)).ToList();
+        }
+
+        internal static List<MapPoint> GetBufferStations()
+        {
+            List<MapPoint> bufferStations = CurrentMap.Points.Values.Where(pt => _isBuffer(pt.StationType)).ToList();
+            bool _isBuffer(STATION_TYPE type)
+            {
+                return type == STATION_TYPE.Buffer || type == STATION_TYPE.Buffer_EQ || type == STATION_TYPE.Charge_Buffer;
+            }
+
+            return bufferStations;
         }
     }
 }

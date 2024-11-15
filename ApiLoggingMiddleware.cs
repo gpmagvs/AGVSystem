@@ -12,7 +12,9 @@ namespace AGVSystem
         {
             "/api/Map",
             "/AGVImages",
-            "/api/Equipment/GetEQOptions"
+            "/api/Equipment/GetEQOptions",
+            "/api/Equipment/GetWIPOptions",
+            "/api/system/website",
         };
         private List<string> contentTypesToIgnore = new() { "image", "text/css", "text/html", "application/javascript", "application/zip", "application/x-zip-compressed", "font" };
 

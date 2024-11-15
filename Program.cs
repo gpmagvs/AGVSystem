@@ -28,6 +28,7 @@ using Microsoft.IdentityModel.Tokens;
 using NLog;
 using NLog.Web;
 using System;
+using System.Diagnostics;
 using System.Net;
 using System.Reflection;
 using System.Text;
@@ -220,7 +221,7 @@ public static class WebAppInitializer
 
         ConfigureAuthentication(builder);
         ConfigureDatabase(builder);
-        ConfigureHostedServices(builder);
+        ServicesInjection(builder);
         ConfigureCors(builder);
         ConfigureWebSockets(builder);
         ConfigureSignalR(builder);
@@ -250,17 +251,22 @@ public static class WebAppInitializer
         }
     }
 
-    private static void ConfigureHostedServices(WebApplicationBuilder builder)
+    private static void ServicesInjection(WebApplicationBuilder builder)
     {
-        builder.Services.AddHostedService<ThirdPartyProgramStartService>();
+        if (!Debugger.IsAttached)
+            builder.Services.AddHostedService<ThirdPartyProgramStartService>();
+
         builder.Services.AddHostedService<DatabaseBackgroundService>();
         builder.Services.AddHostedService<VehicleLocationMonitorBackgroundService>();
         builder.Services.AddHostedService<FrontEndDataBrocastService>();
         builder.Services.AddHostedService<PCPerformanceService>();
+        builder.Services.AddHostedService<EquipmentInitStartupService>();
+        builder.Services.AddHostedService<EquipmentsCollectBackgroundService>();
         builder.Services.AddScoped<MeanTimeQueryService>();
         builder.Services.AddScoped<LogDownlodService>();
         builder.Services.AddScoped<StationSelectService>();
         builder.Services.AddScoped<SystemStatusDbStoreService>();
+        builder.Services.AddScoped<RackCargoStatusContorlService>();
     }
 
     private static void ConfigureCors(WebApplicationBuilder builder)
@@ -339,8 +345,6 @@ public static class WebAppInitializer
         });
 
         app.UseMiddleware<ApiLoggingMiddleware>();
-        Task.Run(() => InitializeEquipmentManager());
-
         AutomationManager.InitialzeDefaultTasks();
         AutomationManager.StartAllAutomationTasks();
 
@@ -360,31 +364,6 @@ public static class WebAppInitializer
         app.MapHub<FrontEndDataHub>("/FrontEndDataHub");
     }
 
-    private static async Task InitializeEquipmentManager()
-    {
-        await Task.Delay(3000);
-        try
-        {
-            clsEQ.WirteOuputEnabled = !AGVSConfigulator.SysConfigs.BaseOnKGSWebAGVSystem;
-
-            string eqConfigsStoreFolder = AGVSConfigulator.SysConfigs.PATHES_STORE[SystemConfigs.PATH_ENUMS.EQ_CONFIGS_FOLDER_PATH];
-
-            StaEQPManagager.InitializeAsync(new clsEQManagementConfigs
-            {
-                EQConfigPath = $"{eqConfigsStoreFolder}//EQConfigs.json",
-                WIPConfigPath = $"{eqConfigsStoreFolder}//WIPConfigs.json",
-                ChargeStationConfigPath = $"{eqConfigsStoreFolder}//ChargStationConfigs.json",
-                EQGroupConfigPath = $"{eqConfigsStoreFolder}//EQGroupConfigs.json",
-            });
-
-            await clsStationInfoManager.ScanWIP_EQ();
-        }
-        catch (Exception ex)
-        {
-            AlarmManagerCenter.AddAlarmAsync(ALARMS.SYSTEM_EQP_MANAGEMENT_INITIALIZE_FAIL_WITH_EXCEPTION);
-            LOG.Critical(ex);
-        }
-    }
 }
 
 public static class StaticFileInitializer

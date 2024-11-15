@@ -283,11 +283,11 @@ namespace AGVSystem.Controllers
             bool DelayReserveCancel = SystemModes.RunMode == AGVSystemCommonNet6.AGVDispatch.RunMode.RUN_MODE.RUN &&
                                                              SystemModes.TransferTaskMode == AGVSystemCommonNet6.AGVDispatch.RunMode.TRANSFER_MODE.LOCAL_AUTO &&
                                                              isCarryTask;
+            bool isDestinePortAboveEq = slot > 0 && mainEQ != null && rack != null;
             try
             {
                 if (mainEQ != null)
                 {
-                    endPoint = mainEQ;
                     _ = Task.Run(async () =>
                     {
                         mainEQ.CancelToEQUpAndLow();
@@ -295,7 +295,12 @@ namespace AGVSystem.Controllers
                         mainEQ.CancelReserve();
                     });
                     logger.Info($"Get AGV LD.ULD Task Finish At Tag {tag}-Action={action}. TO Eq DO ALL OFF");
-                    return new clsAGVSTaskReportResponse() { confirm = true, message = $"{mainEQ.EQName} ToEQUp DO OFF" };
+
+                    if (!isDestinePortAboveEq)
+                    {
+                        endPoint = mainEQ;
+                        return new clsAGVSTaskReportResponse() { confirm = true, message = $"{mainEQ.EQName} ToEQUp DO OFF" };
+                    }
                 }
                 if (rack != null)
                 {
@@ -390,6 +395,11 @@ namespace AGVSystem.Controllers
             MapPoint _mapPt = AGVSMapManager.GetMapPointByTag(tag);
             bool isPureWIP = _mapPt.StationType == MapPoint.STATION_TYPE.Buffer || _mapPt.StationType == MapPoint.STATION_TYPE.Charge_Buffer;
             clsEQ? Eq = isPureWIP ? null : StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == tag && eq.EndPointOptions.Height == slot);
+            if (slot > 0)
+            {
+                //try get eq at first slot.
+                Eq = isPureWIP ? null : StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == tag && eq.EndPointOptions.Height == 0);
+            }
             clsRack? Rack = StaEQPManagager.RacksList.FirstOrDefault(x => x.PortsStatus.Any(p => p.TagNumbers.Contains(tag)));
             return (Eq != null || Rack != null, Eq, Rack);
         }
