@@ -146,6 +146,23 @@ namespace AGVSystem.Controllers
             }
         }
 
+        [HttpPost("DeepCharge")]
+        [Authorize]
+        public async Task<IActionResult> DeepChargeTask([FromBody] clsTaskDto taskData, string user = "")
+        {
+            try
+            {
+                (bool confirm, int alarm_code, string message) check_result = TaskManager.CheckChargeTask(taskData.DesignatedAGVName, taskData.To_Station_Tag);
+                if (!check_result.confirm)
+                    return Ok(new { confirm = check_result.confirm, alarm_code = check_result.alarm_code, message = check_result.message });
+                return Ok(await AddTask(taskData, user));
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { confirm = false, alarm_code = ALARMS.SYSTEM_ERROR, message = "[Internal Error] " + ex.Message });
+            }
+        }
+
         [HttpGet("CancelChargeTask")]
         [Authorize]
         public async Task<IActionResult> CancelChargeTask(string agv_name)
