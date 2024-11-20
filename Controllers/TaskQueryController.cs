@@ -84,19 +84,21 @@ namespace AGVSystem.Controllers
 
 
         [HttpGet("GetTasks")]
-        public async Task<IActionResult> GetTasks(DateTime start, DateTime end, string agv_name = "")
+        public async Task<IActionResult> GetTasks(DateTime start, DateTime end, string? agv_name = "", string? taskID = "")
         {
-            string dataKey = $"GetTask_{agv_name}_{start.ToString()}_{end.ToString()}";
+            string dataKey = $"GetTask_{agv_name}_{taskID}_{start.ToString()}_{end.ToString()}";
             if (cache.TryGetValue(dataKey, out object dataCached))
             {
                 return Ok(dataCached);
             }
             else
             {
+                bool _specifiedTaskID = !string.IsNullOrEmpty(taskID);
                 TaskDatabaseHelper dbhelper = new TaskDatabaseHelper();
-                List<clsTaskDto> tasks = dbhelper.GetTasksByTimeInterval(start, end);
+                List<clsTaskDto> tasks = dbhelper.GetTasksByTimeInterval(start, end, taskID);
                 List<clsTaskDto> returnData;
-                if (agv_name != "")
+
+                if (!string.IsNullOrEmpty(agv_name) && !_specifiedTaskID)
                     returnData = tasks.FindAll(task => task.DesignatedAGVName == agv_name);
                 else
                     returnData = tasks;
