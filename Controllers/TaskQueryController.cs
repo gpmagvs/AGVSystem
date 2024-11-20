@@ -14,6 +14,7 @@ using AGVSystemCommonNet6.Vehicle_Control.VCSDatabase;
 using Microsoft.Build.ObjectModelRemoting;
 using AGVSystemCommonNet6.ViewModels;
 using AGVSystemCommonNet6.AGVDispatch.Messages;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace AGVSystem.Controllers
 {
@@ -22,9 +23,11 @@ namespace AGVSystem.Controllers
     public class TaskQueryController : ControllerBase
     {
         AGVSDbContext dbcontext;
-        public TaskQueryController(AGVSDbContext dbcontext)
+        readonly IMemoryCache cache;
+        public TaskQueryController(AGVSDbContext dbcontext, IMemoryCache cache)
         {
             this.dbcontext = dbcontext;
+            this.cache = cache;
         }
 
         [HttpPost]
@@ -94,9 +97,20 @@ namespace AGVSystem.Controllers
         {
             try
             {
-                TrajectoryDBStoreHelper helper = new TrajectoryDBStoreHelper();
-                List<clsTrajCoordination> coordinations = helper.GetTrajectory(taskID);
-                return Ok(new { task_id = taskID, coordinations = coordinations });
+                string cacheDataKey = $"Trajectory_{taskID}";
+                if (cache.TryGetValue(cacheDataKey, out object cacheData))
+                {
+                    return Ok(cacheData);
+                }
+                else
+                {
+
+                    TrajectoryDBStoreHelper helper = new TrajectoryDBStoreHelper();
+                    List<clsTrajCoordination> coordinations = helper.GetTrajectory(taskID);
+                    var dataWrap = new { task_id = taskID, coordinations = coordinations };
+                    cache.Set<object>(cacheDataKey, dataWrap, TimeSpan.FromMinutes(30));
+                    return Ok(dataWrap);
+                }
             }
             catch (Exception ex)
             {
