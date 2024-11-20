@@ -15,6 +15,7 @@ using Microsoft.Build.ObjectModelRemoting;
 using AGVSystemCommonNet6.ViewModels;
 using AGVSystemCommonNet6.AGVDispatch.Messages;
 using Microsoft.Extensions.Caching.Memory;
+using System.Collections.Generic;
 
 namespace AGVSystem.Controllers
 {
@@ -85,12 +86,23 @@ namespace AGVSystem.Controllers
         [HttpGet("GetTasks")]
         public async Task<IActionResult> GetTasks(DateTime start, DateTime end, string agv_name = "")
         {
-            TaskDatabaseHelper dbhelper = new TaskDatabaseHelper();
-            List<clsTaskDto> tasks = dbhelper.GetTasksByTimeInterval(start, end);
-            if (agv_name != "")
-                return Ok(tasks.FindAll(task => task.DesignatedAGVName == agv_name));
+            string dataKey = $"GetTask_{agv_name}_{start.ToString()}_{end.ToString()}";
+            if (cache.TryGetValue(dataKey, out object dataCached))
+            {
+                return Ok(dataCached);
+            }
             else
+            {
+                TaskDatabaseHelper dbhelper = new TaskDatabaseHelper();
+                List<clsTaskDto> tasks = dbhelper.GetTasksByTimeInterval(start, end);
+                List<clsTaskDto> returnData;
+                if (agv_name != "")
+                    returnData = tasks.FindAll(task => task.DesignatedAGVName == agv_name);
+                else
+                    returnData = tasks;
+                cache.Set<List<clsTaskDto>>(dataKey, returnData, TimeSpan.FromMinutes(10));
                 return Ok(tasks);
+            }
         }
         [HttpGet("GetTrajectory")]
         public async Task<IActionResult> GetTrajectory(string taskID)
