@@ -256,6 +256,7 @@ public static class WebAppInitializer
         if (!Debugger.IsAttached)
             builder.Services.AddHostedService<ThirdPartyProgramStartService>();
 
+        builder.Services.AddMemoryCache();
         builder.Services.AddHostedService<DatabaseBackgroundService>();
         builder.Services.AddHostedService<VehicleLocationMonitorBackgroundService>();
         builder.Services.AddHostedService<FrontEndDataBrocastService>();
