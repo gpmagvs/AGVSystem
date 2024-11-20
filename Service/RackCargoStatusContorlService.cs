@@ -40,7 +40,10 @@ namespace AGVSystem.Service
                         portStatus.MaterialID = string.Empty;
                     }
                     await _dbContext.SaveChangesAsync();
-                    await MCSCIMService.ShelfStatusChange();
+
+                    var rackData=StaEQPManagager.GetRackDataForMCS();
+
+                    await MCSCIMService.ShelfStatusChange(rackData);
                 }
             }
             catch (Exception ex)
