@@ -14,6 +14,8 @@ using AGVSystemCommonNet6.Vehicle_Control.VCSDatabase;
 using Microsoft.Build.ObjectModelRemoting;
 using AGVSystemCommonNet6.ViewModels;
 using AGVSystemCommonNet6.AGVDispatch.Messages;
+using Microsoft.Extensions.Caching.Memory;
+using System.Collections.Generic;
 
 namespace AGVSystem.Controllers
 {
@@ -22,9 +24,11 @@ namespace AGVSystem.Controllers
     public class TaskQueryController : ControllerBase
     {
         AGVSDbContext dbcontext;
-        public TaskQueryController(AGVSDbContext dbcontext)
+        readonly IMemoryCache cache;
+        public TaskQueryController(AGVSDbContext dbcontext, IMemoryCache cache)
         {
             this.dbcontext = dbcontext;
+            this.cache = cache;
         }
 
         [HttpPost]
@@ -80,23 +84,47 @@ namespace AGVSystem.Controllers
 
 
         [HttpGet("GetTasks")]
-        public async Task<IActionResult> GetTasks(DateTime start, DateTime end, string agv_name = "")
+        public async Task<IActionResult> GetTasks(DateTime start, DateTime end, string? agv_name = "", string? taskID = "")
         {
-            TaskDatabaseHelper dbhelper = new TaskDatabaseHelper();
-            List<clsTaskDto> tasks = dbhelper.GetTasksByTimeInterval(start, end);
-            if (agv_name != "")
-                return Ok(tasks.FindAll(task => task.DesignatedAGVName == agv_name));
+            string dataKey = $"GetTask_{agv_name}_{taskID}_{start.ToString()}_{end.ToString()}";
+            if (cache.TryGetValue(dataKey, out object dataCached))
+            {
+                return Ok(dataCached);
+            }
             else
+            {
+                bool _specifiedTaskID = !string.IsNullOrEmpty(taskID);
+                TaskDatabaseHelper dbhelper = new TaskDatabaseHelper();
+                List<clsTaskDto> tasks = dbhelper.GetTasksByTimeInterval(start, end, taskID);
+                List<clsTaskDto> returnData;
+
+                if (!string.IsNullOrEmpty(agv_name) && !_specifiedTaskID)
+                    returnData = tasks.FindAll(task => task.DesignatedAGVName == agv_name);
+                else
+                    returnData = tasks;
+                cache.Set<List<clsTaskDto>>(dataKey, returnData, TimeSpan.FromMinutes(10));
                 return Ok(tasks);
+            }
         }
         [HttpGet("GetTrajectory")]
         public async Task<IActionResult> GetTrajectory(string taskID)
         {
             try
             {
-                TrajectoryDBStoreHelper helper = new TrajectoryDBStoreHelper();
-                List<clsTrajCoordination> coordinations = helper.GetTrajectory(taskID);
-                return Ok(new { task_id = taskID, coordinations = coordinations });
+                string cacheDataKey = $"Trajectory_{taskID}";
+                if (cache.TryGetValue(cacheDataKey, out object cacheData))
+                {
+                    return Ok(cacheData);
+                }
+                else
+                {
+
+                    TrajectoryDBStoreHelper helper = new TrajectoryDBStoreHelper();
+                    List<clsTrajCoordination> coordinations = helper.GetTrajectory(taskID);
+                    var dataWrap = new { task_id = taskID, coordinations = coordinations };
+                    cache.Set<object>(cacheDataKey, dataWrap, TimeSpan.FromMinutes(30));
+                    return Ok(dataWrap);
+                }
             }
             catch (Exception ex)
             {

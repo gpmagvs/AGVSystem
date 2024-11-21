@@ -47,6 +47,30 @@ namespace AGVSystem.Controllers
             return Ok();
         }
 
+        [HttpPost("ReAssignTask")]
+        [Authorize]
+        public async Task<IActionResult> ReAssignTask([FromBody] clsTaskDto taskData, string user = "", bool autoSelectVehicle = false)
+        {
+            if (taskData.TaskName.StartsWith("M"))
+            {
+                return Ok(new { confirm = false, message = "禁止手動重新指派MCS任務", message_en = "Can not re-assign order from MCS" });
+            }
+            if (SystemModes.TransferTaskMode != AGVSystemCommonNet6.AGVDispatch.RunMode.TRANSFER_MODE.MANUAL)
+            {
+                return Ok(new { confirm = false, message = "自動派工模式下禁止手動重新指派任務", message_en = "Can not re-assign order in AUTO DISPATCH mode" });
+            }
+
+            int existTaskNnm = _TaskDBContent.Tasks.Count(tk => tk.TaskName.Contains(taskData.TaskName));
+            taskData.TaskName = taskData.TaskName + $"-{existTaskNnm}";
+            taskData.RecieveTime = DateTime.Now;
+            taskData.State = TASK_RUN_STATUS.WAIT;
+            taskData.FinishTime = DateTime.MinValue;
+            taskData.FailureReason = "";
+            taskData.need_change_agv = false;
+            taskData.DesignatedAGVName = autoSelectVehicle ? "" : taskData.DesignatedAGVName;
+            taskData.bypass_eq_status_check = false;
+            return Ok(await AddTask(taskData, user));
+        }
 
 
         [HttpGet("Cancel")]
@@ -111,6 +135,23 @@ namespace AGVSystem.Controllers
             try
             {
 
+                (bool confirm, int alarm_code, string message) check_result = TaskManager.CheckChargeTask(taskData.DesignatedAGVName, taskData.To_Station_Tag);
+                if (!check_result.confirm)
+                    return Ok(new { confirm = check_result.confirm, alarm_code = check_result.alarm_code, message = check_result.message });
+                return Ok(await AddTask(taskData, user));
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { confirm = false, alarm_code = ALARMS.SYSTEM_ERROR, message = "[Internal Error] " + ex.Message });
+            }
+        }
+
+        [HttpPost("DeepCharge")]
+        [Authorize]
+        public async Task<IActionResult> DeepChargeTask([FromBody] clsTaskDto taskData, string user = "")
+        {
+            try
+            {
                 (bool confirm, int alarm_code, string message) check_result = TaskManager.CheckChargeTask(taskData.DesignatedAGVName, taskData.To_Station_Tag);
                 if (!check_result.confirm)
                     return Ok(new { confirm = check_result.confirm, alarm_code = check_result.alarm_code, message = check_result.message });

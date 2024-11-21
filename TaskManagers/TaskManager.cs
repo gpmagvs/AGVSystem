@@ -51,9 +51,6 @@ namespace AGVSystem.TaskManagers
             AGVSystemCommonNet6.MAP.MapPoint sourcePoint = AGVSMapManager.GetMapPointByTag(source_station_tag);
             AGVSystemCommonNet6.MAP.MapPoint destinePoint = AGVSMapManager.GetMapPointByTag(destine_station_tag);
 
-
-
-
             using AGVSDatabase database = new AGVSDatabase();
             #region   AGV 狀態檢查
             // AGV 有貨不可派取貨or搬運, 無貨不可派放貨, 有貨不能去充電(非潛盾車型)
@@ -86,7 +83,7 @@ namespace AGVSystem.TaskManagers
                     AlarmManagerCenter.AddAlarmAsync(ALARMS.AGV_NO_Carge_Cannot_Transfer_Cargo_From_AGV_To_Desinte);
                     return (false, ALARMS.AGV_NO_Carge_Cannot_Transfer_Cargo_From_AGV_To_Desinte, $"{_agv_assigned.AGV_Name} 車上無貨物無法指派[{taskData.ActionName}]任務", $"{_agv_assigned.AGV_Name} no cargo can not assigned to {taskData.Action}");
                 }
-                if (taskData.Action == ACTION_TYPE.Charge && _agv_assigned.Model != clsEnums.AGV_TYPE.SUBMERGED_SHIELD && (_agv_assigned.CargoStatus != 0 || _agv_assigned.CurrentCarrierID != ""))
+                if ((taskData.Action == ACTION_TYPE.Charge || taskData.Action == ACTION_TYPE.DeepCharge) && _agv_assigned.Model != clsEnums.AGV_TYPE.SUBMERGED_SHIELD && (_agv_assigned.CargoStatus != 0 || _agv_assigned.CurrentCarrierID != ""))
                 {
                     AlarmManagerCenter.AddAlarmAsync(ALARMS.CannotAssignChargeJobBecauseWrongCargoStatus);
                     return (false, ALARMS.CannotAssignChargeJobBecauseWrongCargoStatus, $"車型非{clsEnums.AGV_TYPE.SUBMERGED_SHIELD}車上有貨不行進行充電任務", $"{_agv_assigned.AGV_Name} Has Cargo Can't Execute Charge Task");
@@ -285,7 +282,7 @@ namespace AGVSystem.TaskManagers
 
             #region 充電任務確認
 
-            if (taskData.Action == ACTION_TYPE.Charge && taskData.DesignatedAGVName != "")
+            if ((taskData.Action == ACTION_TYPE.Charge || taskData.Action == ACTION_TYPE.DeepCharge) && taskData.DesignatedAGVName != "")
             {
                 try
                 {
@@ -319,7 +316,20 @@ namespace AGVSystem.TaskManagers
                 using (var db = new AGVSDatabase())
                 {
 
-                    if (db.tables.Tasks.AsNoTracking().Where(task => task.To_Station != "-1" && task.State == TASK_RUN_STATUS.WAIT || task.State == TASK_RUN_STATUS.NAVIGATING).Any(task => task.To_Station == taskData.To_Station))
+                    //起點確認
+                    if (_order_action == ACTION_TYPE.Carry)
+                    {
+                        if (db.tables.Tasks.AsNoTracking().Where(task => task.From_Station != "-1" && task.State == TASK_RUN_STATUS.WAIT || task.State == TASK_RUN_STATUS.NAVIGATING)
+                                                          .Any(task => task.From_Station == taskData.From_Station && task.From_Slot == taskData.From_Slot))
+                        {
+                            AlarmManagerCenter.AddAlarmAsync(ALARMS.Destine_Eq_Already_Has_Task_To_Excute, ALARM_SOURCE.AGVS);
+                            return (false, ALARMS.Destine_Eq_Already_Has_Task_To_Excute, $"來源設備已有搬運任務", "The source equipment already has a carry task.");
+                        }
+                    }
+
+                    //終點確認
+                    if (db.tables.Tasks.AsNoTracking().Where(task => task.To_Station != "-1" && task.State == TASK_RUN_STATUS.WAIT || task.State == TASK_RUN_STATUS.NAVIGATING)
+                                                      .Any(task => task.To_Station == taskData.To_Station && task.To_Slot == taskData.To_Slot))
                     {
                         if (_order_action == ACTION_TYPE.None)
                         {
@@ -377,7 +387,7 @@ namespace AGVSystem.TaskManagers
                 if (isNoChargeStation)
                     return (false, 1008, "當前地圖上沒有充電站可以使用");
 
-                var chargeTasks = DatabaseCaches.TaskCaches.InCompletedTasks.Where(_task => _task.Action == ACTION_TYPE.Charge);
+                var chargeTasks = DatabaseCaches.TaskCaches.InCompletedTasks.Where(_task => _task.Action == ACTION_TYPE.Charge || _task.Action == ACTION_TYPE.DeepCharge);
 
                 bool isAlreadyHasChargeTask = chargeTasks.Any(_task => _task.DesignatedAGVName == agv_name);
                 if (isAlreadyHasChargeTask)
