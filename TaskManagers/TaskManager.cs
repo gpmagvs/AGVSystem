@@ -11,6 +11,7 @@ using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.DATABASE.Helpers;
 using AGVSystemCommonNet6.HttpTools;
 using AGVSystemCommonNet6.Log;
+using AGVSystemCommonNet6.MAP;
 using AGVSystemCommonNet6.Material;
 using AGVSystemCommonNet6.Microservices.ResponseModel;
 using AGVSystemCommonNet6.Microservices.VMS;
@@ -348,6 +349,7 @@ namespace AGVSystem.TaskManagers
                         }
 
                     }
+                    SetUpHighestPriorityState(taskData);
                     db.tables.Tasks.Add(taskData);
                     var added = await db.SaveChanges();
                 }
@@ -371,6 +373,17 @@ namespace AGVSystem.TaskManagers
                 AlarmManagerCenter.AddAlarmAsync(ALARMS.Task_Add_To_Database_Fail, ALARM_SOURCE.AGVS);
                 return new(false, ALARMS.Task_Add_To_Database_Fail, ex.Message, ex.Message);
             }
+        }
+
+        private static void SetUpHighestPriorityState(clsTaskDto taskData)
+        {
+            MapPoint? sourcePt = AGVSMapManager.GetMapPointByTag(taskData.From_Station_Tag);
+            MapPoint? destinePt = AGVSMapManager.GetMapPointByTag(taskData.To_Station_Tag);
+
+            bool isSourceStationHighestPriority = sourcePt == null ? false : sourcePt.IsHighestPriorityStation;
+            bool isDestineStationHighestPriority = destinePt == null ? false : destinePt.IsHighestPriorityStation;
+            taskData.IsHighestPriorityTask = isSourceStationHighestPriority || isDestineStationHighestPriority;
+            taskData.Priority = taskData.IsHighestPriorityTask ? 9999999 : taskData.Priority;
         }
 
         public static (bool confirm, int alarm_code, string message) CheckChargeTask(string agv_name, int assign_charge_station_tag)
