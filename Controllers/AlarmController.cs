@@ -1,6 +1,7 @@
 ﻿using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.Microservices.AudioPlay;
+using EquipmentManagment.Manager;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
@@ -32,6 +33,9 @@ namespace AGVSystem.Controllers
                 _dbContext.SystemAlarms.Update(alarm);
             }
             await _dbContext.SaveChangesAsync();
+
+            StaEQPManagager.ResetChargeStationAlarmsAsync();
+
             return Ok();
         }
 
