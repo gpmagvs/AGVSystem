@@ -52,7 +52,7 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
         [NonSerialized]
         internal HotRunAction RunningAction = new HotRunAction();
         public RegularUnloadConfiguration RegularLoadSettings { get; set; } = new RegularUnloadConfiguration();
-
+        public RandomHotRunConfiguration RandomHotRunSettings { get; set; } = new RandomHotRunConfiguration();
         public string comment { get; set; } = "Description";
         internal CancellationTokenSource cancellationTokenSource;
         internal event EventHandler OnScriptStopRequest;
@@ -100,7 +100,27 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                 NotifyServiceHelper.INFO(_RealTimeMessage);
         }
     }
+    public class RandomHotRunConfiguration
+    {
+        /// <summary>
+        /// 來源是Rack Port時，是否需要真正有貨(在席)才能產生搬運任務
+        /// </summary>
+        public bool IsRackPortNeedHasCargoAcutally { get; set; } = false;
+        /// <summary>
+        /// 主設備出料後都搬運至Rack
+        /// </summary>
+        public bool IsMainEqUnloadTransferToRackOnly { get; set; } = true;
 
+        public Dictionary<string, RackUpDownStream> RacksUpDownStarems { get; set; } = new Dictionary<string, RackUpDownStream>();
+
+        public class RackUpDownStream
+        {
+            public List<int> UpStream { get; set; } = new List<int>();
+            public List<int> DownStream { get; set; } = new List<int>();
+
+        }
+
+    }
     public class RegularUnloadConfiguration
     {
         /// <summary>
