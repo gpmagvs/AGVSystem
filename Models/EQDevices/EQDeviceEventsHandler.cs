@@ -42,6 +42,7 @@ namespace AGVSystem.Models.EQDevices
             ChargerIOSynchronizer.OnEMO += ChargerIOSynchronizer_OnEMO;
             ChargerIOSynchronizer.OnAirError += ChargerIOSynchronizer_OnAirError;
             ChargerIOSynchronizer.OnSmokeDetected += ChargerIOSynchronizer_OnSmokeDetected;
+            ChargerIOSynchronizer.OnTemperatureModuleError +=ChargerIOSynchronizer_OnTemperatureErrorDetected;
 
             clsPortOfRack.OnRackPortSensorFlash += HandlePortOfRackSensorFlash;
             clsPortOfRack.OnRackPortSensorStatusChanged += HandlePortOfRackSensorStatusChanged;

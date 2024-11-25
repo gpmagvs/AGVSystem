@@ -109,6 +109,12 @@ namespace AGVSystem.Models.EQDevices
             AlarmManagerCenter.AddAlarmAsync(ALARMS.Charge_Station_Smoke_Detected, Equipment_Name: chargerName);
         }
 
+        private static void ChargerIOSynchronizer_OnTemperatureErrorDetected(object? sender, string chargerName)
+        {
+            AudioPlayService.AddAudioToPlayQueue(ChargerSmokeDetectedAudioFilePath);
+            AlarmManagerCenter.AddAlarmAsync(ALARMS.Charge_Station_Temperature_High, Equipment_Name: chargerName);
+        }
+
         private static void ChargerIOSynchronizer_OnAirError(object? sender, string chargerName)
         {
             AudioPlayService.AddAudioToPlayQueue(ChargerAirErrorAudioFilePath);
