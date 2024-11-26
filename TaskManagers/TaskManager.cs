@@ -352,6 +352,20 @@ namespace AGVSystem.TaskManagers
                     SetUpHighestPriorityState(taskData);
                     db.tables.Tasks.Add(taskData);
                     var added = await db.SaveChanges();
+
+                    if (taskData.Action == ACTION_TYPE.DeepCharge)
+                    {
+                        db.tables.DeepChargeRecords.Add(new AGVSystemCommonNet6.Equipment.AGV.DeepChargeRecord()
+                        {
+                            AGVID = taskData.DesignatedAGVName,
+                            OrderRecievedTime = DateTime.Now,
+                            TaskID = taskData.TaskName,
+                            OrderStatus = TASK_RUN_STATUS.WAIT,
+                            TriggerBy = AGVSystemCommonNet6.Equipment.AGV.DeepChargeRecord.DEEP_CHARGE_TRIGGER_MOMENT.MANUAL,
+                        });
+                        await db.SaveChanges();
+                    }
+
                 }
             }
             catch (Exception ex)
