@@ -111,6 +111,7 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
         /// </summary>
         public bool IsMainEqUnloadTransferToRackOnly { get; set; } = true;
 
+        public bool IsOnlyUseRackFirstLayer { get; set; } = true;
         public Dictionary<string, RackUpDownStream> RacksUpDownStarems { get; set; } = new Dictionary<string, RackUpDownStream>();
 
         public class RackUpDownStream

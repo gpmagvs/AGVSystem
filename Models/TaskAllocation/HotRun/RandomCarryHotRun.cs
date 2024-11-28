@@ -216,6 +216,7 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
             {
                 var hasCargoPorts = StaEQPManagager.RacksList.SelectMany(rack => script.RandomHotRunSettings.IsRackPortNeedHasCargoAcutally ? rack.PortsStatus.Where(port => port.CargoExist) : rack.PortsStatus)
                                                              .Where(port => IsPortBelongPureBufferType(port))
+                                                             .Where(port => script.RandomHotRunSettings.IsOnlyUseRackFirstLayer ? port.Layer == 0 : true)
                                                              .Where(port => !IsPortAssignedOrder(port, tagsOfAssignedEq)).ToList();
                 if (hasCargoPorts.Any())
                 {
@@ -274,6 +275,7 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                         var noCargoPorts = StaEQPManagager.RacksList.Where(rack => usableRacksNames.Contains(rack.EQName))
                                                                     .SelectMany(rack => rack.PortsStatus.Where(port => !port.CargoExist))
                                                                     .Where(port => IsPortBelongPureBufferType(port))
+                                                                    .Where(port => script.RandomHotRunSettings.IsOnlyUseRackFirstLayer ? port.Layer == 0 : true)
                                                                     .Where(port => !IsPortAssignedOrder(port, tagsOfAssignedEq)).ToList();
                         if (!noCargoPorts.Any())
                             return (false, null);
