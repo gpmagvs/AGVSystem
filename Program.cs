@@ -12,6 +12,7 @@ using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.DATABASE.BackgroundServices;
 using AGVSystemCommonNet6.Log;
 using AGVSystemCommonNet6.Material;
+using AGVSystemCommonNet6.Microservices.MCS;
 using AGVSystemCommonNet6.Microservices.VMS;
 using AGVSystemCommonNet6.Notify;
 using AGVSystemCommonNet6.Sys;
@@ -268,6 +269,7 @@ public static class WebAppInitializer
         builder.Services.AddScoped<StationSelectService>();
         builder.Services.AddScoped<SystemStatusDbStoreService>();
         builder.Services.AddScoped<RackCargoStatusContorlService>();
+        builder.Services.AddScoped<MCSService>();
     }
 
     private static void ConfigureCors(WebApplicationBuilder builder)

@@ -1,4 +1,6 @@
 ﻿using AGVSystem.Models.Sys;
+using AGVSystem.Service;
+using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.AGVDispatch;
 using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.Microservices.MCS;
@@ -6,6 +8,7 @@ using AGVSystemCommonNet6.Microservices.ResponseModel;
 using AGVSystemCommonNet6.Vehicle_Control.VCS_ALARM;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using static AGVSystem.Service.MCSService;
 
 namespace AGVSystem.Controllers
 {
@@ -13,6 +16,19 @@ namespace AGVSystem.Controllers
     [ApiController]
     public partial class MCSCIMController : Controller
     {
+        public class clsResult
+        {
+            public bool Confirmed { get; set; } = false;
+            public int ResultCode { get; set; } = 1;
+            public string Message { get; set; } = "";
+        }
+
+        readonly MCSService mcsService;
+        public MCSCIMController(MCSService mcsService)
+        {
+            this.mcsService = mcsService;
+        }
+
         [HttpPost("TaskReporter")]
         public async Task<IActionResult> TaskReporter(object data)
         {
@@ -49,5 +65,13 @@ namespace AGVSystem.Controllers
             AlarmManagerCenter.IsReportAlarmToHostON = truetoenable;
             return Ok(response);
         }
+
+        [HttpPost("TransportCommand")]
+        public async Task<clsResult> TransportCommand([FromBody] clsTransportCommandDto transportCommand)
+        {
+            mcsService.HandleTransportCommand(transportCommand);
+            return new() { Message = transportCommand.ToJson() };
+        }
+
     }
 }
