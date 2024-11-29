@@ -52,8 +52,17 @@ namespace AGVSystem.TaskManagers
         {
             logger.Warn("Run Mode Start");
         }
-        public static (bool confirm, ALARMS alarm_code, string message, string message_en, object obj, Type objtype) CheckLoadUnloadStation(int station_tag, int LayerorSlot, ACTION_TYPE actiontype, bool check_rack_move_out_is_empty_or_full = true, bool bypasseqandrackckeck = false)
+
+        public class DeviceIDInfo
         {
+            public string portID { get; set; } = "";
+            public string zoneID { get; set; } = "";
+        }
+
+        public static (bool confirm, ALARMS alarm_code, string message, string message_en, object obj, Type objtype) CheckLoadUnloadStation(int station_tag, int LayerorSlot, ACTION_TYPE actiontype, out DeviceIDInfo deviceIDInfo, bool check_rack_move_out_is_empty_or_full = true, bool bypasseqandrackckeck = false)
+        {
+            deviceIDInfo = new DeviceIDInfo();
+
             if (bypasseqandrackckeck == true)
                 return new(true, ALARMS.NONE, "已經 Bypass 設備與RACK狀態檢查", $"By Pass EQ and Rack Check", null, null);
             AGVSystemCommonNet6.MAP.MapPoint MapPoint = AGVSMapManager.GetMapPointByTag(station_tag);
@@ -68,7 +77,7 @@ namespace AGVSystem.TaskManagers
                 clsEQ? Eq = StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == station_tag && eq.EndPointOptions.Height == LayerorSlot);
                 if (Eq == null)
                     return new(false, ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, $"設備站點TAG-{station_tag},EQ不存在於當前地圖", $"Tag of EQ Station({station_tag}) not exist on current map", null, null);
-
+                deviceIDInfo.portID = Eq.EndPointOptions.DeviceID;
                 logger.Trace($"AGV請求[{actiontype}]於設備-{MapPoint.Graph.Display}(Tag={station_tag}),設備狀態=>\r\n{Eq.GetStatusDescription()}");
 
                 if (!Eq.IsConnected)
@@ -114,6 +123,7 @@ namespace AGVSystem.TaskManagers
                 var Eq = StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == station_tag);
                 if (Eq != null)
                 {
+                    deviceIDInfo.portID = Eq.EndPointOptions.DeviceID;
                     if (!Eq.IsConnected)
                         return new(false, ALARMS.Endpoint_EQ_NOT_CONNECTED, $"設備[{Eq.EQName}] 尚未連線,無法確認狀態", $"EQ {Eq.EQName} is not connected, can't confirm status", null, null);
                     if (actiontype == ACTION_TYPE.Unload)
@@ -153,6 +163,10 @@ namespace AGVSystem.TaskManagers
                     clsPortOfRack specificport = ports.Where(x => x.Layer == LayerorSlot).FirstOrDefault();
                     if (specificport == null)
                         return new(false, ALARMS.EQ_LOAD_REQUEST_IS_NOT_ON, $"WIP設備[{Rack.EQName}, ID:{specificport.Properties.ID}] 料座不存在", $"WIP EQ {Rack.EQName}, ID:{specificport.Properties.ID} port does not exist", null, null);
+
+                    deviceIDInfo.zoneID = Rack.EndPointOptions.DeviceID;
+                    deviceIDInfo.portID = deviceIDInfo.zoneID + $"_{specificport.PortNo}";
+
                     if (actiontype == ACTION_TYPE.Unload)
                     {
                         if (specificport.CargoExist == false)
@@ -172,11 +186,17 @@ namespace AGVSystem.TaskManagers
                 var Rack = ports.FirstOrDefault().GetParentRack();
                 if (Rack == null)
                     return new(false, ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, $"WIP站點TAG-{station_tag},EQ-{Rack.EQName} 不存在於當前地圖", $"WIP station tag {station_tag}, EQ {Rack.EQName} not exist on current map", null, null);
+
+                clsPortOfRack specificport = ports.Where(x => x.Layer == LayerorSlot).FirstOrDefault();
+                
                 if (Rack.IsConnected == false)
                     return new(false, ALARMS.Endpoint_EQ_NOT_CONNECTED, $"WIP [{Rack.EQName}] 尚未連線,無法確認狀態", $"WIP {Rack.EQName} is not connected, can't confirm status", null, null);
-                clsPortOfRack specificport = ports.Where(x => x.Layer == LayerorSlot).FirstOrDefault();
                 if (specificport == null)
                     return new(false, ALARMS.EQ_LOAD_REQUEST_IS_NOT_ON, $"WIP設備[{Rack.EQName}, ID:{specificport.Properties.ID}] 料座不存在", $"WIP EQ {Rack.EQName}, ID:{specificport.Properties.ID} port does not exist", null, null);
+
+                deviceIDInfo.zoneID = Rack.EndPointOptions.DeviceID;
+                deviceIDInfo.portID = deviceIDInfo.zoneID + $"_{specificport.PortNo}";
+
                 if (actiontype == ACTION_TYPE.Unload)
                 {
                     if (specificport.CargoExist == false)

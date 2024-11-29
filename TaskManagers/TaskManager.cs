@@ -24,6 +24,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 using WebSocketSharp;
+using static AGVSystem.TaskManagers.EQTransferTaskManager;
 using static AGVSystemCommonNet6.MAP.MapPoint;
 using static SQLite.SQLite3;
 using static System.Collections.Specialized.BitVector32;
@@ -112,6 +113,8 @@ namespace AGVSystem.TaskManagers
                 else if (_order_action == ACTION_TYPE.Park && !destinePoint.IsParking)
                     return (false, ALARMS.Station_Disabled, "目標站點非可停車點，無法指派停車任務", "Can't dispatch PARK task when destine isn't parkable");
             }
+            DeviceIDInfo sourceDeviceIDInfo = new DeviceIDInfo();
+            DeviceIDInfo destineDeviceIDInfo = new DeviceIDInfo();
             #region 設備狀態檢查
             if (!taskData.bypass_eq_status_check && (_order_action == ACTION_TYPE.Load || _order_action == ACTION_TYPE.LoadAndPark || _order_action == ACTION_TYPE.Unload || _order_action == ACTION_TYPE.Carry))
             {
@@ -120,7 +123,7 @@ namespace AGVSystem.TaskManagers
 
                 if (taskData.Action == ACTION_TYPE.Unload || taskData.Action == ACTION_TYPE.Load || taskData.Action == ACTION_TYPE.LoadAndPark)
                 {
-                    results2 = EQTransferTaskManager.CheckLoadUnloadStation(destine_station_tag, Convert.ToInt16(taskData.To_Slot), taskData.Action, bypasseqandrackckeck: taskData.bypass_eq_status_check);
+                    results2 = EQTransferTaskManager.CheckLoadUnloadStation(destine_station_tag, Convert.ToInt16(taskData.To_Slot), taskData.Action, out destineDeviceIDInfo, bypasseqandrackckeck: taskData.bypass_eq_status_check);
                     results.confirm = results2.confirm;
                     results.alarm_code = results2.alarm_code;
                     results.message = results2.message;
@@ -131,7 +134,7 @@ namespace AGVSystem.TaskManagers
                 {
                     if (!isCarryAndSourceIsAGV)
                     {
-                        results2 = EQTransferTaskManager.CheckLoadUnloadStation(source_station_tag, Convert.ToInt16(taskData.From_Slot), ACTION_TYPE.Unload, bypasseqandrackckeck: taskData.bypass_eq_status_check);
+                        results2 = EQTransferTaskManager.CheckLoadUnloadStation(source_station_tag, Convert.ToInt16(taskData.From_Slot), ACTION_TYPE.Unload, out sourceDeviceIDInfo, bypasseqandrackckeck: taskData.bypass_eq_status_check);
                         results.confirm = results2.confirm;
                         results.alarm_code = results2.alarm_code;
                         results.message = results2.message;
@@ -139,7 +142,7 @@ namespace AGVSystem.TaskManagers
                         if (!results.confirm)
                             return results;
                     }
-                    results2 = EQTransferTaskManager.CheckLoadUnloadStation(destine_station_tag, Convert.ToInt16(taskData.To_Slot), ACTION_TYPE.Load, bypasseqandrackckeck: taskData.bypass_eq_status_check);
+                    results2 = EQTransferTaskManager.CheckLoadUnloadStation(destine_station_tag, Convert.ToInt16(taskData.To_Slot), ACTION_TYPE.Load, out destineDeviceIDInfo, bypasseqandrackckeck: taskData.bypass_eq_status_check);
                     results.confirm = results2.confirm;
                     results.alarm_code = results2.alarm_code;
                     results.message = results2.message;
@@ -278,6 +281,7 @@ namespace AGVSystem.TaskManagers
                 taskData.DesignatedAGVName = agv_name;
                 var agv = database.tables.AgvStates.FirstOrDefault(d => d.AGV_Name == agv_name);
                 taskData.From_Station = agv_name;
+                sourceDeviceIDInfo.portID = agv_name;
             }
             #endregion
 
@@ -350,6 +354,7 @@ namespace AGVSystem.TaskManagers
 
                     }
                     SetUpHighestPriorityState(taskData);
+                    SetUpDeviceIDState(taskData, sourceDeviceIDInfo, destineDeviceIDInfo);
                     db.tables.Tasks.Add(taskData);
                     var added = await db.SaveChanges();
 
@@ -387,6 +392,14 @@ namespace AGVSystem.TaskManagers
                 AlarmManagerCenter.AddAlarmAsync(ALARMS.Task_Add_To_Database_Fail, ALARM_SOURCE.AGVS);
                 return new(false, ALARMS.Task_Add_To_Database_Fail, ex.Message, ex.Message);
             }
+        }
+
+        private static void SetUpDeviceIDState(clsTaskDto taskData, DeviceIDInfo sourceDeviceIDInfo, DeviceIDInfo destineDeviceIDInfo)
+        {
+            taskData.soucePortID = sourceDeviceIDInfo.portID;
+            taskData.sourceZoneID = sourceDeviceIDInfo.zoneID;
+            taskData.destinePortID = destineDeviceIDInfo.portID;
+            taskData.destineZoneID = destineDeviceIDInfo.zoneID;
         }
 
         private static void SetUpHighestPriorityState(clsTaskDto taskData)

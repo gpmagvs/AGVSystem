@@ -21,6 +21,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NLog;
+using static AGVSystem.TaskManagers.EQTransferTaskManager;
 
 namespace AGVSystem.Controllers
 {
@@ -207,7 +208,7 @@ namespace AGVSystem.Controllers
                 return Ok(new clsAGVSTaskReportResponse() { confirm = true, message = $"Get empty port OK", ReturnObj = port.Layer });
             }
 
-            (bool confirm, ALARMS alarm_code, string message, string message_en, object obj, Type objtype) result = EQTransferTaskManager.CheckLoadUnloadStation(tag, slot, action, bypasseqandrackckeck: false);
+            (bool confirm, ALARMS alarm_code, string message, string message_en, object obj, Type objtype) result = EQTransferTaskManager.CheckLoadUnloadStation(tag, slot, action, out DeviceIDInfo deviceIDInfo, bypasseqandrackckeck: false);
             if (result.confirm == false)
             {
                 return Ok(new clsAGVSTaskReportResponse() { confirm = false, message = $"{result.message}", message_en = result.message_en, AlarmCode = result.alarm_code });
@@ -492,7 +493,5 @@ namespace AGVSystem.Controllers
                 throw exc;
             }
         }
-
-
     }
 }
