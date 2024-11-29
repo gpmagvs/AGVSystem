@@ -1,5 +1,6 @@
 ﻿using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.Material;
+using AGVSystemCommonNet6.Microservices.MCS;
 using EquipmentManagment.Manager;
 using EquipmentManagment.WIP;
 using NLog;
@@ -23,6 +24,14 @@ namespace AGVSystem.Service
                 int tag = port.TagNumbers.FirstOrDefault();
                 int slot = port.Properties.Row;
                 await RemoveRackCargoID(tag, slot, triggerBy);
+                var rackData = StaEQPManagager.GetRackDataForMCS();
+
+                await MCSCIMService.ShelfStatusChange(rackData);
+                var ExistsChange = StaEQPManagager.GetRackExistForMCS();
+                if (ExistsChange)
+                {
+                    await MCSCIMService.ZoneCapacityChange(rackData);
+                }
             }
         }
         internal async Task RemoveRackCargoID(int tagNumber, int slot, string triggerBy)
@@ -39,6 +48,15 @@ namespace AGVSystem.Service
                         portStatus.MaterialID = string.Empty;
                     }
                     await _dbContext.SaveChangesAsync();
+
+                    var rackData=StaEQPManagager.GetRackDataForMCS();
+
+                    await MCSCIMService.ShelfStatusChange(rackData);
+                    var ExistsChange = StaEQPManagager.GetRackExistForMCS();
+                    if (ExistsChange)
+                    {
+                        await MCSCIMService.ZoneCapacityChange(rackData);
+                    }
                 }
             }
             catch (Exception ex)
@@ -57,6 +75,13 @@ namespace AGVSystem.Service
                 int tag = port.TagNumbers.FirstOrDefault();
                 int slot = port.Properties.Row;
                 await AddRackCargoID(tag, slot, cargoID, triggerBy);
+                var rackData = StaEQPManagager.GetRackDataForMCS();
+                await MCSCIMService.ShelfStatusChange(rackData);
+                var ExistsChange = StaEQPManagager.GetRackExistForMCS();
+                if (ExistsChange)
+                {
+                    await MCSCIMService.ZoneCapacityChange(rackData);
+                }
             }
         }
         internal async Task AddRackCargoID(int tagNumber, int slot, string cargoID, string triggerBy)
@@ -73,6 +98,13 @@ namespace AGVSystem.Service
                         portStatus.MaterialID = cargoID;
                     }
                     await _dbContext.SaveChangesAsync();
+                    var rackData = StaEQPManagager.GetRackDataForMCS();
+                    await MCSCIMService.ShelfStatusChange(rackData);
+                    var ExistsChange = StaEQPManagager.GetRackExistForMCS();
+                    if (ExistsChange)
+                    {
+                        await MCSCIMService.ZoneCapacityChange(rackData);
+                    }
                 }
             }
             catch (Exception ex)
