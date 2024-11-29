@@ -16,7 +16,12 @@ namespace AGVSystem.Service
         {
             _dbContext = dbContext;
         }
+        public async Task GetRackdata2Mcs()
+        {
+            var rackData = StaEQPManagager.GetRackDataForMCS();
 
+            await MCSCIMService.GetRackData(rackData);
+        }
         internal async Task RemoveRackCargoID(string wIPID, string portID, string triggerBy)
         {
             if (TryGetPort(wIPID, portID, out clsPortOfRack port))

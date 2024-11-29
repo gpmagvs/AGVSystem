@@ -83,6 +83,8 @@ namespace AGVSystem.Controllers
                 response = await MCSCIMService.Offline();
             if (response.confirm == true)
             {
+                RackCargoStatusContorlService rackCargoStatusContorlService = null;
+                await rackCargoStatusContorlService.GetRackdata2Mcs();
                 SystemModes.HostConnMode = mode;
                 if (SystemModes.HostConnMode == HOST_CONN_MODE.OFFLINE)
                     SystemModes.HostOperMode = HOST_OPER_MODE.LOCAL;
