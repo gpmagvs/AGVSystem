@@ -3,6 +3,7 @@ using AGVSystemCommonNet6.Material;
 using AGVSystemCommonNet6.Microservices.MCS;
 using EquipmentManagment.Manager;
 using EquipmentManagment.WIP;
+using Microsoft.EntityFrameworkCore;
 using NLog;
 
 namespace AGVSystem.Service
@@ -12,9 +13,9 @@ namespace AGVSystem.Service
         private static SemaphoreSlim dbSemaphoreSlim = new SemaphoreSlim(1, 1);
         private readonly AGVSDbContext _dbContext;
         private Logger _logger = LogManager.GetCurrentClassLogger();
-        public RackCargoStatusContorlService(AGVSDbContext dbContext)
+        public RackCargoStatusContorlService(IServiceScopeFactory factory)
         {
-            _dbContext = dbContext;
+            _dbContext = factory.CreateScope().ServiceProvider.GetRequiredService<AGVSDbContext>(); 
         }
 
         internal async Task RemoveRackCargoID(string wIPID, string portID, string triggerBy)
