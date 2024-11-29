@@ -74,8 +74,7 @@ namespace AGVSystem.Controllers
 
 
         [HttpGet("Cancel")]
-        [Authorize]
-        public async Task<IActionResult> Cancel(string task_name)
+        public async Task<IActionResult> Cancel(string task_name,string? reason,string? raiserName)
         {
             logger.Info($"User try cancle Task-{task_name}");
 
