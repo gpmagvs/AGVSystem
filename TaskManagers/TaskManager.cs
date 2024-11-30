@@ -7,6 +7,7 @@ using AGVSystemCommonNet6.AGVDispatch;
 using AGVSystemCommonNet6.AGVDispatch.Messages;
 using AGVSystemCommonNet6.AGVDispatch.RunMode;
 using AGVSystemCommonNet6.Alarm;
+using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.DATABASE.Helpers;
 using AGVSystemCommonNet6.HttpTools;
@@ -355,6 +356,7 @@ namespace AGVSystem.TaskManagers
                     }
                     SetUpHighestPriorityState(taskData);
                     SetUpDeviceIDState(taskData, sourceDeviceIDInfo, destineDeviceIDInfo);
+                    await SetUnknowCarrierID(taskData);
                     db.tables.Tasks.Add(taskData);
                     var added = await db.SaveChanges();
 
@@ -392,6 +394,27 @@ namespace AGVSystem.TaskManagers
                 AlarmManagerCenter.AddAlarmAsync(ALARMS.Task_Add_To_Database_Fail, ALARM_SOURCE.AGVS);
                 return new(false, ALARMS.Task_Add_To_Database_Fail, ex.Message, ex.Message);
             }
+        }
+
+        private static async Task SetUnknowCarrierID(clsTaskDto taskData)
+        {
+            if (!string.IsNullOrEmpty(taskData.Carrier_ID))
+                return;
+            int flowNumber = 0;
+            string unknowCargoID = "";
+            if (taskData.CST_TYPE == 200 || taskData.CST_TYPE == 0)
+            {
+                flowNumber = await AGVSConfigulator.GetTrayUnknowFlowNumber();
+                unknowCargoID = $"TUN";
+            }
+            else
+            {
+                flowNumber = await AGVSConfigulator.GetRackUnknowFlowNumber();
+                unknowCargoID = $"UN";
+            }
+
+            unknowCargoID += $"{AGVSConfigulator.SysConfigs.SECSGem.SystemID}{flowNumber.ToString("D5")}";
+            taskData.Carrier_ID = unknowCargoID;
         }
 
         private static void SetUpDeviceIDState(clsTaskDto taskData, DeviceIDInfo sourceDeviceIDInfo, DeviceIDInfo destineDeviceIDInfo)
