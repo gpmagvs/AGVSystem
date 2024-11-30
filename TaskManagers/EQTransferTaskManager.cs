@@ -78,6 +78,8 @@ namespace AGVSystem.TaskManagers
                 if (Eq == null)
                     return new(false, ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, $"設備站點TAG-{station_tag},EQ不存在於當前地圖", $"Tag of EQ Station({station_tag}) not exist on current map", null, null);
                 deviceIDInfo.portID = Eq.EndPointOptions.DeviceID;
+                if (TryGetZoneIDOfEqLocateing(Eq.EndPointOptions.TagID, out string zoneID))
+                    deviceIDInfo.zoneID = zoneID;
                 logger.Trace($"AGV請求[{actiontype}]於設備-{MapPoint.Graph.Display}(Tag={station_tag}),設備狀態=>\r\n{Eq.GetStatusDescription()}");
 
                 if (!Eq.IsConnected)
@@ -188,7 +190,7 @@ namespace AGVSystem.TaskManagers
                     return new(false, ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, $"WIP站點TAG-{station_tag},EQ-{Rack.EQName} 不存在於當前地圖", $"WIP station tag {station_tag}, EQ {Rack.EQName} not exist on current map", null, null);
 
                 clsPortOfRack specificport = ports.Where(x => x.Layer == LayerorSlot).FirstOrDefault();
-                
+
                 if (Rack.IsConnected == false)
                     return new(false, ALARMS.Endpoint_EQ_NOT_CONNECTED, $"WIP [{Rack.EQName}] 尚未連線,無法確認狀態", $"WIP {Rack.EQName} is not connected, can't confirm status", null, null);
                 if (specificport == null)
@@ -219,6 +221,20 @@ namespace AGVSystem.TaskManagers
                 return new(false, ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, $"設備站點TAG-{station_tag} 不存在於當前地圖", $"EQ station tag {station_tag} not exist on current map", null, null);
             }
         }
+
+        private static bool TryGetZoneIDOfEqLocateing(int eqTag, out string zoneID)
+        {
+            zoneID = "";
+            clsEQ? Eq = StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == eqTag);
+            if (Eq == null)
+                return false;
+            clsRack rack = StaEQPManagager.RacksList.FirstOrDefault(rack => rack.RackOption.ColumnTagMap.SelectMany(tgs => tgs.Value).Contains(eqTag));
+            if (rack == null)
+                return false;
+            zoneID = rack.EndPointOptions.DeviceID;
+            return true;
+        }
+
         public static clsPortOfRack get_empyt_port_of_rack(int _station_tag)
         {
             List<clsPortOfRack> ports = StaEQPManagager.GetRackColumnByTag(_station_tag);
