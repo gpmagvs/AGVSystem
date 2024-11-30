@@ -34,11 +34,11 @@ namespace AGVSystem.Models.EQDevices
 
         private static void HandlePortCargoInstalled(object? sender, clsPortOfRack port)
         {
-            ShelfStatusChangeEventReport();
+            ZoneCapacityChangeEventReport(port.GetParentRack());
         }
         private static void HandlePortCargoRemoved(object? sender, clsPortOfRack port)
         {
-            ShelfStatusChangeEventReport();
+            ZoneCapacityChangeEventReport(port.GetParentRack());
         }
     }
 }

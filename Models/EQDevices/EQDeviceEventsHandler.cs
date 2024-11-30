@@ -21,10 +21,12 @@ namespace AGVSystem.Models.EQDevices
 {
     public static class Extenion
     {
-        public static bool IsEQInRack(this clsEQ eq)
+        public static bool IsEQInRack(this clsEQ eq,out clsRack rack)
         {
+            rack = null;
             int tag = eq.EndPointOptions.TagID;
-            return StaEQPManagager.RacksList.Any(rack => rack.RackOption.ColumnTagMap.SelectMany(k => k.Value).Contains(tag));
+            rack = StaEQPManagager.RacksList.FirstOrDefault(rack => rack.RackOption.ColumnTagMap.SelectMany(k => k.Value).Contains(tag));
+            return rack != null;
         }
     }
     public partial class EQDeviceEventsHandler
@@ -72,14 +74,16 @@ namespace AGVSystem.Models.EQDevices
 
         private static void HandleEQPortCargoInstalled(object? sender, clsEQ eq)
         {
-            if (eq.IsEQInRack())
-                ShelfStatusChangeEventReport();
+            if (eq.IsEQInRack(out clsRack rack))
+            {
+                ZoneCapacityChangeEventReport(rack);
+            }
         }
 
         private static void HandleEQPortCargoRemoved(object? sender, clsEQ eq)
         {
-            if (eq.IsEQInRack())
-                ShelfStatusChangeEventReport();
+            if (eq.IsEQInRack(out clsRack rack))
+                ZoneCapacityChangeEventReport(rack);
         }
 
         private static void HandleMaterialDelete(object? sender, clsMaterialInfo e)
@@ -231,46 +235,77 @@ namespace AGVSystem.Models.EQDevices
 
         }
 
-        private static async Task ShelfStatusChangeEventReport()
+        private static async Task ShelfStatusChangeEventReport(clsRack rack)
         {
             await Task.Delay(1).ContinueWith(async t =>
             {
-                List<MCSCIMService.ZoneData> zoneData = GenerateZoneData();
+                MCSCIMService.ZoneData zoneData = GenerateZoneData(rack);
                 await MCSCIMService.ShelfStatusChange(zoneData);
             });
         }
+        private static async Task ZoneCapacityChangeEventReport(clsRack rack)
+        {
+            await Task.Delay(1).ContinueWith(async t =>
+            {
+                MCSCIMService.ZoneData zoneData = GenerateZoneData(rack);
+                await MCSCIMService.ZoneCapacityChange(zoneData);
+            });
+        }
 
-
-        private static List<MCSCIMService.ZoneData> GenerateZoneData()
+        private static MCSCIMService.ZoneData GenerateZoneData(clsRack rack)
         {
             try
             {
                 string shelfIDPrefix = AGVSConfigulator.SysConfigs.SECSGem.CarrierLOCPrefixName;
-                return StaEQPManagager.RacksList.Select(rack => new MCSCIMService.ZoneData()
+                return  new MCSCIMService.ZoneData()
                 {
                     ZoneName = rack.RackOption.DeviceID,
                     ZoneType = 0,
                     LocationStatusList = GetLocationStatus(rack),
 
-                }).ToList();
+                };
+
 
                 List<MCSCIMService.ZoneData.LocationStatus> GetLocationStatus(clsRack rack)
                 {
-                    List<MCSCIMService.ZoneData.LocationStatus> statuslist = rack.PortsStatus.Select(port => new MCSCIMService.ZoneData.LocationStatus
+                    List<MCSCIMService.ZoneData.LocationStatus> statuslist = rack.PortsStatus.Select(port => port.Properties.EQInstall.IsUseForEQ ?
+                                                                                                                    GetLocationStatusOfEQLocatinPort(ref rack, ref port) :
+                                                                                                                    GetLocationStatusOfPort(ref rack, port)).ToList();
+
+                    return statuslist;
+                }
+
+                MCSCIMService.ZoneData.LocationStatus GetLocationStatusOfPort(ref clsRack rack, clsPortOfRack port)
+                {
+                    return new MCSCIMService.ZoneData.LocationStatus
                     {
                         ShelfId = $"{shelfIDPrefix}_{rack.RackOption.DeviceID}_{port.PortNo}",
                         CarrierID = port.CarrierID,
                         IsCargoExist = port.CargoExist,
                         DisabledStatus = port.Properties.PortEnable == clsPortOfRack.Port_Enable.Disable ? 1 : 0,
                         ProcessState = 0
-                    }).ToList();
-                    return statuslist;
+                    };
                 }
 
+                MCSCIMService.ZoneData.LocationStatus GetLocationStatusOfEQLocatinPort(ref clsRack rack, ref clsPortOfRack port)
+                {
+                    EquipmentManagment.Device.Options.clsRackPortProperty.clsPortUseToEQProperty eqInstallInfo = port.Properties.EQInstall;
+                    if (!StaEQPManagager.TryGetEQByEqName(eqInstallInfo.BindingEQName, out clsEQ eQ, out string errorMsg))
+                        return new MCSCIMService.ZoneData.LocationStatus();
+
+                    return new MCSCIMService.ZoneData.LocationStatus
+                    {
+                        ShelfId = $"{shelfIDPrefix}_{rack.RackOption.DeviceID}_{port.PortNo}",
+                        CarrierID = eQ.PortStatus.CarrierID,
+                        IsCargoExist = eQ.Port_Exist,
+                        DisabledStatus = eQ.EndPointOptions.Enable?0:1,
+                        ProcessState = 0
+                    };
+                }
             }
             catch (Exception)
             {
-                return new List<MCSCIMService.ZoneData>();
+                return new MCSCIMService.ZoneData();
 
             }
         }
