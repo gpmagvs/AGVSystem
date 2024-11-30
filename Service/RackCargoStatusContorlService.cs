@@ -1,6 +1,8 @@
-﻿using AGVSystemCommonNet6.DATABASE;
+﻿using AGVSystem.Models.EQDevices;
+using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.Material;
 using AGVSystemCommonNet6.Microservices.MCS;
+using EquipmentManagment.MainEquipment;
 using EquipmentManagment.Manager;
 using EquipmentManagment.WIP;
 using Microsoft.EntityFrameworkCore;
@@ -25,7 +27,10 @@ namespace AGVSystem.Service
                 int tag = port.TagNumbers.FirstOrDefault();
                 int slot = port.Properties.Row;
                 await RemoveRackCargoID(tag, slot, triggerBy);
+
             }
+
+
         }
         internal async Task RemoveRackCargoID(int tagNumber, int slot, string triggerBy)
         {
@@ -39,6 +44,9 @@ namespace AGVSystem.Service
                     if (TryGetStationStatus(tagNumber, slot, out clsStationStatus portStatus))
                     {
                         portStatus.MaterialID = string.Empty;
+
+                        if (port.IsRackPortIsEQ(out clsEQ eq) && eq.EndPointOptions.IsRoleAsZone)
+                            eq.PortStatus.CarrierID = "";
                     }
                     await _dbContext.SaveChangesAsync();
                 }
@@ -73,6 +81,8 @@ namespace AGVSystem.Service
                     if (TryGetStationStatus(tagNumber, slot, out clsStationStatus portStatus))
                     {
                         portStatus.MaterialID = cargoID;
+                        if (port.IsRackPortIsEQ(out clsEQ eq) && eq.EndPointOptions.IsRoleAsZone)
+                            eq.PortStatus.CarrierID = cargoID;
                     }
                     await _dbContext.SaveChangesAsync();
                 }

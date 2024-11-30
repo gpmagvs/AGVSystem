@@ -21,12 +21,21 @@ namespace AGVSystem.Models.EQDevices
 {
     public static class Extenion
     {
-        public static bool IsEQInRack(this clsEQ eq,out clsRack rack)
+        public static bool IsEQInRack(this clsEQ eq, out clsRack rack)
         {
             rack = null;
             int tag = eq.EndPointOptions.TagID;
             rack = StaEQPManagager.RacksList.FirstOrDefault(rack => rack.RackOption.ColumnTagMap.SelectMany(k => k.Value).Contains(tag));
             return rack != null;
+        }
+
+        public static bool IsRackPortIsEQ(this clsPortOfRack rackPort, out clsEQ eq)
+        {
+            eq = null;
+            if (rackPort.Layer > 0)
+                return false;
+            eq = StaEQPManagager.MainEQList.FirstOrDefault(eq => rackPort.TagNumbers.Contains(eq.EndPointOptions.TagID));
+            return eq != null;
         }
     }
     public partial class EQDeviceEventsHandler
@@ -67,14 +76,23 @@ namespace AGVSystem.Models.EQDevices
             clsEQ.OnUnloadRequestChanged += HandleEQUnloadRequestChanged;
             clsEQ.OnPortCargoInstalled += HandleEQPortCargoInstalled;
             clsEQ.OnPortCargoRemoved += HandleEQPortCargoRemoved;
+
+            PortStatusAbstract.CarrierIDChanged += PortStatusAbstract_CarrierIDChanged;
+
             MaterialManagerEventHandler.OnMaterialTransferStatusChange += HandleMaterialTransferStatusChanged;
             MaterialManagerEventHandler.OnMaterialAdd += HandleMaterialAdd;
             MaterialManagerEventHandler.OnMaterialDelete += HandleMaterialDelete;
         }
 
+        private static void PortStatusAbstract_CarrierIDChanged(object? sender, string e)
+        {
+            clsPortOfRack rackPort = (sender as clsPortOfRack);
+            ShelfStatusChangeEventReport(rackPort.GetParentRack());
+        }
+
         private static void HandleEQPortCargoInstalled(object? sender, clsEQ eq)
         {
-            if (eq.IsEQInRack(out clsRack rack))
+            if (eq.IsEQInRack(out clsRack rack) && eq.EndPointOptions.IsRoleAsZone)
             {
                 ZoneCapacityChangeEventReport(rack);
             }
@@ -82,7 +100,7 @@ namespace AGVSystem.Models.EQDevices
 
         private static void HandleEQPortCargoRemoved(object? sender, clsEQ eq)
         {
-            if (eq.IsEQInRack(out clsRack rack))
+            if (eq.IsEQInRack(out clsRack rack) && eq.EndPointOptions.IsRoleAsZone)
                 ZoneCapacityChangeEventReport(rack);
         }
 
@@ -252,12 +270,12 @@ namespace AGVSystem.Models.EQDevices
             });
         }
 
-        private static MCSCIMService.ZoneData GenerateZoneData(clsRack rack)
+        internal static MCSCIMService.ZoneData GenerateZoneData(clsRack rack)
         {
             try
             {
                 string shelfIDPrefix = AGVSConfigulator.SysConfigs.SECSGem.CarrierLOCPrefixName;
-                return  new MCSCIMService.ZoneData()
+                return new MCSCIMService.ZoneData()
                 {
                     ZoneName = rack.RackOption.DeviceID,
                     ZoneType = 0,
@@ -272,7 +290,7 @@ namespace AGVSystem.Models.EQDevices
                                                                                                                     GetLocationStatusOfEQLocatinPort(ref rack, ref port) :
                                                                                                                     GetLocationStatusOfPort(ref rack, port)).ToList();
 
-                    return statuslist;
+                    return statuslist.Where(status => status != null).ToList();
                 }
 
                 MCSCIMService.ZoneData.LocationStatus GetLocationStatusOfPort(ref clsRack rack, clsPortOfRack port)
@@ -291,14 +309,17 @@ namespace AGVSystem.Models.EQDevices
                 {
                     EquipmentManagment.Device.Options.clsRackPortProperty.clsPortUseToEQProperty eqInstallInfo = port.Properties.EQInstall;
                     if (!StaEQPManagager.TryGetEQByEqName(eqInstallInfo.BindingEQName, out clsEQ eQ, out string errorMsg))
-                        return new MCSCIMService.ZoneData.LocationStatus();
+                        return null;
+
+                    if (!eQ.EndPointOptions.IsRoleAsZone)
+                        return null;
 
                     return new MCSCIMService.ZoneData.LocationStatus
                     {
                         ShelfId = $"{shelfIDPrefix}_{rack.RackOption.DeviceID}_{port.PortNo}",
                         CarrierID = eQ.PortStatus.CarrierID,
                         IsCargoExist = eQ.Port_Exist,
-                        DisabledStatus = eQ.EndPointOptions.Enable?0:1,
+                        DisabledStatus = eQ.EndPointOptions.Enable ? 0 : 1,
                         ProcessState = 0
                     };
                 }

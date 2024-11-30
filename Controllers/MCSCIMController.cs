@@ -1,4 +1,5 @@
-﻿using AGVSystem.Models.Sys;
+﻿using AGVSystem.Models.EQDevices;
+using AGVSystem.Models.Sys;
 using AGVSystem.Service;
 using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.AGVDispatch;
@@ -6,9 +7,11 @@ using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.Microservices.MCS;
 using AGVSystemCommonNet6.Microservices.ResponseModel;
 using AGVSystemCommonNet6.Vehicle_Control.VCS_ALARM;
+using EquipmentManagment.Manager;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using static AGVSystem.Service.MCSService;
+using static AGVSystemCommonNet6.Microservices.MCS.MCSCIMService;
 
 namespace AGVSystem.Controllers
 {
@@ -73,5 +76,15 @@ namespace AGVSystem.Controllers
             return new() { Message = transportCommand.ToJson() };
         }
 
+        [HttpGet("EnhancedActiveZones")]
+        public async Task<clsResult> EnhancedActiveZones()
+        {
+            List<ZoneData> zoneDataList= StaEQPManagager.RacksList.Select(rack => EQDeviceEventsHandler.GenerateZoneData(rack)).ToList();
+            return new clsResult()
+            {
+                Confirmed = true,
+                Message = zoneDataList.ToJson(Formatting.None)
+            };
+        }
     }
 }
