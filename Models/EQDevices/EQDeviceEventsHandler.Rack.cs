@@ -31,5 +31,14 @@ namespace AGVSystem.Models.EQDevices
             AlarmManagerCenter.SetAlarmCheckedAsync(rackName, portId, ALARMS.Rack_Port_Sensor_Flash);
         }
 
+
+        private static void HandlePortCargoInstalled(object? sender, clsPortOfRack port)
+        {
+            ShelfStatusChangeEventReport();
+        }
+        private static void HandlePortCargoRemoved(object? sender, clsPortOfRack port)
+        {
+            ShelfStatusChangeEventReport();
+        }
     }
 }

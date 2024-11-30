@@ -1,20 +1,32 @@
-﻿using AGVSystemCommonNet6;
+﻿using AGVSystem.Service;
+using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.Equipment;
 using AGVSystemCommonNet6.Material;
+using AGVSystemCommonNet6.Microservices.MCS;
 using AGVSystemCommonNet6.Microservices.ResponseModel;
 using AGVSystemCommonNet6.Notify;
 using EquipmentManagment.ChargeStation;
 using EquipmentManagment.Device;
 using EquipmentManagment.MainEquipment;
+using EquipmentManagment.Manager;
 using EquipmentManagment.WIP;
 using NLog;
 using System.Collections.Concurrent;
+using System.Linq;
 
 namespace AGVSystem.Models.EQDevices
 {
+    public static class Extenion
+    {
+        public static bool IsEQInRack(this clsEQ eq)
+        {
+            int tag = eq.EndPointOptions.TagID;
+            return StaEQPManagager.RacksList.Any(rack => rack.RackOption.ColumnTagMap.SelectMany(k => k.Value).Contains(tag));
+        }
+    }
     public partial class EQDeviceEventsHandler
     {
         private static bool _disableEntryPointWhenEQPartsReplacing => AGVSConfigulator.SysConfigs.EQManagementConfigs.DisableEntryPointWhenEQPartsReplacing;
@@ -42,16 +54,33 @@ namespace AGVSystem.Models.EQDevices
             ChargerIOSynchronizer.OnEMO += ChargerIOSynchronizer_OnEMO;
             ChargerIOSynchronizer.OnAirError += ChargerIOSynchronizer_OnAirError;
             ChargerIOSynchronizer.OnSmokeDetected += ChargerIOSynchronizer_OnSmokeDetected;
-            ChargerIOSynchronizer.OnTemperatureModuleError +=ChargerIOSynchronizer_OnTemperatureErrorDetected;
+            ChargerIOSynchronizer.OnTemperatureModuleError += ChargerIOSynchronizer_OnTemperatureErrorDetected;
 
             clsPortOfRack.OnRackPortSensorFlash += HandlePortOfRackSensorFlash;
             clsPortOfRack.OnRackPortSensorStatusChanged += HandlePortOfRackSensorStatusChanged;
+            clsPortOfRack.OnPortCargoInstalled += HandlePortCargoInstalled;
+            clsPortOfRack.OnPortCargoRemoved += HandlePortCargoRemoved;
 
+            clsEQ.OnIOStateChanged += HandleEQIOStateChanged;
+            clsEQ.OnUnloadRequestChanged += HandleEQUnloadRequestChanged;
+            clsEQ.OnPortCargoInstalled += HandleEQPortCargoInstalled;
+            clsEQ.OnPortCargoRemoved += HandleEQPortCargoRemoved;
             MaterialManagerEventHandler.OnMaterialTransferStatusChange += HandleMaterialTransferStatusChanged;
             MaterialManagerEventHandler.OnMaterialAdd += HandleMaterialAdd;
             MaterialManagerEventHandler.OnMaterialDelete += HandleMaterialDelete;
         }
 
+        private static void HandleEQPortCargoInstalled(object? sender, clsEQ eq)
+        {
+            if (eq.IsEQInRack())
+                ShelfStatusChangeEventReport();
+        }
+
+        private static void HandleEQPortCargoRemoved(object? sender, clsEQ eq)
+        {
+            if (eq.IsEQInRack())
+                ShelfStatusChangeEventReport();
+        }
 
         private static void HandleMaterialDelete(object? sender, clsMaterialInfo e)
         {
@@ -202,6 +231,49 @@ namespace AGVSystem.Models.EQDevices
 
         }
 
+        private static async Task ShelfStatusChangeEventReport()
+        {
+            await Task.Delay(1).ContinueWith(async t =>
+            {
+                List<MCSCIMService.ZoneData> zoneData = GenerateZoneData();
+                await MCSCIMService.ShelfStatusChange(zoneData);
+            });
+        }
+
+
+        private static List<MCSCIMService.ZoneData> GenerateZoneData()
+        {
+            try
+            {
+                string shelfIDPrefix = AGVSConfigulator.SysConfigs.SECSGem.CarrierLOCPrefixName;
+                return StaEQPManagager.RacksList.Select(rack => new MCSCIMService.ZoneData()
+                {
+                    ZoneName = rack.RackOption.DeviceID,
+                    ZoneType = 0,
+                    LocationStatusList = GetLocationStatus(rack),
+
+                }).ToList();
+
+                List<MCSCIMService.ZoneData.LocationStatus> GetLocationStatus(clsRack rack)
+                {
+                    List<MCSCIMService.ZoneData.LocationStatus> statuslist = rack.PortsStatus.Select(port => new MCSCIMService.ZoneData.LocationStatus
+                    {
+                        ShelfId = $"{shelfIDPrefix}_{rack.RackOption.DeviceID}_{port.PortNo}",
+                        CarrierID = port.CarrierID,
+                        IsCargoExist = port.CargoExist,
+                        DisabledStatus = port.Properties.PortEnable == clsPortOfRack.Port_Enable.Disable ? 1 : 0,
+                        ProcessState = 0
+                    }).ToList();
+                    return statuslist;
+                }
+
+            }
+            catch (Exception)
+            {
+                return new List<MCSCIMService.ZoneData>();
+
+            }
+        }
     }
 
 }

@@ -119,9 +119,6 @@ public static class SystemInitializer
         HotRunScriptManager.Initialize();
         ScheduleMeasureManager.Initialize();
         EQDeviceEventsHandler.Initialize();
-        clsEQ.OnIOStateChanged += EQDeviceEventsHandler.HandleEQIOStateChanged;
-        clsEQ.OnPortExistChangeed += MaterialManager.HandlePortExistChanged;
-        clsEQ.OnUnloadRequestChanged += EQDeviceEventsHandler.HandleEQUnloadRequestChanged;
         AlarmManagerCenter.InitializeAsync().GetAwaiter().GetResult();
         AlarmManager.LoadVCSTrobleShootings();
         VMSSerivces.OnVMSReconnected += async (sender, e) => await VMSSerivces.RunModeSwitch(SystemModes.RunMode);
