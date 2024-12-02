@@ -76,8 +76,8 @@ namespace AGVSystem.Models.EQDevices
 
             clsPortOfRack.OnRackPortSensorFlash += HandlePortOfRackSensorFlash;
             clsPortOfRack.OnRackPortSensorStatusChanged += HandlePortOfRackSensorStatusChanged;
-            clsPortOfRack.OnPortCargoInstalled += HandlePortCargoInstalled;
-            clsPortOfRack.OnPortCargoRemoved += HandlePortCargoRemoved;
+            clsPortOfRack.OnPortCargoChangedToExist += HandlePortCargoInstalled;
+            clsPortOfRack.OnPortCargoChangeToDisappear += HandlePortCargoRemoved;
 
             clsEQ.OnIOStateChanged += HandleEQIOStateChanged;
             clsEQ.OnUnloadRequestChanged += HandleEQUnloadRequestChanged;
