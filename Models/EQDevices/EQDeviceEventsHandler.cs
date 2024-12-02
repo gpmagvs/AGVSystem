@@ -81,8 +81,8 @@ namespace AGVSystem.Models.EQDevices
 
             clsEQ.OnIOStateChanged += HandleEQIOStateChanged;
             clsEQ.OnUnloadRequestChanged += HandleEQUnloadRequestChanged;
-            clsEQ.OnPortCargoInstalled += HandleEQPortCargoInstalled;
-            clsEQ.OnPortCargoRemoved += HandleEQPortCargoRemoved;
+            clsEQ.OnEQPortCargoChangedToExist += HandleEQPortCargoInstalled;
+            clsEQ.OnEQPortCargoChangedToDisappear += HandleEQPortCargoRemoved;
 
             PortStatusAbstract.CarrierIDChanged += PortStatusAbstract_CarrierIDChanged;
 
