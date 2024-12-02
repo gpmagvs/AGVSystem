@@ -5,9 +5,11 @@ using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.Log;
 using AGVSystemCommonNet6.MAP;
 using AGVSystemCommonNet6.Microservices;
+using AGVSystemCommonNet6.Microservices.MCS;
 using AGVSystemCommonNet6.Microservices.VMS;
 using AGVSystemCommonNet6.Notify;
 using EquipmentManagment.Device;
+using EquipmentManagment.MainEquipment;
 using EquipmentManagment.WIP;
 using System.Diagnostics;
 
@@ -34,7 +36,22 @@ namespace AGVSystem.Models.EQDevices
 
         private static void HandlePortCargoInstalled(object? sender, clsPortOfRack port)
         {
-            ZoneCapacityChangeEventReport(port.GetParentRack());
+            Task.Factory.StartNew(async () =>
+            {
+                if (string.IsNullOrEmpty(port.CarrierID))
+                {
+                    port.CarrierID = await AGVSConfigulator.GetTrayUnknownFlowID();
+
+                    if (port.IsRackPortIsEQ(out clsEQ eqInport))
+                        eqInport.PortStatus.CarrierID = port.CarrierID;
+                    await MCSCIMService.CarrierInstallCompletedReport(port.CarrierID, port.GetLocID(), port.GetParentRack().RackOption.DeviceID, 1);
+                }
+                else
+                {
+
+                }
+                ZoneCapacityChangeEventReport(port.GetParentRack());
+            });
         }
         private static void HandlePortCargoRemoved(object? sender, clsPortOfRack port)
         {

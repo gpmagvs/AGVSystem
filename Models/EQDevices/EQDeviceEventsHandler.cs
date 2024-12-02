@@ -37,6 +37,13 @@ namespace AGVSystem.Models.EQDevices
             eq = StaEQPManagager.MainEQList.FirstOrDefault(eq => rackPort.TagNumbers.Contains(eq.EndPointOptions.TagID));
             return eq != null;
         }
+
+        public static string GetLocID(this clsPortOfRack portOfRack)
+        {
+            string zoneID = portOfRack.GetParentRack().RackOption.DeviceID;
+            string portPrefix = AGVSConfigulator.SysConfigs.SECSGem.CarrierLOCPrefixName;
+            return $"{portPrefix}_{zoneID}_{portOfRack.Properties.PortNo}";
+        }
     }
     public partial class EQDeviceEventsHandler
     {
@@ -94,7 +101,21 @@ namespace AGVSystem.Models.EQDevices
         {
             if (eq.IsEQInRack(out clsRack rack) && eq.EndPointOptions.IsRoleAsZone)
             {
-                ZoneCapacityChangeEventReport(rack);
+                Task.Factory.StartNew(async () =>
+                {
+                    if (string.IsNullOrEmpty(eq.PortStatus.CarrierID))
+                    {
+                        clsPortOfRack port = rack.PortsStatus.FirstOrDefault(port => port.TagNumbers.Contains(eq.EndPointOptions.TagID));
+                        string tunid = await AGVSConfigulator.GetTrayUnknownFlowID();
+                        eq.PortStatus.CarrierID = tunid;
+                        if (port != null)
+                        {
+                            port.CarrierID = tunid;
+                            await MCSCIMService.CarrierInstallCompletedReport(port.CarrierID, port.GetLocID(), port.GetParentRack().RackOption.DeviceID, 1);
+                        }
+                    }
+                    await ZoneCapacityChangeEventReport(rack);
+                });
             }
         }
 
@@ -297,7 +318,7 @@ namespace AGVSystem.Models.EQDevices
                 {
                     return new MCSCIMService.ZoneData.LocationStatus
                     {
-                        ShelfId = $"{shelfIDPrefix}_{rack.RackOption.DeviceID}_{port.PortNo}",
+                        ShelfId = port.GetLocID(),
                         CarrierID = port.CarrierID,
                         IsCargoExist = port.CargoExist,
                         DisabledStatus = port.Properties.PortEnable == clsPortOfRack.Port_Enable.Disable ? 1 : 0,
