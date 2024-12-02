@@ -517,7 +517,7 @@ namespace AGVSystem.TaskManagers
             bool cancel_success = await Cancel(charge_task.TaskName, "User Cancel");
             return (cancel_success, cancel_success ? "" : "任務取消失敗");
         }
-        internal async static Task<bool> Cancel(string task_name, string reason = "", TASK_RUN_STATUS status = TASK_RUN_STATUS.CANCEL)
+        internal async static Task<bool> Cancel(string task_name, string reason = "", TASK_RUN_STATUS status = TASK_RUN_STATUS.CANCEL , string hostAction ="cancel")
         {
             try
             {
@@ -545,6 +545,7 @@ namespace AGVSystem.TaskManagers
 
                 if (isOrderWaiting)
                 {
+                    await VMSSerivces.TaskCancel(task_name, reason, hostAction);
                     using (var agvsDb = new AGVSDatabase())
                     {
                         var dto = agvsDb.tables.Tasks.FirstOrDefault(od => od.TaskName == task_name);
@@ -559,7 +560,7 @@ namespace AGVSystem.TaskManagers
                     return true;
                 }
 
-                await VMSSerivces.TaskCancel(task_name, reason);
+                await VMSSerivces.TaskCancel(task_name, reason, hostAction);
                 //using (var db = new AGVSDatabase())
                 //{
                 //    var task = db.tables.Tasks.Where(tk => tk.TaskName == task_name).FirstOrDefault();

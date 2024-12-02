@@ -35,10 +35,13 @@ namespace AGVSystem.Controllers
 
         private Logger logger = LogManager.GetCurrentClassLogger();
 
-        public TaskController(AGVSDbContext content, UserValidationService userValidation)
+        private readonly MCSService mcsService;
+
+        public TaskController(AGVSDbContext content, UserValidationService userValidation, MCSService mcsService)
         {
             this._TaskDBContent = content;
             this.UserValidation = userValidation;
+            this.mcsService=mcsService;
         }
 
         [HttpGet("Allocation")]
@@ -75,7 +78,7 @@ namespace AGVSystem.Controllers
 
 
         [HttpGet("Cancel")]
-        public async Task<IActionResult> Cancel(string task_name,string? reason,string? raiserName)
+        public async Task<IActionResult> Cancel(string task_name, string? reason, string? raiserName)
         {
             logger.Info($"User try cancle Task-{task_name}");
 
@@ -84,8 +87,7 @@ namespace AGVSystem.Controllers
                 await KGSWebAGVSystemAPI.TaskOrder.OrderAPI.CancelTask(task_name);
                 return Ok(true);
             }
-
-            bool canceled = await TaskManager.Cancel(task_name, $"用戶取消任務(User manual canceled)");
+            bool canceled = await TaskManager.Cancel(task_name, $"用戶取消任務(User manual canceled)", hostAction: reason);
             logger.Info($"User try cancle Task-{task_name}---{canceled}");
             return Ok(canceled);
         }
