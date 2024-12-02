@@ -290,7 +290,7 @@ namespace AGVSystem.Controllers
         }
 
         [HttpGet("LoadUnloadTaskFinish")]
-        public async Task<clsAGVSTaskReportResponse> LoadUnloadTaskFinish(string taskID, int tag, ACTION_TYPE action)
+        public async Task<clsAGVSTaskReportResponse> LoadUnloadTaskFinish(string taskID, int tag, ACTION_TYPE action, bool normalDone)
         {
             clsTaskDto? order = _TaskDBContent.Tasks.AsNoTracking().FirstOrDefault(od => od.TaskName == taskID);
 
@@ -381,7 +381,7 @@ namespace AGVSystem.Controllers
                     //    //eqEmu.SetStatusUnloadable();
                     //});
                 }
-                if (order != null && order.State == TASK_RUN_STATUS.NAVIGATING || order.State == TASK_RUN_STATUS.ACTION_FINISH)
+                if (order != null && normalDone && order.State == TASK_RUN_STATUS.NAVIGATING || order.State == TASK_RUN_STATUS.ACTION_FINISH)
                 {
                     string? carrierID = action == ACTION_TYPE.Unload ? "" : order?.Actual_Carrier_ID;
                     endPoint.UpdateCarrierInfo(tag, carrierID, slot);
