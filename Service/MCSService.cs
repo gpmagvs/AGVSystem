@@ -3,24 +3,25 @@ using AGVSystem.Models.TaskAllocation.HotRun;
 using AGVSystem.TaskManagers;
 using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.DATABASE;
+using AGVSystemCommonNet6.Microservices.MCS;
 using EquipmentManagment.Device;
 using EquipmentManagment.MainEquipment;
 using EquipmentManagment.Manager;
 using EquipmentManagment.WIP;
 using System.Linq;
+using static AGVSystemCommonNet6.Microservices.MCS.MCSCIMService;
 
 namespace AGVSystem.Service
 {
     public class MCSService
     {
-
         List<clsPortOfRack> ALLRackPorts => StaEQPManagager.RacksList.SelectMany(rack => rack.PortsStatus).ToList();
         List<clsRack> ALLRack => StaEQPManagager.RacksList.ToList();
 
         public MCSService()
         {
-
         }
+
         internal async Task HandleTransportCommand(clsTransportCommandDto transportCommand)
         {
             int sourceTag = -1;
@@ -72,10 +73,17 @@ namespace AGVSystem.Service
                 bypass_eq_status_check = false,
             }, TaskManager.TASK_RECIEVE_SOURCE.REMOTE);
         }
+        private TransportCommandDto GetCommandInfo(string commandID)
+        {
+            return new TransportCommandDto()
+            {
+                CommandID = commandID,
+            };
+        }
 
         private bool TryGetEQPort(string deviceID, out EndPointDeviceAbstract port)
         {
-            port = StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.DeviceID == deviceID);
+            port = StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.DeviceID.Contains(deviceID));
             return port != null;
         }
         private bool TryGetRackPort(string deviceID, bool asDestine, string carrierID, out clsPortOfRack? port)
@@ -104,8 +112,11 @@ namespace AGVSystem.Service
                 //Filter : 不可以是轉換架,不可以有貨物,不可以有被指派任務
                 port = allPorts.Where(p => NotTransferStationPort(p) && !p.CargoExist && !HasOrderAssigned(p)).FirstOrDefault(); //TODO 可以更優化，找PORT的邏輯 , 比如從最低層開始找
             }
-            else //Rack 是來源地[取貨], 找有貨的Port且ID = carrierID
+            else
+            {
+                //Rack 是來源地[取貨], 找有貨的Port且ID = carrierID
                 port = rack.PortsStatus.FirstOrDefault(p => p.CargoExist && p.CarrierID == carrierID);
+            }
             return port != null;
         }
 
@@ -129,8 +140,13 @@ namespace AGVSystem.Service
         }
         private bool isDeviceIDBelongRack(string deviceID)
         {
+            clsEQ eq = StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.DeviceID.Contains(deviceID));
+            if (eq!=null)
+                return false;
             return ALLRack.Any(rack => rack.RackOption.DeviceID == deviceID);
         }
+
+
         //string commandID, string carrierID, string carrierLoc, string? carrierZoneName, string dest
         public class clsTransportCommandDto
         {
