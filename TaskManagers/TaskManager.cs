@@ -403,19 +403,11 @@ namespace AGVSystem.TaskManagers
             int flowNumber = 0;
             string unknowCargoID = "";
             if (taskData.CST_TYPE == 200 || taskData.CST_TYPE == 0)
-            {
-                flowNumber = await AGVSConfigulator.GetTrayUnknowFlowNumber();
-                unknowCargoID = $"TUN";
-            }
+                taskData.Carrier_ID =  await AGVSConfigulator. GetTrayUnknownFlowID();
             else
-            {
-                flowNumber = await AGVSConfigulator.GetRackUnknowFlowNumber();
-                unknowCargoID = $"UN";
-            }
-
-            unknowCargoID += $"{AGVSConfigulator.SysConfigs.SECSGem.SystemID}{flowNumber.ToString("D5")}";
-            taskData.Carrier_ID = unknowCargoID;
+                taskData.Carrier_ID =  await AGVSConfigulator.GetRackUnknownFlowID();
         }
+
 
         private static void SetUpDeviceIDState(clsTaskDto taskData, DeviceIDInfo sourceDeviceIDInfo, DeviceIDInfo destineDeviceIDInfo)
         {
