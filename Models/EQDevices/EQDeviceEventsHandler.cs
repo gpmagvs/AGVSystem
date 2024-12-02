@@ -91,7 +91,7 @@ namespace AGVSystem.Models.EQDevices
             MaterialManagerEventHandler.OnMaterialDelete += HandleMaterialDelete;
         }
 
-        private static void PortStatusAbstract_CarrierIDChanged(object? sender, string e)
+        private static void PortStatusAbstract_CarrierIDChanged(object? sender, (string newValue, string oldValue) args)
         {
             clsPortOfRack rackPort = (sender as clsPortOfRack);
             ShelfStatusChangeEventReport(rackPort.GetParentRack());
