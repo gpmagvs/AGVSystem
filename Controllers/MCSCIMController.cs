@@ -72,19 +72,32 @@ namespace AGVSystem.Controllers
         [HttpPost("TransportCommand")]
         public async Task<clsResult> TransportCommand([FromBody] clsTransportCommandDto transportCommand)
         {
-            mcsService.HandleTransportCommand(transportCommand);
-            return new() { Message = transportCommand.ToJson() };
+            try
+            {
+                await mcsService.HandleTransportCommand(transportCommand);
+                return new clsResult() { Confirmed = true, ResultCode = 0 };
+            }
+            catch (HasIDbutNoCargoException ex)
+            {
+                return new clsResult()
+                {
+                    Confirmed = false,
+                    ResultCode = 6,
+                    Message = ex.GetType().Name
+                };
+            }
         }
 
         [HttpGet("EnhancedActiveZones")]
         public async Task<clsResult> EnhancedActiveZones()
         {
-            List<ZoneData> zoneDataList= StaEQPManagager.RacksList.Select(rack => EQDeviceEventsHandler.GenerateZoneData(rack)).ToList();
+            List<ZoneData> zoneDataList = StaEQPManagager.RacksList.Select(rack => EQDeviceEventsHandler.GenerateZoneData(rack)).ToList();
             return new clsResult()
             {
                 Confirmed = true,
                 Message = zoneDataList.ToJson(Formatting.None)
             };
         }
+
     }
 }
