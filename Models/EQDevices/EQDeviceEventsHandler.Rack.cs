@@ -34,7 +34,7 @@ namespace AGVSystem.Models.EQDevices
         }
 
 
-        private static void HandlePortCargoInstalled(object? sender, clsPortOfRack port)
+        private static void HandlePortCargoChangedToExist(object? sender, clsPortOfRack port)
         {
             Task.Factory.StartNew(async () =>
             {
@@ -53,7 +53,7 @@ namespace AGVSystem.Models.EQDevices
                 ZoneCapacityChangeEventReport(port.GetParentRack());
             });
         }
-        private static void HandlePortCargoRemoved(object? sender, clsPortOfRack port)
+        private static void HandlePortCargoChangeToDisappear(object? sender, clsPortOfRack port)
         {
             ZoneCapacityChangeEventReport(port.GetParentRack());
         }
