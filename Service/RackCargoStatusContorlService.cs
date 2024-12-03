@@ -32,13 +32,15 @@ namespace AGVSystem.Service
 
 
         }
-        internal async Task RemoveRackCargoID(int tagNumber, int slot, string triggerBy)
+        internal async Task<string> RemoveRackCargoID(int tagNumber, int slot, string triggerBy)
         {
             try
             {
+                string removedCarrierID = "";
                 await dbSemaphoreSlim.WaitAsync();
                 if (TryGetPort(tagNumber, slot, out clsPortOfRack port))
                 {
+                    removedCarrierID = port.CarrierID + "";
                     port.CarrierID = string.Empty;
                     _logger.Info($"WIP:{port.GetParentRack().EQName} Port-{port.Properties.ID} Cargo ID Removed. (Trigger By:{triggerBy})");
                     if (TryGetStationStatus(tagNumber, slot, out clsStationStatus portStatus))
@@ -50,10 +52,12 @@ namespace AGVSystem.Service
                     }
                     await _dbContext.SaveChangesAsync();
                 }
+                return removedCarrierID;
             }
             catch (Exception ex)
             {
                 _logger.Error(ex);
+                return "";
             }
             finally
             {
