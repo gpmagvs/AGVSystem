@@ -38,24 +38,56 @@ namespace AGVSystem.Models.EQDevices
         {
             Task.Factory.StartNew(async () =>
             {
-                if (string.IsNullOrEmpty(port.CarrierID))
-                {
-                    port.CarrierID = await AGVSConfigulator.GetTrayUnknownFlowID();
+                string locID = port.GetLocID();
+                string zoneID = port.GetParentRack().RackOption.DeviceID;
 
-                    if (port.IsRackPortIsEQ(out clsEQ eqInport))
-                        eqInport.PortStatus.CarrierID = port.CarrierID;
-                    await MCSCIMService.CarrierInstallCompletedReport(port.CarrierID, port.GetLocID(), port.GetParentRack().RackOption.DeviceID, 1);
-                }
-                else
+                if (!string.IsNullOrEmpty(port.CarrierID)) //本來無帳 ,需要建帳
                 {
-
+                    string tunid = await AGVSConfigulator.GetTrayUnknownFlowID();
+                    UpdateCarrierID(tunid);
+                    await MCSCIMService.CarrierInstallCompletedReport(port.CarrierID, locID, zoneID, 1);
                 }
-                ZoneCapacityChangeEventReport(port.GetParentRack());
+                else //本來就有帳 需 remove 舊帳籍然後 install tunid
+                {
+                    string tunid = await AGVSConfigulator.GetTrayUnknownFlowID();
+                    string oldCarrierID = port.CarrierID;
+                    UpdateCarrierID(tunid);
+                    await MCSCIMService.CarrierRemoveCompletedReport(oldCarrierID, locID, zoneID, 1)
+                                        .ContinueWith(async t =>
+                                        {
+                                            await MCSCIMService.CarrierInstallCompletedReport(tunid, locID, zoneID, 1);
+                                        });
+                }
+                await ZoneCapacityChangeEventReport(port.GetParentRack());
             });
+
+            void UpdateCarrierID(string tunid)
+            {
+                port.CarrierID = tunid;
+                if (port.IsRackPortIsEQ(out clsEQ eqInport))
+                    eqInport.PortStatus.CarrierID = port.CarrierID;
+            }
         }
+
+
+        /// <summary>
+        /// Rack Port 貨物消失時的處置(不用carrier remove,因為可能是貨物被手動搬走，須把carrier id留著)
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="port"></param>
         private static void HandlePortCargoChangeToDisappear(object? sender, clsPortOfRack port)
         {
-            ZoneCapacityChangeEventReport(port.GetParentRack());
+            Task.Factory.StartNew(async () =>
+            {
+                bool hasCarrierID = string.IsNullOrEmpty(port.CarrierID);
+
+                if (hasCarrierID)
+                {
+                    //TODO 系統提示 [有帳無料]
+                }
+
+                await ZoneCapacityChangeEventReport(port.GetParentRack());
+            });
         }
     }
 }

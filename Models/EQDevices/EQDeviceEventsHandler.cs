@@ -27,8 +27,10 @@ namespace AGVSystem.Models.EQDevices
             port = null;
             int tag = eq.EndPointOptions.TagID;
             rack = StaEQPManagager.RacksList.FirstOrDefault(rack => rack.RackOption.ColumnTagMap.SelectMany(k => k.Value).Contains(tag));
+            if (rack == null)
+                return false;
             port = rack.PortsStatus.FirstOrDefault(port => port.TagNumbers.Contains(tag));
-            return rack != null && port!=null;
+            return port!=null;
         }
 
         public static bool IsRackPortIsEQ(this clsPortOfRack rackPort, out clsEQ eq)
@@ -93,10 +95,62 @@ namespace AGVSystem.Models.EQDevices
             MaterialManagerEventHandler.OnMaterialDelete += HandleMaterialDelete;
         }
 
+        /// <summary>
+        /// 處理貨物ID變化
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="args"></param>
         private static void HandlePortCarrierIDChanged(object? sender, (string newValue, string oldValue) args)
         {
-            clsPortOfRack rackPort = (sender as clsPortOfRack);
-            ShelfStatusChangeEventReport(rackPort.GetParentRack());
+            Task.Factory.StartNew(async () =>
+            {
+                if (sender == null)
+                    return;
+                try
+                {
+                    clsPortOfRack rackPort = (sender as clsPortOfRack);
+                    if (rackPort == null)
+                        return;
+
+                    string locID = rackPort.GetLocID();
+                    string zoneID = rackPort.GetParentRack().RackOption.DeviceID;
+
+                    bool isNewInstall = string.IsNullOrEmpty(args.oldValue) && !string.IsNullOrEmpty(args.newValue); //新建
+                    bool isRemoved = !string.IsNullOrEmpty(args.oldValue) && string.IsNullOrEmpty(args.newValue);//移除
+                    bool isChanged = args.oldValue!= args.newValue && !string.IsNullOrEmpty(args.oldValue) && !string.IsNullOrEmpty(args.newValue); //變化
+
+                    if (isNewInstall)
+                    {
+                        await _CarrierInstalledReport(args.newValue);
+                    }
+                    if (isRemoved)
+                    {
+                        await _CarrierRemovedReport(args.oldValue);
+                    }
+                    if (isChanged)
+                    {
+                        await _CarrierRemovedReport(args.oldValue).ContinueWith(async t =>
+                        {
+                            await _CarrierInstalledReport(args.newValue);
+                        });
+                    }
+
+                    async Task _CarrierInstalledReport(string carrierIDToInstall)
+                    {
+                        await MCSCIMService.CarrierInstallCompletedReport(carrierIDToInstall, locID, zoneID, 1);
+                    }
+                    async Task _CarrierRemovedReport(string carrierIDToRemove)
+                    {
+                        await MCSCIMService.CarrierRemoveCompletedReport(carrierIDToRemove, locID, zoneID, 1);
+                    }
+
+                    await ShelfStatusChangeEventReport(rackPort.GetParentRack());
+                }
+                catch (Exception ex)
+                {
+                    throw ex;
+                }
+            });
         }
 
         private static void HandleEQPortCargoChangedToExist(object? sender, clsEQ eq)
@@ -339,7 +393,7 @@ namespace AGVSystem.Models.EQDevices
 
                     return new MCSCIMService.ZoneData.LocationStatus
                     {
-                        ShelfId = $"{shelfIDPrefix}_{rack.RackOption.DeviceID}_{port.PortNo}",
+                        ShelfId = port.GetLocID(),
                         CarrierID = eQ.PortStatus.CarrierID,
                         IsCargoExist = eQ.Port_Exist,
                         DisabledStatus = eQ.EndPointOptions.Enable ? 0 : 1,
