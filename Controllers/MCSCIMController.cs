@@ -6,6 +6,7 @@ using AGVSystemCommonNet6.AGVDispatch;
 using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.Microservices.MCS;
 using AGVSystemCommonNet6.Microservices.ResponseModel;
+using AGVSystemCommonNet6.Notify;
 using AGVSystemCommonNet6.Vehicle_Control.VCS_ALARM;
 using EquipmentManagment.Manager;
 using Microsoft.AspNetCore.Mvc;
@@ -74,11 +75,16 @@ namespace AGVSystem.Controllers
         {
             try
             {
+                NotifyServiceHelper.INFO($"[MCS命令-{transportCommand.commandID}] {transportCommand.source} to {transportCommand.dest}");
+
                 await mcsService.HandleTransportCommand(transportCommand);
+
                 return new clsResult() { Confirmed = true, ResultCode = 0 };
             }
             catch (HasIDbutNoCargoException ex)
             {
+
+                NotifyServiceHelper.ERROR($"[MCS命令-{transportCommand.commandID} 已被系統拒絕] Result Code = 6 ({ex.Message})");
                 return new clsResult()
                 {
                     Confirmed = false,

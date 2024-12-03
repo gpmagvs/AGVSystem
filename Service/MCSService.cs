@@ -1,4 +1,5 @@
 ﻿
+using AGVSystem.Models.EQDevices;
 using AGVSystem.Models.TaskAllocation.HotRun;
 using AGVSystem.TaskManagers;
 using AGVSystemCommonNet6.Alarm;
@@ -16,7 +17,11 @@ namespace AGVSystem.Service
 
     public class HasIDbutNoCargoException : Exception
     {
+        public HasIDbutNoCargoException() : base() { }
+        public HasIDbutNoCargoException(string message) : base(message)
+        {
 
+        }
     }
 
     public class MCSService
@@ -80,10 +85,11 @@ namespace AGVSystem.Service
                     To_Station = destineTag + "",
                     From_Slot = sourceSlot + "",
                     To_Slot = destineSlot + "",
-                    DesignatedAGVName = _isSourceAGV? sourceAGVName:"",
+                    DesignatedAGVName = _isSourceAGV ? sourceAGVName : "",
                     Priority = transportCommand.priority,
                     RecieveTime = DateTime.Now,
                     bypass_eq_status_check = false,
+                    isFromMCS = true
                 }, TaskManager.TASK_RECIEVE_SOURCE.REMOTE);
             }
             catch (HasIDbutNoCargoException ex)
@@ -106,7 +112,7 @@ namespace AGVSystem.Service
             port = StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.DeviceID.Contains(deviceID));
             if (port!=null && isAsSource &&  (port as clsEQ).PortStatus.CarrierID == carrierID && !(port as clsEQ).Port_Exist)
             {
-                throw new HasIDbutNoCargoException();
+                throw new HasIDbutNoCargoException($"[{port.EQName}] 無貨物");
             }
 
             return port != null;
@@ -141,9 +147,9 @@ namespace AGVSystem.Service
             {
                 //Rack 是來源地[取貨], 找有貨的Port且ID = carrierID
                 //有帳無料
-                var port_HasIDButNoCargo = rack.PortsStatus.FirstOrDefault(p => p.CarrierID == carrierID && !p.CarrierExist);
+                var port_HasIDButNoCargo = rack.PortsStatus.FirstOrDefault(p => p.CarrierID == carrierID && !p.CargoExist);
                 if (port_HasIDButNoCargo!=null)
-                    throw new HasIDbutNoCargoException();
+                    throw new HasIDbutNoCargoException($"[{port_HasIDButNoCargo.GetLocID()}] 無貨物");
                 port = rack.PortsStatus.FirstOrDefault(p => p.CargoExist && p.CarrierID == carrierID);
             }
             return port != null;

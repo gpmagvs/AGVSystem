@@ -1,6 +1,8 @@
-﻿using AGVSystemCommonNet6.Alarm;
+﻿using AGVSystem.Service;
+using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.Microservices.AudioPlay;
+using AGVSystemCommonNet6.Microservices.MCS;
 using EquipmentManagment.Manager;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -14,7 +16,6 @@ namespace AGVSystem.Controllers
     public class AlarmController : ControllerBase
     {
         private readonly AGVSDbContext _dbContext;
-
         public AlarmController(AGVSDbContext dbContext)
         {
             _dbContext = dbContext;
@@ -31,6 +32,7 @@ namespace AGVSystem.Controllers
             {
                 alarm.Checked = true;
                 _dbContext.SystemAlarms.Update(alarm);
+                MCSCIMService.AlarmClear((ushort)alarm.AlarmCode, alarm.Description);
             }
             await _dbContext.SaveChangesAsync();
 

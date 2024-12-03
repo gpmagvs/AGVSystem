@@ -1,10 +1,12 @@
-﻿using AGVSystem.Models.Map;
+﻿using AGVSystem.Models.EQDevices;
+using AGVSystem.Models.Map;
 using AGVSystem.Models.Sys;
 using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.AGVDispatch;
 using AGVSystemCommonNet6.AGVDispatch.Messages;
 using AGVSystemCommonNet6.AGVDispatch.RunMode;
 using AGVSystemCommonNet6.Alarm;
+using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.MAP;
 using EquipmentManagment.Device;
@@ -167,17 +169,17 @@ namespace AGVSystem.TaskManagers
                         return new(false, ALARMS.EQ_LOAD_REQUEST_IS_NOT_ON, $"WIP設備[{Rack.EQName}, ID:{specificport.Properties.ID}] 料座不存在", $"WIP EQ {Rack.EQName}, ID:{specificport.Properties.ID} port does not exist", null, null);
 
                     deviceIDInfo.zoneID = Rack.EndPointOptions.DeviceID;
-                    deviceIDInfo.portID = deviceIDInfo.zoneID + $"_{specificport.PortNo}";
+                    deviceIDInfo.portID = specificport.GetLocID();
 
                     if (actiontype == ACTION_TYPE.Unload)
                     {
                         if (specificport.CargoExist == false)
-                            return new(false, ALARMS.EQ_LOAD_REQUEST_IS_NOT_ON, $"WIP設備[{Rack.EQName}, ID:{specificport.Properties.ID}] 料座無貨", $"WIP EQ {Rack.EQName}, ID:{specificport.Properties.ID} port has no cargo", null, null);
+                            return new(false, ALARMS.EQ_UNLOAD_REQUEST_ON_BUT_NO_CARGO, $"WIP設備[{Rack.EQName}, ID:{specificport.Properties.ID}] 料座無貨", $"WIP EQ {Rack.EQName}, ID:{specificport.Properties.ID} port has no cargo", null, null);
                     }
                     else if (actiontype == ACTION_TYPE.Load || actiontype == ACTION_TYPE.LoadAndPark)
                     {
                         if (specificport.CargoExist == true)
-                            return new(false, ALARMS.EQ_LOAD_REQUEST_IS_NOT_ON, $"WIP設備[{Rack.EQName}, ID:{specificport.Properties.ID}] 料座已占用", $"WIP EQ {Rack.EQName}, ID:{specificport.Properties.ID} port is occupied", null, null);
+                            return new(false, ALARMS.EQ_LOAD_REQUEST_ON_BUT_HAS_CARGO, $"WIP設備[{Rack.EQName}, ID:{specificport.Properties.ID}] 料座已占用", $"WIP EQ {Rack.EQName}, ID:{specificport.Properties.ID} port is occupied", null, null);
                     }
                     return new(true, ALARMS.NONE, $" GET RACK", $"GET RACK", specificport, specificport.GetType());
                 }
@@ -197,7 +199,7 @@ namespace AGVSystem.TaskManagers
                     return new(false, ALARMS.EQ_LOAD_REQUEST_IS_NOT_ON, $"WIP設備[{Rack.EQName}, ID:{specificport.Properties.ID}] 料座不存在", $"WIP EQ {Rack.EQName}, ID:{specificport.Properties.ID} port does not exist", null, null);
 
                 deviceIDInfo.zoneID = Rack.EndPointOptions.DeviceID;
-                deviceIDInfo.portID = deviceIDInfo.zoneID + $"_{specificport.PortNo}";
+                deviceIDInfo.portID = specificport.GetLocID();
 
                 if (actiontype == ACTION_TYPE.Unload)
                 {

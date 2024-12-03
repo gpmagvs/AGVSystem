@@ -154,7 +154,7 @@ namespace AGVSystem.Models.EQDevices
                     if (isRepeatdIDOfOtherPortInSystem)
                     {
                         string carrierToRemove = args.newValue;
-                        await DecoupleCarrierIDHandler(carrierToRemove, repeatCarrierIDPorts, rackPort);
+                        DecoupleCarrierIDHandler(carrierToRemove, repeatCarrierIDPorts, rackPort);
                     }
 
                 }
@@ -167,11 +167,12 @@ namespace AGVSystem.Models.EQDevices
 
         private static async Task DecoupleCarrierIDHandler(string carrierToRemove, List<clsPortOfRack> repeatCarrierIDPorts, clsPortOfRack triggerPort)
         {
+            await Task.Delay(1000);
             foreach (var _portToRemove in repeatCarrierIDPorts)
             {
                 string locID = _portToRemove.GetLocID();
                 string zoneID = _portToRemove.GetParentRack().RackOption.DeviceID;
-                string DUID = await AGVSConfigulator.GetDoubleUnknownFlowID();
+                string DUID = await AGVSConfigulator.GetDoubleTrayUnknownFlowID();
                 _portToRemove.CarrierID = DUID;
 
                 if (_portToRemove.IsRackPortIsEQ(out clsEQ eqInPort))
@@ -181,7 +182,6 @@ namespace AGVSystem.Models.EQDevices
                 //await MCSCIMService.CarrierRemoveCompletedReport(carrierToRemove, locID, zoneID, 1).ContinueWith(async t =>
                 //{
                 //    await MCSCIMService.CarrierInstallCompletedReport(DUID, locID, zoneID, 1);
-
                 //});
             }
         }

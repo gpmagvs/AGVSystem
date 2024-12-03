@@ -354,6 +354,10 @@ namespace AGVSystem.TaskManagers
                         }
 
                     }
+
+                    //test
+                    //taskData.Carrier_ID ="TAE1314123123";
+
                     SetUpHighestPriorityState(taskData);
                     SetUpDeviceIDState(taskData, sourceDeviceIDInfo, destineDeviceIDInfo);
                     await SetUnknowCarrierID(taskData);

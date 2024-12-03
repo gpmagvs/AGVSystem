@@ -11,6 +11,7 @@ using AGVSystemCommonNet6.Notify;
 using EquipmentManagment.Device;
 using EquipmentManagment.MainEquipment;
 using EquipmentManagment.WIP;
+using System;
 using System.Diagnostics;
 
 namespace AGVSystem.Models.EQDevices
@@ -40,26 +41,14 @@ namespace AGVSystem.Models.EQDevices
             {
                 string locID = port.GetLocID();
                 string zoneID = port.GetParentRack().RackOption.DeviceID;
+                string tunid = await AGVSConfigulator.GetTrayUnknownFlowID();
 
-                if (!string.IsNullOrEmpty(port.CarrierID)) //本來無帳 ,需要建帳
-                {
-                    string tunid = await AGVSConfigulator.GetTrayUnknownFlowID();
+                if (string.IsNullOrEmpty(port.CarrierID))
                     UpdateCarrierID(tunid);
-                    await MCSCIMService.CarrierInstallCompletedReport(port.CarrierID, locID, zoneID, 1);
-                }
-                else //本來就有帳 需 remove 舊帳籍然後 install tunid
-                {
-                    string tunid = await AGVSConfigulator.GetTrayUnknownFlowID();
-                    string oldCarrierID = port.CarrierID;
-                    UpdateCarrierID(tunid);
-                    await MCSCIMService.CarrierRemoveCompletedReport(oldCarrierID, locID, zoneID, 1)
-                                        .ContinueWith(async t =>
-                                        {
-                                            await MCSCIMService.CarrierInstallCompletedReport(tunid, locID, zoneID, 1);
-                                        });
-                }
                 await ZoneCapacityChangeEventReport(port.GetParentRack());
             });
+
+
 
             void UpdateCarrierID(string tunid)
             {
