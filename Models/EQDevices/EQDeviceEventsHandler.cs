@@ -21,12 +21,14 @@ namespace AGVSystem.Models.EQDevices
 {
     public static class Extenion
     {
-        public static bool IsEQInRack(this clsEQ eq, out clsRack rack)
+        public static bool IsEQInRack(this clsEQ eq, out clsRack rack, out clsPortOfRack port)
         {
             rack = null;
+            port = null;
             int tag = eq.EndPointOptions.TagID;
             rack = StaEQPManagager.RacksList.FirstOrDefault(rack => rack.RackOption.ColumnTagMap.SelectMany(k => k.Value).Contains(tag));
-            return rack != null;
+            port = rack.PortsStatus.FirstOrDefault(port => port.TagNumbers.Contains(tag));
+            return rack != null && port!=null;
         }
 
         public static bool IsRackPortIsEQ(this clsPortOfRack rackPort, out clsEQ eq)
@@ -99,7 +101,7 @@ namespace AGVSystem.Models.EQDevices
 
         private static void HandleEQPortCargoInstalled(object? sender, clsEQ eq)
         {
-            if (eq.IsEQInRack(out clsRack rack) && eq.EndPointOptions.IsRoleAsZone)
+            if (eq.IsEQInRack(out clsRack rack, out clsPortOfRack port) && eq.EndPointOptions.IsRoleAsZone)
             {
                 Task.Factory.StartNew(async () =>
                 {
@@ -121,7 +123,7 @@ namespace AGVSystem.Models.EQDevices
 
         private static void HandleEQPortCargoRemoved(object? sender, clsEQ eq)
         {
-            if (eq.IsEQInRack(out clsRack rack) && eq.EndPointOptions.IsRoleAsZone)
+            if (eq.IsEQInRack(out clsRack rack, out clsPortOfRack port) && eq.EndPointOptions.IsRoleAsZone)
                 ZoneCapacityChangeEventReport(rack);
         }
 
