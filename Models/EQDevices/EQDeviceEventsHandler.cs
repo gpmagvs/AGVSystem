@@ -114,43 +114,84 @@ namespace AGVSystem.Models.EQDevices
 
                     string locID = rackPort.GetLocID();
                     string zoneID = rackPort.GetParentRack().RackOption.DeviceID;
-
+                    List<clsPortOfRack> repeatCarrierIDPorts = new List<clsPortOfRack>();
                     bool isNewInstall = string.IsNullOrEmpty(args.oldValue) && !string.IsNullOrEmpty(args.newValue); //新建
                     bool isRemoved = !string.IsNullOrEmpty(args.oldValue) && string.IsNullOrEmpty(args.newValue);//移除
                     bool isChanged = args.oldValue!= args.newValue && !string.IsNullOrEmpty(args.oldValue) && !string.IsNullOrEmpty(args.newValue); //變化
+                    bool isRepeatdIDOfOtherPortInSystem = !string.IsNullOrEmpty(args.newValue) && TryGetPortWithID(args.newValue, out repeatCarrierIDPorts) && repeatCarrierIDPorts.Count>1;
+
 
                     if (isNewInstall)
                     {
-                        await _CarrierInstalledReport(args.newValue);
+                        await _CarrierInstalledReport(locID, zoneID, args.newValue);
                     }
                     if (isRemoved)
                     {
-                        await _CarrierRemovedReport(args.oldValue);
+                        await _CarrierRemovedReport(locID, zoneID, args.oldValue);
                     }
                     if (isChanged)
                     {
-                        await _CarrierRemovedReport(args.oldValue).ContinueWith(async t =>
+                        await _CarrierRemovedReport(locID, zoneID, args.oldValue).ContinueWith(async t =>
                         {
-                            await _CarrierInstalledReport(args.newValue);
+                            await _CarrierInstalledReport(locID, zoneID, args.newValue);
                         });
                     }
 
-                    async Task _CarrierInstalledReport(string carrierIDToInstall)
+
+
+                    async Task _CarrierInstalledReport(string _locID, string _zoneID, string carrierIDToInstall)
                     {
-                        await MCSCIMService.CarrierInstallCompletedReport(carrierIDToInstall, locID, zoneID, 1);
+                        await MCSCIMService.CarrierInstallCompletedReport(carrierIDToInstall, _locID, _zoneID, 1);
                     }
-                    async Task _CarrierRemovedReport(string carrierIDToRemove)
+                    async Task _CarrierRemovedReport(string _locID, string _zoneID, string carrierIDToRemove)
                     {
-                        await MCSCIMService.CarrierRemoveCompletedReport(carrierIDToRemove, locID, zoneID, 1);
+                        await MCSCIMService.CarrierRemoveCompletedReport(carrierIDToRemove, _locID, _zoneID, 1);
                     }
 
                     await ShelfStatusChangeEventReport(rackPort.GetParentRack());
+
+
+                    if (isRepeatdIDOfOtherPortInSystem)
+                    {
+                        string carrierToRemove = args.newValue;
+                        await DecoupleCarrierIDHandler(carrierToRemove, repeatCarrierIDPorts, rackPort);
+                    }
+
                 }
                 catch (Exception ex)
                 {
                     throw ex;
                 }
             });
+        }
+
+        private static async Task DecoupleCarrierIDHandler(string carrierToRemove, List<clsPortOfRack> repeatCarrierIDPorts, clsPortOfRack triggerPort)
+        {
+            foreach (var _portToRemove in repeatCarrierIDPorts)
+            {
+                string locID = _portToRemove.GetLocID();
+                string zoneID = _portToRemove.GetParentRack().RackOption.DeviceID;
+                string DUID = await AGVSConfigulator.GetDoubleUnknownFlowID();
+                _portToRemove.CarrierID = DUID;
+
+                if (_portToRemove.IsRackPortIsEQ(out clsEQ eqInPort))
+                {
+                    eqInPort.PortStatus.CarrierID = DUID;
+                }
+                //await MCSCIMService.CarrierRemoveCompletedReport(carrierToRemove, locID, zoneID, 1).ContinueWith(async t =>
+                //{
+                //    await MCSCIMService.CarrierInstallCompletedReport(DUID, locID, zoneID, 1);
+
+                //});
+            }
+        }
+
+        private static bool TryGetPortWithID(string carrierID, out List<clsPortOfRack> ports)
+        {
+            ports = new List<clsPortOfRack>();
+            IEnumerable<clsPortOfRack> allPorts = StaEQPManagager.RacksList.SelectMany(rack => rack.PortsStatus);
+            ports =  allPorts.Where(port => port.CarrierID == carrierID).ToList();
+            return ports.Any();
         }
 
         private static void HandleEQPortCargoChangedToExist(object? sender, clsEQ eq)
