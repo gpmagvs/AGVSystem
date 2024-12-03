@@ -41,7 +41,7 @@ namespace AGVSystem.Controllers
         {
             this._TaskDBContent = content;
             this.UserValidation = userValidation;
-            this.mcsService=mcsService;
+            this.mcsService = mcsService;
         }
 
         [HttpGet("Allocation")]
@@ -381,13 +381,13 @@ namespace AGVSystem.Controllers
                     //    //eqEmu.SetStatusUnloadable();
                     //});
                 }
-                if (order != null && normalDone && order.State == TASK_RUN_STATUS.NAVIGATING || order.State == TASK_RUN_STATUS.ACTION_FINISH)
-                {
-                    string? carrierID = action == ACTION_TYPE.Unload ? "" : order?.Actual_Carrier_ID;
-                    if (action == ACTION_TYPE.Load && executingAGVState!=null)
-                        await MCSCIMService.CarrierRemoveCompletedReport(carrierID, executingAGVState.AGV_ID, "", 1);
-                    endPoint?.UpdateCarrierInfo(tag, carrierID, slot);
-                }
+                //if (order != null && normalDone && order.State == TASK_RUN_STATUS.NAVIGATING || order.State == TASK_RUN_STATUS.ACTION_FINISH)
+                //{
+                //    string? carrierID = action == ACTION_TYPE.Unload ? "" : order?.Actual_Carrier_ID;
+                //    if (action == ACTION_TYPE.Load && executingAGVState!=null)
+                //        await MCSCIMService.CarrierRemoveCompletedReport(carrierID, executingAGVState.AGV_ID, "", 1);
+                //    endPoint?.UpdateCarrierInfo(tag, carrierID, slot);
+                //}
                 //endPoint.UpdateCarrierInfo(tag,)
             }
         }

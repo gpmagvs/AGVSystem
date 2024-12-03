@@ -105,6 +105,8 @@ namespace AGVSystem.Service
         {
             port = null;
             var rack = StaEQPManagager.RacksList.FirstOrDefault(rack => rack.RackOption.ColumnTagMap.SelectMany(tgs => tgs.Value).Contains(tagNumber));
+
+
             if (rack == null)
                 return false;
             port = rack.PortsStatus.FirstOrDefault(port => port.TagNumbers.Contains(tagNumber) && port.Properties.Row == slot);
