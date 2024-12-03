@@ -83,23 +83,23 @@ namespace AGVSystem.Models.EQDevices
 
             clsEQ.OnIOStateChanged += HandleEQIOStateChanged;
             clsEQ.OnUnloadRequestChanged += HandleEQUnloadRequestChanged;
-            clsEQ.OnEQPortCargoChangedToExist += HandleEQPortCargoInstalled;
-            clsEQ.OnEQPortCargoChangedToDisappear += HandleEQPortCargoRemoved;
+            clsEQ.OnEQPortCargoChangedToExist += HandleEQPortCargoChangedToExist;
+            clsEQ.OnEQPortCargoChangedToDisappear += HandleEQPortCargoChangedToDisappear;
 
-            PortStatusAbstract.CarrierIDChanged += PortStatusAbstract_CarrierIDChanged;
+            PortStatusAbstract.CarrierIDChanged += HandlePortCarrierIDChanged;
 
             MaterialManagerEventHandler.OnMaterialTransferStatusChange += HandleMaterialTransferStatusChanged;
             MaterialManagerEventHandler.OnMaterialAdd += HandleMaterialAdd;
             MaterialManagerEventHandler.OnMaterialDelete += HandleMaterialDelete;
         }
 
-        private static void PortStatusAbstract_CarrierIDChanged(object? sender, (string newValue, string oldValue) args)
+        private static void HandlePortCarrierIDChanged(object? sender, (string newValue, string oldValue) args)
         {
             clsPortOfRack rackPort = (sender as clsPortOfRack);
             ShelfStatusChangeEventReport(rackPort.GetParentRack());
         }
 
-        private static void HandleEQPortCargoInstalled(object? sender, clsEQ eq)
+        private static void HandleEQPortCargoChangedToExist(object? sender, clsEQ eq)
         {
             if (eq.IsEQInRack(out clsRack rack, out clsPortOfRack port) && eq.EndPointOptions.IsRoleAsZone)
             {
@@ -121,7 +121,7 @@ namespace AGVSystem.Models.EQDevices
             }
         }
 
-        private static void HandleEQPortCargoRemoved(object? sender, clsEQ eq)
+        private static void HandleEQPortCargoChangedToDisappear(object? sender, clsEQ eq)
         {
             if (eq.IsEQInRack(out clsRack rack, out clsPortOfRack port) && eq.EndPointOptions.IsRoleAsZone)
                 ZoneCapacityChangeEventReport(rack);
