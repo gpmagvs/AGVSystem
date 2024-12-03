@@ -282,7 +282,7 @@ namespace AGVSystem.TaskManagers
                 taskData.DesignatedAGVName = agv_name;
                 var agv = database.tables.AgvStates.FirstOrDefault(d => d.AGV_Name == agv_name);
                 taskData.From_Station = agv_name;
-                sourceDeviceIDInfo.portID = agv_name;
+                sourceDeviceIDInfo.portID = agv.AGV_ID;
             }
             #endregion
 
@@ -403,7 +403,7 @@ namespace AGVSystem.TaskManagers
             int flowNumber = 0;
             string unknowCargoID = "";
             if (taskData.CST_TYPE == 200 || taskData.CST_TYPE == 0)
-                taskData.Carrier_ID =  await AGVSConfigulator. GetTrayUnknownFlowID();
+                taskData.Carrier_ID =  await AGVSConfigulator.GetTrayUnknownFlowID();
             else
                 taskData.Carrier_ID =  await AGVSConfigulator.GetRackUnknownFlowID();
         }
@@ -509,7 +509,7 @@ namespace AGVSystem.TaskManagers
             bool cancel_success = await Cancel(charge_task.TaskName, "User Cancel");
             return (cancel_success, cancel_success ? "" : "任務取消失敗");
         }
-        internal async static Task<bool> Cancel(string task_name, string reason = "", TASK_RUN_STATUS status = TASK_RUN_STATUS.CANCEL , string hostAction ="cancel")
+        internal async static Task<bool> Cancel(string task_name, string reason = "", TASK_RUN_STATUS status = TASK_RUN_STATUS.CANCEL, string hostAction = "cancel")
         {
             try
             {
