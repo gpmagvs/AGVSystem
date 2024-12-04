@@ -469,7 +469,7 @@ namespace AGVSystem.Controllers
             taskData.DispatcherName = user;
             try
             {
-                (bool confirm, ALARMS alarm_code, string message, string message_en) result = await TaskManager.AddTask(taskData, TaskManager.TASK_RECIEVE_SOURCE.MANUAL);
+                (bool confirm, ALARMS alarm_code, string message, string message_en) result = await TaskManager.AddTask(taskData, TaskManager.TASK_RECIEVE_SOURCE.Local_MANUAL);
 
                 if (!result.confirm && string.IsNullOrEmpty(result.message))
                 {

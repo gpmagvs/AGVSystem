@@ -92,6 +92,17 @@ namespace AGVSystem.Controllers
                     Message = ex.GetType().Name
                 };
             }
+            catch (AddOrderFailException ex)
+            {
+                NotifyServiceHelper.ERROR($"[MCS命令-{transportCommand.commandID} 已被系統拒絕] Result Code = {(int)ex.alarmCode} ({ex.Message})");
+
+                return new clsResult
+                {
+                    Confirmed = false,
+                    ResultCode = (int)ex.alarmCode,
+                    Message = ex.Message
+                };
+            }
         }
 
         [HttpGet("EnhancedActiveZones")]

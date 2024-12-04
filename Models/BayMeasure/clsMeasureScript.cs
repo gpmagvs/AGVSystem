@@ -37,7 +37,7 @@ namespace AGVSystem.Models.BayMeasure
                     TaskName = $"Measure_{DateTime.Now.ToString("yyyyMMdd_HHmmssffff")}",
                     RecieveTime = DateTime.Now
                 };
-                await TaskManager.AddTask(taskDto);
+                await TaskManager.AddTask(taskDto, TaskManager.TASK_RECIEVE_SOURCE.LOCAL_Auto);
             }
         }
     }

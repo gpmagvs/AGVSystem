@@ -36,12 +36,12 @@ namespace AGVSystem.TaskManagers
     {
         public enum TASK_RECIEVE_SOURCE
         {
-            LOCAL,
-            MANUAL,
+            LOCAL_Auto,
+            Local_MANUAL,
             REMOTE,
         }
 
-        public static async Task<(bool confirm, ALARMS alarm_code, string message, string message_en)> AddTask(clsTaskDto taskData, TASK_RECIEVE_SOURCE source = TASK_RECIEVE_SOURCE.LOCAL)
+        public static async Task<(bool confirm, ALARMS alarm_code, string message, string message_en)> AddTask(clsTaskDto taskData, TASK_RECIEVE_SOURCE source)
         {
             ACTION_TYPE _order_action = taskData.Action;
 
@@ -354,10 +354,16 @@ namespace AGVSystem.TaskManagers
                         }
 
                     }
+                    if (source == TASK_RECIEVE_SOURCE.LOCAL_Auto || source == TASK_RECIEVE_SOURCE.Local_MANUAL)
+                    {
+                        if (_order_action == ACTION_TYPE.Unload)
+                            taskData.Carrier_ID = destineDeviceIDInfo.carrierIDMounted;
+                        else if (_order_action == ACTION_TYPE.Carry)
+                            taskData.Carrier_ID = sourceDeviceIDInfo.carrierIDMounted;
+                    }
 
                     //test
                     //taskData.Carrier_ID ="TAE1314123123";
-
                     SetUpHighestPriorityState(taskData);
                     SetUpDeviceIDState(taskData, sourceDeviceIDInfo, destineDeviceIDInfo);
                     await SetUnknowCarrierID(taskData);
@@ -407,9 +413,9 @@ namespace AGVSystem.TaskManagers
             int flowNumber = 0;
             string unknowCargoID = "";
             if (taskData.CST_TYPE == 200 || taskData.CST_TYPE == 0)
-                taskData.Carrier_ID =  await AGVSConfigulator.GetTrayUnknownFlowID();
+                taskData.Carrier_ID = await AGVSConfigulator.GetTrayUnknownFlowID();
             else
-                taskData.Carrier_ID =  await AGVSConfigulator.GetRackUnknownFlowID();
+                taskData.Carrier_ID = await AGVSConfigulator.GetRackUnknownFlowID();
         }
 
 

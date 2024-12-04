@@ -60,7 +60,7 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                         TaskName = TaskName,
                         DesignatedAGVName = "",
                         bypass_eq_status_check = true,
-                    });
+                    }, TaskManager.TASK_RECIEVE_SOURCE.LOCAL_Auto);
 
                     if (addTaskResult.confirm)
                     {
@@ -95,7 +95,7 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                         TaskName = TaskName,
                         DesignatedAGVName = "",
                         bypass_eq_status_check = true,
-                    });
+                    }, TaskManager.TASK_RECIEVE_SOURCE.LOCAL_Auto);
 
                     if (addTaskResult.confirm)
                     {

@@ -37,6 +37,9 @@ namespace AGVSystem.Models.EQDevices
 
         private static void HandlePortCargoChangedToExist(object? sender, clsPortOfRack port)
         {
+
+
+
             Task.Factory.StartNew(async () =>
             {
                 string locID = port.GetLocID();

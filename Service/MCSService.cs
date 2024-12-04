@@ -24,6 +24,14 @@ namespace AGVSystem.Service
         }
     }
 
+    public class AddOrderFailException : Exception
+    {
+        public readonly ALARMS alarmCode;
+        public AddOrderFailException(string message, ALARMS alarmCode) : base(message)
+        {
+            this.alarmCode = alarmCode;
+        }
+    }
     public class MCSService
     {
         List<clsPortOfRack> ALLRackPorts => StaEQPManagager.RacksList.SelectMany(rack => rack.PortsStatus).ToList();
@@ -81,7 +89,7 @@ namespace AGVSystem.Service
                     Action = AGVSystemCommonNet6.AGVDispatch.Messages.ACTION_TYPE.Carry,
                     TaskName = transportCommand.commandID,
                     Carrier_ID = transportCommand.carrierID,
-                    From_Station =_isSourceAGV ? sourceAGVName : sourceTag + "",
+                    From_Station = _isSourceAGV ? sourceAGVName : sourceTag + "",
                     To_Station = destineTag + "",
                     From_Slot = sourceSlot + "",
                     To_Slot = destineSlot + "",
@@ -91,6 +99,11 @@ namespace AGVSystem.Service
                     bypass_eq_status_check = false,
                     isFromMCS = true
                 }, TaskManager.TASK_RECIEVE_SOURCE.REMOTE);
+
+                if (!confirm)
+                {
+                    throw new AddOrderFailException(message, alarm_code);
+                }
             }
             catch (HasIDbutNoCargoException ex)
             {
@@ -110,7 +123,7 @@ namespace AGVSystem.Service
         private bool TryGetEQPort(string deviceID, string carrierID, bool isAsSource, out EndPointDeviceAbstract port)
         {
             port = StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.DeviceID.Contains(deviceID));
-            if (port!=null && isAsSource &&  (port as clsEQ).PortStatus.CarrierID == carrierID && !(port as clsEQ).Port_Exist)
+            if (port != null && isAsSource && (port as clsEQ).PortStatus.CarrierID == carrierID && !(port as clsEQ).Port_Exist)
             {
                 throw new HasIDbutNoCargoException($"[{port.EQName}] 無貨物");
             }
@@ -148,7 +161,7 @@ namespace AGVSystem.Service
                 //Rack 是來源地[取貨], 找有貨的Port且ID = carrierID
                 //有帳無料
                 var port_HasIDButNoCargo = rack.PortsStatus.FirstOrDefault(p => p.CarrierID == carrierID && !p.CargoExist);
-                if (port_HasIDButNoCargo!=null)
+                if (port_HasIDButNoCargo != null)
                     throw new HasIDbutNoCargoException($"[{port_HasIDButNoCargo.GetLocID()}] 無貨物");
                 port = rack.PortsStatus.FirstOrDefault(p => p.CargoExist && p.CarrierID == carrierID);
             }
@@ -176,7 +189,7 @@ namespace AGVSystem.Service
         private bool isDeviceIDBelongRack(string deviceID)
         {
             clsEQ eq = StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.DeviceID.Contains(deviceID));
-            if (eq!=null)
+            if (eq != null)
                 return false;
             return ALLRack.Any(rack => rack.RackOption.DeviceID == deviceID);
         }

@@ -240,7 +240,7 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                                     TaskName = TaskName,
                                     DesignatedAGVName = script.agv_name,
                                     bypass_eq_status_check = true,
-                                });
+                                }, TaskManager.TASK_RECIEVE_SOURCE.LOCAL_Auto);
                                 script.state = "Running";
                                 bool WaitTaskExecuting(string TaskName)
                                 {

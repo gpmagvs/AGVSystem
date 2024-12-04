@@ -59,6 +59,8 @@ namespace AGVSystem.TaskManagers
         {
             public string portID { get; set; } = "";
             public string zoneID { get; set; } = "";
+
+            public string carrierIDMounted { get; set; } = string.Empty;
         }
 
         public static (bool confirm, ALARMS alarm_code, string message, string message_en, object obj, Type objtype) CheckLoadUnloadStation(int station_tag, int LayerorSlot, ACTION_TYPE actiontype, out DeviceIDInfo deviceIDInfo, bool check_rack_move_out_is_empty_or_full = true, bool bypasseqandrackckeck = false)
@@ -80,6 +82,7 @@ namespace AGVSystem.TaskManagers
                 if (Eq == null)
                     return new(false, ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, $"設備站點TAG-{station_tag},EQ不存在於當前地圖", $"Tag of EQ Station({station_tag}) not exist on current map", null, null);
                 deviceIDInfo.portID = Eq.EndPointOptions.DeviceID;
+                deviceIDInfo.carrierIDMounted = Eq.PortStatus.CarrierID;
                 if (TryGetZoneIDOfEqLocateing(Eq.EndPointOptions.TagID, out string zoneID))
                     deviceIDInfo.zoneID = zoneID;
                 logger.Trace($"AGV請求[{actiontype}]於設備-{MapPoint.Graph.Display}(Tag={station_tag}),設備狀態=>\r\n{Eq.GetStatusDescription()}");
@@ -128,6 +131,7 @@ namespace AGVSystem.TaskManagers
                 if (Eq != null)
                 {
                     deviceIDInfo.portID = Eq.EndPointOptions.DeviceID;
+                    deviceIDInfo.carrierIDMounted = Eq.PortStatus.CarrierID;
                     if (!Eq.IsConnected)
                         return new(false, ALARMS.Endpoint_EQ_NOT_CONNECTED, $"設備[{Eq.EQName}] 尚未連線,無法確認狀態", $"EQ {Eq.EQName} is not connected, can't confirm status", null, null);
                     if (actiontype == ACTION_TYPE.Unload)
@@ -170,6 +174,7 @@ namespace AGVSystem.TaskManagers
 
                     deviceIDInfo.zoneID = Rack.EndPointOptions.DeviceID;
                     deviceIDInfo.portID = specificport.GetLocID();
+                    deviceIDInfo.carrierIDMounted = specificport.CarrierID;
 
                     if (actiontype == ACTION_TYPE.Unload)
                     {
@@ -200,6 +205,7 @@ namespace AGVSystem.TaskManagers
 
                 deviceIDInfo.zoneID = Rack.EndPointOptions.DeviceID;
                 deviceIDInfo.portID = specificport.GetLocID();
+                deviceIDInfo.carrierIDMounted = specificport.CarrierID;
 
                 if (actiontype == ACTION_TYPE.Unload)
                 {
@@ -361,7 +367,7 @@ namespace AGVSystem.TaskManagers
                                 Priority = 80,
                                 Height = destineEQ.EndPointOptions.Height
                             };
-                            var taskAddedResult = await TaskManager.AddTask(taskOrder);
+                            var taskAddedResult = await TaskManager.AddTask(taskOrder, taskOrder.isFromMCS ? TaskManager.TASK_RECIEVE_SOURCE.REMOTE : TaskManager.TASK_RECIEVE_SOURCE.Local_MANUAL);
                             if (taskAddedResult.confirm)
                             {
                                 UnloadEQQueueing.Add(sourceEQ, destineEQ); ;

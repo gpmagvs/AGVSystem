@@ -30,7 +30,7 @@ namespace AGVSystem.Models.EQDevices
             if (rack == null)
                 return false;
             port = rack.PortsStatus.FirstOrDefault(port => port.TagNumbers.Contains(tag));
-            return port!=null;
+            return port != null;
         }
 
         public static bool IsRackPortIsEQ(this clsPortOfRack rackPort, out clsEQ eq)
@@ -47,6 +47,20 @@ namespace AGVSystem.Models.EQDevices
             string zoneID = portOfRack.GetParentRack().RackOption.DeviceID;
             string portPrefix = AGVSConfigulator.SysConfigs.SECSGem.CarrierLOCPrefixName;
             return $"{portPrefix}_{zoneID}_{portOfRack.Properties.PortNo}";
+        }
+
+        public static bool IsRackPortAssignToOrder(this clsPortOfRack rackPort)
+        {
+            List<string> destinesKeys = DatabaseCaches.TaskCaches.InCompletedTasks.SelectMany(order => new string[] { $"{order.From_Station}_{order.From_Slot}", $"{order.To_Station}_{order.To_Slot}" })
+                                                                                  .ToList();
+            return rackPort.TagNumbers.Any(tag => destinesKeys.Contains($"{tag}_{rackPort.Layer}"));
+        }
+
+        public static bool IsEQPortAssignToOrder(this clsEQ eqPort)
+        {
+            List<string> destinesKeys = DatabaseCaches.TaskCaches.InCompletedTasks.SelectMany(order => new string[] { $"{order.From_Station}_{order.From_Slot}", $"{order.To_Station}_{order.To_Slot}" })
+                                                                                  .ToList();
+            return destinesKeys.Contains($"{eqPort.EndPointOptions.TagID}_{eqPort.EndPointOptions.Height}");
         }
     }
     public partial class EQDeviceEventsHandler
@@ -117,8 +131,8 @@ namespace AGVSystem.Models.EQDevices
                     List<clsPortOfRack> repeatCarrierIDPorts = new List<clsPortOfRack>();
                     bool isNewInstall = string.IsNullOrEmpty(args.oldValue) && !string.IsNullOrEmpty(args.newValue); //新建
                     bool isRemoved = !string.IsNullOrEmpty(args.oldValue) && string.IsNullOrEmpty(args.newValue);//移除
-                    bool isChanged = args.oldValue!= args.newValue && !string.IsNullOrEmpty(args.oldValue) && !string.IsNullOrEmpty(args.newValue); //變化
-                    bool isRepeatdIDOfOtherPortInSystem = !string.IsNullOrEmpty(args.newValue) && TryGetPortWithID(args.newValue, out repeatCarrierIDPorts) && repeatCarrierIDPorts.Count>1;
+                    bool isChanged = args.oldValue != args.newValue && !string.IsNullOrEmpty(args.oldValue) && !string.IsNullOrEmpty(args.newValue); //變化
+                    bool isRepeatdIDOfOtherPortInSystem = !string.IsNullOrEmpty(args.newValue) && TryGetPortWithID(args.newValue, out repeatCarrierIDPorts) && repeatCarrierIDPorts.Count > 1;
 
 
                     if (isNewInstall)
@@ -190,7 +204,7 @@ namespace AGVSystem.Models.EQDevices
         {
             ports = new List<clsPortOfRack>();
             IEnumerable<clsPortOfRack> allPorts = StaEQPManagager.RacksList.SelectMany(rack => rack.PortsStatus);
-            ports =  allPorts.Where(port => port.CarrierID == carrierID).ToList();
+            ports = allPorts.Where(port => port.CarrierID == carrierID).ToList();
             return ports.Any();
         }
 
@@ -208,7 +222,6 @@ namespace AGVSystem.Models.EQDevices
                         if (port != null)
                         {
                             port.CarrierID = tunid;
-                            await MCSCIMService.CarrierInstallCompletedReport(port.CarrierID, port.GetLocID(), port.GetParentRack().RackOption.DeviceID, 1);
                         }
                     }
                     await ZoneCapacityChangeEventReport(rack);

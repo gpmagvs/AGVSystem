@@ -51,7 +51,7 @@ namespace AGVSystem.Models.EQDevices
                     To_Slot = "0",
                     DesignatedAGVName = agvName,
                     DispatcherName = "AGVS-ReCharge"
-                }, TaskManager.TASK_RECIEVE_SOURCE.LOCAL);
+                }, TaskManager.TASK_RECIEVE_SOURCE.LOCAL_Auto);
 
                 if (AddTaskResult.confirm)
                 {
