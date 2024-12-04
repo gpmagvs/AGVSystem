@@ -5,6 +5,7 @@ using AGVSystem.Models.Map;
 using AGVSystem.Models.Sys;
 using AGVSystem.Models.TaskAllocation.HotRun;
 using AGVSystem.Service;
+using AGVSystem.Service.MCS;
 using AGVSystem.TaskManagers;
 using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.Configuration;

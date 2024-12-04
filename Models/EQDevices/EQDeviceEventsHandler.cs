@@ -114,7 +114,7 @@ namespace AGVSystem.Models.EQDevices
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="args"></param>
-        private static void HandlePortCarrierIDChanged(object? sender, (string newValue, string oldValue) args)
+        private static void HandlePortCarrierIDChanged(object? sender, (string newValue, string oldValue, bool isUpdateByVehicleLoadTo) args)
         {
             Task.Factory.StartNew(async () =>
             {
@@ -147,6 +147,8 @@ namespace AGVSystem.Models.EQDevices
                     {
                         await _CarrierRemovedReport(locID, zoneID, args.oldValue).ContinueWith(async t =>
                         {
+                            if (args.isUpdateByVehicleLoadTo)
+                                return;//若carrier id 變化是因為 agv 放貨 (在席會先ON建一個TUN帳),則不用 報 install, 因為車子會報 transfer completed.
                             await _CarrierInstalledReport(locID, zoneID, args.newValue);
                         });
                     }

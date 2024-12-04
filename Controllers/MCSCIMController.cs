@@ -1,9 +1,11 @@
 ﻿using AGVSystem.Models.EQDevices;
 using AGVSystem.Models.Sys;
 using AGVSystem.Service;
+using AGVSystem.Service.MCS;
 using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.AGVDispatch;
 using AGVSystemCommonNet6.Alarm;
+using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.Microservices.MCS;
 using AGVSystemCommonNet6.Microservices.ResponseModel;
 using AGVSystemCommonNet6.Notify;
@@ -11,7 +13,7 @@ using AGVSystemCommonNet6.Vehicle_Control.VCS_ALARM;
 using EquipmentManagment.Manager;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
-using static AGVSystem.Service.MCSService;
+using static AGVSystem.Service.MCS.MCSService;
 using static AGVSystemCommonNet6.Microservices.MCS.MCSCIMService;
 
 namespace AGVSystem.Controllers
@@ -103,6 +105,50 @@ namespace AGVSystem.Controllers
                     Message = ex.Message
                 };
             }
+            catch (ZoneIsFullException ex)
+            {
+                NotifyServiceHelper.ERROR($"[MCS命令-{transportCommand.commandID} 已被系統拒絕] Result Code = 2 ,({ex.Message})");
+                return new clsResult
+                {
+                    Confirmed = false,
+                    ResultCode = 2,
+                    Message = ex.Message
+                };
+            }
+            catch (Exception ex)
+            {
+                NotifyServiceHelper.ERROR($"[MCS命令-{transportCommand.commandID} 已被系統拒絕] Result Code = 2 ,({ex.Message})");
+                return new clsResult
+                {
+                    Confirmed = false,
+                    ResultCode = 2,
+                    Message = ex.Message
+                };
+            }
+        }
+
+        /// <summary>
+        /// Cancel用於MCS想要取消在駐列中的任務
+        /// </summary>
+        /// <returns></returns>
+        [HttpPost("TransportCancel")]
+        public async Task<clsResult> TranportCancel(string commandID)
+        {
+            return await mcsService.HandleTransportCancelAsync(commandID);
+        }
+
+        /// <summary>
+        /// Abort用於MCS想要中止運行中的任務
+        /// </summary>
+        /// <returns></returns>
+        [HttpPost("TransportAbort")]
+        public async Task<clsResult> TransportAbort(string commandID)
+        {
+            MCSCIMService.TransferAbortInitiatedReport(new TransportCommandDto()
+            {
+
+            });
+            return new clsResult();
         }
 
         [HttpGet("EnhancedActiveZones")]

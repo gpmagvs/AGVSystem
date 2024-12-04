@@ -22,7 +22,7 @@ namespace AGVSystem.Controllers
         public async Task<IActionResult> ModifyCargoID(string WIPID, string PortID, string NewCargoID)
         {
             //StaEQPManagager.WIPController.ModifyCargoID(WIPID, PortID, NewCargoID);
-            _rackControlService.AddRackCargoID(WIPID, PortID, NewCargoID, this.GetType().Name);
+            _rackControlService.AddRackCargoID(WIPID, PortID, NewCargoID, this.GetType().Name, false);
             return Ok(new { confirm = true, message = "" });
         }
 

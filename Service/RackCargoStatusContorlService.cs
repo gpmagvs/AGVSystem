@@ -64,29 +64,43 @@ namespace AGVSystem.Service
                 dbSemaphoreSlim.Release();
             }
         }
-        internal async Task AddRackCargoID(string WIPID, string PortID, string cargoID, string triggerBy)
+        internal async Task AddRackCargoID(string WIPID, string PortID, string cargoID, string triggerBy, bool isByAgvLoadend)
         {
             if (TryGetPort(WIPID, PortID, out clsPortOfRack port))
             {
                 int tag = port.TagNumbers.FirstOrDefault();
                 int slot = port.Properties.Row;
-                await AddRackCargoID(tag, slot, cargoID, triggerBy);
+                await AddRackCargoID(tag, slot, cargoID, triggerBy, isByAgvLoadend);
             }
         }
-        internal async Task AddRackCargoID(int tagNumber, int slot, string cargoID, string triggerBy)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="tagNumber"></param>
+        /// <param name="slot"></param>
+        /// <param name="cargoID"></param>
+        /// <param name="triggerBy"></param>
+        /// <param name="isByAgvLoadend">是不是因為車子放貨到port修改帳籍</param>
+        /// <returns></returns>
+        internal async Task AddRackCargoID(int tagNumber, int slot, string cargoID, string triggerBy, bool isByAgvLoadend)
         {
             try
             {
                 await dbSemaphoreSlim.WaitAsync();
                 if (TryGetPort(tagNumber, slot, out clsPortOfRack port))
                 {
+                    port.VehicleLoadToPortFlag = isByAgvLoadend;
                     port.CarrierID = cargoID;
+                    if (port.IsRackPortIsEQ(out clsEQ eq) && eq.EndPointOptions.IsRoleAsZone)
+                    {
+                        eq.PortStatus.VehicleLoadToPortFlag = isByAgvLoadend;
+                        eq.PortStatus.CarrierID = cargoID;
+                    }
                     _logger.Info($"WIP:{port.GetParentRack().EQName} Port-{port.Properties.ID} Cargo ID Changed to {cargoID}(Trigger By:{triggerBy})");
+
                     if (TryGetStationStatus(tagNumber, slot, out clsStationStatus portStatus))
                     {
                         portStatus.MaterialID = cargoID;
-                        if (port.IsRackPortIsEQ(out clsEQ eq) && eq.EndPointOptions.IsRoleAsZone)
-                            eq.PortStatus.CarrierID = cargoID;
                     }
                     await _dbContext.SaveChangesAsync();
                 }

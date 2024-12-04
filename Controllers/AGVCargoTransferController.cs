@@ -48,7 +48,7 @@ namespace AGVSystem.Controllers
             var agvState = dbContext.AgvStates.FirstOrDefault(agv => agv.AGV_Name == agvName);
             string agvID = agvState.AGV_ID;
             await MCSCIMService.CarrierRemoveCompletedReport(cargoID, agvID, "", 1);
-            await _rackCargoStatusContorlService.AddRackCargoID(tagNumber, slot, cargoID, this.GetType().Name);
+            await _rackCargoStatusContorlService.AddRackCargoID(tagNumber, slot, cargoID, this.GetType().Name, true);
             return Ok();
         }
     }
