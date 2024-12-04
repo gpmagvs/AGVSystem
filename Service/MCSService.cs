@@ -97,7 +97,8 @@ namespace AGVSystem.Service
                     Priority = transportCommand.priority,
                     RecieveTime = DateTime.Now,
                     bypass_eq_status_check = false,
-                    isFromMCS = true
+                    isFromMCS = true,
+                    DispatcherName = "MCS"
                 }, TaskManager.TASK_RECIEVE_SOURCE.REMOTE);
 
                 if (!confirm)
