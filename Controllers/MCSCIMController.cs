@@ -15,6 +15,7 @@ using EquipmentManagment.Manager;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Newtonsoft.Json;
+using NLog;
 using static AGVSystem.Service.MCS.MCSService;
 using static AGVSystemCommonNet6.Microservices.MCS.MCSCIMService;
 
@@ -31,6 +32,7 @@ namespace AGVSystem.Controllers
             public string Message { get; set; } = "";
         }
 
+        Logger logger = LogManager.GetCurrentClassLogger();
         readonly MCSService mcsService;
         IHubContext<FrontEndDataHub> fronendMsgHub;
         public MCSCIMController(MCSService mcsService, IHubContext<FrontEndDataHub> fronendMsgHub)
@@ -159,6 +161,7 @@ namespace AGVSystem.Controllers
         public async Task<clsResult> EnhancedActiveZones()
         {
             List<ZoneData> zoneDataList = StaEQPManagager.RacksList.Select(rack => EQDeviceEventsHandler.GenerateZoneData(rack)).ToList();
+            zoneDataList = zoneDataList.DistinctBy(zone => zone.ZoneName).ToList();
             return new clsResult()
             {
                 Confirmed = true,
@@ -166,8 +169,13 @@ namespace AGVSystem.Controllers
             };
         }
 
-        private async Task SendMCSMessage(string message)
+        private async Task SendMCSMessage(string message, bool isException = false)
         {
+            logger.Trace(message);
+            if (isException)
+                NotifyServiceHelper.WARNING(message);
+            else
+                NotifyServiceHelper.INFO(message);
             await fronendMsgHub.Clients.All.SendAsync("MCSMessage", message);
         }
     }
