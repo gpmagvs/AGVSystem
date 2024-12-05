@@ -126,6 +126,9 @@ namespace AGVSystem.Models.EQDevices
                     if (rackPort == null)
                         return;
 
+                    if (rackPort.Properties.PortEnable == clsPortOfRack.Port_Enable.Disable)
+                        return;
+
                     string locID = rackPort.GetLocID();
                     string zoneID = rackPort.GetParentRack().RackOption.DeviceID;
                     List<clsPortOfRack> repeatCarrierIDPorts = new List<clsPortOfRack>();
@@ -417,12 +420,12 @@ namespace AGVSystem.Models.EQDevices
                 };
 
 
-                List<MCSCIMService.ZoneData.LocationStatus> GetLocationStatus(clsRack rack)
+                List<MCSCIMService.ZoneData.LocationStatus> GetLocationStatus(clsRack _rack)
                 {
-                    List<MCSCIMService.ZoneData.LocationStatus> statuslist = rack.PortsStatus.Select(port => port.Properties.EQInstall.IsUseForEQ ?
+                    var racks = StaEQPManagager.RacksList.Where(rack => rack.RackOption.DeviceID == _rack.EndPointOptions.DeviceID);
+                    List<MCSCIMService.ZoneData.LocationStatus> statuslist = racks.SelectMany(rack => rack.PortsStatus.Select(port => port.Properties.EQInstall.IsUseForEQ ?
                                                                                                                     GetLocationStatusOfEQLocatinPort(ref rack, ref port) :
-                                                                                                                    GetLocationStatusOfPort(ref rack, port)).ToList();
-
+                                                                                                                    GetLocationStatusOfPort(ref rack, port))).ToList();
                     return statuslist.Where(status => status != null).ToList();
                 }
 
