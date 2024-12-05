@@ -22,6 +22,10 @@ namespace AGVSystem.Service.MCS
         List<clsPortOfRack> ALLRackPorts => StaEQPManagager.RacksList.SelectMany(rack => rack.PortsStatus).ToList();
         List<clsRack> ALLRack => StaEQPManagager.RacksList.ToList();
         AGVSDbContext dbContext;
+
+        Dictionary<string, clsEQ> MainEQMap => StaEQPManagager.MainEQList.Where(eq => !eq.EndPointOptions.IsRoleAsZone)
+                                                                         .ToDictionary(eq => eq.EndPointOptions.DeviceID, eq => eq);
+
         public MCSService(AGVSDbContext dbContext)
         {
             this.dbContext = dbContext;
@@ -121,8 +125,14 @@ namespace AGVSystem.Service.MCS
 
         private bool TryGetEQPort(string deviceID, string carrierID, bool isAsSource, out clsEQ port)
         {
-
+            return MainEQMap.TryGetValue(deviceID, out port);
             //TODO 要考慮作為來源而且是 eq 作為 zone的情境 _
+
+            //find eq first 
+            port = StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.DeviceID == deviceID);
+            if (port != null)
+                return true;
+
             if (isAsSource)
             {
                 port = StaEQPManagager.MainEQList.Where(eq => eq.EndPointOptions.IsRoleAsZone)
@@ -130,8 +140,8 @@ namespace AGVSystem.Service.MCS
                 if (port != null)
                     return true;
             }
-
             port = StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.DeviceID.Contains(deviceID) && (!isAsSource ? (!eq.Port_Exist && string.IsNullOrEmpty(eq.PortStatus.CarrierID)) : true));
+
             if (port != null && isAsSource && port.PortStatus.CarrierID == carrierID && !port.Port_Exist)
             {
                 throw new HasIDbutNoCargoException($"[{port.EQName}] 無貨物");
@@ -142,7 +152,7 @@ namespace AGVSystem.Service.MCS
         private bool TryGetRackPort(string deviceID, bool asDestine, string carrierID, out clsPortOfRack? port)
         {
             port = null;
-            clsRack rack = ALLRack.FirstOrDefault(rack => rack.RackOption.DeviceID == deviceID);
+            clsRack rack = ALLRack.FirstOrDefault(rack => rack.RackOption.DeviceID == deviceID && rack.PortsStatus.Any(port => asDestine ? true : port.CarrierID == carrierID));
             if (rack == null)
                 return false;
 
@@ -201,10 +211,7 @@ namespace AGVSystem.Service.MCS
         }
         private bool isDeviceIDBelongRack(string deviceID)
         {
-            clsEQ eq = StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.DeviceID.Contains(deviceID));
-            if (eq != null)
-                return false;
-            return ALLRack.Any(rack => rack.RackOption.DeviceID == deviceID);
+            return !MainEQMap.TryGetValue(deviceID, out clsEQ eq);
         }
 
         private bool isSourceAGV(string sourceID, out string agvName)
