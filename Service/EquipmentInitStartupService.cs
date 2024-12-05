@@ -1,4 +1,5 @@
 ﻿
+using AGVSystem.Models.EQDevices;
 using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.DATABASE;
@@ -32,10 +33,10 @@ namespace AGVSystem.Service
                     ChargeStationConfigPath = $"{eqConfigsStoreFolder}//ChargStationConfigs.json",
                     EQGroupConfigPath = $"{eqConfigsStoreFolder}//EQGroupConfigs.json",
                 });
-
                 List<clsStationStatus> cargoIDStored = await QueryCargoIDStoredFromDataBase();
                 RestoreCargoID(cargoIDStored);
                 await clsStationInfoManager.ScanWIP_EQ();
+                StaEQPManagager.DevicesConnectToAsync();
             }
             catch (Exception ex)
             {
@@ -45,6 +46,7 @@ namespace AGVSystem.Service
 
         private void RestoreCargoID(List<clsStationStatus> cargoIDStored)
         {
+            var allRackPorts = StaEQPManagager.RacksList.SelectMany(rack => rack.PortsStatus);
             var wipPortIDList = StaEQPManagager.RacksList.SelectMany(rack => rack.RackOption.PortsOptions.Select(p => rack.EQName + "_" + p.ID)).ToList();
 
             foreach (var item in cargoIDStored)
@@ -57,6 +59,19 @@ namespace AGVSystem.Service
                 {
                     rackport.CarrierID = _materialID;
                 }
+            }
+
+
+            foreach (var eqAsZone in StaEQPManagager.MainEQList.Where(eq => eq.EndPointOptions.IsRoleAsZone))
+            {
+                var storedInfo = cargoIDStored.FirstOrDefault(st => st.StationTag + "" == eqAsZone.EndPointOptions.TagID + "");
+                if (storedInfo == null)
+                    continue;
+                eqAsZone.PortStatus.CarrierID = storedInfo.MaterialID;
+                clsPortOfRack rackPort = allRackPorts.FirstOrDefault(rackPort => rackPort.IsRackPortIsEQ(out var eq) && eq.EndPointOptions.TagID == eqAsZone.EndPointOptions.TagID);
+                if (rackPort == null)
+                    continue;
+                rackPort.CarrierID = storedInfo.MaterialID;
             }
 
         }
