@@ -1,4 +1,5 @@
-﻿using AGVSystem.Models.EQDevices;
+﻿using AGVSystem.Hubs;
+using AGVSystem.Models.EQDevices;
 using AGVSystem.Models.Sys;
 using AGVSystem.Service;
 using AGVSystem.Service.MCS;
@@ -12,6 +13,7 @@ using AGVSystemCommonNet6.Notify;
 using AGVSystemCommonNet6.Vehicle_Control.VCS_ALARM;
 using EquipmentManagment.Manager;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Newtonsoft.Json;
 using static AGVSystem.Service.MCS.MCSService;
 using static AGVSystemCommonNet6.Microservices.MCS.MCSCIMService;
@@ -30,9 +32,11 @@ namespace AGVSystem.Controllers
         }
 
         readonly MCSService mcsService;
-        public MCSCIMController(MCSService mcsService)
+        IHubContext<FrontEndDataHub> fronendMsgHub;
+        public MCSCIMController(MCSService mcsService, IHubContext<FrontEndDataHub> fronendMsgHub)
         {
             this.mcsService = mcsService;
+            this.fronendMsgHub = fronendMsgHub;
         }
 
         [HttpPost("TaskReporter")]
@@ -77,7 +81,7 @@ namespace AGVSystem.Controllers
         {
             try
             {
-                NotifyServiceHelper.INFO($"[MCS命令-{transportCommand.commandID}] {transportCommand.source} to {transportCommand.dest}");
+                await SendMCSMessage($"[MCS命令-{transportCommand.commandID}] {transportCommand.source} to {transportCommand.dest}");
 
                 await mcsService.HandleTransportCommand(transportCommand);
 
@@ -86,7 +90,7 @@ namespace AGVSystem.Controllers
             catch (HasIDbutNoCargoException ex)
             {
 
-                NotifyServiceHelper.ERROR($"[MCS命令-{transportCommand.commandID} 已被系統拒絕] Result Code = 6 ({ex.Message})");
+                SendMCSMessage($"[MCS命令-{transportCommand.commandID} 已被系統拒絕] Result Code = 6 ({ex.Message})");
                 return new clsResult()
                 {
                     Confirmed = false,
@@ -96,7 +100,7 @@ namespace AGVSystem.Controllers
             }
             catch (AddOrderFailException ex)
             {
-                NotifyServiceHelper.ERROR($"[MCS命令-{transportCommand.commandID} 已被系統拒絕] Result Code = {(int)ex.alarmCode} ({ex.Message})");
+                SendMCSMessage($"[MCS命令-{transportCommand.commandID} 已被系統拒絕] Result Code = {(int)ex.alarmCode} ({ex.Message})");
 
                 return new clsResult
                 {
@@ -107,7 +111,7 @@ namespace AGVSystem.Controllers
             }
             catch (ZoneIsFullException ex)
             {
-                NotifyServiceHelper.ERROR($"[MCS命令-{transportCommand.commandID} 已被系統拒絕] Result Code = 2 ,({ex.Message})");
+                SendMCSMessage($"[MCS命令-{transportCommand.commandID} 已被系統拒絕] Result Code = 2 ,({ex.Message})");
                 return new clsResult
                 {
                     Confirmed = false,
@@ -117,7 +121,7 @@ namespace AGVSystem.Controllers
             }
             catch (Exception ex)
             {
-                NotifyServiceHelper.ERROR($"[MCS命令-{transportCommand.commandID} 已被系統拒絕] Result Code = 2 ,({ex.Message})");
+                SendMCSMessage($"[MCS命令-{transportCommand.commandID} 已被系統拒絕] Result Code = 2 ,({ex.Message})");
                 return new clsResult
                 {
                     Confirmed = false,
@@ -162,5 +166,9 @@ namespace AGVSystem.Controllers
             };
         }
 
+        private async Task SendMCSMessage(string message)
+        {
+            await fronendMsgHub.Clients.All.SendAsync("MCSMessage", message);
+        }
     }
 }

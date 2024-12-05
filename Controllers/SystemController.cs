@@ -86,7 +86,7 @@ namespace AGVSystem.Controllers
                 SystemModes.HostConnMode = mode;
                 if (SystemModes.HostConnMode == HOST_CONN_MODE.OFFLINE)
                     SystemModes.HostOperMode = HOST_OPER_MODE.LOCAL;
-                _SystemStatusDbStoreService.ModifyHostConnMode(mode);
+                //_SystemStatusDbStoreService.ModifyHostConnMode(mode);
             }
             return Ok(new { confirm = response.confirm, message = response.message });
         }
@@ -106,7 +106,7 @@ namespace AGVSystem.Controllers
             {
 
                 SystemModes.HostOperMode = mode;
-                _SystemStatusDbStoreService.ModifyHostOperMode(mode);
+                //_SystemStatusDbStoreService.ModifyHostOperMode(mode);
             }
             return Ok(new { confirm = response.confirm, message = response.message });
         }

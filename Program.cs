@@ -1,4 +1,5 @@
 ﻿using AGVSystem;
+using AGVSystem.Hubs;
 using AGVSystem.Models.Automation;
 using AGVSystem.Models.EQDevices;
 using AGVSystem.Models.Map;
@@ -23,9 +24,11 @@ using EquipmentManagment.Manager;
 using KGSWebAGVSystemAPI.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Json;
+using Microsoft.AspNetCore.SignalR.Protocol;
 using Microsoft.AspNetCore.WebSockets;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using NLog;
 using NLog.Web;
@@ -282,17 +285,19 @@ public static class WebAppInitializer
 
         List<string> allowedOrigins = new List<string> {
             "http://localhost:8080",
-            "http://127.0.0.1:8080"
+            "http://127.0.0.1:8080",
+            "http://127.0.0.1:7107"
         };
         foreach (var ip in localIPs)
         {
-            allowedOrigins.Add($"{ip}:5216");
-            allowedOrigins.Add($"{ip}:5036");
-            allowedOrigins.Add($"{ip}:8080");
-            allowedOrigins.Add($"{ip}:8081");
-            allowedOrigins.Add($"{ip}:8082");
-            allowedOrigins.Add($"{ip}:8083");
-            allowedOrigins.Add($"{ip}:8084");
+            allowedOrigins.Add($"http://{ip}:5216");
+            allowedOrigins.Add($"http://{ip}:5036");
+            allowedOrigins.Add($"http://{ip}:8080");
+            allowedOrigins.Add($"http://{ip}:8081");
+            allowedOrigins.Add($"http://{ip}:8082");
+            allowedOrigins.Add($"http://{ip}:8083");
+            allowedOrigins.Add($"http://{ip}:8084");
+            allowedOrigins.Add($"http://{ip}:7107");
         }
         builder.Services.AddCors(options =>
         {
@@ -363,6 +368,7 @@ public static class WebAppInitializer
         app.UseAuthorization();
         app.MapControllers();
         app.MapHub<FrontEndDataHub>("/FrontEndDataHub");
+        app.MapHub<SecsPlatformHub>("/SecsPlatform");
     }
 
 }
