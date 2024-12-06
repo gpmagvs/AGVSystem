@@ -183,10 +183,7 @@ namespace AGVSystem.Service.MCS
             {
                 //Rack 是來源地[取貨], 找有貨的Port且ID = carrierID
                 //有帳無料
-                var port_HasIDButNoCargo = rack.PortsStatus.FirstOrDefault(p => p.CarrierID == carrierID && !p.CargoExist);
-                if (port_HasIDButNoCargo != null)
-                    throw new HasIDbutNoCargoException($"[{port_HasIDButNoCargo.GetLocID()}] 無貨物");
-                port = rack.PortsStatus.FirstOrDefault(p => p.CargoExist && p.CarrierID == carrierID);
+                port = rack.PortsStatus.FirstOrDefault(p => p.CarrierID == carrierID);
             }
             return port != null;
         }
