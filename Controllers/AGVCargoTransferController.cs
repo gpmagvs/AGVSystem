@@ -27,10 +27,9 @@ namespace AGVSystem.Controllers
         [HttpPost("UnloadCargoFromPort")]
         public async Task<IActionResult> UnloadCargoFromPort(string agvName, int tagNumber, int slot)
         {
-            string removedCarrierID = await _rackCargoStatusContorlService.RemoveRackCargoID(tagNumber, slot, this.GetType().Name);
+            string removedCarrierID = await _rackCargoStatusContorlService.RemoveRackCargoID(tagNumber, slot, this.GetType().Name, true);
             var agvState = dbContext.AgvStates.FirstOrDefault(agv => agv.AGV_Name == agvName);
             string agvID = agvState.AGV_ID;
-            await _rackCargoStatusContorlService.RemoveRackCargoID(tagNumber, slot, GetType().Name);
             await MCSCIMService.CarrierInstallCompletedReport(removedCarrierID, agvID, "", 1);
 
             return Ok();
@@ -47,7 +46,7 @@ namespace AGVSystem.Controllers
         {
             var agvState = dbContext.AgvStates.FirstOrDefault(agv => agv.AGV_Name == agvName);
             string agvID = agvState.AGV_ID;
-            await MCSCIMService.CarrierRemoveCompletedReport(cargoID, agvID, "", 1);
+            //await MCSCIMService.CarrierRemoveCompletedReport(cargoID, agvID, "", 1);
             await _rackCargoStatusContorlService.AddRackCargoID(tagNumber, slot, cargoID, this.GetType().Name, true);
             return Ok();
         }
