@@ -114,7 +114,7 @@ namespace AGVSystem.Models.EQDevices
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="args"></param>
-        private static void HandlePortCarrierIDChanged(object? sender, (string newValue, string oldValue, bool isUpdateByVehicleLoadTo) args)
+        private static void HandlePortCarrierIDChanged(object? sender, (string newValue, string oldValue, bool isUpdateByVehicleLoadUnload) args)
         {
             Task.Factory.StartNew(async () =>
             {
@@ -144,13 +144,14 @@ namespace AGVSystem.Models.EQDevices
                     }
                     if (isRemoved)
                     {
-                        await _CarrierRemovedReport(locID, zoneID, args.oldValue);
+                        if (!args.isUpdateByVehicleLoadUnload)//若carrier id 變化是因為 agv 放貨 (在席會先ON建一個TUN帳),則不用 報 install, 因為車子會報 transfer completed.
+                            await _CarrierRemovedReport(locID, zoneID, args.oldValue);
                     }
                     if (isChanged)
                     {
                         await _CarrierRemovedReport(locID, zoneID, args.oldValue).ContinueWith(async t =>
                         {
-                            if (args.isUpdateByVehicleLoadTo)
+                            if (args.isUpdateByVehicleLoadUnload)
                                 return;//若carrier id 變化是因為 agv 放貨 (在席會先ON建一個TUN帳),則不用 報 install, 因為車子會報 transfer completed.
                             await _CarrierInstalledReport(locID, zoneID, args.newValue);
                         });
@@ -435,7 +436,7 @@ namespace AGVSystem.Models.EQDevices
                     {
                         ShelfId = port.GetLocID(),
                         CarrierID = port.CarrierID,
-                        IsCargoExist = port.CargoExist,
+                        IsCargoExist = port.CarrierExist,
                         DisabledStatus = port.Properties.PortEnable == clsPortOfRack.Port_Enable.Disable ? 1 : 0,
                         ProcessState = 0
                     };

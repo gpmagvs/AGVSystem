@@ -30,7 +30,7 @@ namespace AGVSystem.Controllers
         public async Task<IActionResult> RemoveCargoID(string WIPID, string PortID)
         {
             //StaEQPManagager.WIPController.RemoveCargoID(WIPID, PortID);
-            _rackControlService.RemoveRackCargoID(WIPID, PortID, this.GetType().Name);
+            _rackControlService.RemoveRackCargoID(WIPID, PortID, this.GetType().Name, false);
             return Ok(new { confirm = true, message = "" });
         }
 

@@ -20,19 +20,19 @@ namespace AGVSystem.Service
             _dbContext = factory.CreateScope().ServiceProvider.GetRequiredService<AGVSDbContext>();
         }
 
-        internal async Task RemoveRackCargoID(string wIPID, string portID, string triggerBy)
+        internal async Task RemoveRackCargoID(string wIPID, string portID, string triggerBy, bool isByAgvUnloadend)
         {
             if (TryGetPort(wIPID, portID, out clsPortOfRack port))
             {
                 int tag = port.TagNumbers.FirstOrDefault();
                 int slot = port.Properties.Row;
-                await RemoveRackCargoID(tag, slot, triggerBy);
+                await RemoveRackCargoID(tag, slot, triggerBy, isByAgvUnloadend);
 
             }
 
 
         }
-        internal async Task<string> RemoveRackCargoID(int tagNumber, int slot, string triggerBy)
+        internal async Task<string> RemoveRackCargoID(int tagNumber, int slot, string triggerBy, bool isByAgvUnloadend)
         {
             try
             {
@@ -41,6 +41,7 @@ namespace AGVSystem.Service
                 if (TryGetPort(tagNumber, slot, out clsPortOfRack port))
                 {
                     removedCarrierID = port.CarrierID + "";
+                    port.VehicleUnLoadFromPortFlag = isByAgvUnloadend;
                     port.CarrierID = string.Empty;
                     _logger.Info($"WIP:{port.GetParentRack().EQName} Port-{port.Properties.ID} Cargo ID Removed. (Trigger By:{triggerBy})");
                     if (TryGetStationStatus(tagNumber, slot, out clsStationStatus portStatus))
