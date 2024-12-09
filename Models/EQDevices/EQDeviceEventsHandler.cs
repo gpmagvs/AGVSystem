@@ -140,12 +140,22 @@ namespace AGVSystem.Models.EQDevices
 
                     if (isNewInstall)
                     {
-                        await _CarrierInstalledReport(locID, zoneID, args.newValue);
+                        if (!args.isUpdateByVehicleLoadUnload)//若carrier id 變化是因為 agv 放貨 (在席會先ON建一個TUN帳),則不用 報 install, 因為車子會報 transfer completed.
+                            await _CarrierInstalledReport(locID, zoneID, args.newValue);
                     }
                     if (isRemoved)
                     {
                         if (!args.isUpdateByVehicleLoadUnload)//若carrier id 變化是因為 agv 放貨 (在席會先ON建一個TUN帳),則不用 報 install, 因為車子會報 transfer completed.
                             await _CarrierRemovedReport(locID, zoneID, args.oldValue);
+
+                        if (rackPort.CargoExist || rackPort.CarrierExist)
+                        {
+                            rackPort.CarrierID = await AGVSConfigulator.GetTrayUnknownFlowID();
+                            if (rackPort.IsRackPortIsEQ(out clsEQ eq) && eq.Port_Exist)
+                            {
+                                eq.PortStatus.CarrierID = rackPort.CarrierID;
+                            }
+                        }
                     }
                     if (isChanged)
                     {
