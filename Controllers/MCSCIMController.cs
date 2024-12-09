@@ -18,6 +18,7 @@ using Newtonsoft.Json;
 using NLog;
 using static AGVSystem.Service.MCS.MCSService;
 using static AGVSystemCommonNet6.Microservices.MCS.MCSCIMService;
+using static SQLite.SQLite3;
 
 namespace AGVSystem.Controllers
 {
@@ -34,9 +35,11 @@ namespace AGVSystem.Controllers
 
         Logger logger = LogManager.GetCurrentClassLogger();
         readonly MCSService mcsService;
+        readonly AGVSDbContext dbContext;
         IHubContext<FrontEndDataHub> fronendMsgHub;
-        public MCSCIMController(MCSService mcsService, IHubContext<FrontEndDataHub> fronendMsgHub)
+        public MCSCIMController(MCSService mcsService, IHubContext<FrontEndDataHub> fronendMsgHub, AGVSDbContext dbContext)
         {
+            this.dbContext = dbContext;
             this.mcsService = mcsService;
             this.fronendMsgHub = fronendMsgHub;
         }
@@ -74,62 +77,81 @@ namespace AGVSystem.Controllers
         public async Task<IActionResult> AlarmReporterSwitch(bool truetoenable)
         {
             clsAGVSTaskReportResponse response = new clsAGVSTaskReportResponse() { confirm = true, AlarmCode = AGVSystemCommonNet6.Alarm.ALARMS.NONE, message = "OK" };
-            AlarmManagerCenter.IsReportAlarmToHostON = truetoenable;
             return Ok(response);
         }
 
         [HttpPost("TransportCommand")]
         public async Task<clsResult> TransportCommand([FromBody] clsTransportCommandDto transportCommand)
         {
+            clsResult result = new clsResult();
+
             try
             {
                 await SendMCSMessage($"[MCS命令-{transportCommand.commandID}] {transportCommand.source} to {transportCommand.dest}");
-
                 await mcsService.HandleTransportCommand(transportCommand);
-
-                return new clsResult() { Confirmed = true, ResultCode = 0 };
+                result.Confirmed = true;
+                result.ResultCode = 0;
             }
             catch (HasIDbutNoCargoException ex)
             {
-
+                result.Confirmed = false;
+                result.ResultCode = 6;
+                result.Message = ex.GetType().Name;
                 SendMCSMessage($"[MCS命令-{transportCommand.commandID} 已被系統拒絕] Result Code = 6 ({ex.Message})");
-                return new clsResult()
-                {
-                    Confirmed = false,
-                    ResultCode = 6,
-                    Message = ex.GetType().Name
-                };
+
             }
             catch (AddOrderFailException ex)
             {
+                result.Confirmed = false;
+                result.ResultCode = (int)ex.alarmCode;
+                result.Message = ex.Message;
+                clsTaskDto order = ex.order;
                 SendMCSMessage($"[MCS命令-{transportCommand.commandID} 已被系統拒絕] Result Code = {(int)ex.alarmCode} ({ex.Message})");
+                AddFailOrderToDatabase(ex, order);
 
-                return new clsResult
-                {
-                    Confirmed = false,
-                    ResultCode = (int)ex.alarmCode,
-                    Message = ex.Message
-                };
             }
             catch (ZoneIsFullException ex)
             {
+                result.Confirmed = false;
+                result.ResultCode = 2;
+                result.Message = ex.Message;
                 SendMCSMessage($"[MCS命令-{transportCommand.commandID} 已被系統拒絕] Result Code = 2 ,({ex.Message})");
-                return new clsResult
-                {
-                    Confirmed = false,
-                    ResultCode = 2,
-                    Message = ex.Message
-                };
             }
             catch (Exception ex)
             {
+                result.Confirmed = false;
+                result.ResultCode = 2;
+                result.Message = ex.Message;
                 SendMCSMessage($"[MCS命令-{transportCommand.commandID} 已被系統拒絕] Result Code = 2 ,({ex.Message})");
-                return new clsResult
+            }
+            return result;
+        }
+
+        private async Task AddFailOrderToDatabase(AddOrderFailException ex, clsTaskDto order)
+        {
+            try
+            {
+                clsTaskDto orderExist = dbContext.Tasks.FirstOrDefault(t => t.TaskName == order.TaskName);
+                if (orderExist == null)
                 {
-                    Confirmed = false,
-                    ResultCode = 2,
-                    Message = ex.Message
-                };
+
+                    string failDesc = string.Empty;//[40]AGV衝撞(前後膠條)(Bumper)
+
+                    if (AlarmManagerCenter.AlarmCodes.TryGetValue(ex.alarmCode, out var alarmModel))
+                        failDesc = $"[{(int)ex.alarmCode}]{alarmModel.Description}";
+                    else
+                        failDesc = $"[{(int)ex.alarmCode}]{ex.Message}";
+
+                    order.State = AGVSystemCommonNet6.AGVDispatch.Messages.TASK_RUN_STATUS.FAILURE;
+                    order.StartTime = order.FinishTime = DateTime.Now;
+                    order.FailureReason = failDesc;
+                    dbContext.Tasks.Add(order);
+                    await dbContext.SaveChangesAsync();
+                }
+            }
+            catch (Exception innderEx)
+            {
+                logger.Error(innderEx);
             }
         }
 

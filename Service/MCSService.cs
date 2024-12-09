@@ -33,6 +33,7 @@ namespace AGVSystem.Service.MCS
 
         internal async Task HandleTransportCommand(clsTransportCommandDto transportCommand)
         {
+            clsTaskDto order = null;
             try
             {
                 bool _isSourceAGV = false;
@@ -82,7 +83,7 @@ namespace AGVSystem.Service.MCS
 
                 Console.WriteLine($"Created Order: From [Tag {sourceTag}_Slot {sourceSlot}] TO  [Tag {destineTag}_Slot {destineSlot}]");
 
-                (bool confirm, ALARMS alarm_code, string message, string message_en) = await TaskManager.AddTask(new AGVSystemCommonNet6.AGVDispatch.clsTaskDto
+                order = new AGVSystemCommonNet6.AGVDispatch.clsTaskDto
                 {
                     Action = AGVSystemCommonNet6.AGVDispatch.Messages.ACTION_TYPE.Carry,
                     TaskName = transportCommand.commandID,
@@ -97,11 +98,13 @@ namespace AGVSystem.Service.MCS
                     bypass_eq_status_check = false,
                     isFromMCS = true,
                     DispatcherName = "MCS"
-                }, TaskManager.TASK_RECIEVE_SOURCE.REMOTE);
+                };
+
+                (bool confirm, ALARMS alarm_code, string message, string message_en) = await TaskManager.AddTask(order, TaskManager.TASK_RECIEVE_SOURCE.REMOTE);
 
                 if (!confirm)
                 {
-                    throw new AddOrderFailException(message, alarm_code);
+                    throw new AddOrderFailException(message, alarm_code, order);
                 }
             }
             catch (HasIDbutNoCargoException ex)

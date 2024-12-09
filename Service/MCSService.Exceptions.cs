@@ -1,4 +1,5 @@
-﻿using AGVSystemCommonNet6.Alarm;
+﻿using AGVSystemCommonNet6.AGVDispatch;
+using AGVSystemCommonNet6.Alarm;
 
 namespace AGVSystem.Service.MCS
 {
@@ -16,9 +17,11 @@ namespace AGVSystem.Service.MCS
         public class AddOrderFailException : Exception
         {
             public readonly ALARMS alarmCode;
-            public AddOrderFailException(string message, ALARMS alarmCode) : base(message)
+            public readonly clsTaskDto order;
+            public AddOrderFailException(string message, ALARMS alarmCode, clsTaskDto order) : base(message)
             {
                 this.alarmCode = alarmCode;
+                this.order = order;
             }
         }
 
