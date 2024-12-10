@@ -181,7 +181,7 @@ namespace AGVSystem.Controllers
 
 
         [HttpGet("Emu/PortExist")]
-        public async Task<IActionResult> SetPortExist(string EqName,int portExist)
+        public async Task<IActionResult> SetPortExist(string EqName, int portExist)
         {
             if (StaEQPEmulatorsManagager.TryGetEQEmuByName(EqName, out clsDIOModuleEmu? EQ))
             {
@@ -204,5 +204,15 @@ namespace AGVSystem.Controllers
             }
             return Ok();
         }
+        [HttpPost("Emu/CSTReadID")]
+        public async Task<IActionResult> SetCSTReadID(string EqName, string? CarrierID)
+        {
+            if (StaEQPEmulatorsManagager.TryGetEQEmuByName(EqName, out clsDIOModuleEmu? EQ))
+            {
+                EQ.SetCarrierIDRead(CarrierID);
+            }
+            return Ok();
+        }
+
     }
 }
