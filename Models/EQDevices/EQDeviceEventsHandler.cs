@@ -16,6 +16,7 @@ using EquipmentManagment.WIP;
 using NLog;
 using System.Collections.Concurrent;
 using System.Linq;
+using System.Security.Policy;
 
 namespace AGVSystem.Models.EQDevices
 {
@@ -101,12 +102,72 @@ namespace AGVSystem.Models.EQDevices
             clsEQ.OnUnloadRequestChanged += HandleEQUnloadRequestChanged;
             clsEQ.OnEQPortCargoChangedToExist += HandleEQPortCargoChangedToExist;
             clsEQ.OnEQPortCargoChangedToDisappear += HandleEQPortCargoChangedToDisappear;
+            clsEQ.OnCSTReaderIDChanged += ClsEQ_OnCSTReaderIDChanged;
 
             PortStatusAbstract.CarrierIDChanged += HandlePortCarrierIDChanged;
 
             MaterialManagerEventHandler.OnMaterialTransferStatusChange += HandleMaterialTransferStatusChanged;
             MaterialManagerEventHandler.OnMaterialAdd += HandleMaterialAdd;
             MaterialManagerEventHandler.OnMaterialDelete += HandleMaterialDelete;
+        }
+
+        private static void ClsEQ_OnCSTReaderIDChanged(object? sender, (clsEQ eq, string newValue, string oldValue) e)
+        {
+            if (!e.eq.EndPointOptions.IsRoleAsZone)
+                return;
+            Task.Factory.StartNew(async () =>
+            {
+
+                string zoneID = "";
+                string carrierLoc = "";
+
+                if (e.eq.IsEQInRack(out clsRack rack, out clsPortOfRack port))
+                {
+                    //port.CarrierID = e.newValue;
+                    zoneID = port.GetParentRack().RackOption.DeviceID;
+                    carrierLoc = port.GetLocID();
+                    bool isNewInstall = string.IsNullOrEmpty(e.oldValue) && !string.IsNullOrEmpty(e.newValue); //新建
+                    bool isRemoved = !string.IsNullOrEmpty(e.oldValue) && string.IsNullOrEmpty(e.newValue);//移除
+                    bool isChanged = e.oldValue != e.newValue && !string.IsNullOrEmpty(e.oldValue) && !string.IsNullOrEmpty(e.newValue); //變化
+
+                    List<clsPortOfRack> repeatCarrierIDPorts = new List<clsPortOfRack>();
+                    bool isRepeatdIDOfOtherPortInSystem = !string.IsNullOrEmpty(e.newValue) && TryGetPortWithID(e.newValue, out repeatCarrierIDPorts) && repeatCarrierIDPorts.Count > 1;
+
+                    bool isAGVLoadUnloadExecuting = e.eq.CMD_Reserve_Up || e.eq.CMD_Reserve_Low;
+
+                    if (isNewInstall && !isAGVLoadUnloadExecuting) //TODO 如果 id移除是因為AGV放貨 不用報
+                    {
+                        await MCSCIMService.CarrierInstallCompletedReport(e.newValue, carrierLoc, zoneID, 1);
+                    }
+                    if (isRemoved && !isAGVLoadUnloadExecuting) //TODO 如果 id移除是因為AGV取貨 不用報
+                    {
+                        await MCSCIMService.CarrierRemoveCompletedReport(e.oldValue, carrierLoc, zoneID, 1);
+
+                    }
+                    if (isChanged)
+                    {
+                        await MCSCIMService.CarrierRemoveCompletedReport(e.oldValue, carrierLoc, zoneID, 1).ContinueWith(async t =>
+                        {
+                            await MCSCIMService.CarrierInstallCompletedReport(e.newValue, carrierLoc, zoneID, 1);
+                        });
+
+                    }
+
+
+                    if (isRepeatdIDOfOtherPortInSystem)
+                    {
+                        string carrierToRemove = e.newValue;
+                        DecoupleCarrierIDHandler(carrierToRemove, repeatCarrierIDPorts, port);
+                    }
+
+                    await ShelfStatusChangeEventReport(rack);
+                }
+
+
+
+            });
+            //sync to zone if nessary
+
         }
 
         /// <summary>
@@ -198,11 +259,12 @@ namespace AGVSystem.Models.EQDevices
         private static async Task DecoupleCarrierIDHandler(string carrierToRemove, List<clsPortOfRack> repeatCarrierIDPorts, clsPortOfRack triggerPort)
         {
             await Task.Delay(1000);
-            foreach (var _portToRemove in repeatCarrierIDPorts)
+            foreach (var _portToRemove in repeatCarrierIDPorts.Where(port => !port.IsRackPortIsEQ(out clsEQ eq) ? true : !eq.EndPointOptions.IsCSTIDReportable))
             {
                 string locID = _portToRemove.GetLocID();
                 string zoneID = _portToRemove.GetParentRack().RackOption.DeviceID;
                 string DUID = await AGVSConfigulator.GetDoubleTrayUnknownFlowID();
+
                 _portToRemove.CarrierID = DUID;
 
                 if (_portToRemove.IsRackPortIsEQ(out clsEQ eqInPort))
@@ -220,7 +282,7 @@ namespace AGVSystem.Models.EQDevices
         {
             ports = new List<clsPortOfRack>();
             IEnumerable<clsPortOfRack> allPorts = StaEQPManagager.RacksList.SelectMany(rack => rack.PortsStatus);
-            ports = allPorts.Where(port => port.CarrierID == carrierID).ToList();
+            ports = allPorts.Where(port => port.CarrierID == carrierID || (port.IsRackPortIsEQ(out clsEQ eq) && eq.PortStatus.CarrierID == carrierID)).ToList();
             return ports.Any();
         }
 
