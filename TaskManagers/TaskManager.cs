@@ -408,8 +408,14 @@ namespace AGVSystem.TaskManagers
 
         private static async Task SetUnknowCarrierID(clsTaskDto taskData)
         {
+
+            if (taskData.Action == ACTION_TYPE.None || taskData.Action == ACTION_TYPE.Charge || taskData.Action == ACTION_TYPE.DeepCharge
+                || taskData.Action == ACTION_TYPE.Measure || taskData.Action == ACTION_TYPE.Discharge || taskData.Action == ACTION_TYPE.Unpark)
+                return;
+
             if (!string.IsNullOrEmpty(taskData.Carrier_ID))
                 return;
+
             int flowNumber = 0;
             string unknowCargoID = "";
             if (taskData.CST_TYPE == 200 || taskData.CST_TYPE == 0)
