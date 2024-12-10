@@ -57,20 +57,24 @@ namespace AGVSystem.Service
                                                         .FirstOrDefault(rack => rack != null);
                 if (rackport != null)
                 {
-                    rackport.CarrierID = _materialID;
+                    bool isEqAsZonePortAndHasCstReader = rackport.IsRackPortIsEQ(out clsEQ eq) && eq.EndPointOptions.IsRoleAsZone && eq.EndPointOptions.IsCSTIDReportable;
+                    if (!isEqAsZonePortAndHasCstReader)
+                        rackport.CarrierID = _materialID;
                 }
             }
 
 
-            foreach (var eqAsZone in StaEQPManagager.MainEQList.Where(eq => eq.EndPointOptions.IsRoleAsZone))
+            foreach (var eqAsZone in StaEQPManagager.MainEQList.Where(eq => eq.EndPointOptions.IsRoleAsZone && !eq.EndPointOptions.IsCSTIDReportable))
             {
                 var storedInfo = cargoIDStored.FirstOrDefault(st => st.StationTag + "" == eqAsZone.EndPointOptions.TagID + "");
                 if (storedInfo == null)
                     continue;
-                eqAsZone.PortStatus.CarrierID = storedInfo.MaterialID;
+
                 clsPortOfRack rackPort = allRackPorts.FirstOrDefault(rackPort => rackPort.IsRackPortIsEQ(out var eq) && eq.EndPointOptions.TagID == eqAsZone.EndPointOptions.TagID);
                 if (rackPort == null)
                     continue;
+
+                eqAsZone.PortStatus.CarrierID = storedInfo.MaterialID;
                 rackPort.CarrierID = storedInfo.MaterialID;
             }
 
