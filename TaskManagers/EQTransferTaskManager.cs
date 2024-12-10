@@ -43,7 +43,7 @@ namespace AGVSystem.TaskManagers
             }
             logger.Warn("Maintain Mode Start");
             //取消預約所有機台
-            StaEQPManagager.MainEQList.FindAll(eq => eq.CMD_Reserve_Low | eq.CMD_Reserve_Up).ForEach(eq =>
+            StaEQPManagager.MainEQList.ForEach(eq =>
             {
                 eq.CancelReserve();
             });
