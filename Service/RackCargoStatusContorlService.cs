@@ -20,59 +20,74 @@ namespace AGVSystem.Service
             _dbContext = factory.CreateScope().ServiceProvider.GetRequiredService<AGVSDbContext>();
         }
 
-        internal async Task RemoveRackCargoID(string wIPID, string portID, string triggerBy, bool isByAgvUnloadend)
+        internal async Task<(bool confirm, string removedCarrierID, string message)> RemoveRackCargoID(string wIPID, string portID, string triggerBy, bool isByAgvUnloadend)
         {
             if (TryGetPort(wIPID, portID, out clsPortOfRack port))
             {
                 int tag = port.TagNumbers.FirstOrDefault();
                 int slot = port.Properties.Row;
-                await RemoveRackCargoID(tag, slot, triggerBy, isByAgvUnloadend);
+                return await RemoveRackCargoID(tag, slot, triggerBy, isByAgvUnloadend);
 
             }
+            else
+                return (false, "", "Port Not Found");
 
 
         }
-        internal async Task<string> RemoveRackCargoID(int tagNumber, int slot, string triggerBy, bool isByAgvUnloadend)
+        internal async Task<(bool confirm, string removedCarrierID, string message)> RemoveRackCargoID(int tagNumber, int slot, string triggerBy, bool isByAgvUnloadend)
         {
             try
             {
                 string removedCarrierID = "";
                 await dbSemaphoreSlim.WaitAsync();
-                if (TryGetPort(tagNumber, slot, out clsPortOfRack port))
-                {
-                    removedCarrierID = port.CarrierID + "";
-                    port.VehicleUnLoadFromPortFlag = isByAgvUnloadend;
-                    port.CarrierID = string.Empty;
-                    _logger.Info($"WIP:{port.GetParentRack().EQName} Port-{port.Properties.ID} Cargo ID Removed. (Trigger By:{triggerBy})");
-                    if (TryGetStationStatus(tagNumber, slot, out clsStationStatus portStatus))
-                    {
-                        portStatus.MaterialID = string.Empty;
 
-                        if (port.IsRackPortIsEQ(out clsEQ eq) && eq.EndPointOptions.IsRoleAsZone)
-                            eq.PortStatus.CarrierID = "";
-                    }
+                if (!TryGetPort(tagNumber, slot, out clsPortOfRack port))
+                    return (false, "", "Port Not Found"); ;
+
+                bool isEqAsZonePortHasCSTIDReader = port.IsRackPortIsEQ(out clsEQ eq) && eq.EndPointOptions.IsRoleAsZone && eq.EndPointOptions.IsCSTIDReportable;
+                if (isEqAsZonePortHasCSTIDReader)
+                    return (false, eq.PortStatus.CarrierID, "該Port具有Carrier ID Reader 功能，無法修改帳料資訊");
+
+                removedCarrierID = port.CarrierID + "";
+
+                port.VehicleUnLoadFromPortFlag = isByAgvUnloadend;
+                port.CarrierID = string.Empty;
+
+
+                if (eq != null && eq.EndPointOptions.IsRoleAsZone)
+                    eq.PortStatus.CarrierID = string.Empty;
+
+                if (TryGetStationStatus(tagNumber, slot, out clsStationStatus portStatus))
+                {
+                    portStatus.MaterialID = string.Empty;
                     await _dbContext.SaveChangesAsync();
                 }
-                return removedCarrierID;
+                _logger.Info($"WIP:{port.GetParentRack().EQName} Port-{port.Properties.ID} Cargo ID Removed. (Trigger By:{triggerBy})");
+                return (true, removedCarrierID, "");
+
             }
             catch (Exception ex)
             {
                 _logger.Error(ex);
-                return "";
+                return (false, "", ex.Message);
+
             }
             finally
             {
                 dbSemaphoreSlim.Release();
             }
         }
-        internal async Task AddRackCargoID(string WIPID, string PortID, string cargoID, string triggerBy, bool isByAgvLoadend)
+        internal async Task<(bool confirm, string message)> AddRackCargoID(string WIPID, string PortID, string cargoID, string triggerBy, bool isByAgvLoadend)
         {
             if (TryGetPort(WIPID, PortID, out clsPortOfRack port))
             {
                 int tag = port.TagNumbers.FirstOrDefault();
                 int slot = port.Properties.Row;
-                await AddRackCargoID(tag, slot, cargoID, triggerBy, isByAgvLoadend);
+                return await AddRackCargoID(tag, slot, cargoID, triggerBy, isByAgvLoadend);
             }
+            else
+                return (false, "Port Not Found");
+
         }
         /// <summary>
         /// 
@@ -83,32 +98,35 @@ namespace AGVSystem.Service
         /// <param name="triggerBy"></param>
         /// <param name="isByAgvLoadend">是不是因為車子放貨到port修改帳籍</param>
         /// <returns></returns>
-        internal async Task AddRackCargoID(int tagNumber, int slot, string cargoID, string triggerBy, bool isByAgvLoadend)
+        internal async Task<(bool confirm, string message)> AddRackCargoID(int tagNumber, int slot, string cargoID, string triggerBy, bool isByAgvLoadend)
         {
             try
             {
                 await dbSemaphoreSlim.WaitAsync();
-                if (TryGetPort(tagNumber, slot, out clsPortOfRack port))
-                {
-                    port.VehicleLoadToPortFlag = isByAgvLoadend;
-                    port.CarrierID = cargoID;
-                    if (port.IsRackPortIsEQ(out clsEQ eq) && eq.EndPointOptions.IsRoleAsZone)
-                    {
-                        eq.PortStatus.VehicleLoadToPortFlag = isByAgvLoadend;
-                        eq.PortStatus.CarrierID = cargoID;
-                    }
-                    _logger.Info($"WIP:{port.GetParentRack().EQName} Port-{port.Properties.ID} Cargo ID Changed to {cargoID}(Trigger By:{triggerBy})");
+                if (!TryGetPort(tagNumber, slot, out clsPortOfRack port))
+                    return (false, "Port Not Found");
 
-                    if (TryGetStationStatus(tagNumber, slot, out clsStationStatus portStatus))
-                    {
-                        portStatus.MaterialID = cargoID;
-                    }
+                bool isEqAsZonePortHasCSTIDReader = port.IsRackPortIsEQ(out clsEQ eq) && eq.EndPointOptions.IsRoleAsZone && eq.EndPointOptions.IsCSTIDReportable;
+                if (isEqAsZonePortHasCSTIDReader)
+                    return (false, "該Port具有Carrier ID Reader 功能，無法修改帳料資訊");
+
+                if (eq != null && eq.EndPointOptions.IsRoleAsZone)
+                    eq.PortStatus.CarrierID = cargoID;
+                port.VehicleLoadToPortFlag = isByAgvLoadend;
+                port.CarrierID = cargoID;
+                if (TryGetStationStatus(tagNumber, slot, out clsStationStatus portStatus))
+                {
+                    portStatus.MaterialID = cargoID;
                     await _dbContext.SaveChangesAsync();
                 }
+                _logger.Info($"WIP:{port.GetParentRack().EQName} Port-{port.Properties.ID} Cargo ID Changed to {cargoID}(Trigger By:{triggerBy})");
+
+                return (true, "");
             }
             catch (Exception ex)
             {
                 _logger.Error(ex);
+                return (false, ex.Message);
             }
             finally
             {
