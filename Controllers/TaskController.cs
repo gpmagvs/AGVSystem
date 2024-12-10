@@ -14,6 +14,7 @@ using AGVSystemCommonNet6.MAP;
 using AGVSystemCommonNet6.Material;
 using AGVSystemCommonNet6.Microservices.MCS;
 using AGVSystemCommonNet6.Microservices.ResponseModel;
+using AGVSystemCommonNet6.Notify;
 using EquipmentManagment.Device;
 using EquipmentManagment.MainEquipment;
 using EquipmentManagment.Manager;
@@ -324,6 +325,7 @@ namespace AGVSystem.Controllers
                 return new clsAGVSTaskReportResponse() { confirm = false, message = $"[LoadUnloadTaskFinish] 找不到Tag為{tag}的設備" };
 
             EndPointDeviceAbstract endPoint = null;
+
             bool DelayReserveCancel = SystemModes.RunMode == AGVSystemCommonNet6.AGVDispatch.RunMode.RUN_MODE.RUN &&
                                                              SystemModes.TransferTaskMode == AGVSystemCommonNet6.AGVDispatch.RunMode.TRANSFER_MODE.LOCAL_AUTO &&
                                                              isCarryTask;
@@ -334,7 +336,13 @@ namespace AGVSystem.Controllers
                 {
                     _ = Task.Run(async () =>
                     {
+                        bool IsEQZoneAndHasReader = mainEQ.EndPointOptions.IsRoleAsZone && mainEQ.EndPointOptions.IsCSTIDReportable;
                         mainEQ.CancelToEQUpAndLow();
+                        if (IsEQZoneAndHasReader)
+                        {
+                            NotifyServiceHelper.WARNING($"設備 [{mainEQ.EQName}] 因屬於Zone且具有CST Reader功能，等待Reader讀取/清除完畢後取消Reserve訊號");
+                            await WaitEqCstReadDone(mainEQ, action);
+                        }
                         await Task.Delay(DelayReserveCancel ? 1000 : 1);
                         mainEQ.CancelReserve();
                     });
@@ -392,6 +400,32 @@ namespace AGVSystem.Controllers
                 //endPoint.UpdateCarrierInfo(tag,)
             }
         }
+
+        private async Task WaitEqCstReadDone(clsEQ mainEQ, ACTION_TYPE action)
+        {
+            CancellationTokenSource cancelWaitCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+
+            while (!IsReaderActionDone())
+            {
+                await Task.Delay(1000);
+                if (cancelWaitCts.IsCancellationRequested)
+                {
+                    NotifyServiceHelper.ERROR($"等待 {mainEQ.EQName}  CST Reader {(action == ACTION_TYPE.Load ? "讀取" : "清空")} 超時!");
+                    return;
+                }
+            }
+
+            bool IsReaderActionDone()
+            {
+                if (action == ACTION_TYPE.Load)
+                    return !string.IsNullOrEmpty(mainEQ.CSTIDReadValue);
+                else if (action == ACTION_TYPE.Unload)
+                    return string.IsNullOrEmpty(mainEQ.CSTIDReadValue);
+                else
+                    return true;
+            }
+        }
+
         [HttpGet("LDULDOrderStart")]
         public async Task<clsAGVSTaskReportResponse> LDULDOrderStart(int from, int FromSlot, int to, int ToSlot, ACTION_TYPE action, bool isSourceAGV)
         {
