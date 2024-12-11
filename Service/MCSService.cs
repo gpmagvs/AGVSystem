@@ -53,11 +53,6 @@ namespace AGVSystem.Service.MCS
                     {
                         TryGetRackPort(transportCommand.source, asDestine: false, transportCommand.carrierID, out clsPortOfRack? sourceRackPort);
 
-                        if (sourceRackPort != null)
-                        {
-                            if (!sourceRackPort.CargoExist && string.IsNullOrEmpty(sourceRackPort.CarrierID))
-                                throw new SourceIsEmptyException($"{sourceRackPort.GetLocID()} no cargo to transfer!");
-                        }
                         sourceTag = sourceRackPort == null ? -1 : sourceRackPort.TagNumbers.FirstOrDefault();
                         sourceSlot = sourceRackPort == null ? -1 : sourceRackPort.Layer;
 
@@ -159,7 +154,7 @@ namespace AGVSystem.Service.MCS
         private bool TryGetRackPort(string deviceID, bool asDestine, string carrierID, out clsPortOfRack? port)
         {
             port = null;
-            clsRack rack = ALLRack.FirstOrDefault(rack => rack.RackOption.DeviceID == deviceID && rack.PortsStatus.Any(port => asDestine ? true : port.CarrierID == carrierID));
+            clsRack rack = ALLRack.FirstOrDefault(rack => rack.RackOption.DeviceID == deviceID && rack.PortsStatus.Any(port => asDestine ? true : port.CarrierID == carrierID || (port.IsRackPortIsEQ(out clsEQ eq) && eq.CSTIDReadValue == carrierID)));
             if (rack == null)
                 return false;
 
@@ -190,7 +185,7 @@ namespace AGVSystem.Service.MCS
             {
                 //Rack 是來源地[取貨], 找有貨的Port且ID = carrierID
                 //有帳無料
-                port = rack.PortsStatus.FirstOrDefault(p => p.CarrierID == carrierID);
+                port = rack.PortsStatus.FirstOrDefault(p => p.CarrierID == carrierID || (p.IsRackPortIsEQ(out clsEQ eq) && eq.CSTIDReadValue == carrierID));
             }
             return port != null;
         }
