@@ -6,6 +6,7 @@ using AGVSystem.TaskManagers;
 using AGVSystemCommonNet6.AGVDispatch;
 using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.DATABASE;
+using AGVSystemCommonNet6.Microservices.AudioPlay;
 using AGVSystemCommonNet6.Microservices.MCS;
 using EquipmentManagment.Device;
 using EquipmentManagment.MainEquipment;
@@ -26,6 +27,8 @@ namespace AGVSystem.Service.MCS
         Dictionary<string, clsEQ> MainEQMap => StaEQPManagager.MainEQList.Where(eq => !eq.EndPointOptions.IsRoleAsZone)
                                                                          .ToDictionary(eq => eq.EndPointOptions.DeviceID, eq => eq);
 
+        public string MCSOrderRecievedAudioFilaPath => Path.Combine(Environment.CurrentDirectory, $"Audios/mcs_transfer_command_recieved.wav");
+
         public MCSService(AGVSDbContext dbContext)
         {
             this.dbContext = dbContext;
@@ -33,6 +36,7 @@ namespace AGVSystem.Service.MCS
 
         internal async Task HandleTransportCommand(clsTransportCommandDto transportCommand)
         {
+            AudioPlayService.PlaySpecficAudio(MCSOrderRecievedAudioFilaPath, 1.5);
             clsTaskDto order = null;
             try
             {

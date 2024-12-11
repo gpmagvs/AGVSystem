@@ -89,6 +89,9 @@
 		<None Update="agvs-system-config-folder-backup.cmd">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
+		<None Update="Audios\mcs_transfer_command_recieved.wav">
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
 		<None Update="Resources\AGVS_TrobleShooting.csv">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
