@@ -292,18 +292,26 @@ namespace AGVSystem.Models.EQDevices
             {
                 Task.Factory.StartNew(async () =>
                 {
-                    if (string.IsNullOrEmpty(eq.PortStatus.CarrierID))
+                    if (eq.EndPointOptions.IsCSTIDReportable)
                     {
-                        clsPortOfRack port = rack.PortsStatus.FirstOrDefault(port => port.TagNumbers.Contains(eq.EndPointOptions.TagID));
-                        string tunid = await AGVSConfigulator.GetTrayUnknownFlowID();
-                        eq.PortStatus.CarrierID = tunid;
-                        if (port != null)
+
+                    }
+                    else
+                    {
+                        if (string.IsNullOrEmpty(eq.PortStatus.CarrierID))
                         {
-                            port.CarrierID = tunid;
+                            clsPortOfRack port = rack.PortsStatus.FirstOrDefault(port => port.TagNumbers.Contains(eq.EndPointOptions.TagID));
+                            string tunid = await AGVSConfigulator.GetTrayUnknownFlowID();
+                            eq.PortStatus.CarrierID = tunid;
+                            if (port != null)
+                            {
+                                port.CarrierID = tunid;
+                            }
                         }
                     }
                     await ZoneCapacityChangeEventReport(rack);
                 });
+
             }
         }
 
