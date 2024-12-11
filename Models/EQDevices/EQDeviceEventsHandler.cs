@@ -14,6 +14,7 @@ using EquipmentManagment.MainEquipment;
 using EquipmentManagment.Manager;
 using EquipmentManagment.WIP;
 using NLog;
+using System;
 using System.Collections.Concurrent;
 using System.Linq;
 using System.Security.Policy;
@@ -135,13 +136,46 @@ namespace AGVSystem.Models.EQDevices
 
                     bool isAGVLoadUnloadExecuting = e.eq.CMD_Reserve_Up || e.eq.CMD_Reserve_Low;
 
-                    if (isNewInstall && !isAGVLoadUnloadExecuting) //TODO 如果 id移除是因為AGV放貨 不用報
+                    if (isNewInstall) //TODO 如果 id新增是因為AGV放貨 不用報
                     {
-                        await MCSCIMService.CarrierInstallCompletedReport(e.newValue, carrierLoc, zoneID, 1);
+
+                        if (!isAGVLoadUnloadExecuting) //手投
+                        {
+                            string installID = e.newValue;
+                            if (e.eq.IsCSTIDReadFail)
+                                installID = await AGVSConfigulator.GetTrayUnknownFlowID();
+                            e.eq.PortStatus.CarrierID = port.CarrierID = installID;
+                            e.eq.SetAGVAssignedCarrierID(installID);
+                            await MCSCIMService.CarrierInstallCompletedReport(installID, carrierLoc, zoneID, 1);
+                        }
+                        else //AGV放貨
+                        {
+                            string installID = e.newValue;
+                            if (e.eq.IsCSTIDReadFail)
+                            {
+                                await MCSCIMService.CarrierRemoveCompletedReport(e.eq.AGVAssignCarrierID, carrierLoc, zoneID, 1);
+                                installID = await AGVSConfigulator.GetTrayUnknownFlowID();
+                            }
+                            else if (e.eq.IsCSTIDReadMismatch)
+                            {
+                                await MCSCIMService.CarrierRemoveCompletedReport(e.eq.AGVAssignCarrierID, carrierLoc, zoneID, 1);
+                                installID = await AGVSConfigulator.GetTrayMissMatchFlowID();
+                            }
+                            e.eq.PortStatus.CarrierID = port.CarrierID = installID;
+                            await MCSCIMService.CarrierInstallCompletedReport(installID, carrierLoc, zoneID, 1);
+                            e.eq.SetAGVAssignedCarrierID(installID);
+                        }
                     }
-                    if (isRemoved && !isAGVLoadUnloadExecuting) //TODO 如果 id移除是因為AGV取貨 不用報
+                    if (isRemoved) //TODO 如果 id移除是因為AGV取貨 不用報
                     {
-                        await MCSCIMService.CarrierRemoveCompletedReport(e.oldValue, carrierLoc, zoneID, 1);
+                        if (isAGVLoadUnloadExecuting) //AGV取
+                        {
+                        }
+                        else //台車取
+                        {
+                            await MCSCIMService.CarrierRemoveCompletedReport(e.eq.AGVAssignCarrierID, carrierLoc, zoneID, 1);
+                        }
+                        e.eq.SetAGVAssignedCarrierID("");
 
                     }
                     if (isChanged)
@@ -160,7 +194,11 @@ namespace AGVSystem.Models.EQDevices
                         DecoupleCarrierIDHandler(carrierToRemove, repeatCarrierIDPorts, port);
                     }
 
-                    await ShelfStatusChangeEventReport(rack);
+                    await ShelfStatusChangeEventReport(rack).ContinueWith(async t =>
+                    {
+                        await Task.Delay(100);
+                        await ZoneCapacityChangeEventReport(rack);
+                    });
                 }
 
 
@@ -190,6 +228,9 @@ namespace AGVSystem.Models.EQDevices
                     if (rackPort.Properties.PortEnable == clsPortOfRack.Port_Enable.Disable)
                         return;
 
+                    if (rackPort.IsRackPortIsEQ(out clsEQ eq) && eq.EndPointOptions.IsCSTIDReportable)
+                        return;
+
                     string locID = rackPort.GetLocID();
                     string zoneID = rackPort.GetParentRack().RackOption.DeviceID;
                     List<clsPortOfRack> repeatCarrierIDPorts = new List<clsPortOfRack>();
@@ -212,7 +253,7 @@ namespace AGVSystem.Models.EQDevices
                         if (rackPort.CargoExist || rackPort.CarrierExist)
                         {
                             rackPort.CarrierID = await AGVSConfigulator.GetTrayUnknownFlowID();
-                            if (rackPort.IsRackPortIsEQ(out clsEQ eq) && eq.Port_Exist)
+                            if (rackPort.IsRackPortIsEQ(out eq) && eq.Port_Exist)
                             {
                                 eq.PortStatus.CarrierID = rackPort.CarrierID;
                             }
@@ -264,7 +305,7 @@ namespace AGVSystem.Models.EQDevices
                 string locID = _portToRemove.GetLocID();
                 string zoneID = _portToRemove.GetParentRack().RackOption.DeviceID;
                 string DUID = await AGVSConfigulator.GetDoubleTrayUnknownFlowID();
-
+                _portToRemove.VehicleLoadToPortFlag = _portToRemove.VehicleLoadToPortFlag = false;
                 _portToRemove.CarrierID = DUID;
 
                 if (_portToRemove.IsRackPortIsEQ(out clsEQ eqInPort))
@@ -308,8 +349,8 @@ namespace AGVSystem.Models.EQDevices
                                 port.CarrierID = tunid;
                             }
                         }
+                        await ZoneCapacityChangeEventReport(rack);
                     }
-                    await ZoneCapacityChangeEventReport(rack);
                 });
 
             }
@@ -317,7 +358,7 @@ namespace AGVSystem.Models.EQDevices
 
         private static void HandleEQPortCargoChangedToDisappear(object? sender, clsEQ eq)
         {
-            if (eq.IsEQInRack(out clsRack rack, out clsPortOfRack port) && eq.EndPointOptions.IsRoleAsZone)
+            if (eq.IsEQInRack(out clsRack rack, out clsPortOfRack port) && eq.EndPointOptions.IsRoleAsZone && !eq.EndPointOptions.IsCSTIDReportable)
                 ZoneCapacityChangeEventReport(rack);
         }
 

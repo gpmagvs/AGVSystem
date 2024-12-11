@@ -192,7 +192,7 @@ namespace AGVSystem.Controllers
 
 
         [HttpGet("LoadUnloadTaskStart")]
-        public async Task<IActionResult> LoadUnloadTaskStart(int tag, int slot, ACTION_TYPE action)
+        public async Task<IActionResult> LoadUnloadTaskStart(string? taskID, int tag, int slot, ACTION_TYPE action)
         {
 
             if (action != ACTION_TYPE.Load && action != ACTION_TYPE.Unload)
@@ -224,7 +224,9 @@ namespace AGVSystem.Controllers
                     clsEQ mainEQ = (clsEQ)result.obj;
                     try
                     {
-                        mainEQ.Reserve();
+                        string carrierIDAssigned = TryGetCarrierIDAssign(taskID);
+
+                        mainEQ.Reserve(carrierIDAssigned);
                         mainEQ.ToEQ();
 
                         if (action == ACTION_TYPE.Unload)
@@ -263,6 +265,13 @@ namespace AGVSystem.Controllers
                 {
                     return Ok(new clsAGVSTaskReportResponse() { confirm = false, message = "NOT EQ or RACK" });
                 }
+            }
+
+
+            string TryGetCarrierIDAssign(string taskID)
+            {
+                clsTaskDto executingOrder = DatabaseCaches.TaskCaches.InCompletedTasks.FirstOrDefault(order => order.TaskName == taskID);
+                return executingOrder != null ? executingOrder.Carrier_ID : "";
             }
         }
 
@@ -427,26 +436,25 @@ namespace AGVSystem.Controllers
         }
 
         [HttpGet("LDULDOrderStart")]
-        public async Task<clsAGVSTaskReportResponse> LDULDOrderStart(int from, int FromSlot, int to, int ToSlot, ACTION_TYPE action, bool isSourceAGV)
+        public async Task<clsAGVSTaskReportResponse> LDULDOrderStart(string? taskID, int from, int FromSlot, int to, int ToSlot, ACTION_TYPE action, bool isSourceAGV)
         {
             try
             {
-
                 if (action == ACTION_TYPE.Unload || action == ACTION_TYPE.LoadAndPark || action == ACTION_TYPE.Load)
                 {
-                    clsAGVSTaskReportResponse result = ((OkObjectResult)await LoadUnloadTaskStart(to, ToSlot, action)).Value as clsAGVSTaskReportResponse;
+                    clsAGVSTaskReportResponse result = ((OkObjectResult)await LoadUnloadTaskStart(taskID, to, ToSlot, action)).Value as clsAGVSTaskReportResponse;
                     return result;
                 }
                 else if (action == ACTION_TYPE.Carry)
                 {
                     if (!isSourceAGV)
                     {
-                        clsAGVSTaskReportResponse result_from = ((OkObjectResult)await LoadUnloadTaskStart(from, FromSlot, ACTION_TYPE.Unload)).Value as clsAGVSTaskReportResponse;
+                        clsAGVSTaskReportResponse result_from = ((OkObjectResult)await LoadUnloadTaskStart(taskID, from, FromSlot, ACTION_TYPE.Unload)).Value as clsAGVSTaskReportResponse;
                         if (result_from.confirm == false)
                             return result_from;
                     }
 
-                    clsAGVSTaskReportResponse result_to = ((OkObjectResult)await LoadUnloadTaskStart(to, ToSlot, ACTION_TYPE.Load)).Value as clsAGVSTaskReportResponse;
+                    clsAGVSTaskReportResponse result_to = ((OkObjectResult)await LoadUnloadTaskStart(taskID, to, ToSlot, ACTION_TYPE.Load)).Value as clsAGVSTaskReportResponse;
                     return result_to;
                 }
                 else
