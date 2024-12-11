@@ -3,6 +3,7 @@ using AGVSystem.Controllers;
 using AGVSystem.Models.EQDevices;
 using AGVSystem.Models.TaskAllocation.HotRun;
 using AGVSystem.TaskManagers;
+using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.AGVDispatch;
 using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.DATABASE;
@@ -13,6 +14,7 @@ using EquipmentManagment.MainEquipment;
 using EquipmentManagment.Manager;
 using EquipmentManagment.WIP;
 using Microsoft.EntityFrameworkCore;
+using NLog;
 using System.Linq;
 using static AGVSystemCommonNet6.Microservices.MCS.MCSCIMService;
 
@@ -23,10 +25,10 @@ namespace AGVSystem.Service.MCS
         List<clsPortOfRack> ALLRackPorts => StaEQPManagager.RacksList.SelectMany(rack => rack.PortsStatus).ToList();
         List<clsRack> ALLRack => StaEQPManagager.RacksList.ToList();
         AGVSDbContext dbContext;
-
+        internal static Logger logger = LogManager.GetCurrentClassLogger();
         Dictionary<string, clsEQ> MainEQMap => StaEQPManagager.MainEQList.Where(eq => !eq.EndPointOptions.IsRoleAsZone)
                                                                          .ToDictionary(eq => eq.EndPointOptions.DeviceID, eq => eq);
-
+        private static SemaphoreSlim TransportCommandHandleSemaphoreSlim = new SemaphoreSlim(1, 1);
         public string MCSOrderRecievedAudioFilaPath => Path.Combine(Environment.CurrentDirectory, $"Audios/mcs_transfer_command_recieved.wav");
 
         public MCSService(AGVSDbContext dbContext)
@@ -36,93 +38,111 @@ namespace AGVSystem.Service.MCS
 
         internal async Task HandleTransportCommand(clsTransportCommandDto transportCommand)
         {
-            AudioPlayService.PlaySpecficAudio(MCSOrderRecievedAudioFilaPath, 1.5);
-            clsTaskDto order = null;
             try
             {
-                bool _isSourceAGV = false;
-                string sourceAGVName = "";
-                int sourceTag = -1;
-                int destineTag = -1;
-                int sourceSlot = 0;
-                int destineSlot = 0;
-                _isSourceAGV = isSourceAGV(transportCommand.source, out sourceAGVName);
-                if (!_isSourceAGV)
-                {
-                    if (isDeviceIDBelongRack(transportCommand.source))
-                    {
-                        TryGetRackPort(transportCommand.source, asDestine: false, transportCommand.carrierID, out clsPortOfRack? sourceRackPort);
+                await TransportCommandHandleSemaphoreSlim.WaitAsync();
 
-                        sourceTag = sourceRackPort == null ? -1 : sourceRackPort.TagNumbers.FirstOrDefault();
-                        sourceSlot = sourceRackPort == null ? -1 : sourceRackPort.Layer;
+                logger.Info($"Start handle MCS transport command:{transportCommand.ToJson()}");
+                AudioPlayService.PlaySpecficAudio(MCSOrderRecievedAudioFilaPath, 1.5);
+                clsTaskDto order = null;
+                try
+                {
+                    bool _isSourceAGV = false;
+                    string sourceAGVName = "";
+                    int sourceTag = -1;
+                    int destineTag = -1;
+                    int sourceSlot = -1;
+                    int destineSlot = -1;
+                    _isSourceAGV = isSourceAGV(transportCommand.source, out sourceAGVName);
+                    if (!_isSourceAGV)
+                    {
+                        if (isDeviceIDBelongRack(transportCommand.source))
+                        {
+                            TryGetRackPort(transportCommand.source, asDestine: false, transportCommand.carrierID, out clsPortOfRack? sourceRackPort);
+
+                            sourceTag = sourceRackPort == null ? -1 : sourceRackPort.TagNumbers.FirstOrDefault();
+                            sourceSlot = sourceRackPort == null ? -1 : sourceRackPort.Layer;
+
+                        }
+                        else
+                        {
+                            TryGetEQPort(transportCommand.source, transportCommand.carrierID, isAsSource: true, out clsEQ soucePort);
+                            sourceTag = soucePort == null ? -1 : soucePort.EndPointOptions.TagID;
+                            sourceSlot = soucePort == null ? -1 : soucePort.EndPointOptions.Height;
+                        }
+                    }
+
+                    if (isDeviceIDBelongRack(transportCommand.dest))
+                    {
+                        TryGetRackPort(transportCommand.dest, asDestine: true, transportCommand.carrierID, out clsPortOfRack? destineackPort);
+                        destineTag = destineackPort == null ? -1 : destineackPort.TagNumbers.FirstOrDefault();
+                        destineSlot = destineackPort == null ? -1 : destineackPort.Layer;
 
                     }
                     else
                     {
-                        TryGetEQPort(transportCommand.source, transportCommand.carrierID, isAsSource: true, out clsEQ soucePort);
-                        sourceTag = soucePort == null ? -1 : soucePort.EndPointOptions.TagID;
+                        TryGetEQPort(transportCommand.dest, transportCommand.carrierID, isAsSource: false, out clsEQ destinePort);
+                        destineTag = destinePort == null ? -1 : destinePort.EndPointOptions.TagID;
+                        destineSlot = destinePort == null ? -1 : destinePort.EndPointOptions.Height;
                     }
+
+                    if (!_isSourceAGV && (sourceTag == -1 || destineTag == -1 || sourceSlot == -1 || destineSlot == -1))
+                    {
+                        Exception ex = new Exception("找不到來源或起點");
+                        logger.Error(ex);
+                        throw ex;
+                    }
+
+                    order = new AGVSystemCommonNet6.AGVDispatch.clsTaskDto
+                    {
+                        Action = AGVSystemCommonNet6.AGVDispatch.Messages.ACTION_TYPE.Carry,
+                        TaskName = transportCommand.commandID,
+                        Carrier_ID = transportCommand.carrierID,
+                        From_Station = _isSourceAGV ? sourceAGVName : sourceTag + "",
+                        To_Station = destineTag + "",
+                        From_Slot = sourceSlot + "",
+                        To_Slot = destineSlot + "",
+                        DesignatedAGVName = _isSourceAGV ? sourceAGVName : "",
+                        Priority = transportCommand.priority,
+                        RecieveTime = DateTime.Now,
+                        bypass_eq_status_check = false,
+                        isFromMCS = true,
+                        DispatcherName = "MCS"
+                    };
+                    logger.Info($"Created Order: From [Tag {sourceTag}_Slot {sourceSlot}] TO  [Tag {destineTag}_Slot {destineSlot}]:\r\n new clsTaskDto object created = {order.ToJson()}");
+
+                    (bool confirm, ALARMS alarm_code, string message, string message_en) = await TaskManager.AddTask(order, TaskManager.TASK_RECIEVE_SOURCE.REMOTE);
+
+                    if (!confirm)
+                    {
+                        logger.Warn($"Add Task Fail:[{alarm_code}] {message}-{message_en}");
+                        Exception ex = new AddOrderFailException(message, alarm_code, order);
+                        logger.Error(ex);
+                        throw ex;
+                    }
+                    else
+                        logger.Info($"Add Task Success! Task ID = {order.TaskName}");
+                }
+                catch (HasIDbutNoCargoException ex)
+                {
+                    logger.Error(ex);
+                    throw ex;
+                }
+                catch (ZoneIsFullException ex)
+                {
+                    logger.Error(ex);
+                    throw ex;
                 }
 
-                if (isDeviceIDBelongRack(transportCommand.dest))
-                {
-                    TryGetRackPort(transportCommand.dest, asDestine: true, transportCommand.carrierID, out clsPortOfRack? destineackPort);
-                    destineTag = destineackPort == null ? -1 : destineackPort.TagNumbers.FirstOrDefault();
-                    destineSlot = destineackPort == null ? -1 : destineackPort.Layer;
-
-                }
-                else
-                {
-                    TryGetEQPort(transportCommand.dest, transportCommand.carrierID, isAsSource: false, out clsEQ destinePort);
-                    destineTag = destinePort == null ? -1 : destinePort.EndPointOptions.TagID;
-                }
-
-                if (!_isSourceAGV && (sourceTag == -1 || destineTag == -1))
-                    throw new Exception("找不到來源或起點");
-
-                Console.WriteLine($"Created Order: From [Tag {sourceTag}_Slot {sourceSlot}] TO  [Tag {destineTag}_Slot {destineSlot}]");
-
-                order = new AGVSystemCommonNet6.AGVDispatch.clsTaskDto
-                {
-                    Action = AGVSystemCommonNet6.AGVDispatch.Messages.ACTION_TYPE.Carry,
-                    TaskName = transportCommand.commandID,
-                    Carrier_ID = transportCommand.carrierID,
-                    From_Station = _isSourceAGV ? sourceAGVName : sourceTag + "",
-                    To_Station = destineTag + "",
-                    From_Slot = sourceSlot + "",
-                    To_Slot = destineSlot + "",
-                    DesignatedAGVName = _isSourceAGV ? sourceAGVName : "",
-                    Priority = transportCommand.priority,
-                    RecieveTime = DateTime.Now,
-                    bypass_eq_status_check = false,
-                    isFromMCS = true,
-                    DispatcherName = "MCS"
-                };
-
-                (bool confirm, ALARMS alarm_code, string message, string message_en) = await TaskManager.AddTask(order, TaskManager.TASK_RECIEVE_SOURCE.REMOTE);
-
-                if (!confirm)
-                {
-                    throw new AddOrderFailException(message, alarm_code, order);
-                }
             }
-            catch (HasIDbutNoCargoException ex)
+            catch (Exception ex)
             {
                 throw ex;
             }
-            catch (ZoneIsFullException ex)
+            finally
             {
-                throw ex;
+                TransportCommandHandleSemaphoreSlim.Release();
             }
-        }
-
-
-        private TransportCommandDto GetCommandInfo(string commandID)
-        {
-            return new TransportCommandDto()
-            {
-                CommandID = commandID,
-            };
         }
 
         private bool TryGetEQPort(string deviceID, string carrierID, bool isAsSource, out clsEQ port)
@@ -146,7 +166,9 @@ namespace AGVSystem.Service.MCS
 
             if (port != null && isAsSource && port.PortStatus.CarrierID == carrierID && !port.Port_Exist)
             {
-                throw new HasIDbutNoCargoException($"[{port.EQName}] 無貨物");
+                var ex = new HasIDbutNoCargoException($"[{port.EQName}] 無貨物");
+                logger.Error(ex.Message);
+                throw ex;
             }
 
             return port != null;
@@ -178,7 +200,12 @@ namespace AGVSystem.Service.MCS
                 port = allPorts.Where(p => NotTransferStationPort(p) && !p.CargoExist && !HasOrderAssigned(p)).FirstOrDefault(); //TODO 可以更優化，找PORT的邏輯 , 比如從最低層開始找
 
                 if (port == null)
-                    throw new ZoneIsFullException($"zone-{deviceID} is full.");
+                {
+                    var ex = new ZoneIsFullException($"zone-{deviceID} is full.");
+                    logger.Error(ex.Message);
+                    throw ex;
+                }
+
 
             }
             else
@@ -256,6 +283,7 @@ namespace AGVSystem.Service.MCS
             public string dest { get; set; } = string.Empty;
             public ushort priority { get; set; } = 0;
             public string lotID { get; set; } = string.Empty;
+            public bool simulation { get; set; } = false;
         }
 
     }

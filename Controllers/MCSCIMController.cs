@@ -33,7 +33,7 @@ namespace AGVSystem.Controllers
             public string Message { get; set; } = "";
         }
 
-        Logger logger = LogManager.GetCurrentClassLogger();
+        Logger logger => MCSService.logger;
         readonly MCSService mcsService;
         readonly AGVSDbContext dbContext;
         IHubContext<FrontEndDataHub> fronendMsgHub;
@@ -87,6 +87,8 @@ namespace AGVSystem.Controllers
 
             try
             {
+                if (transportCommand.simulation)
+                    transportCommand.commandID = $"MSIM{DateTime.Now.ToString("yyyyMMddHHmmssff")}";
                 await SendMCSMessage($"[MCS命令-{transportCommand.commandID}] {transportCommand.source} to {transportCommand.dest}");
                 await mcsService.HandleTransportCommand(transportCommand);
                 result.Confirmed = true;
