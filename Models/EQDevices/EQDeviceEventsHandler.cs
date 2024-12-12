@@ -247,9 +247,10 @@ namespace AGVSystem.Models.EQDevices
                     }
                     if (isRemoved)
                     {
-                        if (!args.isUpdateByVehicleLoadUnload)//若carrier id 變化是因為 agv 放貨 (在席會先ON建一個TUN帳),則不用 報 install, 因為車子會報 transfer completed.
+                        if (!args.isUpdateByVehicleLoadUnload)
                             await _CarrierRemovedReport(locID, zoneID, args.oldValue);
 
+                        //若carrier id 移除了是因為 agv 取貨 
                         if (rackPort.CargoExist || rackPort.CarrierExist)
                         {
                             rackPort.CarrierID = await AGVSConfigulator.GetTrayUnknownFlowID();
@@ -263,6 +264,7 @@ namespace AGVSystem.Models.EQDevices
                     {
                         await _CarrierRemovedReport(locID, zoneID, args.oldValue).ContinueWith(async t =>
                         {
+                            await Task.Delay(500);
                             await _CarrierInstalledReport(locID, zoneID, args.newValue);
                         });
                     }
@@ -278,9 +280,9 @@ namespace AGVSystem.Models.EQDevices
                         await MCSCIMService.CarrierRemoveCompletedReport(carrierIDToRemove, _locID, _zoneID, 1);
                     }
 
+
+                    await Task.Delay(500);
                     await ShelfStatusChangeEventReport(rackPort.GetParentRack());
-
-
                     if (isRepeatdIDOfOtherPortInSystem)
                     {
                         string carrierToRemove = args.newValue;

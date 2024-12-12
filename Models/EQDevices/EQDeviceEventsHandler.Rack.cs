@@ -2,6 +2,7 @@
 using AGVSystem.Service;
 using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.Configuration;
+using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.Log;
 using AGVSystemCommonNet6.MAP;
 using AGVSystemCommonNet6.Microservices;
@@ -11,6 +12,7 @@ using AGVSystemCommonNet6.Notify;
 using EquipmentManagment.Device;
 using EquipmentManagment.MainEquipment;
 using EquipmentManagment.WIP;
+using Microsoft.EntityFrameworkCore.Storage;
 using System;
 using System.Diagnostics;
 
@@ -37,20 +39,31 @@ namespace AGVSystem.Models.EQDevices
 
         private static void HandlePortCargoChangedToExist(object? sender, clsPortOfRack port)
         {
+            string portLocID = port.GetLocID();
 
+            bool _isTransferActionRunning = DatabaseCaches.TaskCaches.RunningTasks.Any(order => order.destinePortID == (portLocID) && order.currentProgress == AGVSystemCommonNet6.AGVDispatch.VehicleMovementStage.WorkingAtDestination);
 
-
-            Task.Factory.StartNew(async () =>
+            if (_isTransferActionRunning)
             {
-                string locID = port.GetLocID();
-                string zoneID = port.GetParentRack().RackOption.DeviceID;
-                string tunid = await AGVSConfigulator.GetTrayUnknownFlowID();
+                NotifyServiceHelper.INFO($"{portLocID} Carrier Placed by AGV!");
+            }
+            else
+            {
+                Task.Factory.StartNew(async () =>
+                {
+                    string locID = port.GetLocID();
+                    string zoneID = port.GetParentRack().RackOption.DeviceID;
+                    string tunid = await AGVSConfigulator.GetTrayUnknownFlowID();
 
-                if (string.IsNullOrEmpty(port.CarrierID))
-                    UpdateCarrierID(tunid);
-                await ZoneCapacityChangeEventReport(port.GetParentRack());
-            });
+                    if (string.IsNullOrEmpty(port.CarrierID))
+                    {
+                        UpdateCarrierID(tunid);
+                        NotifyServiceHelper.INFO($"{portLocID}因非搬運過程但偵測到在席有貨,已生成未知帳-{tunid}");
+                    }
+                    await ZoneCapacityChangeEventReport(port.GetParentRack());
+                });
 
+            }
 
 
             void UpdateCarrierID(string tunid)
@@ -71,11 +84,12 @@ namespace AGVSystem.Models.EQDevices
         {
             Task.Factory.StartNew(async () =>
             {
-                bool hasCarrierID = string.IsNullOrEmpty(port.CarrierID);
+                bool hasCarrierID = !string.IsNullOrEmpty(port.CarrierID);
 
                 if (hasCarrierID)
                 {
                     //TODO 系統提示 [有帳無料]
+                    NotifyServiceHelper.WARNING($"[{port.GetParentRack().RackOption.Name} - Port:{port.PortNo}] 現在有帳無料!");
                 }
 
                 await ZoneCapacityChangeEventReport(port.GetParentRack());
