@@ -7,6 +7,7 @@ using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.AGVDispatch;
 using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.Alarm.SECS_Alarm_Code;
+using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.Microservices.AudioPlay;
 using AGVSystemCommonNet6.Microservices.MCS;
@@ -19,6 +20,7 @@ using NLog;
 using System.Linq;
 using static AGVSystemCommonNet6.Alarm.SECS_Alarm_Code.SECSHCACKAlarmCodeMapper;
 using static AGVSystemCommonNet6.Microservices.MCS.MCSCIMService;
+using static AGVSystemCommonNet6.Microservices.MCSCIM.SECSAlarmConfiguration;
 
 namespace AGVSystem.Service.MCS
 {
@@ -27,15 +29,17 @@ namespace AGVSystem.Service.MCS
         List<clsPortOfRack> ALLRackPorts => StaEQPManagager.RacksList.SelectMany(rack => rack.PortsStatus).ToList();
         List<clsRack> ALLRack => StaEQPManagager.RacksList.ToList();
         AGVSDbContext dbContext;
+        SECSConfigsService secsConfigService;
         internal static Logger logger = LogManager.GetCurrentClassLogger();
         Dictionary<string, clsEQ> MainEQMap => StaEQPManagager.MainEQList.Where(eq => !eq.EndPointOptions.IsRoleAsZone)
                                                                          .ToDictionary(eq => eq.EndPointOptions.DeviceID, eq => eq);
         private static SemaphoreSlim TransportCommandHandleSemaphoreSlim = new SemaphoreSlim(1, 1);
         public string MCSOrderRecievedAudioFilaPath => Path.Combine(Environment.CurrentDirectory, $"Audios/mcs_transfer_command_recieved.wav");
 
-        public MCSService(AGVSDbContext dbContext)
+        public MCSService(AGVSDbContext dbContext, SECSConfigsService secsConfigService)
         {
             this.dbContext = dbContext;
+            this.secsConfigService = secsConfigService;
         }
 
         internal async Task HandleTransportCommand(clsTransportCommandDto transportCommand)
@@ -118,8 +122,7 @@ namespace AGVSystem.Service.MCS
                     if (!confirm)
                     {
                         logger.Warn($"Add Task Fail:[{alarm_code}] {message}-{message_en}");
-                        SECSHCACKAlarmCodeMapper alarmCodeMapper = new AlarmCodeMapperBaseOnGPMSpec();
-                        //SECSHCACKAlarmCodeMapper alarmCodeMapper = new AlarmCodeMapperBaseOnGPMSpec();
+                        SECSHCACKAlarmCodeMapper alarmCodeMapper = secsConfigService.alarmConfiguration.Version == ALARM_TABLE_VERSION.GPM ? new AlarmCodeMapperBaseOnGPMSpec() : new AlarmCodeMapperBaseOnKGSSpec();
                         MapResult mapresult = alarmCodeMapper.GetHCACKReturnCode(alarm_code);
                         Exception ex = new AddOrderFailException(message, alarm_code, order, mapresult);
                         logger.Error(ex);

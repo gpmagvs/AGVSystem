@@ -7,6 +7,7 @@ using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.AGVDispatch;
 using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.Alarm.SECS_Alarm_Code.Enums;
+using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.Microservices.MCS;
 using AGVSystemCommonNet6.Microservices.ResponseModel;
@@ -38,11 +39,13 @@ namespace AGVSystem.Controllers
         readonly MCSService mcsService;
         readonly AGVSDbContext dbContext;
         IHubContext<FrontEndDataHub> fronendMsgHub;
-        public MCSCIMController(MCSService mcsService, IHubContext<FrontEndDataHub> fronendMsgHub, AGVSDbContext dbContext)
+        readonly SECSConfigsService secsConfigService;
+        public MCSCIMController(MCSService mcsService, IHubContext<FrontEndDataHub> fronendMsgHub, AGVSDbContext dbContext, SECSConfigsService secsConfigService)
         {
             this.dbContext = dbContext;
             this.mcsService = mcsService;
             this.fronendMsgHub = fronendMsgHub;
+            this.secsConfigService = secsConfigService;
         }
 
         [HttpPost("AlarmReporterSwitch")]
@@ -87,7 +90,8 @@ namespace AGVSystem.Controllers
             catch (ZoneIsFullException ex)
             {
                 result.Confirmed = false;
-                result.ResultCode = (byte)HCACK_RETURN_CODE_YELLOW.Cannot_Find_Seat_For_The_Carrier_In_Rack;
+                result.ResultCode = secsConfigService.alarmConfiguration.Version == AGVSystemCommonNet6.Microservices.MCSCIM.SECSAlarmConfiguration.ALARM_TABLE_VERSION.GPM ?
+                    (byte)HCACK_RETURN_CODE_GPM.ZoneIsFull : (byte)HCACK_RETURN_CODE_YELLOW.Cannot_Find_Seat_For_The_Carrier_In_Rack;
                 result.Message = ex.Message;
                 SendMCSMessage($"[MCS命令-{transportCommand.commandID} 已被系統拒絕] Result Code = {result.ResultCode} ,({ex.Message})", true);
             }

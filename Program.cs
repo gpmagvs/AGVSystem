@@ -271,6 +271,7 @@ public static class WebAppInitializer
         builder.Services.AddScoped<SystemStatusDbStoreService>();
         builder.Services.AddScoped<RackCargoStatusContorlService>();
         builder.Services.AddScoped<MCSService>();
+        builder.Services.AddScoped<SECSConfigsService>(service => new SECSConfigsService(Path.Combine(AGVSConfigulator.SysConfigs.CONFIGS_ROOT_FOLDER, "SECSConfigs")));
     }
 
     private static void ConfigureCors(WebApplicationBuilder builder)
