@@ -61,7 +61,7 @@ namespace AGVSystem.Controllers
             string message = "";
             try
             {
-                if (StaEQPEmulatorsManagager.TryGetEQEmuByName(EqName, out clsDIOModuleEmu? EQ))
+                if (StaEQPEmulatorsManagager.TryGetEQEmuByName(EqName, out EQEmulatorBase? EQ))
                 {
 
 
@@ -120,7 +120,7 @@ namespace AGVSystem.Controllers
             string message = "";
             try
             {
-                if (StaEQPEmulatorsManagager.TryGetEQEmuByName(EqName, out clsDIOModuleEmu? EQ))
+                if (StaEQPEmulatorsManagager.TryGetEQEmuByName(EqName, out EQEmulatorBase? EQ))
                 {
                     if (SignalName == "L_REQ")
                         confirm = EQ.SetHS_L_REQ(State);
@@ -154,7 +154,7 @@ namespace AGVSystem.Controllers
         [HttpGet("Emu/SetUpPose")]
         public async Task<IActionResult> SetUpPose(string EqName)
         {
-            if (StaEQPEmulatorsManagager.TryGetEQEmuByName(EqName, out clsDIOModuleEmu? EQ))
+            if (StaEQPEmulatorsManagager.TryGetEQEmuByName(EqName, out EQEmulatorBase? EQ))
             {
                 EQ.SetUpPose();
             }
@@ -163,7 +163,7 @@ namespace AGVSystem.Controllers
         [HttpGet("Emu/SetDownPose")]
         public async Task<IActionResult> SetDownPose(string EqName)
         {
-            if (StaEQPEmulatorsManagager.TryGetEQEmuByName(EqName, out clsDIOModuleEmu? EQ))
+            if (StaEQPEmulatorsManagager.TryGetEQEmuByName(EqName, out EQEmulatorBase? EQ))
             {
                 EQ.SetDownPose();
             }
@@ -172,7 +172,7 @@ namespace AGVSystem.Controllers
         [HttpGet("Emu/SetUnknownPose")]
         public async Task<IActionResult> SetUnknownPose(string EqName)
         {
-            if (StaEQPEmulatorsManagager.TryGetEQEmuByName(EqName, out clsDIOModuleEmu? EQ))
+            if (StaEQPEmulatorsManagager.TryGetEQEmuByName(EqName, out EQEmulatorBase? EQ))
             {
                 EQ.SetUnknownPose();
             }
@@ -183,7 +183,7 @@ namespace AGVSystem.Controllers
         [HttpGet("Emu/PortExist")]
         public async Task<IActionResult> SetPortExist(string EqName, int portExist)
         {
-            if (StaEQPEmulatorsManagager.TryGetEQEmuByName(EqName, out clsDIOModuleEmu? EQ))
+            if (StaEQPEmulatorsManagager.TryGetEQEmuByName(EqName, out EQEmulatorBase? EQ))
             {
                 EQ.SetPortExist(portExist);
             }
@@ -193,7 +193,7 @@ namespace AGVSystem.Controllers
         [HttpGet("Emu/SetPortType")]
         public async Task<IActionResult> SetPortType(string EqName, int PortType)
         {
-            if (StaEQPEmulatorsManagager.TryGetEQEmuByName(EqName, out clsDIOModuleEmu? EQ))
+            if (StaEQPEmulatorsManagager.TryGetEQEmuByName(EqName, out EQEmulatorBase? EQ))
             {
                 EQ.SetPortType(PortType);
                 var anotherPortEq = StaEQPEmulatorsManagager.EqEmulators.Values.FirstOrDefault(eq => eq.options.TagID == EQ.options.AnotherPortTagNumber);
@@ -207,7 +207,7 @@ namespace AGVSystem.Controllers
         [HttpPost("Emu/CSTReadID")]
         public async Task<IActionResult> SetCSTReadID(string EqName, string? CarrierID)
         {
-            if (StaEQPEmulatorsManagager.TryGetEQEmuByName(EqName, out clsDIOModuleEmu? EQ))
+            if (StaEQPEmulatorsManagager.TryGetEQEmuByName(EqName, out EQEmulatorBase? EQ))
             {
                 EQ.SetCarrierIDRead(CarrierID);
             }

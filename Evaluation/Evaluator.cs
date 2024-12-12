@@ -27,7 +27,7 @@ namespace AGVSystem.Evaluation
                     string _log = $"[{_keyFrame.Time}]";
                     foreach (var eqControl in _keyFrame.EQControls)
                     {
-                        EquipmentManagment.Emu.clsDIOModuleEmu eqEmulator = StaEQPEmulatorsManagager.GetEQEmuByName(eqControl.EQ.EndPointOptions.Name);
+                        EquipmentManagment.Emu.EQEmulatorBase eqEmulator = StaEQPEmulatorsManagager.GetEQEmuByName(eqControl.EQ.EndPointOptions.Name);
                         //Check the state of the EQControl
                         switch (eqControl.LdUldState)
                         {

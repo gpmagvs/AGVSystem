@@ -32,14 +32,14 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
 
         private void SetAllEQPNoAnyRequest()
         {
-            foreach (KeyValuePair<string, EquipmentManagment.Emu.clsDIOModuleEmu> item in StaEQPEmulatorsManagager.EqEmulators)
+            foreach (KeyValuePair<string, EquipmentManagment.Emu.EQEmulatorBase> item in StaEQPEmulatorsManagager.EqEmulators)
             {
                 item.Value.SetStatusBUSY();
             }
         }
         private void RaiseLoadRequests()
         {
-            IEnumerable<EquipmentManagment.Emu.clsDIOModuleEmu> alwaysLoadEqEmus = StaEQPEmulatorsManagager.EqEmulators.Values.Where(emu => script.RegularLoadSettings.LoadRequestAlwaysOnEqNames.Contains(emu.options.Name));
+            IEnumerable<EquipmentManagment.Emu.EQEmulatorBase> alwaysLoadEqEmus = StaEQPEmulatorsManagager.EqEmulators.Values.Where(emu => script.RegularLoadSettings.LoadRequestAlwaysOnEqNames.Contains(emu.options.Name));
             foreach (var item in alwaysLoadEqEmus)
             {
                 item.SetStatusLoadable();
