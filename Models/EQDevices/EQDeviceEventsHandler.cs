@@ -263,8 +263,6 @@ namespace AGVSystem.Models.EQDevices
                     {
                         await _CarrierRemovedReport(locID, zoneID, args.oldValue).ContinueWith(async t =>
                         {
-                            if (args.isUpdateByVehicleLoadUnload)
-                                return;//若carrier id 變化是因為 agv 放貨 (在席會先ON建一個TUN帳),則不用 報 install, 因為車子會報 transfer completed.
                             await _CarrierInstalledReport(locID, zoneID, args.newValue);
                         });
                     }
