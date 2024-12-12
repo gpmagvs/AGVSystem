@@ -44,35 +44,6 @@ namespace AGVSystem.Controllers
             this.fronendMsgHub = fronendMsgHub;
         }
 
-        [HttpPost("TaskReporter")]
-        public async Task<IActionResult> TaskReporter(object data)
-        {
-            clsAGVSTaskReportResponse response = new clsAGVSTaskReportResponse() { confirm = false, AlarmCode = AGVSystemCommonNet6.Alarm.ALARMS.SYSTEM_ERROR, message = "System Error" };
-            if (false) // 測試時不卡條件就true
-            {
-                (clsTaskDto task, int stat) obj_data = JsonConvert.DeserializeObject<(clsTaskDto, int)>(data.ToString());
-                (bool confirm, string message) v = await MCSCIMService.TaskReporter(obj_data);
-                response.confirm = v.confirm;
-                response.message = v.message;
-            }
-            else
-            {
-                if (SystemModes.HostOperMode == AGVSystemCommonNet6.AGVDispatch.RunMode.HOST_OPER_MODE.REMOTE)
-                {
-                    (clsTaskDto task, int stat) obj_data = JsonConvert.DeserializeObject<(clsTaskDto, int)>(data.ToString());
-                    (bool confirm, string message) v = await MCSCIMService.TaskReporter(obj_data);
-                    response.confirm = v.confirm;
-                    response.message = v.message;
-                }
-                else
-                {
-                    response.confirm = true;
-                    response.AlarmCode = AGVSystemCommonNet6.Alarm.ALARMS.NONE;
-                    response.message = $"SystemModes.HostOperMode={SystemModes.HostOperMode}";
-                }
-            }
-            return Ok(response);
-        }
         [HttpPost("AlarmReporterSwitch")]
         public async Task<IActionResult> AlarmReporterSwitch(bool truetoenable)
         {
