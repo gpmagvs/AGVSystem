@@ -1,5 +1,6 @@
 ﻿using AGVSystemCommonNet6.AGVDispatch;
 using AGVSystemCommonNet6.Alarm;
+using static AGVSystemCommonNet6.Alarm.SECS_Alarm_Code.SECSHCACKAlarmCodeMapper;
 
 namespace AGVSystem.Service.MCS
 {
@@ -17,11 +18,13 @@ namespace AGVSystem.Service.MCS
         public class AddOrderFailException : Exception
         {
             public readonly ALARMS alarmCode;
+            public readonly MapResult alarmCodeMap;
             public readonly clsTaskDto order;
-            public AddOrderFailException(string message, ALARMS alarmCode, clsTaskDto order) : base(message)
+            public AddOrderFailException(string message, ALARMS alarmCode, clsTaskDto order, MapResult mapResult) : base(message)
             {
                 this.alarmCode = alarmCode;
                 this.order = order;
+                this.alarmCodeMap = mapResult;
             }
         }
 

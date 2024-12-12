@@ -6,6 +6,7 @@ using AGVSystem.Service.MCS;
 using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.AGVDispatch;
 using AGVSystemCommonNet6.Alarm;
+using AGVSystemCommonNet6.Alarm.SECS_Alarm_Code.Enums;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.Microservices.MCS;
 using AGVSystemCommonNet6.Microservices.ResponseModel;
@@ -60,42 +61,42 @@ namespace AGVSystem.Controllers
             {
                 if (transportCommand.simulation)
                     transportCommand.commandID = $"MSIM{DateTime.Now.ToString("yyyyMMddHHmmssff")}";
-                await SendMCSMessage($"[MCS命令-{transportCommand.commandID}] {transportCommand.source} to {transportCommand.dest}");
                 await mcsService.HandleTransportCommand(transportCommand);
                 result.Confirmed = true;
                 result.ResultCode = 0;
+                await SendMCSMessage($"已接收 MCS命令-{transportCommand.commandID},Carrier ID= {transportCommand.carrierID},From {transportCommand.source} To {transportCommand.dest}");
             }
             catch (HasIDbutNoCargoException ex)
             {
                 result.Confirmed = false;
                 result.ResultCode = 6;
                 result.Message = ex.GetType().Name;
-                SendMCSMessage($"[MCS命令-{transportCommand.commandID} 已被系統拒絕] Result Code = 6 ({ex.Message})");
+                SendMCSMessage($"[MCS命令-{transportCommand.commandID} 已被系統拒絕] Result Code = 6 ({ex.Message})", true);
 
             }
             catch (AddOrderFailException ex)
             {
                 result.Confirmed = false;
-                result.ResultCode = (int)ex.alarmCode;
+                result.ResultCode = ex.alarmCodeMap.Code;
                 result.Message = ex.Message;
                 clsTaskDto order = ex.order;
-                SendMCSMessage($"[MCS命令-{transportCommand.commandID} 已被系統拒絕] Result Code = {(int)ex.alarmCode} ({ex.Message})");
+                SendMCSMessage($"[MCS命令-{transportCommand.commandID} 已被系統拒絕]:{ex.Message} , AGVS Result Code : {ex.alarmCode} | HCACK Return Code :{ex.alarmCodeMap.Code} ({ex.alarmCodeMap.Description})", true);
                 AddFailOrderToDatabase(ex, order);
 
             }
             catch (ZoneIsFullException ex)
             {
                 result.Confirmed = false;
-                result.ResultCode = 2;
+                result.ResultCode = (byte)HCACK_RETURN_CODE_YELLOW.Cannot_Find_Seat_For_The_Carrier_In_Rack;
                 result.Message = ex.Message;
-                SendMCSMessage($"[MCS命令-{transportCommand.commandID} 已被系統拒絕] Result Code = 2 ,({ex.Message})");
+                SendMCSMessage($"[MCS命令-{transportCommand.commandID} 已被系統拒絕] Result Code = {result.ResultCode} ,({ex.Message})", true);
             }
             catch (Exception ex)
             {
                 result.Confirmed = false;
                 result.ResultCode = 2;
                 result.Message = ex.Message;
-                SendMCSMessage($"[MCS命令-{transportCommand.commandID} 已被系統拒絕] Result Code = 2 ,({ex.Message})");
+                SendMCSMessage($"[MCS命令-{transportCommand.commandID} 已被系統拒絕] Result Code = 2 ,({ex.Message})", true);
             }
             return result;
         }
@@ -167,11 +168,7 @@ namespace AGVSystem.Controllers
         private async Task SendMCSMessage(string message, bool isException = false)
         {
             logger.Trace(message);
-            if (isException)
-                NotifyServiceHelper.WARNING(message);
-            else
-                NotifyServiceHelper.INFO(message);
-            await fronendMsgHub.Clients.All.SendAsync("MCSMessage", message);
+            await fronendMsgHub.Clients.All.SendAsync("MCSMessage", new { time = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss"), message = message, type = isException ? "error" : "success" });
         }
     }
 }

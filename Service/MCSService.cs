@@ -6,6 +6,7 @@ using AGVSystem.TaskManagers;
 using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.AGVDispatch;
 using AGVSystemCommonNet6.Alarm;
+using AGVSystemCommonNet6.Alarm.SECS_Alarm_Code;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.Microservices.AudioPlay;
 using AGVSystemCommonNet6.Microservices.MCS;
@@ -16,6 +17,7 @@ using EquipmentManagment.WIP;
 using Microsoft.EntityFrameworkCore;
 using NLog;
 using System.Linq;
+using static AGVSystemCommonNet6.Alarm.SECS_Alarm_Code.SECSHCACKAlarmCodeMapper;
 using static AGVSystemCommonNet6.Microservices.MCS.MCSCIMService;
 
 namespace AGVSystem.Service.MCS
@@ -116,7 +118,10 @@ namespace AGVSystem.Service.MCS
                     if (!confirm)
                     {
                         logger.Warn($"Add Task Fail:[{alarm_code}] {message}-{message_en}");
-                        Exception ex = new AddOrderFailException(message, alarm_code, order);
+                        SECSHCACKAlarmCodeMapper alarmCodeMapper = new AlarmCodeMapperBaseOnGPMSpec();
+                        //SECSHCACKAlarmCodeMapper alarmCodeMapper = new AlarmCodeMapperBaseOnGPMSpec();
+                        MapResult mapresult = alarmCodeMapper.GetHCACKReturnCode(alarm_code);
+                        Exception ex = new AddOrderFailException(message, alarm_code, order, mapresult);
                         logger.Error(ex);
                         throw ex;
                     }
