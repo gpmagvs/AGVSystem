@@ -319,39 +319,15 @@ namespace AGVSystem.TaskManagers
 
                 taskData.RecieveTime = DateTime.Now;
                 await Task.Delay(200);
+
+                //起點確認
+                (bool confirm, ALARMS alarmCode, string message, string message_en) GoalCheckReuslt = CheckGoalPortOrderAssignedState(taskData);
+                if (GoalCheckReuslt.confirm == false)
+                    return GoalCheckReuslt;
+
+
                 using (var db = new AGVSDatabase())
                 {
-
-                    //起點確認
-                    if (_order_action == ACTION_TYPE.Carry)
-                    {
-                        if (DatabaseCaches.TaskCaches.InCompletedTasks.Any(task => task.From_Station == taskData.From_Station && task.From_Slot == taskData.From_Slot))
-                        {
-                            AlarmManagerCenter.AddAlarmAsync(ALARMS.Destine_Eq_Already_Has_Task_To_Excute, ALARM_SOURCE.AGVS);
-                            return (false, ALARMS.Destine_Eq_Already_Has_Task_To_Excute, $"來源設備已有搬運任務", "The source equipment already has a carry task.");
-                        }
-                    }
-
-                    //終點確認
-                    if (DatabaseCaches.TaskCaches.InCompletedTasks.Any(task => task.To_Station == taskData.To_Station && task.To_Slot == taskData.To_Slot))
-                    {
-                        if (_order_action == ACTION_TYPE.None)
-                        {
-                            AlarmManagerCenter.AddAlarmAsync(ALARMS.Destine_Normal_Station_Has_Task_To_Reach, ALARM_SOURCE.AGVS, level: ALARM_LEVEL.WARNING);
-                            return (false, ALARMS.Destine_Normal_Station_Has_Task_To_Reach, $"站點-{taskData.To_Station} 已存在移動任務", $"Station {taskData.To_Station} already has a move task");
-                        }
-                        else if (_order_action == ACTION_TYPE.Park || _order_action == ACTION_TYPE.LoadAndPark)
-                        {
-                            AlarmManagerCenter.AddAlarmAsync(ALARMS.Destine_Eq_Station_Has_Task_To_Park, ALARM_SOURCE.AGVS);
-                            return (false, ALARMS.Destine_Eq_Station_Has_Task_To_Park, $"目的地設備已有停車任務", "The destination equipment already has a parking task.");
-                        }
-                        else
-                        {
-                            AlarmManagerCenter.AddAlarmAsync(ALARMS.Destine_Eq_Already_Has_Task_To_Excute, ALARM_SOURCE.AGVS);
-                            return (false, ALARMS.Destine_Eq_Already_Has_Task_To_Excute, $"目的地設備已有搬運任務", "The destination equipment already has a carry task.");
-                        }
-
-                    }
                     if (source == TASK_RECIEVE_SOURCE.LOCAL_Auto || source == TASK_RECIEVE_SOURCE.Local_MANUAL)
                     {
                         if (_order_action == ACTION_TYPE.Unload)
@@ -402,6 +378,38 @@ namespace AGVSystem.TaskManagers
                 AlarmManagerCenter.AddAlarmAsync(ALARMS.Task_Add_To_Database_Fail, ALARM_SOURCE.AGVS);
                 return new(false, ALARMS.Task_Add_To_Database_Fail, ex.Message, ex.Message);
             }
+        }
+
+        private static (bool confirm, ALARMS alarmCode, string message, string message_en) CheckGoalPortOrderAssignedState(clsTaskDto taskData)
+        {
+            ACTION_TYPE _order_action = taskData.Action;
+            List<string> currentNotUsableGoalKeyList = new List<string>(DatabaseCaches.TaskCaches.InCompletedTasks.Count);
+            foreach (var task in DatabaseCaches.TaskCaches.InCompletedTasks)
+            {
+                currentNotUsableGoalKeyList.Add($"{task.To_Station}_{task.To_Slot}");
+                if (task.currentProgress == VehicleMovementStage.Not_Start_Yet || task.currentProgress == VehicleMovementStage.Traveling_To_Source || task.currentProgress == VehicleMovementStage.WorkingAtSource)
+                    currentNotUsableGoalKeyList.Add($"{task.From_Station}_{task.From_Slot}");
+            }
+
+            //來源確認
+
+            if (_order_action == ACTION_TYPE.Carry)
+            {
+                string sourceKey = $"{taskData.From_Station}_{taskData.From_Slot}";
+                if (currentNotUsableGoalKeyList.Contains(sourceKey))
+                {
+                    AlarmManagerCenter.AddAlarmAsync(ALARMS.Destine_Eq_Already_Has_Task_To_Excute, ALARM_SOURCE.AGVS);
+                    return (false, ALARMS.Destine_Eq_Already_Has_Task_To_Excute, $"來源設備已有搬運任務", "The source equipment already has a carry task.");
+                }
+            }
+            //終點確認
+            string destineKey = $"{taskData.To_Station}_{taskData.To_Slot}";
+            if (currentNotUsableGoalKeyList.Contains(destineKey))
+            {
+                AlarmManagerCenter.AddAlarmAsync(ALARMS.Destine_Eq_Already_Has_Task_To_Excute, ALARM_SOURCE.AGVS);
+                return (false, ALARMS.Destine_Eq_Already_Has_Task_To_Excute, $"目的地已被指派任務", "The goal already has assigned any task.");
+            }
+            return (true, ALARMS.NONE, "", "");
         }
 
         private static async Task SetUnknowCarrierID(clsTaskDto taskData)
