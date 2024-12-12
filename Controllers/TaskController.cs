@@ -192,30 +192,41 @@ namespace AGVSystem.Controllers
 
 
         [HttpGet("LoadUnloadTaskStart")]
-        public async Task<IActionResult> LoadUnloadTaskStart(string? taskID, int tag, int slot, ACTION_TYPE action)
+        public async Task<clsAGVSTaskReportResponse> LoadUnloadTaskStart(string? taskID, int tag, int slot, ACTION_TYPE action)
         {
+            try
+            {
+                return await CheckStatus(taskID, tag, slot, action);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
 
+        private async Task<clsAGVSTaskReportResponse> CheckStatus(string? taskID, int tag, int slot, ACTION_TYPE action)
+        {
             if (action != ACTION_TYPE.Load && action != ACTION_TYPE.Unload)
-                return Ok(new clsAGVSTaskReportResponse() { confirm = false, message = "Action should equal Load or Unlaod" });
+                return (new clsAGVSTaskReportResponse() { confirm = false, message = "Action should equal Load or Unlaod" });
 
 
             AGVSystemCommonNet6.MAP.MapPoint MapPoint = AGVSMapManager.GetMapPointByTag(tag);
             if (MapPoint == null)
-                return Ok(new clsAGVSTaskReportResponse() { confirm = false, AlarmCode = ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, message = $"站點TAG-{tag} 不存在於當前地圖" });
+                return (new clsAGVSTaskReportResponse() { confirm = false, AlarmCode = ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, message = $"站點TAG-{tag} 不存在於當前地圖" });
 
             if (!MapPoint.Enable)
-                return Ok(new clsAGVSTaskReportResponse() { confirm = false, AlarmCode = ALARMS.Station_Disabled, message = $"站點TAG-{tag} 未啟用，無法指派任務" });
+                return (new clsAGVSTaskReportResponse() { confirm = false, AlarmCode = ALARMS.Station_Disabled, message = $"站點TAG-{tag} 未啟用，無法指派任務" });
 
             if (action == ACTION_TYPE.Load && (MapPoint.StationType == MapPoint.STATION_TYPE.Buffer_EQ || MapPoint.StationType == MapPoint.STATION_TYPE.Buffer) && slot == -2)
             {
                 clsPortOfRack port = EQTransferTaskManager.get_empyt_port_of_rack(tag);
-                return Ok(new clsAGVSTaskReportResponse() { confirm = true, message = $"Get empty port OK", ReturnObj = port.Layer });
+                return (new clsAGVSTaskReportResponse() { confirm = true, message = $"Get empty port OK", ReturnObj = port.Layer });
             }
 
             (bool confirm, ALARMS alarm_code, string message, string message_en, object obj, Type objtype) result = EQTransferTaskManager.CheckLoadUnloadStation(tag, slot, action, out DeviceIDInfo deviceIDInfo, bypasseqandrackckeck: false);
             if (result.confirm == false)
             {
-                return Ok(new clsAGVSTaskReportResponse() { confirm = false, message = $"{result.message}", message_en = result.message_en, AlarmCode = result.alarm_code });
+                return (new clsAGVSTaskReportResponse() { confirm = false, message = $"{result.message}", message_en = result.message_en, AlarmCode = result.alarm_code });
             }
             else
             {
@@ -252,18 +263,18 @@ namespace AGVSystem.Controllers
                     }
                     catch (Exception ex)
                     {
-                        return Ok(new clsAGVSTaskReportResponse() { confirm = false, message = $"{mainEQ.EQName} ToEQUp DO ON的過程中發生錯誤:{ex.Message}" });
+                        return (new clsAGVSTaskReportResponse() { confirm = false, message = $"{mainEQ.EQName} ToEQUp DO ON的過程中發生錯誤:{ex.Message}" });
                     }
                     logger.Info($"Get AGV LD.ULD Task Start At Tag {tag}-Action={action}. TO Eq Up DO ON");
-                    return Ok(new clsAGVSTaskReportResponse() { confirm = true, message = $"{mainEQ.EQName} ToEQUp DO ON" });
+                    return (new clsAGVSTaskReportResponse() { confirm = true, message = $"{mainEQ.EQName} ToEQUp DO ON" });
                 }
                 else if (result.objtype == typeof(clsPortOfRack))
                 {
-                    return Ok(new clsAGVSTaskReportResponse() { confirm = true, message = result.message });
+                    return (new clsAGVSTaskReportResponse() { confirm = true, message = result.message });
                 }
                 else
                 {
-                    return Ok(new clsAGVSTaskReportResponse() { confirm = false, message = "NOT EQ or RACK" });
+                    return (new clsAGVSTaskReportResponse() { confirm = false, message = "NOT EQ or RACK" });
                 }
             }
 
@@ -442,19 +453,18 @@ namespace AGVSystem.Controllers
             {
                 if (action == ACTION_TYPE.Unload || action == ACTION_TYPE.LoadAndPark || action == ACTION_TYPE.Load)
                 {
-                    clsAGVSTaskReportResponse result = ((OkObjectResult)await LoadUnloadTaskStart(taskID, to, ToSlot, action)).Value as clsAGVSTaskReportResponse;
+                    clsAGVSTaskReportResponse result = await CheckStatus(taskID, to, ToSlot, action);
                     return result;
                 }
                 else if (action == ACTION_TYPE.Carry)
                 {
                     if (!isSourceAGV)
                     {
-                        clsAGVSTaskReportResponse result_from = ((OkObjectResult)await LoadUnloadTaskStart(taskID, from, FromSlot, ACTION_TYPE.Unload)).Value as clsAGVSTaskReportResponse;
-                        if (result_from.confirm == false)
-                            return result_from;
+                        clsAGVSTaskReportResponse result_from = await CheckStatus(taskID, from, FromSlot, ACTION_TYPE.Unload);
+                        return result_from;
                     }
 
-                    clsAGVSTaskReportResponse result_to = ((OkObjectResult)await LoadUnloadTaskStart(taskID, to, ToSlot, ACTION_TYPE.Load)).Value as clsAGVSTaskReportResponse;
+                    clsAGVSTaskReportResponse result_to = await CheckStatus(taskID, to, ToSlot, ACTION_TYPE.Load);
                     return result_to;
                 }
                 else
