@@ -3,13 +3,13 @@ using AGVSystem.Service;
 using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.AGVDispatch.RunMode;
 using AGVSystemCommonNet6.Configuration;
-using AGVSystemCommonNet6.Log;
 using AGVSystemCommonNet6.Microservices.MCS;
 using AGVSystemCommonNet6.Microservices.VMS;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using NLog;
 using System.Reflection;
 using System.Text;
 
@@ -20,6 +20,7 @@ namespace AGVSystem.Controllers
     public class SystemController : ControllerBase
     {
         SystemStatusDbStoreService _SystemStatusDbStoreService;
+        Logger logger = LogManager.GetCurrentClassLogger();
         public SystemController(SystemStatusDbStoreService _SystemStatusDbStoreService)
         {
             this._SystemStatusDbStoreService = _SystemStatusDbStoreService;
@@ -56,7 +57,7 @@ namespace AGVSystem.Controllers
                 SystemModes.RunMode = _previousMode;
                 return Ok(new { confirm = false, message = message });
             }
-            LOG.INFO($"[Run Mode Switch] 等待VMS回覆 {mode}模式請求");
+            logger.Info($"[Run Mode Switch] 等待VMS回覆 {mode}模式請求");
             (bool confirm, string message) vms_response = await VMSSerivces.RunModeSwitch(mode, forecing_change);
             OkObjectResult oko = Ok(new { confirm = false, message = "" });
             if (vms_response.confirm == false)
@@ -127,7 +128,7 @@ namespace AGVSystem.Controllers
             }
             catch (Exception ex)
             {
-                LOG.WARN(ex.Message);
+                logger.Error(ex.Message);
             }
             var website_config = new
             {

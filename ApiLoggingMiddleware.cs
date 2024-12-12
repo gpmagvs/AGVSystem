@@ -1,10 +1,11 @@
-﻿using System.Text;
+﻿using NLog;
+using System.Text;
 
 namespace AGVSystem
 {
     public class ApiLoggingMiddleware
     {
-        private readonly ILogger<ApiLoggingMiddleware> _logger;
+        private readonly Logger _logger;
 
         private readonly RequestDelegate _next;
 
@@ -18,9 +19,9 @@ namespace AGVSystem
         };
         private List<string> contentTypesToIgnore = new() { "image", "text/css", "text/html", "application/javascript", "application/zip", "application/x-zip-compressed", "font" };
 
-        public ApiLoggingMiddleware(ILogger<ApiLoggingMiddleware> logger, RequestDelegate next)
+        public ApiLoggingMiddleware(RequestDelegate next)
         {
-            _logger = logger;
+            _logger = LogManager.GetCurrentClassLogger();
             _next = next;
         }
 
@@ -53,8 +54,8 @@ namespace AGVSystem
             }
 
             // 紀錄資訊
-            _logger.LogInformation("Request: \n{Request}", request);
-            _logger.LogInformation("Response: \n{Response}", response);
+            _logger.Info("Request: \n{Request}", request);
+            _logger.Info("Response: \n{Response}", response);
 
             // 將原始回應內容寫回
             await responseBody.CopyToAsync(originalBodyStream);
