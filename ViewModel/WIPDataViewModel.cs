@@ -5,6 +5,7 @@ namespace AGVSystem.ViewModel
     public class WIPDataViewModel
     {
         public string WIPName { get; set; } = "WEE~~";
+        public string DeviceID { get; set; } = "";
         public int Columns { get; set; } = 1;
         public int Rows { get; set; } = 1;
         public bool IsOvenAsRacks { get; set; } = false;

@@ -27,11 +27,14 @@ namespace AGVSystem.Service
 
         private List<ViewModel.WIPDataViewModel> GetWIPDataViewModels()
         {
+            Random random = new Random(DateTime.Now.Second);
+
             return StaEQPManagager.RacksList.Select(wip => new ViewModel.WIPDataViewModel()
             {
                 WIPName = wip.EQName,
                 Columns = wip.RackOption.Columns,
                 Rows = wip.RackOption.Rows,
+                DeviceID = string.IsNullOrEmpty(wip.RackOption.DeviceID) ? $"SYS-{random.NextInt64(1, 12222222)}" : wip.RackOption.DeviceID,
                 Ports = wip.RackOption.MaterialInfoFromEquipment ? wip.GetPortStatusWithEqInfo().ToList() : wip.PortsStatus.ToList(),
                 ColumnsTagMap = wip.RackOption.ColumnTagMap,
                 IsOvenAsRacks = wip.RackOption.MaterialInfoFromEquipment
