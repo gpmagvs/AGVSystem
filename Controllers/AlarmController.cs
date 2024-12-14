@@ -21,6 +21,12 @@ namespace AGVSystem.Controllers
             _dbContext = dbContext;
         }
 
+        [HttpGet]
+        public async Task<List<clsAlarmDto>> Get()
+        {
+            return DatabaseCaches.Alarms.UnCheckedAlarms;
+        }
+
         [HttpGet("SystemAlarmReset")]
         public async Task<IActionResult> SystemAlarmReset()
         {

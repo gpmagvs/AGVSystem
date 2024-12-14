@@ -29,8 +29,7 @@ namespace AGVSystem.Service
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             HotRunScriptManager.FrontendHub = this._hubContext;
-
-
+            DatabaseCaches.Alarms.OnUnCheckedAlarmsChanged += HandleUnCheckedAlarmsChanged;
             _ = Task.Run(async () =>
              {
                  bool _foring = false;
@@ -52,8 +51,8 @@ namespace AGVSystem.Service
                              VMSAliveCheck = VMSSerivces.IsAlive,
                              AGVLocationUpload = AGVSMapManager.AGVUploadCoordinationStore,
                              HotRun = HotRunScriptManager.HotRunScripts,
-                             UncheckedAlarm = AlarmManagerCenter.uncheckedAlarms,
                              TaskData = new { incompleteds = incompleted_tasks, completeds = completed_tasks }
+                             //UncheckedAlarm = AlarmManagerCenter.uncheckedAlarms,
                          };
                          //use json string to compare the data is changed or not                        
                          _hubContext.Clients.All.SendAsync("ReceiveData", "VMS", data);
@@ -68,6 +67,14 @@ namespace AGVSystem.Service
                  }
              });
 
+        }
+
+        private void HandleUnCheckedAlarmsChanged(object? sender, List<clsAlarmDto> e)
+        {
+            Task.Factory.StartNew(async () =>
+            {
+                await _hubContext.Clients.All.SendAsync("UnCheckedAlarms", e);
+            });
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
