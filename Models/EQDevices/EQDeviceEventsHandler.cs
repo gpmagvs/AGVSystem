@@ -13,6 +13,7 @@ using EquipmentManagment.Device;
 using EquipmentManagment.MainEquipment;
 using EquipmentManagment.Manager;
 using EquipmentManagment.WIP;
+using Microsoft.AspNetCore.SignalR;
 using NLog;
 using System;
 using System.Collections.Concurrent;
@@ -70,7 +71,10 @@ namespace AGVSystem.Models.EQDevices
         private static bool _disableEntryPointWhenEQPartsReplacing => AGVSConfigulator.SysConfigs.EQManagementConfigs.DisableEntryPointWhenEQPartsReplacing;
         private static Logger _logger = LogManager.GetCurrentClassLogger();
         private static SemaphoreSlim _EqUnlaodStateDBAccessSemaphorseSlim = new SemaphoreSlim(1, 1);
-
+        internal static IHubContext<FrontEndDataHub> HubContext { get; set; }
+        internal static RackService rackService;
+        private static SemaphoreSlim _RackDataBrocastSemaphoreSlim = new SemaphoreSlim(1, 1);
+        private static SemaphoreSlim _EQDataBrocastSemaphoreSlim = new SemaphoreSlim(1, 1);
 
         private static ConcurrentDictionary<int, EqUnloadState> _EqUnloadStateRecordTempStore = new ConcurrentDictionary<int, EqUnloadState>();
 
@@ -114,6 +118,7 @@ namespace AGVSystem.Models.EQDevices
 
         private static void ClsEQ_OnCSTReaderIDChanged(object? sender, (clsEQ eq, string newValue, string oldValue) e)
         {
+            BrocastRackData();
             if (!e.eq.EndPointOptions.IsRoleAsZone)
                 return;
             Task.Factory.StartNew(async () =>
@@ -217,6 +222,7 @@ namespace AGVSystem.Models.EQDevices
         {
             Task.Factory.StartNew(async () =>
             {
+                BrocastRackData();
                 if (sender == null)
                     return;
                 try
@@ -329,6 +335,7 @@ namespace AGVSystem.Models.EQDevices
 
         private static void HandleEQPortCargoChangedToExist(object? sender, clsEQ eq)
         {
+            BrocastRackData();
             if (eq.IsEQInRack(out clsRack rack, out clsPortOfRack port) && eq.EndPointOptions.IsRoleAsZone)
             {
                 Task.Factory.StartNew(async () =>
@@ -358,6 +365,7 @@ namespace AGVSystem.Models.EQDevices
 
         private static void HandleEQPortCargoChangedToDisappear(object? sender, clsEQ eq)
         {
+            BrocastRackData();
             if (eq.IsEQInRack(out clsRack rack, out clsPortOfRack port) && eq.EndPointOptions.IsRoleAsZone && !eq.EndPointOptions.IsCSTIDReportable)
                 ZoneCapacityChangeEventReport(rack);
         }
@@ -444,6 +452,7 @@ namespace AGVSystem.Models.EQDevices
 
         internal static async void HandleEQIOStateChanged(object? sender, EndPointDeviceAbstract.IOChangedEventArgs device)
         {
+            BrocastEQkData();
             _logger.Trace($"[{device.Device.EQName}] IO-{device.IOName} Changed To {(device.IOState ? "1" : "0")}", device.Device.EQName);
         }
 

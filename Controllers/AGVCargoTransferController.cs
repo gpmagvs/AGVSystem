@@ -11,9 +11,9 @@ namespace AGVSystem.Controllers
     [ApiController]
     public class AGVCargoTransferController : ControllerBase
     {
-        private readonly RackCargoStatusContorlService _rackCargoStatusContorlService;
+        private readonly RackService _rackCargoStatusContorlService;
         private readonly AGVSDbContext dbContext;
-        public AGVCargoTransferController(RackCargoStatusContorlService rackCargoStatusContorlService, AGVSDbContext dbContext)
+        public AGVCargoTransferController(RackService rackCargoStatusContorlService, AGVSDbContext dbContext)
         {
             _rackCargoStatusContorlService = rackCargoStatusContorlService;
             this.dbContext = dbContext;

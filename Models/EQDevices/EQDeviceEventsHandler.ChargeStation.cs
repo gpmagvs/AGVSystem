@@ -11,6 +11,7 @@ using AGVSystemCommonNet6.AGVDispatch;
 using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.Microservices.AudioPlay;
 using EquipmentManagment.MainEquipment;
+using Microsoft.AspNetCore.SignalR;
 namespace AGVSystem.Models.EQDevices
 {
     public partial class EQDeviceEventsHandler
@@ -19,6 +20,7 @@ namespace AGVSystem.Models.EQDevices
         private static string ChargerSmokeDetectedAudioFilePath => Path.Combine(AGVSConfigulator.ConfigsFilesFolder, "Sounds/charger-smoke-detected-alarm.mp3");
         private static string ChargerAirErrorAudioFilePath => Path.Combine(AGVSConfigulator.ConfigsFilesFolder, "Sounds/charger-air-error-alarm.mp3");
         private static string ChargerEMOAudioFilePath => Path.Combine(AGVSConfigulator.ConfigsFilesFolder, "Sounds/charger-emo-alarm.mp3");
+
 
         /// <summary>
         /// 處理充電站偵測到電池未連接的事件

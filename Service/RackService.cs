@@ -10,15 +10,32 @@ using NLog;
 
 namespace AGVSystem.Service
 {
-    public class RackCargoStatusContorlService
+    public class RackService
     {
         private static SemaphoreSlim dbSemaphoreSlim = new SemaphoreSlim(1, 1);
         private readonly AGVSDbContext _dbContext;
         private Logger _logger = LogManager.GetCurrentClassLogger();
-        public RackCargoStatusContorlService(IServiceScopeFactory factory)
+        public RackService(IServiceScopeFactory factory)
         {
             _dbContext = factory.CreateScope().ServiceProvider.GetRequiredService<AGVSDbContext>();
         }
+
+        internal List<ViewModel.WIPDataViewModel> GetWIPDataViewModels()
+        {
+            Random random = new Random(DateTime.Now.Second);
+
+            return StaEQPManagager.RacksList.Select(wip => new ViewModel.WIPDataViewModel()
+            {
+                WIPName = wip.EQName,
+                Columns = wip.RackOption.Columns,
+                Rows = wip.RackOption.Rows,
+                DeviceID = string.IsNullOrEmpty(wip.RackOption.DeviceID) ? $"SYS-{random.NextInt64(1, 12222222)}" : wip.RackOption.DeviceID,
+                Ports = wip.RackOption.MaterialInfoFromEquipment ? wip.GetPortStatusWithEqInfo().ToList() : wip.PortsStatus.ToList(),
+                ColumnsTagMap = wip.RackOption.ColumnTagMap,
+                IsOvenAsRacks = wip.RackOption.MaterialInfoFromEquipment
+            }).OrderBy(wip => wip.WIPName).ToList();
+        }
+
 
         internal async Task<(bool confirm, string removedCarrierID, string message)> RemoveRackCargoID(string wIPID, string portID, string triggerBy, bool isByAgvUnloadend)
         {

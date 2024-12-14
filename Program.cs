@@ -269,7 +269,7 @@ public static class WebAppInitializer
         builder.Services.AddScoped<LogDownlodService>();
         builder.Services.AddScoped<StationSelectService>();
         builder.Services.AddScoped<SystemStatusDbStoreService>();
-        builder.Services.AddScoped<RackCargoStatusContorlService>();
+        builder.Services.AddScoped<RackService>();
         builder.Services.AddScoped<MCSService>();
         builder.Services.AddScoped<SECSConfigsService>(service => new SECSConfigsService(Path.Combine(AGVSConfigulator.SysConfigs.CONFIGS_ROOT_FOLDER, "SECSConfigs")));
     }

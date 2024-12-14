@@ -25,6 +25,11 @@ namespace AGVSystem.Controllers
     [ApiController]
     public partial class EquipmentController : ControllerBase
     {
+        [HttpGet("GetEQData")]
+        public async Task<List<EQStatusDIDto>> GetEQData()
+        {
+            return StaEQPManagager.GetEQStates();
+        }
 
         [HttpPost("WriteOutputs")]
         public async Task<IActionResult> WriteOutPuts(string EqName, ushort start, bool[] value)

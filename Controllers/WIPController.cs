@@ -12,8 +12,8 @@ namespace AGVSystem.Controllers
     [ApiController]
     public class WIPController : ControllerBase
     {
-        private readonly RackCargoStatusContorlService _rackControlService;
-        public WIPController(RackCargoStatusContorlService rackControlService)
+        private readonly RackService _rackControlService;
+        public WIPController(RackService rackControlService)
         {
             _rackControlService = rackControlService;
         }
@@ -53,6 +53,12 @@ namespace AGVSystem.Controllers
                 return new string[3] { "0", "1", "2" };
             }
             return Ok(slotPortsNoDisplayMap);
+        }
+
+        [HttpGet("GetRackStatusData")]
+        public async Task<List<ViewModel.WIPDataViewModel>> GetRackStatusData()
+        {
+            return _rackControlService.GetWIPDataViewModels();
         }
     }
 }

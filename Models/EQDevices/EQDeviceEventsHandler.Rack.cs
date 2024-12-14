@@ -12,6 +12,7 @@ using AGVSystemCommonNet6.Notify;
 using EquipmentManagment.Device;
 using EquipmentManagment.MainEquipment;
 using EquipmentManagment.WIP;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore.Storage;
 using System;
 using System.Diagnostics;
@@ -22,6 +23,7 @@ namespace AGVSystem.Models.EQDevices
     {
         private static async void HandlePortOfRackSensorFlash(object? sender, (clsRack rack, clsPortOfRack port) e)
         {
+            BrocastRackData();
             string rackName = e.rack.EQName;
             string portId = e.port.Properties.ID;
             AlarmManagerCenter.AddAlarmAsync(ALARMS.Rack_Port_Sensor_Flash, ALARM_SOURCE.EQP, ALARM_LEVEL.WARNING, rackName, portId);
@@ -31,6 +33,7 @@ namespace AGVSystem.Models.EQDevices
 
         private static void HandlePortOfRackSensorStatusChanged(object? sender, (clsRack rack, clsPortOfRack port) e)
         {
+            BrocastRackData();
             string rackName = e.rack.EQName;
             string portId = e.port.Properties.ID;
             AlarmManagerCenter.SetAlarmCheckedAsync(rackName, portId, ALARMS.Rack_Port_Sensor_Flash);
@@ -39,6 +42,7 @@ namespace AGVSystem.Models.EQDevices
 
         private static void HandlePortCargoChangedToExist(object? sender, clsPortOfRack port)
         {
+            BrocastRackData();
             string portLocID = port.GetLocID();
 
             bool _isTransferActionRunning = DatabaseCaches.TaskCaches.RunningTasks.Any(order => order.destinePortID == (portLocID) && order.currentProgress == AGVSystemCommonNet6.AGVDispatch.VehicleMovementStage.WorkingAtDestination);
@@ -57,6 +61,7 @@ namespace AGVSystem.Models.EQDevices
 
                     if (string.IsNullOrEmpty(port.CarrierID))
                     {
+                        await Task.Delay(600);
                         UpdateCarrierID(tunid);
                         NotifyServiceHelper.INFO($"{portLocID}因非搬運過程但偵測到在席有貨,已生成未知帳-{tunid}");
                     }
@@ -82,6 +87,7 @@ namespace AGVSystem.Models.EQDevices
         /// <param name="port"></param>
         private static void HandlePortCargoChangeToDisappear(object? sender, clsPortOfRack port)
         {
+            BrocastRackData();
             Task.Factory.StartNew(async () =>
             {
                 bool hasCarrierID = !string.IsNullOrEmpty(port.CarrierID);
@@ -95,5 +101,7 @@ namespace AGVSystem.Models.EQDevices
                 await ZoneCapacityChangeEventReport(port.GetParentRack());
             });
         }
+
+
     }
 }

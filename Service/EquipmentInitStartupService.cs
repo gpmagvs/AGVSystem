@@ -7,6 +7,7 @@ using AGVSystemCommonNet6.Material;
 using EquipmentManagment.MainEquipment;
 using EquipmentManagment.Manager;
 using EquipmentManagment.WIP;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace AGVSystem.Service
@@ -14,15 +15,22 @@ namespace AGVSystem.Service
     public class EquipmentInitStartupService : IHostedService
     {
         private readonly AGVSDbContext _dbContext;
-        public EquipmentInitStartupService(IServiceScopeFactory factory)
+        IHubContext<FrontEndDataHub> hubContext;
+        RackService rackService;
+        public EquipmentInitStartupService(IServiceScopeFactory factory, IHubContext<FrontEndDataHub> hubContext)
         {
             _dbContext = factory.CreateScope().ServiceProvider.GetRequiredService<AGVSDbContext>();
+            rackService = factory.CreateScope().ServiceProvider.GetRequiredService<RackService>();
+            this.hubContext = hubContext;
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             try
             {
+                Models.EQDevices.EQDeviceEventsHandler.HubContext = hubContext;
+                Models.EQDevices.EQDeviceEventsHandler.rackService = rackService;
+
                 clsEQ.WirteOuputEnabled = !AGVSConfigulator.SysConfigs.BaseOnKGSWebAGVSystem;
                 string eqConfigsStoreFolder = AGVSConfigulator.SysConfigs.PATHES_STORE[SystemConfigs.PATH_ENUMS.EQ_CONFIGS_FOLDER_PATH];
 
@@ -42,6 +50,11 @@ namespace AGVSystem.Service
             {
                 AlarmManagerCenter.AddAlarmAsync(ALARMS.SYSTEM_EQP_MANAGEMENT_INITIALIZE_FAIL_WITH_EXCEPTION);
             }
+        }
+
+        private void ClsEQ_OnCSTReaderIDChanged(object? sender, (clsEQ, string newValue, string oldValue) e)
+        {
+            throw new NotImplementedException();
         }
 
         private void RestoreCargoID(List<clsStationStatus> cargoIDStored)
