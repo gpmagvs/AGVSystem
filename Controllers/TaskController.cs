@@ -461,7 +461,8 @@ namespace AGVSystem.Controllers
                     if (!isSourceAGV)
                     {
                         clsAGVSTaskReportResponse result_from = await CheckStatus(taskID, from, FromSlot, ACTION_TYPE.Unload);
-                        return result_from;
+                        if (!result_from.confirm)
+                            return result_from;
                     }
 
                     clsAGVSTaskReportResponse result_to = await CheckStatus(taskID, to, ToSlot, ACTION_TYPE.Load);
