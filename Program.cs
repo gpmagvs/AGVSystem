@@ -251,6 +251,7 @@ public static class WebAppInitializer
         {
             builder.Services.AddDbContext<WebAGVSystemContext>(options => options.UseSqlServer(AGVSConfigulator.SysConfigs.KGSWebAGVSystemDBConnection));
         }
+        EnvironmentVariables.AddUserVariable("AGVSDatabaseConnection", AGVSConfigulator.SysConfigs.DBConnection);
     }
 
     private static void ServicesInjection(WebApplicationBuilder builder)
