@@ -321,11 +321,18 @@ namespace AGVSystem.TaskManagers
 
                     List<string> waitOrRunningSouceEQTagStrList = DatabaseCaches.TaskCaches.InCompletedTasks.Select(task => task.From_Station)
                                                                                                        .ToList();
-                    List<clsEQ> unload_req_eq_list = StaEQPManagager.MainEQList.FindAll(eq => eq.lduld_type == EQLDULD_TYPE.ULD || eq.lduld_type == EQLDULD_TYPE.LDULD)
-                                                                                .FindAll(eq => eq.IsCreateUnloadTaskAble() && !UnloadEQQueueing.TryGetValue(eq, out clsEQ _eq))
+                    List<clsEQ> unload_req_eq_list = StaEQPManagager.MainEQList.Where(eq => !IsEQDisabled(eq))
+                                                                               .Where(eq => eq.lduld_type == EQLDULD_TYPE.ULD || eq.lduld_type == EQLDULD_TYPE.LDULD)
+                                                                                .Where(eq => eq.IsCreateUnloadTaskAble() && !UnloadEQQueueing.TryGetValue(eq, out clsEQ _eq))
                                                                                 .Where(eq => !waitOrRunningSouceEQTagStrList.Contains(eq.EndPointOptions.TagID + ""))
                                                                                 .OrderBy(eq => eq.UnloadRequestRaiseTime).ToList();
-
+                    bool IsEQDisabled(clsEQ eq)
+                    {
+                        var mapPt = AGVSMapManager.CurrentMap.Points.Values.FirstOrDefault(pt => pt.TagNumber == eq.EndPointOptions.TagID);
+                        if (mapPt == null)
+                            return true;
+                        return !mapPt.Enable;
+                    }
                     if (unload_req_eq_list.Count > 0)
                     {
                         foreach (clsEQ sourceEQ in unload_req_eq_list)
