@@ -272,6 +272,7 @@ public static class WebAppInitializer
         builder.Services.AddScoped<SystemStatusDbStoreService>();
         builder.Services.AddScoped<RackService>();
         builder.Services.AddScoped<MCSService>();
+        builder.Services.AddScoped<DatabaseMigrateService>();
         builder.Services.AddScoped<SECSConfigsService>(service => new SECSConfigsService(Path.Combine(AGVSConfigulator.SysConfigs.CONFIGS_ROOT_FOLDER, "SECSConfigs")));
     }
 

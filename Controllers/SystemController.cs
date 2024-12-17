@@ -12,6 +12,7 @@ using Newtonsoft.Json;
 using NLog;
 using System.Reflection;
 using System.Text;
+using static SQLite.SQLite3;
 
 namespace AGVSystem.Controllers
 {
@@ -20,10 +21,12 @@ namespace AGVSystem.Controllers
     public class SystemController : ControllerBase
     {
         SystemStatusDbStoreService _SystemStatusDbStoreService;
+        DatabaseMigrateService dbMigrateService;
         Logger logger = LogManager.GetCurrentClassLogger();
-        public SystemController(SystemStatusDbStoreService _SystemStatusDbStoreService)
+        public SystemController(SystemStatusDbStoreService _SystemStatusDbStoreService, DatabaseMigrateService dbMigrateService)
         {
             this._SystemStatusDbStoreService = _SystemStatusDbStoreService;
+            this.dbMigrateService = dbMigrateService;
         }
 
 
@@ -152,7 +155,19 @@ namespace AGVSystem.Controllers
             return Ok();
         }
 
-
+        [HttpPost("CloneCurrentDatabaseToNewOne")]
+        public async Task<IActionResult> CloneCurrentDatabaseToNewOne([FromBody] DatabaseMigrateService.NewDatabaseConfiguration configuration)
+        {
+            try
+            {
+                var result = await dbMigrateService.CreateNewDatabase(configuration);
+                return Ok(new { result = result.Item1, message = result.Item2 });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { result = false, message = ex.Message });
+            }
+        }
 
         private string GetAppVersion()
         {
