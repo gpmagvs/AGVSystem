@@ -133,6 +133,23 @@ namespace AGVSystem.Controllers
 
 
         }
+        [HttpGet("GetTrajectorys")]
+        public async Task<IActionResult> GetTrajectorys(string taskID)
+        {
+            try
+            {
+                TrajectoryDBStoreHelper helper = new TrajectoryDBStoreHelper();
+                List<List<clsTrajCoordination>> coordinations = helper.GetTrajectorys(taskID);
+                var dataWrap = new { task_id = taskID, coordinations = coordinations };
+                return Ok(dataWrap);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+
+
+        }
         [HttpGet("DeleteTask")]
         public async Task<IActionResult> DeleteTask(string taskID)
         {
