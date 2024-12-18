@@ -57,7 +57,7 @@ namespace AGVSystem.Controllers
         [Authorize]
         public async Task<IActionResult> ReAssignTask([FromBody] clsTaskDto taskData, string user = "", bool autoSelectVehicle = false)
         {
-            if (taskData.TaskName.StartsWith("M"))
+            if (taskData.isFromMCS)
             {
                 return Ok(new { confirm = false, message = "禁止手動重新指派MCS任務", message_en = "Can not re-assign order from MCS" });
             }
