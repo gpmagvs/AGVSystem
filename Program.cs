@@ -274,6 +274,7 @@ public static class WebAppInitializer
         builder.Services.AddScoped<MCSService>();
         builder.Services.AddScoped<DatabaseMigrateService>();
         builder.Services.AddScoped<SECSConfigsService>(service => new SECSConfigsService(Path.Combine(AGVSConfigulator.SysConfigs.CONFIGS_ROOT_FOLDER, "SECSConfigs")));
+        builder.Services.AddScoped<TrafficStateDataQueryService>();
     }
 
     private static void ConfigureCors(WebApplicationBuilder builder)
