@@ -16,6 +16,7 @@ using AGVSystemCommonNet6.ViewModels;
 using AGVSystemCommonNet6.AGVDispatch.Messages;
 using Microsoft.Extensions.Caching.Memory;
 using System.Collections.Generic;
+using static AGVSystemCommonNet6.DATABASE.Helpers.TrajectoryDBStoreHelper;
 
 namespace AGVSystem.Controllers
 {
@@ -150,6 +151,14 @@ namespace AGVSystem.Controllers
 
 
         }
+
+        [HttpGet("GetTrajectorysWithTimeRange")]
+        public async Task<List<clsTaskTrajecotroyViewModel>> GetTrajectorysWithTimeRange(DateTime from, DateTime to)
+        {
+            TrajectoryDBStoreHelper helper = new TrajectoryDBStoreHelper();
+            return await helper.GetTrajectorysWithTimeRange(from, to);
+        }
+
         [HttpGet("DeleteTask")]
         public async Task<IActionResult> DeleteTask(string taskID)
         {
