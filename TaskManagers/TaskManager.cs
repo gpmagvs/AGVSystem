@@ -14,6 +14,7 @@ using AGVSystemCommonNet6.HttpTools;
 using AGVSystemCommonNet6.Log;
 using AGVSystemCommonNet6.MAP;
 using AGVSystemCommonNet6.Material;
+using AGVSystemCommonNet6.Microservices.MCS;
 using AGVSystemCommonNet6.Microservices.ResponseModel;
 using AGVSystemCommonNet6.Microservices.VMS;
 using EquipmentManagment.Device.Options;
@@ -23,10 +24,12 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.Design;
 using System.Threading.Tasks;
 using WebSocketSharp;
 using static AGVSystem.TaskManagers.EQTransferTaskManager;
 using static AGVSystemCommonNet6.MAP.MapPoint;
+using static AGVSystemCommonNet6.Microservices.MCS.MCSCIMService;
 using static SQLite.SQLite3;
 using static System.Collections.Specialized.BitVector32;
 
@@ -559,18 +562,30 @@ namespace AGVSystem.TaskManagers
 
                 if (isOrderWaiting)
                 {
+                    MCSCIMService.TransportCommandDto transportCommandDto = new TransportCommandDto();
                     await VMSSerivces.TaskCancel(task_name, reason, hostAction);
                     using (var agvsDb = new AGVSDatabase())
                     {
                         var dto = agvsDb.tables.Tasks.FirstOrDefault(od => od.TaskName == task_name);
                         if (dto != null)
                         {
+                            transportCommandDto = new MCSCIMService.TransportCommandDto
+                            {
+                                CommandID = dto.TaskName,
+                                CarrierID = dto.Carrier_ID,
+                                CarrierLoc = dto.soucePortID,
+                                CarrierZoneName = dto.sourceZoneID,
+                            };
+                            MCSCIMService.TransferCancelInitiatedReport(transportCommandDto);
+
                             dto.State = TASK_RUN_STATUS.CANCEL;
                             dto.FailureReason = reason;
                             dto.FinishTime = DateTime.Now;
                         }
                         await agvsDb.SaveChanges();
                     }
+
+                    MCSCIMService.TransferCancelCompletedReport(transportCommandDto);
                     return true;
                 }
 
