@@ -22,50 +22,6 @@ using System.Security.Policy;
 
 namespace AGVSystem.Models.EQDevices
 {
-    public static class Extenion
-    {
-        public static bool IsEQInRack(this clsEQ eq, out clsRack rack, out clsPortOfRack port)
-        {
-            rack = null;
-            port = null;
-            int tag = eq.EndPointOptions.TagID;
-            rack = StaEQPManagager.RacksList.FirstOrDefault(rack => rack.RackOption.ColumnTagMap.SelectMany(k => k.Value).Contains(tag));
-            if (rack == null)
-                return false;
-            port = rack.PortsStatus.FirstOrDefault(port => port.TagNumbers.Contains(tag));
-            return port != null;
-        }
-
-        public static bool IsRackPortIsEQ(this clsPortOfRack rackPort, out clsEQ eq)
-        {
-            eq = null;
-            if (rackPort.Layer > 0)
-                return false;
-            eq = StaEQPManagager.MainEQList.FirstOrDefault(eq => rackPort.TagNumbers.Contains(eq.EndPointOptions.TagID));
-            return eq != null;
-        }
-
-        public static string GetLocID(this clsPortOfRack portOfRack)
-        {
-            string zoneID = portOfRack.GetParentRack().RackOption.DeviceID;
-            string portPrefix = AGVSConfigulator.SysConfigs.SECSGem.CarrierLOCPrefixName;
-            return $"{portPrefix}_{zoneID}_{portOfRack.Properties.PortNo}";
-        }
-
-        public static bool IsRackPortAssignToOrder(this clsPortOfRack rackPort)
-        {
-            List<string> destinesKeys = DatabaseCaches.TaskCaches.InCompletedTasks.SelectMany(order => new string[] { $"{order.From_Station}_{order.From_Slot}", $"{order.To_Station}_{order.To_Slot}" })
-                                                                                  .ToList();
-            return rackPort.TagNumbers.Any(tag => destinesKeys.Contains($"{tag}_{rackPort.Layer}"));
-        }
-
-        public static bool IsEQPortAssignToOrder(this clsEQ eqPort)
-        {
-            List<string> destinesKeys = DatabaseCaches.TaskCaches.InCompletedTasks.SelectMany(order => new string[] { $"{order.From_Station}_{order.From_Slot}", $"{order.To_Station}_{order.To_Slot}" })
-                                                                                  .ToList();
-            return destinesKeys.Contains($"{eqPort.EndPointOptions.TagID}_{eqPort.EndPointOptions.Height}");
-        }
-    }
     public partial class EQDeviceEventsHandler
     {
         private static bool _disableEntryPointWhenEQPartsReplacing => AGVSConfigulator.SysConfigs.EQManagementConfigs.DisableEntryPointWhenEQPartsReplacing;
@@ -75,6 +31,7 @@ namespace AGVSystem.Models.EQDevices
         internal static RackService rackService;
         private static SemaphoreSlim _RackDataBrocastSemaphoreSlim = new SemaphoreSlim(1, 1);
         private static SemaphoreSlim _EQDataBrocastSemaphoreSlim = new SemaphoreSlim(1, 1);
+        private static SemaphoreSlim CarrierIDChangeHandleSemaphoreSlim = new SemaphoreSlim(1, 1);
 
         private static ConcurrentDictionary<int, EqUnloadState> _EqUnloadStateRecordTempStore = new ConcurrentDictionary<int, EqUnloadState>();
 
@@ -225,6 +182,9 @@ namespace AGVSystem.Models.EQDevices
                 BrocastRackData();
                 if (sender == null)
                     return;
+                bool getSignal = await CarrierIDChangeHandleSemaphoreSlim.WaitAsync(TimeSpan.FromSeconds(1));
+                if (!getSignal)
+                    return;
                 try
                 {
                     clsPortOfRack rackPort = (sender as clsPortOfRack);
@@ -249,12 +209,12 @@ namespace AGVSystem.Models.EQDevices
                     if (isNewInstall)
                     {
                         if (!args.isUpdateByVehicleLoadUnload)//若carrier id 變化是因為 agv 放貨 (在席會先ON建一個TUN帳),則不用 報 install, 因為車子會報 transfer completed.
-                            await _CarrierInstalledReport(locID, zoneID, args.newValue);
+                            await MCSCIMService.CarrierInstallCompletedReport(args.newValue, locID, zoneID, 1);
                     }
                     if (isRemoved)
                     {
                         if (!args.isUpdateByVehicleLoadUnload)
-                            await _CarrierRemovedReport(locID, zoneID, args.oldValue);
+                            await MCSCIMService.CarrierRemoveCompletedReport(args.oldValue, locID, zoneID, 1);
 
                         //若carrier id 移除了是因為 agv 取貨 
                         if (rackPort.CargoExist || rackPort.CarrierExist)
@@ -268,24 +228,10 @@ namespace AGVSystem.Models.EQDevices
                     }
                     if (isChanged)
                     {
-                        await _CarrierRemovedReport(locID, zoneID, args.oldValue).ContinueWith(async t =>
-                        {
-                            await Task.Delay(500);
-                            await _CarrierInstalledReport(locID, zoneID, args.newValue);
-                        });
+                        await MCSCIMService.CarrierRemoveCompletedReport(args.oldValue, locID, zoneID, 1);
+                        await Task.Delay(110);
+                        await MCSCIMService.CarrierInstallCompletedReport(args.newValue, locID, zoneID, 1);
                     }
-
-
-
-                    async Task _CarrierInstalledReport(string _locID, string _zoneID, string carrierIDToInstall)
-                    {
-                        await MCSCIMService.CarrierInstallCompletedReport(carrierIDToInstall, _locID, _zoneID, 1);
-                    }
-                    async Task _CarrierRemovedReport(string _locID, string _zoneID, string carrierIDToRemove)
-                    {
-                        await MCSCIMService.CarrierRemoveCompletedReport(carrierIDToRemove, _locID, _zoneID, 1);
-                    }
-
 
                     await Task.Delay(500);
                     await ShelfStatusChangeEventReport(rackPort.GetParentRack());
@@ -298,7 +244,11 @@ namespace AGVSystem.Models.EQDevices
                 }
                 catch (Exception ex)
                 {
-                    throw ex;
+                    _logger.Error(ex.Message, ex);
+                }
+                finally
+                {
+                    CarrierIDChangeHandleSemaphoreSlim.Release();
                 }
             });
         }
@@ -598,5 +548,48 @@ namespace AGVSystem.Models.EQDevices
             }
         }
     }
+    public static class Extenion
+    {
+        public static bool IsEQInRack(this clsEQ eq, out clsRack rack, out clsPortOfRack port)
+        {
+            rack = null;
+            port = null;
+            int tag = eq.EndPointOptions.TagID;
+            rack = StaEQPManagager.RacksList.FirstOrDefault(rack => rack.RackOption.ColumnTagMap.SelectMany(k => k.Value).Contains(tag));
+            if (rack == null)
+                return false;
+            port = rack.PortsStatus.FirstOrDefault(port => port.TagNumbers.Contains(tag));
+            return port != null;
+        }
 
+        public static bool IsRackPortIsEQ(this clsPortOfRack rackPort, out clsEQ eq)
+        {
+            eq = null;
+            if (rackPort.Layer > 0)
+                return false;
+            eq = StaEQPManagager.MainEQList.FirstOrDefault(eq => rackPort.TagNumbers.Contains(eq.EndPointOptions.TagID));
+            return eq != null;
+        }
+
+        public static string GetLocID(this clsPortOfRack portOfRack)
+        {
+            string zoneID = portOfRack.GetParentRack().RackOption.DeviceID;
+            string portPrefix = AGVSConfigulator.SysConfigs.SECSGem.CarrierLOCPrefixName;
+            return $"{portPrefix}_{zoneID}_{portOfRack.Properties.PortNo}";
+        }
+
+        public static bool IsRackPortAssignToOrder(this clsPortOfRack rackPort)
+        {
+            List<string> destinesKeys = DatabaseCaches.TaskCaches.InCompletedTasks.SelectMany(order => new string[] { $"{order.From_Station}_{order.From_Slot}", $"{order.To_Station}_{order.To_Slot}" })
+                                                                                  .ToList();
+            return rackPort.TagNumbers.Any(tag => destinesKeys.Contains($"{tag}_{rackPort.Layer}"));
+        }
+
+        public static bool IsEQPortAssignToOrder(this clsEQ eqPort)
+        {
+            List<string> destinesKeys = DatabaseCaches.TaskCaches.InCompletedTasks.SelectMany(order => new string[] { $"{order.From_Station}_{order.From_Slot}", $"{order.To_Station}_{order.To_Slot}" })
+                                                                                  .ToList();
+            return destinesKeys.Contains($"{eqPort.EndPointOptions.TagID}_{eqPort.EndPointOptions.Height}");
+        }
+    }
 }
