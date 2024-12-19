@@ -260,7 +260,8 @@ namespace AGVSystem.Models.EQDevices
             {
                 string locID = _portToRemove.GetLocID();
                 string zoneID = _portToRemove.GetParentRack().RackOption.DeviceID;
-                string DUID = await AGVSConfigulator.GetDoubleTrayUnknownFlowID();
+                bool isTray = carrierToRemove.StartsWith("T");
+                string DUID = isTray ? await AGVSConfigulator.GetDoubleTrayUnknownFlowID() : await AGVSConfigulator.GetDoubleRackUnknownFlowID();
                 _portToRemove.VehicleLoadToPortFlag = _portToRemove.VehicleLoadToPortFlag = false;
                 _portToRemove.CarrierID = DUID;
 

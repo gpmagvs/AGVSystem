@@ -57,7 +57,11 @@ namespace AGVSystem.Models.EQDevices
                 {
                     string locID = port.GetLocID();
                     string zoneID = port.GetParentRack().RackOption.DeviceID;
-                    string tunid = await AGVSConfigulator.GetTrayUnknownFlowID();
+
+                    bool isTraySensorOn = port.MaterialExistSensorStates.Any(pair => (pair.Value == clsPortOfRack.SENSOR_STATUS.ON || pair.Value == clsPortOfRack.SENSOR_STATUS.FLASH)
+                                                                                    && (pair.Key == clsPortOfRack.SENSOR_LOCATION.TRAY_1 || pair.Key == clsPortOfRack.SENSOR_LOCATION.TRAY_2));
+
+                    string tunid = isTraySensorOn ? await AGVSConfigulator.GetTrayUnknownFlowID() : await AGVSConfigulator.GetRackUnknownFlowID();
 
                     if (string.IsNullOrEmpty(port.CarrierID))
                     {
