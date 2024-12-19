@@ -91,7 +91,7 @@ namespace AGVSystem.Controllers
             {
                 result.Confirmed = false;
                 result.ResultCode = secsConfigService.alarmConfiguration.Version == AGVSystemCommonNet6.Microservices.MCSCIM.SECSAlarmConfiguration.ALARM_TABLE_VERSION.GPM ?
-                    (byte)HCACK_RETURN_CODE_GPM.ZoneIsFull : (byte)HCACK_RETURN_CODE_YELLOW.Cannot_Find_Seat_For_The_Carrier_In_Rack;
+                    (byte)HCACK_RETURN_CODE_GPM.Cannot_Find_Seat_For_The_Carrier_In_Rack : (byte)HCACK_RETURN_CODE_YELLOW.Cannot_Find_Seat_For_The_Carrier_In_Rack;
                 result.Message = ex.Message;
                 SendMCSMessage($"[MCS命令-{transportCommand.commandID} 已被系統拒絕] Result Code = {result.ResultCode} ,({ex.Message})", true);
             }
