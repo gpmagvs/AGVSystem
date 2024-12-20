@@ -219,7 +219,9 @@ namespace AGVSystem.Models.EQDevices
                         //若carrier id 移除了是因為 agv 取貨 
                         if (rackPort.CargoExist || rackPort.CarrierExist)
                         {
-                            rackPort.CarrierID = await AGVSConfigulator.GetTrayUnknownFlowID();
+                            bool isTraySensorOn = rackPort.MaterialExistSensorStates.Any(pair => (pair.Value == clsPortOfRack.SENSOR_STATUS.ON || pair.Value == clsPortOfRack.SENSOR_STATUS.FLASH)
+                                                                                    && (pair.Key == clsPortOfRack.SENSOR_LOCATION.TRAY_1 || pair.Key == clsPortOfRack.SENSOR_LOCATION.TRAY_2));
+                            rackPort.CarrierID = isTraySensorOn ? await AGVSConfigulator.GetTrayUnknownFlowID() : await AGVSConfigulator.GetRackUnknownFlowID();
                             if (rackPort.IsRackPortIsEQ(out eq) && eq.Port_Exist)
                             {
                                 eq.PortStatus.CarrierID = rackPort.CarrierID;

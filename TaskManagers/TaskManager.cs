@@ -344,6 +344,7 @@ namespace AGVSystem.TaskManagers
                     SetUpHighestPriorityState(taskData);
                     SetUpDeviceIDState(taskData, sourceDeviceIDInfo, destineDeviceIDInfo);
                     await SetUnknowCarrierID(taskData);
+                    taskData.CST_TYPE = taskData.Carrier_ID.StartsWith("T") ? 200 : 201;
                     db.tables.Tasks.Add(taskData);
                     var added = await db.SaveChanges();
 
