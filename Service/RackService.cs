@@ -150,6 +150,20 @@ namespace AGVSystem.Service
                 dbSemaphoreSlim.Release();
             }
         }
+
+        internal async Task<(bool confirm, string message)> PortUsableSwitch(string wIPID, string portID, bool usable)
+        {
+            if (TryGetPort(wIPID, portID, out clsPortOfRack port))
+            {
+                StaEQPManagager.RacksOptions.TryGetValue(wIPID, out var wipOption);
+                var portPropertyStore = wipOption.PortsOptions.FirstOrDefault(p => p.ID == port.Properties.ID);
+                portPropertyStore.PortUsable = port.Properties.PortUsable = usable ? clsPortOfRack.PORT_USABLE.USABLE : clsPortOfRack.PORT_USABLE.NOT_USABLE;
+                StaEQPManagager.SaveEqConfigs();
+                return (true, "");
+            }
+            else
+                return (false, "Port Not Found");
+        }
         private bool TryGetStationStatus(int tagNumber, int slot, out clsStationStatus status)
         {
             status = _dbContext.StationStatus.FirstOrDefault(data => data.StationTag == tagNumber.ToString() && data.StationRow == slot);
