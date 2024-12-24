@@ -205,7 +205,7 @@ namespace AGVSystem.Service.MCS
                 allPorts = allPorts.OrderByDescending(p => p.TagNumbers.All(tag => tag.GetMapPoint().StationType == AGVSystemCommonNet6.MAP.MapPoint.STATION_TYPE.Buffer))
                                    .ToList();
                 //Filter : 不可以是轉換架,不可以有貨物,不可以有被指派任務
-                port = allPorts.Where(p => NotTransferStationPort(p) && !p.CargoExist && !HasOrderAssigned(p)).FirstOrDefault(); //TODO 可以更優化，找PORT的邏輯 , 比如從最低層開始找
+                port = allPorts.Where(p => p.Properties.PortUsable == clsPortOfRack.PORT_USABLE.USABLE && NotTransferStationPort(p) && !p.CargoExist && !HasOrderAssigned(p)).FirstOrDefault(); //TODO 可以更優化，找PORT的邏輯 , 比如從最低層開始找
 
                 if (port == null)
                 {
