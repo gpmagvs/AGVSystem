@@ -1,4 +1,5 @@
-﻿using AGVSystem.Models.Map;
+﻿using AGVSystem.Models.EQDevices;
+using AGVSystem.Models.Map;
 using AGVSystem.Service;
 using AGVSystemCommonNet6.MAP;
 using EquipmentManagment.Device.Options;
@@ -33,6 +34,17 @@ namespace AGVSystem.Controllers
             (bool confirm, string removedCarrierID, string message) = await _rackControlService.RemoveRackCargoID(WIPID, PortID, this.GetType().Name, false);
             return Ok(new { confirm = confirm, message = message });
         }
+
+        [HttpPost("PortUsableSwitch")]
+        public async Task<IActionResult> PortUsableSwitch(string WIPID, string PortID, bool Usable)
+        {
+            //StaEQPManagager.WIPController.RemoveCargoID(WIPID, PortID);
+            (bool confirm, string message) = await _rackControlService.PortUsableSwitch(WIPID, PortID, Usable);
+            Task.Delay(100).ContinueWith((t) => { EQDeviceEventsHandler.BrocastRackData(); });
+            return Ok(new { confirm = confirm, message = message });
+        }
+
+
 
         [HttpGet("GetAllSlotsOptions")]
         public async Task<IActionResult> GetAllSlotsOptions()

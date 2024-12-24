@@ -21,7 +21,7 @@ namespace AGVSystem.Models.EQDevices
                 _EQDataBrocastSemaphoreSlim.Release();
             }
         }
-        private static async Task BrocastRackData()
+        internal static async Task BrocastRackData()
         {
             try
             {

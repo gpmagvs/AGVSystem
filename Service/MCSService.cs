@@ -122,7 +122,7 @@ namespace AGVSystem.Service.MCS
                     if (!confirm)
                     {
                         logger.Warn($"Add Task Fail:[{alarm_code}] {message}-{message_en}");
-                        SECSHCACKAlarmCodeMapper alarmCodeMapper = secsConfigService.alarmConfiguration.Version == ALARM_TABLE_VERSION.GPM ? new AlarmCodeMapperBaseOnGPMSpec() : new AlarmCodeMapperBaseOnKGSSpec();
+                        SECSHCACKAlarmCodeMapper alarmCodeMapper = new AlarmCodeMapperBaseOnKGSSpec();
                         MapResult mapresult = alarmCodeMapper.GetHCACKReturnCode(alarm_code);
                         Exception ex = new AddOrderFailException(message, alarm_code, order, mapresult);
                         logger.Error(ex);

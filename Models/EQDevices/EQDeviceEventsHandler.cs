@@ -520,7 +520,7 @@ namespace AGVSystem.Models.EQDevices
                         ShelfId = port.GetLocID(),
                         CarrierID = port.CarrierID,
                         IsCargoExist = port.CarrierExist,
-                        DisabledStatus = port.Properties.PortEnable == clsPortOfRack.Port_Enable.Disable ? 1 : 0,
+                        DisabledStatus = port.Properties.PortUsable == clsPortOfRack.PORT_USABLE.USABLE ? 0 : 1,
                         ProcessState = 0
                     };
                 }
