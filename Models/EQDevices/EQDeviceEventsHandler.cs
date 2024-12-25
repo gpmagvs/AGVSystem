@@ -75,96 +75,100 @@ namespace AGVSystem.Models.EQDevices
 
         private static void ClsEQ_OnCSTReaderIDChanged(object? sender, (clsEQ eq, string newValue, string oldValue) e)
         {
-            BrocastRackData();
             if (!e.eq.EndPointOptions.IsRoleAsZone)
                 return;
             Task.Factory.StartNew(async () =>
             {
-
-                string zoneID = "";
-                string carrierLoc = "";
-
-                if (e.eq.IsEQInRack(out clsRack rack, out clsPortOfRack port))
+                try
                 {
-                    //port.CarrierID = e.newValue;
-                    zoneID = port.GetParentRack().RackOption.DeviceID;
-                    carrierLoc = port.GetLocID();
-                    bool isNewInstall = string.IsNullOrEmpty(e.oldValue) && !string.IsNullOrEmpty(e.newValue); //新建
-                    bool isRemoved = !string.IsNullOrEmpty(e.oldValue) && string.IsNullOrEmpty(e.newValue);//移除
-                    bool isChanged = e.oldValue != e.newValue && !string.IsNullOrEmpty(e.oldValue) && !string.IsNullOrEmpty(e.newValue); //變化
+                    string zoneID = "";
+                    string carrierLoc = "";
 
-                    List<clsPortOfRack> repeatCarrierIDPorts = new List<clsPortOfRack>();
-                    bool isRepeatdIDOfOtherPortInSystem = !string.IsNullOrEmpty(e.newValue) && TryGetPortWithID(e.newValue, out repeatCarrierIDPorts) && repeatCarrierIDPorts.Count > 1;
-
-                    bool isAGVLoadUnloadExecuting = e.eq.CMD_Reserve_Up || e.eq.CMD_Reserve_Low;
-
-                    if (isNewInstall) //TODO 如果 id新增是因為AGV放貨 不用報
+                    if (e.eq.IsEQInRack(out clsRack rack, out clsPortOfRack port))
                     {
+                        //port.CarrierID = e.newValue;
+                        zoneID = port.GetParentRack().RackOption.DeviceID;
+                        carrierLoc = port.GetLocID();
+                        bool isNewInstall = string.IsNullOrEmpty(e.oldValue) && !string.IsNullOrEmpty(e.newValue); //新建
+                        bool isRemoved = !string.IsNullOrEmpty(e.oldValue) && string.IsNullOrEmpty(e.newValue);//移除
+                        bool isChanged = e.oldValue != e.newValue && !string.IsNullOrEmpty(e.oldValue) && !string.IsNullOrEmpty(e.newValue); //變化
 
-                        if (!isAGVLoadUnloadExecuting) //手投
+                        List<clsPortOfRack> repeatCarrierIDPorts = new List<clsPortOfRack>();
+                        bool isRepeatdIDOfOtherPortInSystem = !string.IsNullOrEmpty(e.newValue) && TryGetPortWithID(e.newValue, out repeatCarrierIDPorts) && repeatCarrierIDPorts.Count > 1;
+
+                        bool isAGVLoadUnloadExecuting = e.eq.CMD_Reserve_Up || e.eq.CMD_Reserve_Low;
+
+                        if (isNewInstall) //TODO 如果 id新增是因為AGV放貨 不用報
                         {
-                            string installID = e.newValue;
-                            if (e.eq.IsCSTIDReadFail)
-                                installID = await AGVSConfigulator.GetTrayUnknownFlowID();
-                            e.eq.PortStatus.CarrierID = port.CarrierID = installID;
-                            e.eq.SetAGVAssignedCarrierID(installID);
-                            await MCSCIMService.CarrierInstallCompletedReport(installID, carrierLoc, zoneID, 1);
+
+                            if (!isAGVLoadUnloadExecuting) //手投
+                            {
+                                string installID = e.newValue;
+                                if (e.eq.IsCSTIDReadFail)
+                                    installID = await AGVSConfigulator.GetTrayUnknownFlowID();
+                                e.eq.PortStatus.CarrierID = port.CarrierID = installID;
+                                e.eq.SetAGVAssignedCarrierID(installID);
+                                await MCSCIMService.CarrierInstallCompletedReport(installID, carrierLoc, zoneID, 1);
+                            }
+                            else //AGV放貨
+                            {
+                                string installID = e.newValue;
+                                if (e.eq.IsCSTIDReadFail)
+                                {
+                                    await MCSCIMService.CarrierRemoveCompletedReport(e.eq.AGVAssignCarrierID, carrierLoc, zoneID, 1);
+                                    installID = await AGVSConfigulator.GetTrayUnknownFlowID();
+                                }
+                                else if (e.eq.IsCSTIDReadMismatch)
+                                {
+                                    await MCSCIMService.CarrierRemoveCompletedReport(e.eq.AGVAssignCarrierID, carrierLoc, zoneID, 1);
+                                    installID = await AGVSConfigulator.GetTrayMissMatchFlowID();
+                                }
+                                e.eq.PortStatus.CarrierID = port.CarrierID = installID;
+                                await MCSCIMService.CarrierInstallCompletedReport(installID, carrierLoc, zoneID, 1);
+                                e.eq.SetAGVAssignedCarrierID(installID);
+                            }
                         }
-                        else //AGV放貨
+                        if (isRemoved) //TODO 如果 id移除是因為AGV取貨 不用報
                         {
-                            string installID = e.newValue;
-                            if (e.eq.IsCSTIDReadFail)
+                            if (isAGVLoadUnloadExecuting) //AGV取
+                            {
+                            }
+                            else //台車取
                             {
                                 await MCSCIMService.CarrierRemoveCompletedReport(e.eq.AGVAssignCarrierID, carrierLoc, zoneID, 1);
-                                installID = await AGVSConfigulator.GetTrayUnknownFlowID();
                             }
-                            else if (e.eq.IsCSTIDReadMismatch)
-                            {
-                                await MCSCIMService.CarrierRemoveCompletedReport(e.eq.AGVAssignCarrierID, carrierLoc, zoneID, 1);
-                                installID = await AGVSConfigulator.GetTrayMissMatchFlowID();
-                            }
-                            e.eq.PortStatus.CarrierID = port.CarrierID = installID;
-                            await MCSCIMService.CarrierInstallCompletedReport(installID, carrierLoc, zoneID, 1);
-                            e.eq.SetAGVAssignedCarrierID(installID);
-                        }
-                    }
-                    if (isRemoved) //TODO 如果 id移除是因為AGV取貨 不用報
-                    {
-                        if (isAGVLoadUnloadExecuting) //AGV取
-                        {
-                        }
-                        else //台車取
-                        {
-                            await MCSCIMService.CarrierRemoveCompletedReport(e.eq.AGVAssignCarrierID, carrierLoc, zoneID, 1);
-                        }
-                        e.eq.SetAGVAssignedCarrierID("");
+                            e.eq.SetAGVAssignedCarrierID("");
 
-                    }
-                    if (isChanged)
-                    {
-                        await MCSCIMService.CarrierRemoveCompletedReport(e.oldValue, carrierLoc, zoneID, 1).ContinueWith(async t =>
+                        }
+                        if (isChanged)
                         {
-                            await MCSCIMService.CarrierInstallCompletedReport(e.newValue, carrierLoc, zoneID, 1);
+                            await MCSCIMService.CarrierRemoveCompletedReport(e.oldValue, carrierLoc, zoneID, 1).ContinueWith(async t =>
+                            {
+                                await MCSCIMService.CarrierInstallCompletedReport(e.newValue, carrierLoc, zoneID, 1);
+                            });
+
+                        }
+                        if (isRepeatdIDOfOtherPortInSystem)
+                        {
+                            string carrierToRemove = e.newValue;
+                            DecoupleCarrierIDHandler(carrierToRemove, repeatCarrierIDPorts, port);
+                        }
+                        await ShelfStatusChangeEventReport(rack).ContinueWith(async t =>
+                        {
+                            await Task.Delay(100);
+                            await ZoneCapacityChangeEventReport(rack);
                         });
-
                     }
-
-
-                    if (isRepeatdIDOfOtherPortInSystem)
-                    {
-                        string carrierToRemove = e.newValue;
-                        DecoupleCarrierIDHandler(carrierToRemove, repeatCarrierIDPorts, port);
-                    }
-
-                    await ShelfStatusChangeEventReport(rack).ContinueWith(async t =>
-                    {
-                        await Task.Delay(100);
-                        await ZoneCapacityChangeEventReport(rack);
-                    });
                 }
+                catch (Exception)
+                {
 
-
-
+                }
+                finally
+                {
+                    BrocastRackData();
+                    BrocastEQkData();
+                }
             });
             //sync to zone if nessary
 
@@ -217,11 +221,11 @@ namespace AGVSystem.Models.EQDevices
                             await MCSCIMService.CarrierRemoveCompletedReport(args.oldValue, locID, zoneID, 1);
 
                         //若carrier id 移除了是因為 agv 取貨 
-                        if (rackPort.CargoExist || rackPort.CarrierExist)
+                        if (rackPort.CargoExist || rackPort.CarrierExist || (rackPort.IsRackPortIsEQ(out eq) && eq.Port_Exist))
                         {
-                            bool isTraySensorOn = rackPort.MaterialExistSensorStates.Any(pair => (pair.Value == clsPortOfRack.SENSOR_STATUS.ON || pair.Value == clsPortOfRack.SENSOR_STATUS.FLASH)
-                                                                                    && (pair.Key == clsPortOfRack.SENSOR_LOCATION.TRAY_1 || pair.Key == clsPortOfRack.SENSOR_LOCATION.TRAY_2));
-                            rackPort.CarrierID = isTraySensorOn ? await AGVSConfigulator.GetTrayUnknownFlowID() : await AGVSConfigulator.GetRackUnknownFlowID();
+                            bool isRackSensorOn = rackPort.MaterialExistSensorStates.Any(pair => (pair.Value == clsPortOfRack.SENSOR_STATUS.ON || pair.Value == clsPortOfRack.SENSOR_STATUS.FLASH)
+                                                                                        && (pair.Key == clsPortOfRack.SENSOR_LOCATION.RACK_1 || pair.Key == clsPortOfRack.SENSOR_LOCATION.RACK_2));
+                            rackPort.CarrierID = isRackSensorOn ? await AGVSConfigulator.GetRackUnknownFlowID() : await AGVSConfigulator.GetTrayUnknownFlowID();
                             if (rackPort.IsRackPortIsEQ(out eq) && eq.Port_Exist)
                             {
                                 eq.PortStatus.CarrierID = rackPort.CarrierID;

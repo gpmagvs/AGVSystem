@@ -26,7 +26,8 @@ namespace AGVSystem.Models.EQDevices
             try
             {
                 await _RackDataBrocastSemaphoreSlim.WaitAsync();
-                await HubContext?.Clients.All.SendAsync("RackDataChanged", rackService.GetWIPDataViewModels());
+                var _data = rackService.GetWIPDataViewModels();
+                await HubContext?.Clients.All.SendAsync("RackDataChanged", _data);
             }
             catch (Exception ex)
             {
