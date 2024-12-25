@@ -179,12 +179,12 @@ namespace AGVSystem.TaskManagers
                     if (actiontype == ACTION_TYPE.Unload)
                     {
                         if (specificport.CargoExist == false)
-                            return new(false, ALARMS.EQ_UNLOAD_REQUEST_ON_BUT_NO_CARGO, $"WIP設備[{Rack.EQName}, ID:{specificport.Properties.ID}] 料座無貨", $"WIP EQ {Rack.EQName}, ID:{specificport.Properties.ID} port has no cargo", null, null);
+                            return new(false, ALARMS.SourceRackPortNoCargo, $"WIP設備[{Rack.EQName}, ID:{specificport.Properties.ID}] 料座無貨", $"WIP EQ {Rack.EQName}, ID:{specificport.Properties.ID} port has no cargo", null, null);
                     }
                     else if (actiontype == ACTION_TYPE.Load || actiontype == ACTION_TYPE.LoadAndPark)
                     {
                         if (specificport.CargoExist == true)
-                            return new(false, ALARMS.EQ_LOAD_REQUEST_ON_BUT_HAS_CARGO, $"WIP設備[{Rack.EQName}, ID:{specificport.Properties.ID}] 料座已占用", $"WIP EQ {Rack.EQName}, ID:{specificport.Properties.ID} port is occupied", null, null);
+                            return new(false, ALARMS.DestineRackPortHasCargo, $"WIP設備[{Rack.EQName}, ID:{specificport.Properties.ID}] 料座已占用", $"WIP EQ {Rack.EQName}, ID:{specificport.Properties.ID} port is occupied", null, null);
                     }
                     return new(true, ALARMS.NONE, $" GET RACK", $"GET RACK", specificport, specificport.GetType());
                 }
@@ -210,12 +210,12 @@ namespace AGVSystem.TaskManagers
                 if (actiontype == ACTION_TYPE.Unload)
                 {
                     if (specificport.CargoExist == false)
-                        return new(false, ALARMS.EQ_UNLOAD_REQUEST_IS_NOT_ON, $"WIP設備[{Rack.EQName}, ID:{specificport.Properties.ID}] 料座無貨", $"WIP EQ {Rack.EQName}, ID:{specificport.Properties.ID} port has no cargo", null, null);
+                        return new(false, ALARMS.SourceRackPortNoCargo, $"WIP設備[{Rack.EQName}, ID:{specificport.Properties.ID}] 料座無貨", $"WIP EQ {Rack.EQName}, ID:{specificport.Properties.ID} port has no cargo", null, null);
                 }
                 else if (actiontype == ACTION_TYPE.Load || actiontype == ACTION_TYPE.LoadAndPark)
                 {
                     if (specificport.CargoExist == true)
-                        return new(false, ALARMS.EQ_LOAD_REQUEST_IS_NOT_ON, $"WIP設備[{Rack.EQName}, ID:{specificport.Properties.ID}] 料座已占用", $"WIP EQ {Rack.EQName}, ID:{specificport.Properties.ID} port is occupied", null, null);
+                        return new(false, ALARMS.DestineRackPortHasCargo, $"WIP設備[{Rack.EQName}, ID:{specificport.Properties.ID}] 料座已占用", $"WIP EQ {Rack.EQName}, ID:{specificport.Properties.ID} port is occupied", null, null);
                 }
                 var Eq = StaEQPManagager.MainEQList.FirstOrDefault(eq => eq.EndPointOptions.TagID == station_tag);
                 if (Eq == null)
