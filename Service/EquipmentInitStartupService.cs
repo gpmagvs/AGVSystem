@@ -72,24 +72,28 @@ namespace AGVSystem.Service
                 {
                     bool isEqAsZonePortAndHasCstReader = rackport.IsRackPortIsEQ(out clsEQ eq) && eq.EndPointOptions.IsRoleAsZone && eq.EndPointOptions.IsCSTIDReportable;
                     if (!isEqAsZonePortAndHasCstReader)
+                    {
                         rackport.CarrierID = _materialID;
+                        if (eq != null && eq.EndPointOptions.IsRoleAsZone)
+                            eq.PortStatus.CarrierID = _materialID;
+                    }
                 }
             }
 
 
-            foreach (var eqAsZone in StaEQPManagager.MainEQList.Where(eq => eq.EndPointOptions.IsRoleAsZone && !eq.EndPointOptions.IsCSTIDReportable))
-            {
-                var storedInfo = cargoIDStored.FirstOrDefault(st => st.StationTag + "" == eqAsZone.EndPointOptions.TagID + "");
-                if (storedInfo == null)
-                    continue;
+            //foreach (var eqAsZone in StaEQPManagager.MainEQList.Where(eq => eq.EndPointOptions.IsRoleAsZone && !eq.EndPointOptions.IsCSTIDReportable))
+            //{
+            //    var storedInfo = cargoIDStored.FirstOrDefault(st => st.StationTag + "" == eqAsZone.EndPointOptions.TagID + "");
+            //    if (storedInfo == null)
+            //        continue;
 
-                clsPortOfRack rackPort = allRackPorts.FirstOrDefault(rackPort => rackPort.IsRackPortIsEQ(out var eq) && eq.EndPointOptions.TagID == eqAsZone.EndPointOptions.TagID);
-                if (rackPort == null)
-                    continue;
+            //    clsPortOfRack rackPort = allRackPorts.FirstOrDefault(rackPort => rackPort.IsRackPortIsEQ(out var eq) && eq.EndPointOptions.TagID == eqAsZone.EndPointOptions.TagID);
+            //    if (rackPort == null)
+            //        continue;
 
-                eqAsZone.PortStatus.CarrierID = storedInfo.MaterialID;
-                rackPort.CarrierID = storedInfo.MaterialID;
-            }
+            //    eqAsZone.PortStatus.CarrierID = storedInfo.MaterialID;
+            //    rackPort.CarrierID = storedInfo.MaterialID;
+            //}
 
         }
 
