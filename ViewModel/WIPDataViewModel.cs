@@ -11,5 +11,15 @@ namespace AGVSystem.ViewModel
         public bool IsOvenAsRacks { get; set; } = false;
         public Dictionary<int, int[]> ColumnsTagMap { get; set; } = new Dictionary<int, int[]>();
         public List<clsPortOfRack> Ports { get; set; } = new List<clsPortOfRack>();
+        public bool IsAnyPortHasDataButNoCargo
+        {
+            get
+            {
+                if (this.IsOvenAsRacks)
+                    return false;
+                if (!Ports.Any()) return false;
+                return Ports.Any(port => !port.CargoExist && !string.IsNullOrEmpty(port.CarrierID));
+            }
+        }
     }
 }
