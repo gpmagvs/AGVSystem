@@ -256,6 +256,9 @@ public static class WebAppInitializer
 
     private static void ServicesInjection(WebApplicationBuilder builder)
     {
+        SECSConfigsService _secsConfigsService = new SECSConfigsService(Path.Combine(AGVSConfigulator.SysConfigs.CONFIGS_ROOT_FOLDER, "SECSConfigs"));
+        _secsConfigsService.Reload();
+
         if (!Debugger.IsAttached)
             builder.Services.AddHostedService<ThirdPartyProgramStartService>();
 
@@ -273,7 +276,7 @@ public static class WebAppInitializer
         builder.Services.AddScoped<RackService>();
         builder.Services.AddScoped<MCSService>();
         builder.Services.AddScoped<DatabaseMigrateService>();
-        builder.Services.AddScoped<SECSConfigsService>(service => new SECSConfigsService(Path.Combine(AGVSConfigulator.SysConfigs.CONFIGS_ROOT_FOLDER, "SECSConfigs")));
+        builder.Services.AddScoped<SECSConfigsService>(service => _secsConfigsService);
         builder.Services.AddScoped<TrafficStateDataQueryService>();
     }
 
