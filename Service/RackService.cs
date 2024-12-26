@@ -1,4 +1,5 @@
 ﻿using AGVSystem.Models.EQDevices;
+using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.Material;
 using AGVSystemCommonNet6.Microservices.MCS;
@@ -37,13 +38,27 @@ namespace AGVSystem.Service
         }
 
 
-        internal async Task<(bool confirm, string removedCarrierID, string message)> RemoveRackCargoID(string wIPID, string portID, string triggerBy, bool isByAgvUnloadend)
+        internal async Task<(bool confirm, string removedCarrierID, string message)> RemoveRackCargoIDManual(string wIPID, string portID, string triggerBy, bool isByAgvUnloadend)
         {
             if (TryGetPort(wIPID, portID, out clsPortOfRack port))
             {
                 int tag = port.TagNumbers.FirstOrDefault();
                 int slot = port.Properties.Row;
-                return await RemoveRackCargoID(tag, slot, triggerBy, isByAgvUnloadend);
+                var result = await RemoveRackCargoID(tag, slot, triggerBy, isByAgvUnloadend);
+
+                if (result.confirm && port.CargoExist || (port.IsRackPortIsEQ(out clsEQ eq) && eq.EndPointOptions.IsRoleAsZone && eq.Port_Exist))
+                {
+                    _ = Task.Delay(400).ContinueWith(async t =>
+                    {
+                        bool isRackSensorOn = port.MaterialExistSensorStates.Any(pair => (pair.Value == clsPortOfRack.SENSOR_STATUS.ON || pair.Value == clsPortOfRack.SENSOR_STATUS.FLASH)
+                                                                                        && (pair.Key == clsPortOfRack.SENSOR_LOCATION.RACK_1 || pair.Key == clsPortOfRack.SENSOR_LOCATION.RACK_2));
+
+                        string tunid = isRackSensorOn ? await AGVSConfigulator.GetRackUnknownFlowID() : await AGVSConfigulator.GetTrayUnknownFlowID();
+                        await AddRackCargoIDManual(wIPID, portID, tunid, triggerBy, isByAgvUnloadend);
+                    });
+                }
+
+                return result;
 
             }
             else
@@ -60,6 +75,8 @@ namespace AGVSystem.Service
 
                 if (!TryGetPort(tagNumber, slot, out clsPortOfRack port))
                     return (false, "", "Port Not Found"); ;
+                string locID = port.GetLocID();
+                string zoneName = port.GetParentRack().RackOption.DeviceID;
 
                 bool isEqAsZonePortHasCSTIDReader = port.IsRackPortIsEQ(out clsEQ eq) && eq.EndPointOptions.IsRoleAsZone && eq.EndPointOptions.IsCSTIDReportable;
                 if (isEqAsZonePortHasCSTIDReader)
@@ -79,6 +96,13 @@ namespace AGVSystem.Service
                     portStatus.MaterialID = string.Empty;
                     await _dbContext.SaveChangesAsync();
                 }
+                if (!isByAgvUnloadend)
+                    MCSCIMService.CarrierRemoveCompletedReport(removedCarrierID, locID, zoneName, 1);
+                EQDeviceEventsHandler.BrocastRackData();
+                await Task.Delay(200);
+                await EQDeviceEventsHandler.ZoneCapacityChangeEventReport(port.GetParentRack());
+                await Task.Delay(200);
+                await EQDeviceEventsHandler.ShelfStatusChangeEventReport(port.GetParentRack());
                 _logger.Info($"WIP:{port.GetParentRack().EQName} Port-{port.Properties.ID} Cargo ID Removed. (Trigger By:{triggerBy})");
                 return (true, removedCarrierID, "");
 
@@ -94,13 +118,13 @@ namespace AGVSystem.Service
                 dbSemaphoreSlim.Release();
             }
         }
-        internal async Task<(bool confirm, string message)> AddRackCargoID(string WIPID, string PortID, string cargoID, string triggerBy, bool isByAgvLoadend)
+        internal async Task<(bool confirm, string message)> AddRackCargoIDManual(string WIPID, string PortID, string cargoID, string triggerBy, bool isByAgvLoadend, bool bypassHasCSTReaderCheck = false)
         {
             if (TryGetPort(WIPID, PortID, out clsPortOfRack port))
             {
                 int tag = port.TagNumbers.FirstOrDefault();
                 int slot = port.Properties.Row;
-                return await AddRackCargoID(tag, slot, cargoID, triggerBy, isByAgvLoadend);
+                return await AddRackCargoID(tag, slot, cargoID, triggerBy, isByAgvLoadend, bypassHasCSTReaderCheck);
             }
             else
                 return (false, "Port Not Found");
@@ -115,7 +139,7 @@ namespace AGVSystem.Service
         /// <param name="triggerBy"></param>
         /// <param name="isByAgvLoadend">是不是因為車子放貨到port修改帳籍</param>
         /// <returns></returns>
-        internal async Task<(bool confirm, string message)> AddRackCargoID(int tagNumber, int slot, string cargoID, string triggerBy, bool isByAgvLoadend)
+        internal async Task<(bool confirm, string message)> AddRackCargoID(int tagNumber, int slot, string cargoID, string triggerBy, bool isByAgvLoadend, bool bypassHasCSTReaderCheck = false)
         {
             try
             {
@@ -124,9 +148,17 @@ namespace AGVSystem.Service
                     return (false, "Port Not Found");
 
                 bool isEqAsZonePortHasCSTIDReader = port.IsRackPortIsEQ(out clsEQ eq) && eq.EndPointOptions.IsRoleAsZone && eq.EndPointOptions.IsCSTIDReportable;
-                if (isEqAsZonePortHasCSTIDReader)
+                if (!bypassHasCSTReaderCheck && isEqAsZonePortHasCSTIDReader)
                     return (false, "該Port具有Carrier ID Reader 功能，無法修改帳料資訊");
 
+                string locID = port.GetLocID();
+                string zoneName = port.GetParentRack().RackOption.DeviceID;
+
+                string oldCarrierID = port.CarrierID;
+                if (!string.IsNullOrEmpty(oldCarrierID))
+                {
+                    MCSCIMService.CarrierRemoveCompletedReport(oldCarrierID, locID, zoneName, 1);
+                }
                 if (eq != null && eq.EndPointOptions.IsRoleAsZone)
                     eq.PortStatus.CarrierID = cargoID;
                 port.VehicleLoadToPortFlag = isByAgvLoadend;
@@ -136,8 +168,14 @@ namespace AGVSystem.Service
                     portStatus.MaterialID = cargoID;
                     await _dbContext.SaveChangesAsync();
                 }
+                if (!isByAgvLoadend)
+                    MCSCIMService.CarrierInstallCompletedReport(cargoID, locID, zoneName, 1);
                 _logger.Info($"WIP:{port.GetParentRack().EQName} Port-{port.Properties.ID} Cargo ID Changed to {cargoID}(Trigger By:{triggerBy})");
-
+                EQDeviceEventsHandler.BrocastRackData();
+                await Task.Delay(200);
+                await EQDeviceEventsHandler.ZoneCapacityChangeEventReport(port.GetParentRack());
+                await Task.Delay(200);
+                await EQDeviceEventsHandler.ShelfStatusChangeEventReport(port.GetParentRack());
                 return (true, "");
             }
             catch (Exception ex)

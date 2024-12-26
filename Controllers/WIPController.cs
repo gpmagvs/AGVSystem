@@ -23,7 +23,7 @@ namespace AGVSystem.Controllers
         public async Task<IActionResult> ModifyCargoID(string WIPID, string PortID, string NewCargoID)
         {
             //StaEQPManagager.WIPController.ModifyCargoID(WIPID, PortID, NewCargoID);
-            (bool confirm, string message) = await _rackControlService.AddRackCargoID(WIPID, PortID, NewCargoID, this.GetType().Name, false);
+            (bool confirm, string message) = await _rackControlService.AddRackCargoIDManual(WIPID, PortID, NewCargoID, this.GetType().Name, false);
             return Ok(new { confirm = confirm, message = message });
         }
 
@@ -31,7 +31,7 @@ namespace AGVSystem.Controllers
         public async Task<IActionResult> RemoveCargoID(string WIPID, string PortID)
         {
             //StaEQPManagager.WIPController.RemoveCargoID(WIPID, PortID);
-            (bool confirm, string removedCarrierID, string message) = await _rackControlService.RemoveRackCargoID(WIPID, PortID, this.GetType().Name, false);
+            (bool confirm, string removedCarrierID, string message) = await _rackControlService.RemoveRackCargoIDManual(WIPID, PortID, this.GetType().Name, false);
             return Ok(new { confirm = confirm, message = message });
         }
 

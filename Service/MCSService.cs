@@ -184,7 +184,7 @@ namespace AGVSystem.Service.MCS
         private bool TryGetRackPort(string deviceID, bool asDestine, string carrierID, out clsPortOfRack? port)
         {
             port = null;
-            clsRack rack = ALLRack.FirstOrDefault(rack => rack.RackOption.DeviceID == deviceID && rack.PortsStatus.Any(port => asDestine ? true : port.CarrierID == carrierID || (port.IsRackPortIsEQ(out clsEQ eq) && eq.CSTIDReadValue == carrierID)));
+            clsRack rack = ALLRack.FirstOrDefault(rack => rack.RackOption.DeviceID == deviceID && rack.PortsStatus.Any(port => asDestine ? true : port.CarrierID == carrierID || (port.IsRackPortIsEQ(out clsEQ eq) && (eq.PortStatus.CarrierID == carrierID || eq.CSTIDReadValue == carrierID))));
             if (rack == null)
                 return false;
 
@@ -205,7 +205,17 @@ namespace AGVSystem.Service.MCS
                 allPorts = allPorts.OrderByDescending(p => p.TagNumbers.All(tag => tag.GetMapPoint().StationType == AGVSystemCommonNet6.MAP.MapPoint.STATION_TYPE.Buffer))
                                    .ToList();
                 //Filter : 不可以是轉換架,不可以有貨物,不可以有被指派任務
-                port = allPorts.Where(p => p.Properties.PortUsable == clsPortOfRack.PORT_USABLE.USABLE && NotTransferStationPort(p) && !p.CargoExist && !HasOrderAssigned(p)).FirstOrDefault(); //TODO 可以更優化，找PORT的邏輯 , 比如從最低層開始找
+
+                port = allPorts.Where(p => p.Properties.PortUsable == clsPortOfRack.PORT_USABLE.USABLE && NotTransferStationPort(p) && !p.CargoExist && !_IsEqAsZoneAndHasCargo(p) && !HasOrderAssigned(p)).FirstOrDefault(); //TODO 可以更優化，找PORT的邏輯 , 比如從最低層開始找
+
+                bool _IsEqAsZoneAndHasCargo(clsPortOfRack rackPort)
+                {
+                    if (!rackPort.IsRackPortIsEQ(out clsEQ eq))
+                        return false;
+                    if (!eq.EndPointOptions.IsRoleAsZone)
+                        return false;
+                    return eq.Port_Exist;
+                }
 
                 if (port == null)
                 {
@@ -220,7 +230,7 @@ namespace AGVSystem.Service.MCS
             {
                 //Rack 是來源地[取貨], 找有貨的Port且ID = carrierID
                 //有帳無料
-                port = rack.PortsStatus.FirstOrDefault(p => p.CarrierID == carrierID || (p.IsRackPortIsEQ(out clsEQ eq) && eq.CSTIDReadValue == carrierID));
+                port = rack.PortsStatus.FirstOrDefault(p => p.CarrierID == carrierID || (p.IsRackPortIsEQ(out clsEQ eq) && (eq.PortStatus.CarrierID == carrierID || eq.CSTIDReadValue == carrierID)));
             }
             return port != null;
         }

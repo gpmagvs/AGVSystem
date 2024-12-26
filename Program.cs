@@ -263,12 +263,6 @@ public static class WebAppInitializer
             builder.Services.AddHostedService<ThirdPartyProgramStartService>();
 
         builder.Services.AddMemoryCache();
-        builder.Services.AddHostedService<DatabaseBackgroundService>();
-        builder.Services.AddHostedService<VehicleLocationMonitorBackgroundService>();
-        builder.Services.AddHostedService<FrontEndDataBrocastService>();
-        builder.Services.AddHostedService<PCPerformanceService>();
-        builder.Services.AddHostedService<EquipmentInitStartupService>();
-        builder.Services.AddHostedService<EquipmentsCollectBackgroundService>();
         builder.Services.AddScoped<MeanTimeQueryService>();
         builder.Services.AddScoped<LogDownlodService>();
         builder.Services.AddScoped<StationSelectService>();
@@ -278,6 +272,13 @@ public static class WebAppInitializer
         builder.Services.AddScoped<DatabaseMigrateService>();
         builder.Services.AddScoped<SECSConfigsService>(service => _secsConfigsService);
         builder.Services.AddScoped<TrafficStateDataQueryService>();
+        builder.Services.AddHostedService<DatabaseBackgroundService>();
+        builder.Services.AddHostedService<VehicleLocationMonitorBackgroundService>();
+        builder.Services.AddHostedService<FrontEndDataBrocastService>();
+        builder.Services.AddHostedService<PCPerformanceService>();
+        builder.Services.AddHostedService<EquipmentInitStartupService>();
+        builder.Services.AddHostedService<EquipmentsCollectBackgroundService>();
+        builder.Services.AddHostedService<RackPortDoubleIDMonitor>();
     }
 
     private static void ConfigureCors(WebApplicationBuilder builder)
