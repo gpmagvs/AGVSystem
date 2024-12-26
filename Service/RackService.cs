@@ -158,7 +158,7 @@ namespace AGVSystem.Service
                 StaEQPManagager.RacksOptions.TryGetValue(wIPID, out var wipOption);
                 var portPropertyStore = wipOption.PortsOptions.FirstOrDefault(p => p.ID == port.Properties.ID);
                 portPropertyStore.PortUsable = port.Properties.PortUsable = usable ? clsPortOfRack.PORT_USABLE.USABLE : clsPortOfRack.PORT_USABLE.NOT_USABLE;
-                StaEQPManagager.SaveEqConfigs();
+                StaEQPManagager.SaveRackConfigs();
                 return (true, "");
             }
             else
