@@ -82,7 +82,7 @@ public class Program
             WebAppInitializer.ConfigureBuilder(builder);
 
             var app = builder.Build();
-            WebAppInitializer.ConfigureApp(app);
+            WebAppInitializer.ConfigureApp(builder, app);
 
             if (hotRunEnabled)
             {
@@ -334,7 +334,7 @@ public static class WebAppInitializer
         });
     }
 
-    public static void ConfigureApp(WebApplication app)
+    public static void ConfigureApp(WebApplicationBuilder builder, WebApplication app)
     {
 
         // 動態獲取本機所有 IP 地址
@@ -365,8 +365,17 @@ public static class WebAppInitializer
         app.UseSwaggerUI();
         app.UseCors("AllowAll");
         app.UseWebSockets();
-        app.UseDefaultFiles(new DefaultFilesOptions());
-        app.UseStaticFiles();
+
+        string frontendRootFolder = builder.Configuration.GetValue<string>("FrontendRootFolder");
+        PhysicalFileProvider frontendFileProvider = new PhysicalFileProvider(Path.Combine(app.Environment.ContentRootPath, frontendRootFolder ?? "wwwroot"));
+        app.UseDefaultFiles(new DefaultFilesOptions()
+        {
+            FileProvider = frontendFileProvider,
+        });
+        app.UseStaticFiles(new StaticFileOptions
+        {
+            FileProvider = frontendFileProvider,
+        });
 
         StaticFileInitializer.Initialize(app);
 
