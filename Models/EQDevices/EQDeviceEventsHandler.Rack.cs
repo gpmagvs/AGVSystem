@@ -42,7 +42,6 @@ namespace AGVSystem.Models.EQDevices
 
         private static void HandlePortCargoChangedToExist(object? sender, clsPortOfRack port)
         {
-            BrocastRackData();
             string portLocID = port.GetLocID();
 
             bool _isTransferActionRunning = DatabaseCaches.TaskCaches.RunningTasks.Any(order => order.destinePortID == (portLocID) && order.currentProgress == AGVSystemCommonNet6.AGVDispatch.VehicleMovementStage.WorkingAtDestination);
@@ -68,12 +67,14 @@ namespace AGVSystem.Models.EQDevices
                         await Task.Delay(600);
                         UpdateCarrierID(tunid);
                         NotifyServiceHelper.INFO($"{portLocID}因非搬運過程但偵測到在席有貨,已生成未知帳-{tunid}");
+                        BrocastRackData();
                     }
                     await ZoneCapacityChangeEventReport(port.GetParentRack());
                 });
 
             }
 
+            BrocastRackData();
 
             void UpdateCarrierID(string tunid)
             {
