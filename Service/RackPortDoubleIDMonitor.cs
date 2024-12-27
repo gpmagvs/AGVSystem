@@ -3,7 +3,8 @@ using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.Microservices.MCS;
 using EquipmentManagment.Manager;
 using EquipmentManagment.WIP;
-
+using AGVSystem.Models.EQDevices;
+using EquipmentManagment.MainEquipment;
 namespace AGVSystem.Service
 {
     public class RackPortDoubleIDMonitor : IHostedService
@@ -28,22 +29,38 @@ namespace AGVSystem.Service
                                                                                       .ToList();
                     Dictionary<string, List<clsPortOfRack>> carrierIDOwnerStateMap = currentCarrierIDExist.ToDictionary(carrierID => carrierID, carrierID => StaEQPManagager.RackPortsList.Where(port => port.CarrierID == carrierID).ToList());
 
-                    foreach (var doubleCarrierIDCollection in carrierIDOwnerStateMap.Where(pair => pair.Value.Count() > 1))
+                    foreach (KeyValuePair<string, List<clsPortOfRack>> doubleCarrierIDCollection in carrierIDOwnerStateMap.Where(pair => pair.Value.Count() > 1))
                     {
                         bool _isTrayDouble = doubleCarrierIDCollection.Key.StartsWith("T");
 
-                        foreach (var ports in doubleCarrierIDCollection.Value)
+
+                        foreach (var port in doubleCarrierIDCollection.Value)
                         {
-                            string doubleUID = _isTrayDouble ? await AGVSConfigulator.GetDoubleTrayUnknownFlowID() : await AGVSConfigulator.GetDoubleRackUnknownFlowID();
-                            await rackSerivce.AddRackCargoIDManual(ports.GetParentRack().EQName, ports.Properties.ID, doubleUID, "AutoDetectDoubleIDService", false);
+                            bool isPortHasCstReader = port.IsRackPortIsEQ(out clsEQ eq) && eq.EndPointOptions.IsCSTIDReportable;
+
+                            string newInstallID = "";
+
+                            if (isPortHasCstReader)
+                                newInstallID = doubleCarrierIDCollection.Key;
+                            else
+                                newInstallID = _isTrayDouble ? await AGVSConfigulator.GetDoubleTrayUnknownFlowID() : await AGVSConfigulator.GetDoubleRackUnknownFlowID();
+
+                            await _ModifyCarrierID(port, newInstallID, isPortHasCstReader);
+
+
                             await Task.Delay(100);
+
+
                         }
                     };
                 }
             });
         }
 
-
+        private async Task _ModifyCarrierID(clsPortOfRack _port, string _newID, bool _isPortHasReader)
+        {
+            await rackSerivce.AddRackCargoIDManual(_port.GetParentRack().EQName, _port.Properties.ID, _newID, "AutoDetectDoubleIDService", false, _isPortHasReader);
+        }
 
         public async Task StopAsync(CancellationToken cancellationToken)
         {
