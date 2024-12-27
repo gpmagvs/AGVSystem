@@ -146,6 +146,7 @@ namespace AGVSystem.Models.EQDevices
                         {
                             await MCSCIMService.CarrierRemoveCompletedReport(e.oldValue, carrierLoc, zoneID, 1).ContinueWith(async t =>
                             {
+                                await Task.Delay(100);
                                 await MCSCIMService.CarrierInstallCompletedReport(e.newValue, carrierLoc, zoneID, 1);
                             });
                             port.CarrierID = e.newValue;
