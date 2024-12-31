@@ -15,7 +15,10 @@ namespace AGVSystem
             "/AGVImages",
             "/api/Equipment/GetEQOptions",
             "/api/Equipment/GetWIPOptions",
+            "/api/Equipment/GetEQData",
             "/api/system/website",
+            "/api/TaskQuery",
+            "/api/WIP/GetRackStatusData",
         };
         private List<string> contentTypesToIgnore = new() { "image", "text/css", "text/html", "application/javascript", "application/zip", "application/x-zip-compressed", "font" };
 
