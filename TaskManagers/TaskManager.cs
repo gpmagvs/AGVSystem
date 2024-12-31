@@ -577,8 +577,6 @@ namespace AGVSystem.TaskManagers
                                 CarrierLoc = dto.soucePortID,
                                 CarrierZoneName = dto.sourceZoneID,
                             };
-                            MCSCIMService.TransferCancelInitiatedReport(transportCommandDto);
-
                             dto.State = TASK_RUN_STATUS.CANCEL;
                             dto.FailureReason = reason;
                             dto.FinishTime = DateTime.Now;
@@ -586,7 +584,7 @@ namespace AGVSystem.TaskManagers
                         await agvsDb.SaveChanges();
                     }
 
-                    MCSCIMService.TransferCancelCompletedReport(transportCommandDto);
+                    MCSCIMService.TransferAbortCompletedReport(transportCommandDto);
                     return true;
                 }
 
