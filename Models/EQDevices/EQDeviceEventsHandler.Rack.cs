@@ -83,6 +83,8 @@ namespace AGVSystem.Models.EQDevices
                 port.CarrierID = tunid;
                 if (port.IsRackPortIsEQ(out clsEQ eqInport))
                     eqInport.PortStatus.CarrierID = port.CarrierID;
+
+                rackService.UpdateRackPortCarrierIDOfDatabase(port, tunid);
             }
         }
 

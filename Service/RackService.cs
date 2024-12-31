@@ -94,6 +94,7 @@ namespace AGVSystem.Service
                 if (TryGetStationStatus(tagNumber, slot, out clsStationStatus portStatus))
                 {
                     portStatus.MaterialID = string.Empty;
+                    portStatus.UpdateTime = DateTime.Now;
                     await _dbContext.SaveChangesAsync();
                 }
                 if (!isByAgvUnloadend)
@@ -231,5 +232,31 @@ namespace AGVSystem.Service
             return port != null;
         }
 
+        internal void UpdateRackPortCarrierIDOfDatabase(clsPortOfRack port, string carrierID)
+        {
+            string stationNameKey = $"{port.GetParentRack().EQName}_{port.Properties.ID}";
+            clsStationStatus entity = _dbContext.StationStatus.FirstOrDefault(p => p.StationName == stationNameKey);
+            if (entity != null)
+            {
+                entity.MaterialID = carrierID;
+                entity.UpdateTime = DateTime.Now;
+            }
+            else
+            {
+                _dbContext.StationStatus.Add(new clsStationStatus()
+                {
+                    StationName = stationNameKey,
+                    StationCol = port.Properties.Column,
+                    StationRow = port.Properties.Row,
+                    MaterialID = carrierID,
+                    Type = MaterialType.Tray,
+                    StationTag = port.TagNumbers.FirstOrDefault().ToString(),
+                    IsNGPort = false,
+                    IsEnable = true,
+                    UpdateTime = DateTime.Now
+                });
+            }
+            _dbContext.SaveChanges();
+        }
     }
 }
