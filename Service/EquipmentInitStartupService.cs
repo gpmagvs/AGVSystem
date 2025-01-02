@@ -4,6 +4,7 @@ using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.Material;
+using EquipmentManagment.Device.Options;
 using EquipmentManagment.MainEquipment;
 using EquipmentManagment.Manager;
 using EquipmentManagment.WIP;
@@ -33,6 +34,15 @@ namespace AGVSystem.Service
 
                 clsEQ.WirteOuputEnabled = !AGVSConfigulator.SysConfigs.BaseOnKGSWebAGVSystem;
                 string eqConfigsStoreFolder = AGVSConfigulator.SysConfigs.PATHES_STORE[SystemConfigs.PATH_ENUMS.EQ_CONFIGS_FOLDER_PATH];
+                StaEQPManagager.OnWIPConfigLoaded += (sender, wipOptions) =>
+                {
+                    CheckWIPDeivceID(wipOptions);
+                };
+
+                StaEQPManagager.OnEqConfigLoaded += (sender, eqOptions) =>
+                {
+                    CheckEQDeviceID(eqOptions);
+                };
 
                 StaEQPManagager.InitializeAsync(new clsEQManagementConfigs
                 {
@@ -49,6 +59,40 @@ namespace AGVSystem.Service
             catch (Exception ex)
             {
                 AlarmManagerCenter.AddAlarmAsync(ALARMS.SYSTEM_EQP_MANAGEMENT_INITIALIZE_FAIL_WITH_EXCEPTION);
+            }
+        }
+
+        private void CheckEQDeviceID(Dictionary<string, clsEndPointOptions> eqOptions)
+        {
+            List<string> deviceIDList = eqOptions.Values.Select(v => v.DeviceID).Distinct().ToList();
+
+            List<string> duplicateDeviceIDList = deviceIDList.Where(_deviceID => eqOptions.Where(pair => pair.Value.DeviceID == _deviceID).Count() > 1)
+                                                             .ToList();
+
+            foreach (var _deviceID in duplicateDeviceIDList)
+            {
+                var toModify = eqOptions.Where(pair => pair.Value.DeviceID == _deviceID).Skip(1);
+                foreach (var item in toModify)
+                {
+                    item.Value.DeviceID = "SYL" + item.Key;
+                };
+            }
+        }
+
+        private void CheckWIPDeivceID(Dictionary<string, clsRackOptions> wipOptions)
+        {
+            List<string> deviceIDList = wipOptions.Values.Select(v => v.DeviceID).Distinct().ToList();
+
+            List<string> duplicateDeviceIDList = deviceIDList.Where(_deviceID => wipOptions.Where(pair => pair.Value.DeviceID == _deviceID).Count() > 1)
+                                                             .ToList();
+
+            foreach (var _deviceID in duplicateDeviceIDList)
+            {
+                var toModify = wipOptions.Where(pair => pair.Value.DeviceID == _deviceID).Skip(1);
+                foreach (var item in toModify)
+                {
+                    item.Value.DeviceID = "SYS00" + item.Key;
+                };
             }
         }
 
@@ -96,7 +140,6 @@ namespace AGVSystem.Service
             //}
 
         }
-
         public async Task StopAsync(CancellationToken cancellationToken)
         {
         }
