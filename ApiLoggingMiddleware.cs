@@ -13,12 +13,12 @@ namespace AGVSystem
         {
             "/api/Map",
             "/AGVImages",
-            "/api/Equipment/GetEQOptions",
-            "/api/Equipment/GetWIPOptions",
-            "/api/Equipment/GetEQData",
+            "/api/system",
+            "/api/Equipment",
+            "/api/WIP",
             "/api/system/website",
             "/api/TaskQuery",
-            "/api/WIP/GetRackStatusData",
+            "/FrontEndDataHub",
         };
         private List<string> contentTypesToIgnore = new() { "image", "text/css", "text/html", "application/javascript", "application/zip", "application/x-zip-compressed", "font" };
 
@@ -50,7 +50,8 @@ namespace AGVSystem
             }
 
             string? _requestPath = context.Request.Path.Value;
-            if (IngnorePath.Contains(_requestPath))
+
+            if (IngnorePath.Any(ingnore => _requestPath.ToLower().Contains(ingnore.ToLower())))
             {
                 await responseBody.CopyToAsync(originalBodyStream);
                 return;
