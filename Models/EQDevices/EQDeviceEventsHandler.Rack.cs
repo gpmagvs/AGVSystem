@@ -75,14 +75,17 @@ namespace AGVSystem.Models.EQDevices
                 });
 
             }
-
             BrocastRackData();
 
             void UpdateCarrierID(string tunid)
             {
                 port.CarrierID = tunid;
+                port.InstallTime = DateTime.Now;
                 if (port.IsRackPortIsEQ(out clsEQ eqInport))
+                {
                     eqInport.PortStatus.CarrierID = port.CarrierID;
+                    eqInport.PortStatus.InstallTime = port.InstallTime;
+                }
 
                 rackService.UpdateRackPortCarrierIDOfDatabase(port, tunid);
             }

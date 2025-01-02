@@ -31,7 +31,7 @@ namespace AGVSystem.Service
                 Columns = wip.RackOption.Columns,
                 Rows = wip.RackOption.Rows,
                 DeviceID = string.IsNullOrEmpty(wip.RackOption.DeviceID) ? $"SYS-{random.NextInt64(1, 12222222)}" : wip.RackOption.DeviceID,
-                Ports = wip.RackOption.MaterialInfoFromEquipment ? wip.GetPortStatusWithEqInfo().ToList() : wip.PortsStatus.ToList(),
+                Ports = wip.GetPortStatusWithEqInfo().ToList(),
                 ColumnsTagMap = wip.RackOption.ColumnTagMap,
                 IsOvenAsRacks = wip.RackOption.MaterialInfoFromEquipment
             }).OrderBy(wip => wip.WIPName).ToList();
@@ -88,7 +88,7 @@ namespace AGVSystem.Service
                 port.CarrierID = string.Empty;
 
 
-                if (eq != null && eq.EndPointOptions.IsRoleAsZone)
+                if (eq != null)
                     eq.PortStatus.CarrierID = string.Empty;
 
                 if (TryGetStationStatus(tagNumber, slot, out clsStationStatus portStatus))
@@ -160,13 +160,20 @@ namespace AGVSystem.Service
                 {
                     MCSCIMService.CarrierRemoveCompletedReport(oldCarrierID, locID, zoneName, 1);
                 }
-                if (eq != null && eq.EndPointOptions.IsRoleAsZone)
-                    eq.PortStatus.CarrierID = cargoID;
+                DateTime installTime = DateTime.Now;
                 port.VehicleLoadToPortFlag = isByAgvLoadend;
                 port.CarrierID = cargoID;
+                port.InstallTime = installTime;
+
+                if (eq != null)
+                {
+                    eq.PortStatus.CarrierID = cargoID;
+                    eq.PortStatus.InstallTime = installTime;
+                }
                 if (TryGetStationStatus(tagNumber, slot, out clsStationStatus portStatus))
                 {
                     portStatus.MaterialID = cargoID;
+                    portStatus.UpdateTime = installTime;
                     await _dbContext.SaveChangesAsync();
                 }
                 if (!isByAgvLoadend)
@@ -197,6 +204,20 @@ namespace AGVSystem.Service
                 StaEQPManagager.RacksOptions.TryGetValue(wIPID, out var wipOption);
                 var portPropertyStore = wipOption.PortsOptions.FirstOrDefault(p => p.ID == port.Properties.ID);
                 portPropertyStore.PortUsable = port.Properties.PortUsable = usable ? clsPortOfRack.PORT_USABLE.USABLE : clsPortOfRack.PORT_USABLE.NOT_USABLE;
+                StaEQPManagager.SaveRackConfigs();
+                return (true, "");
+            }
+            else
+                return (false, "Port Not Found");
+        }
+
+        internal async Task<(bool confirm, string message)> PortNoRename(string wIPID, string portID, string newPortNo)
+        {
+            if (TryGetPort(wIPID, portID, out clsPortOfRack port))
+            {
+                StaEQPManagager.RacksOptions.TryGetValue(wIPID, out var wipOption);
+                var portPropertyStore = wipOption.PortsOptions.FirstOrDefault(p => p.ID == port.Properties.ID);
+                port.Properties.PortNo = portPropertyStore.PortNo = newPortNo;
                 StaEQPManagager.SaveRackConfigs();
                 return (true, "");
             }
@@ -239,7 +260,7 @@ namespace AGVSystem.Service
             if (entity != null)
             {
                 entity.MaterialID = carrierID;
-                entity.UpdateTime = DateTime.Now;
+                entity.UpdateTime = port.InstallTime;
             }
             else
             {
@@ -253,10 +274,11 @@ namespace AGVSystem.Service
                     StationTag = port.TagNumbers.FirstOrDefault().ToString(),
                     IsNGPort = false,
                     IsEnable = true,
-                    UpdateTime = DateTime.Now
+                    UpdateTime = port.InstallTime
                 });
             }
             _dbContext.SaveChanges();
         }
+
     }
 }

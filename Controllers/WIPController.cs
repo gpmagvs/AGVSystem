@@ -45,6 +45,16 @@ namespace AGVSystem.Controllers
         }
 
 
+        [HttpPost("PortNoRename")]
+        public async Task<IActionResult> PortNoRename(string WIPID, string PortID, string NewPortNo)
+        {
+            //StaEQPManagager.WIPController.RemoveCargoID(WIPID, PortID);
+            (bool confirm, string message) = await _rackControlService.PortNoRename(WIPID, PortID, NewPortNo);
+            Task.Delay(100).ContinueWith((t) => { EQDeviceEventsHandler.BrocastRackData(); });
+            return Ok(new { confirm = confirm, message = message });
+        }
+
+
 
         [HttpGet("GetAllSlotsOptions")]
         public async Task<IActionResult> GetAllSlotsOptions()

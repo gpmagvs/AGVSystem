@@ -372,8 +372,9 @@ namespace AGVSystem.Models.EQDevices
 
         internal static async void HandleEQIOStateChanged(object? sender, EndPointDeviceAbstract.IOChangedEventArgs device)
         {
-            BrocastEQkData();
             _logger.Trace($"[{device.Device.EQName}] IO-{device.IOName} Changed To {(device.IOState ? "1" : "0")}", device.Device.EQName);
+            BrocastEQkData();
+            BrocastRackData();
         }
 
 

@@ -10,7 +10,7 @@ namespace AGVSystem.ViewModel
         public int Rows { get; set; } = 1;
         public bool IsOvenAsRacks { get; set; } = false;
         public Dictionary<int, int[]> ColumnsTagMap { get; set; } = new Dictionary<int, int[]>();
-        public List<clsPortOfRack> Ports { get; set; } = new List<clsPortOfRack>();
+        public List<PortOfRackViewModel> Ports { get; set; } = new List<PortOfRackViewModel>();
         public bool IsAnyPortHasDataButNoCargo
         {
             get

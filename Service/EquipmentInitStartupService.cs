@@ -36,7 +36,7 @@ namespace AGVSystem.Service
                 string eqConfigsStoreFolder = AGVSConfigulator.SysConfigs.PATHES_STORE[SystemConfigs.PATH_ENUMS.EQ_CONFIGS_FOLDER_PATH];
                 StaEQPManagager.OnWIPConfigLoaded += (sender, wipOptions) =>
                 {
-                    CheckWIPDeivceID(wipOptions);
+                    //CheckWIPConfigration(wipOptions);
                 };
 
                 StaEQPManagager.OnEqConfigLoaded += (sender, eqOptions) =>
@@ -79,7 +79,7 @@ namespace AGVSystem.Service
             }
         }
 
-        private void CheckWIPDeivceID(Dictionary<string, clsRackOptions> wipOptions)
+        private void CheckWIPConfigration(Dictionary<string, clsRackOptions> wipOptions)
         {
             List<string> deviceIDList = wipOptions.Values.Select(v => v.DeviceID).Distinct().ToList();
 
@@ -118,8 +118,12 @@ namespace AGVSystem.Service
                     if (!isEqAsZonePortAndHasCstReader)
                     {
                         rackport.CarrierID = _materialID;
+                        rackport.InstallTime = item.UpdateTime;
                         if (eq != null && eq.EndPointOptions.IsRoleAsZone)
+                        {
                             eq.PortStatus.CarrierID = _materialID;
+                            eq.PortStatus.InstallTime = item.UpdateTime;
+                        }
                     }
                 }
             }
