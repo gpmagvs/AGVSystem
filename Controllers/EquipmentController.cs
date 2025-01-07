@@ -164,7 +164,7 @@ namespace AGVSystem.Controllers
                     return Ok(new { confirm = false, message = $"{EqName} is not exist" });
 
                 clsChargeStation chargeStation = charge_station as clsChargeStation;
-                bool isGy7601 = (chargeStation.EndPointOptions as clsChargeStationOptions).chip_brand == 2;
+                bool isGy7601 = (chargeStation.EndPointOptions as clsChargeStationOptions).chip_brand == clsChargeStationOptions.CHARGER_INTERFACE.PMBUS_REV_1_1;
 
                 var _item = Item.ToUpper();
                 bool success = false;
