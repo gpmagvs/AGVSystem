@@ -78,13 +78,13 @@ namespace AGVSystem.Models.EQDevices
         {
             (int ChargeStationTag, MapPoint StationMapPoint, string UsingChargeStationVehicleName) = _GetChargeStationAndVehicle(e);
             string chargerName = e.EQName;
-            AlarmManagerCenter.AddAlarmAsync(ALARMS.Charge_Station_Temperature_High, ALARM_SOURCE.EQP, Equipment_Name: chargerName, location: chargerName);
+            AlarmManagerCenter.AddAlarmAsync(ALARMS.Charge_Station_Status_Temperature_High, ALARM_SOURCE.EQP, Equipment_Name: chargerName, location: chargerName);
         }
         private static void HandleChargeStationTemperatureRestoreUnderThreshoad(object? sender, clsChargeStation e)
         {
             (int ChargeStationTag, MapPoint StationMapPoint, string UsingChargeStationVehicleName) = _GetChargeStationAndVehicle(e);
             string chargerName = e.EQName;
-            AlarmManagerCenter.SetAlarmCheckedAsync(chargerName, ALARMS.Charge_Station_Temperature_High);
+            AlarmManagerCenter.SetAlarmCheckedAsync(chargerName, ALARMS.Charge_Station_Status_Temperature_High);
         }
 
 
@@ -108,26 +108,36 @@ namespace AGVSystem.Models.EQDevices
         private static void ChargerIOSynchronizer_OnSmokeDetected(object? sender, string chargerName)
         {
             AudioPlayService.AddAudioToPlayQueue(ChargerSmokeDetectedAudioFilePath);
-            AlarmManagerCenter.AddAlarmAsync(ALARMS.Charge_Station_Smoke_Detected, Equipment_Name: chargerName);
+            AlarmManagerCenter.AddAlarmAsync(ALARMS.Charge_Station_Status_Smoke_Detected, Equipment_Name: chargerName);
         }
 
         private static void ChargerIOSynchronizer_OnTemperatureErrorDetected(object? sender, string chargerName)
         {
             AudioPlayService.AddAudioToPlayQueue(ChargerSmokeDetectedAudioFilePath);
-            AlarmManagerCenter.AddAlarmAsync(ALARMS.Charge_Station_Temperature_High, Equipment_Name: chargerName);
+            AlarmManagerCenter.AddAlarmAsync(ALARMS.Charge_Station_Status_Temperature_High, Equipment_Name: chargerName);
         }
 
         private static void ChargerIOSynchronizer_OnAirError(object? sender, string chargerName)
         {
             AudioPlayService.AddAudioToPlayQueue(ChargerAirErrorAudioFilePath);
-            AlarmManagerCenter.AddAlarmAsync(ALARMS.Charge_Station_Air_Error, Equipment_Name: chargerName);
+            AlarmManagerCenter.AddAlarmAsync(ALARMS.Charge_Station_Status_Air_Error, Equipment_Name: chargerName);
         }
 
         private static void ChargerIOSynchronizer_OnEMO(object? sender, string chargerName)
         {
             AudioPlayService.AddAudioToPlayQueue(ChargerEMOAudioFilePath);
-            AlarmManagerCenter.AddAlarmAsync(ALARMS.Charge_Station_EMO, Equipment_Name: chargerName);
+            AlarmManagerCenter.AddAlarmAsync(ALARMS.Charge_Station_Status_EMO, Equipment_Name: chargerName);
         }
+
+        private static void ChargerIOSynchronizer_OnConnected(object? sender, string chargerName)
+        {
+            AlarmManagerCenter.SetAlarmCheckedAsync(chargerName, ALARMS.Charge_Station_Status_IO_Module_Disconnected);
+        }
+        private static void ChargerIOSynchronizer_OnDisconnected(object? sender, string chargerName)
+        {
+            AlarmManagerCenter.AddAlarmAsync(ALARMS.Charge_Station_Status_IO_Module_Disconnected, Equipment_Name: chargerName);
+        }
+
 
     }
 }

@@ -77,5 +77,25 @@ namespace AGVSystem.Controllers
                 charger.chargerIOSynchronizer.AirErrorEmulate(isAirError);
             }
         }
+
+
+        [HttpPost("StartEmulator")]
+        public async Task StartEmulator(string chargerName)
+        {
+            EquipmentManagment.ChargeStation.clsChargeStation? charger = StaEQPManagager.ChargeStations.FirstOrDefault(ch => ch.EndPointOptions.Name == chargerName);
+            if (charger != null && charger.chargerOptions.hasIOModule && charger.chargerOptions.IsEmulation)
+            {
+                charger.chargerIOSynchronizer.StartEmulator();
+            }
+        }
+        [HttpPost("ClosEmulator")]
+        public async Task ClosEmulator(string chargerName)
+        {
+            EquipmentManagment.ChargeStation.clsChargeStation? charger = StaEQPManagager.ChargeStations.FirstOrDefault(ch => ch.EndPointOptions.Name == chargerName);
+            if (charger != null && charger.chargerOptions.hasIOModule && charger.chargerOptions.IsEmulation)
+            {
+                charger.chargerIOSynchronizer.CloseEmulator();
+            }
+        }
     }
 }
