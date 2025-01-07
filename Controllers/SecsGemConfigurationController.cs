@@ -1,4 +1,5 @@
 ﻿using AGVSystemCommonNet6.Configuration;
+using AGVSystemCommonNet6.Microservices.MCSCIM;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using static AGVSystemCommonNet6.Microservices.MCSCIM.TransferReportConfiguration;
@@ -35,7 +36,21 @@ namespace AGVSystem.Controllers
                 return new { confirm = false, message = ex.Message };
             }
         }
-
+        [HttpPost("saveSECSGemSetting")]
+        public async Task<object> SaveSECSGemSetting(SECSConfiguration returnSECSGemSettings)
+        {
+            try
+            {
+                AGVSConfigulator.SysConfigs.SECSGem = returnSECSGemSettings;
+                AGVSConfigulator.Save(AGVSConfigulator.SysConfigs);
+                //service.UpdateSECSGemConfigs(returnSECSGemSettings);
+                return new { confirm = true, message = "" };
+            }
+            catch (Exception ex)
+            {
+                return new { confirm = false, message = ex.Message };
+            }
+        }
 
         public class clsSaveReturnCodeRequest
         {
