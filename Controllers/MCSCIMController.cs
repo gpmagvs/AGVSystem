@@ -77,6 +77,16 @@ namespace AGVSystem.Controllers
                 SendMCSMessage($"[MCS命令-{transportCommand.commandID} 已被系統拒絕] Result Code = 6 ({ex.Message})", true);
 
             }
+            catch (SourceOrDestineNotFoundException ex)
+            {
+                result.Confirmed = false;
+                result.ResultCode = 2;
+                result.Message = ex.Message;
+                clsTaskDto order = ex.order;
+                SendMCSMessage($"[MCS命令-{transportCommand.commandID} 已被系統拒絕] Result Code = 2 ,({ex.Message})", true);
+                AddFailOrderToDatabase(ex, order);
+
+            }
             catch (AddOrderFailException ex)
             {
                 result.Confirmed = false;
@@ -104,7 +114,26 @@ namespace AGVSystem.Controllers
             }
             return result;
         }
-
+        private async Task AddFailOrderToDatabase(SourceOrDestineNotFoundException ex, clsTaskDto order)
+        {
+            try
+            {
+                clsTaskDto orderExist = dbContext.Tasks.FirstOrDefault(t => t.TaskName == order.TaskName);
+                if (orderExist == null)
+                {
+                    string failDesc = $"{ex.Message}";
+                    order.State = AGVSystemCommonNet6.AGVDispatch.Messages.TASK_RUN_STATUS.FAILURE;
+                    order.StartTime = order.FinishTime = DateTime.Now;
+                    order.FailureReason = failDesc;
+                    dbContext.Tasks.Add(order);
+                    await dbContext.SaveChangesAsync();
+                }
+            }
+            catch (Exception innderEx)
+            {
+                logger.Error(innderEx);
+            }
+        }
         private async Task AddFailOrderToDatabase(AddOrderFailException ex, clsTaskDto order)
         {
             try

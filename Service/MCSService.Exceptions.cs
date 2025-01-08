@@ -15,6 +15,17 @@ namespace AGVSystem.Service.MCS
             }
         }
 
+        public class SourceOrDestineNotFoundException : Exception
+        {
+
+            public readonly clsTaskDto order;
+            public SourceOrDestineNotFoundException(string message, clsTaskDto order) : base(message)
+            {
+                this.order = order;
+            }
+
+        }
+
         public class AddOrderFailException : Exception
         {
             public readonly ALARMS alarmCode;

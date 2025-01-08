@@ -11,6 +11,7 @@ using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.Microservices.AudioPlay;
 using AGVSystemCommonNet6.Microservices.MCS;
+using AGVSystemCommonNet6.Vehicle_Control.VCS_ALARM;
 using EquipmentManagment.Device;
 using EquipmentManagment.MainEquipment;
 using EquipmentManagment.Manager;
@@ -94,7 +95,20 @@ namespace AGVSystem.Service.MCS
 
                     if (!_isSourceAGV && (sourceTag == -1 || destineTag == -1 || sourceSlot == -1 || destineSlot == -1))
                     {
-                        Exception ex = new Exception("找不到來源或起點");
+                        Exception ex = new SourceOrDestineNotFoundException("找不到來源或起點", new clsTaskDto
+                        {
+                            Action = AGVSystemCommonNet6.AGVDispatch.Messages.ACTION_TYPE.Carry,
+                            TaskName = transportCommand.commandID,
+                            Carrier_ID = transportCommand.carrierID,
+                            From_Station = transportCommand.source,
+                            To_Station = transportCommand.dest,
+                            Priority = transportCommand.priority,
+                            RecieveTime = DateTime.Now,
+                            bypass_eq_status_check = false,
+                            isFromMCS = true,
+                            DispatcherName = "MCS",
+                            State = AGVSystemCommonNet6.AGVDispatch.Messages.TASK_RUN_STATUS.FAILURE,
+                        });
                         logger.Error(ex);
                         throw ex;
                     }
@@ -130,6 +144,10 @@ namespace AGVSystem.Service.MCS
                     }
                     else
                         logger.Info($"Add Task Success! Task ID = {order.TaskName}");
+                }
+                catch (SourceOrDestineNotFoundException ex)
+                {
+                    throw ex;
                 }
                 catch (HasIDbutNoCargoException ex)
                 {
