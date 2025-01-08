@@ -79,12 +79,14 @@ namespace AGVSystem.Models.EQDevices
 
             void UpdateCarrierID(string tunid)
             {
+                port.InstallBy = PortStatusAbstract.CARRIER_SOURCE.MANUAL;
                 port.CarrierID = tunid;
                 port.InstallTime = DateTime.Now;
                 if (port.IsRackPortIsEQ(out clsEQ eqInport))
                 {
                     eqInport.PortStatus.CarrierID = port.CarrierID;
                     eqInport.PortStatus.InstallTime = port.InstallTime;
+                    eqInport.PortStatus.InstallBy = port.InstallBy;
                 }
 
                 rackService.UpdateRackPortCarrierIDOfDatabase(port, tunid);

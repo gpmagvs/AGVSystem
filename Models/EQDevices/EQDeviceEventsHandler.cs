@@ -108,7 +108,8 @@ namespace AGVSystem.Models.EQDevices
                                     installID = await AGVSConfigulator.GetTrayUnknownFlowID();
                                 e.eq.PortStatus.CarrierID = port.CarrierID = installID;
                                 e.eq.SetAGVAssignedCarrierID(installID);
-                                await MCSCIMService.CarrierInstallCompletedReport(installID, carrierLoc, zoneID, 1);
+                                e.eq.PortStatus.InstallBy = port.InstallBy = PortStatusAbstract.CARRIER_SOURCE.MANUAL;
+                                await MCSCIMService.CarrierInstallCompletedReport(installID, carrierLoc, zoneID, 0);
                             }
                             else //AGV放貨
                             {
@@ -127,6 +128,7 @@ namespace AGVSystem.Models.EQDevices
                                     await MCSCIMService.CarrierInstallCompletedReport(installID, carrierLoc, zoneID, 1);
                                 }
                                 e.eq.PortStatus.CarrierID = port.CarrierID = installID;
+                                e.eq.PortStatus.InstallBy = port.InstallBy = PortStatusAbstract.CARRIER_SOURCE.AGV;
                                 e.eq.SetAGVAssignedCarrierID(installID);
                             }
                         }
@@ -134,10 +136,12 @@ namespace AGVSystem.Models.EQDevices
                         {
                             if (isAGVLoadUnloadExecuting) //AGV取
                             {
+                                e.eq.PortStatus.RemovedBy = port.RemovedBy = PortStatusAbstract.CARRIER_SOURCE.AGV;
                             }
                             else //台車取
                             {
-                                await MCSCIMService.CarrierRemoveCompletedReport(e.eq.AGVAssignCarrierID, carrierLoc, zoneID, 1);
+                                e.eq.PortStatus.RemovedBy = port.RemovedBy = PortStatusAbstract.CARRIER_SOURCE.MANUAL;
+                                await MCSCIMService.CarrierRemoveCompletedReport(e.eq.AGVAssignCarrierID, carrierLoc, zoneID, 0);
                             }
                             e.eq.SetAGVAssignedCarrierID("");
                             port.CarrierID = string.Empty;
@@ -271,8 +275,12 @@ namespace AGVSystem.Models.EQDevices
                         string zoneName = port.GetParentRack().RackOption.DeviceID;
                         string tunid = await AGVSConfigulator.GetTrayUnknownFlowID();
                         eq.PortStatus.CarrierID = tunid;
+                        eq.PortStatus.InstallBy = PortStatusAbstract.CARRIER_SOURCE.MANUAL;
                         if (port != null)
+                        {
                             port.CarrierID = tunid;
+                            port.InstallBy = PortStatusAbstract.CARRIER_SOURCE.MANUAL;
+                        }
                         MCSCIMService.CarrierInstallCompletedReport(tunid, locID, zoneName, 1);
                         await Task.Delay(200);
                     }
