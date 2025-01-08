@@ -31,9 +31,8 @@ namespace AGVSystem.Service
 
                     foreach (KeyValuePair<string, List<clsPortOfRack>> doubleCarrierIDCollection in carrierIDOwnerStateMap.Where(pair => pair.Value.Count() > 1))
                     {
+                        await Task.Delay(1000);
                         bool _isTrayDouble = doubleCarrierIDCollection.Key.StartsWith("T");
-
-
                         foreach (var port in doubleCarrierIDCollection.Value)
                         {
                             bool isPortHasCstReader = port.IsRackPortIsEQ(out clsEQ eq) && eq.EndPointOptions.IsCSTIDReportable;
