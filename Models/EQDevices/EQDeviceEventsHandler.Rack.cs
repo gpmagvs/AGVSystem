@@ -67,7 +67,7 @@ namespace AGVSystem.Models.EQDevices
                         await Task.Delay(600);
                         UpdateCarrierID(tunid);
                         NotifyServiceHelper.INFO($"{portLocID}因非搬運過程但偵測到在席有貨,已生成未知帳-{tunid}");
-                        await MCSCIMService.CarrierInstallCompletedReport(tunid, locID, zoneID, 1);
+                        await MCSCIMService.CarrierInstallCompletedReport(tunid, locID, zoneID, 0);
                         await Task.Delay(100);
                         BrocastRackData();
                     }

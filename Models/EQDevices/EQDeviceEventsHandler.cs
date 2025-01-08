@@ -281,7 +281,7 @@ namespace AGVSystem.Models.EQDevices
                             port.CarrierID = tunid;
                             port.InstallBy = PortStatusAbstract.CARRIER_SOURCE.MANUAL;
                         }
-                        MCSCIMService.CarrierInstallCompletedReport(tunid, locID, zoneName, 1);
+                        MCSCIMService.CarrierInstallCompletedReport(tunid, locID, zoneName, 0);
                         await Task.Delay(200);
                     }
 

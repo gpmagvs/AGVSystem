@@ -98,7 +98,7 @@ namespace AGVSystem.Service
                     await _dbContext.SaveChangesAsync();
                 }
                 if (!isByAgvUnloadend)
-                    MCSCIMService.CarrierRemoveCompletedReport(removedCarrierID, locID, zoneName, 1);
+                    MCSCIMService.CarrierRemoveCompletedReport(removedCarrierID, locID, zoneName, 0);
                 EQDeviceEventsHandler.BrocastRackData();
                 await Task.Delay(200);
                 await EQDeviceEventsHandler.ZoneCapacityChangeEventReport(port.GetParentRack());
@@ -158,7 +158,7 @@ namespace AGVSystem.Service
                 string oldCarrierID = port.CarrierID;
                 if (!string.IsNullOrEmpty(oldCarrierID))
                 {
-                    MCSCIMService.CarrierRemoveCompletedReport(oldCarrierID, locID, zoneName, 1);
+                    MCSCIMService.CarrierRemoveCompletedReport(oldCarrierID, locID, zoneName, 0);
                 }
                 DateTime installTime = DateTime.Now;
                 port.VehicleLoadToPortFlag = isByAgvLoadend;
@@ -177,7 +177,7 @@ namespace AGVSystem.Service
                     await _dbContext.SaveChangesAsync();
                 }
                 if (!isByAgvLoadend)
-                    MCSCIMService.CarrierInstallCompletedReport(cargoID, locID, zoneName, 1);
+                    MCSCIMService.CarrierInstallCompletedReport(cargoID, locID, zoneName, 0);
                 _logger.Info($"WIP:{port.GetParentRack().EQName} Port-{port.Properties.ID} Cargo ID Changed to {cargoID}(Trigger By:{triggerBy})");
                 EQDeviceEventsHandler.BrocastRackData();
                 await Task.Delay(200);
