@@ -108,6 +108,7 @@ namespace AGVSystem.Models.EQDevices
                                     installID = await AGVSConfigulator.GetTrayUnknownFlowID();
                                 e.eq.PortStatus.CarrierID = port.CarrierID = installID;
                                 e.eq.SetAGVAssignedCarrierID(installID);
+                                rackService.UpdateRackPortCarrierIDOfDatabase(port, installID);
                                 e.eq.PortStatus.InstallBy = port.InstallBy = PortStatusAbstract.CARRIER_SOURCE.MANUAL;
                                 await MCSCIMService.CarrierInstallCompletedReport(installID, carrierLoc, zoneID, 0);
                             }
@@ -130,7 +131,9 @@ namespace AGVSystem.Models.EQDevices
                                 e.eq.PortStatus.CarrierID = port.CarrierID = installID;
                                 e.eq.PortStatus.InstallBy = port.InstallBy = PortStatusAbstract.CARRIER_SOURCE.AGV;
                                 e.eq.SetAGVAssignedCarrierID(installID);
+                                rackService.UpdateRackPortCarrierIDOfDatabase(port, installID);
                             }
+
                         }
                         if (isRemoved) //TODO 如果 id移除是因為AGV取貨 不用報
                         {
@@ -143,6 +146,7 @@ namespace AGVSystem.Models.EQDevices
                                 e.eq.PortStatus.RemovedBy = port.RemovedBy = PortStatusAbstract.CARRIER_SOURCE.MANUAL;
                                 await MCSCIMService.CarrierRemoveCompletedReport(e.eq.AGVAssignCarrierID, carrierLoc, zoneID, 0);
                             }
+                            rackService.UpdateRackPortCarrierIDOfDatabase(port, "");
                             e.eq.SetAGVAssignedCarrierID("");
                             port.CarrierID = string.Empty;
 
@@ -155,6 +159,7 @@ namespace AGVSystem.Models.EQDevices
                                 await MCSCIMService.CarrierInstallCompletedReport(e.newValue, carrierLoc, zoneID, 1);
                             });
                             port.CarrierID = e.newValue;
+                            rackService.UpdateRackPortCarrierIDOfDatabase(port, port.CarrierID);
 
                         }
                         await ShelfStatusChangeEventReport(rack).ContinueWith(async t =>
@@ -266,7 +271,7 @@ namespace AGVSystem.Models.EQDevices
                 {
                     if (eq.EndPointOptions.IsCSTIDReportable)
                     {
-
+                        rackService.UpdateRackPortCarrierIDOfDatabase(port, eq.CSTIDReadValue);
                     }
                     else if (isExistSensorOnWhenOrderNotAssigned && string.IsNullOrEmpty(eq.PortStatus.CarrierID))
                     {
@@ -280,6 +285,7 @@ namespace AGVSystem.Models.EQDevices
                         {
                             port.CarrierID = tunid;
                             port.InstallBy = PortStatusAbstract.CARRIER_SOURCE.MANUAL;
+                            rackService.UpdateRackPortCarrierIDOfDatabase(port, port.CarrierID);
                         }
                         MCSCIMService.CarrierInstallCompletedReport(tunid, locID, zoneName, 0);
                         await Task.Delay(200);
