@@ -227,7 +227,7 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
                             {
                                 script.RunningAction = _action;
 
-                                var TaskName = $"HR_{_action.action.ToUpper()}_{DateTime.Now.ToString("yMdHHmmss")}";
+                                var TaskName = $"HR_{script.agv_name}_{_action.action.ToUpper()}_{DateTime.Now.ToString("yMdHHmmss")}";
                                 await TaskManager.AddTask(new clsTaskDto
                                 {
                                     Action = GetActionByActionName(_action.action),
