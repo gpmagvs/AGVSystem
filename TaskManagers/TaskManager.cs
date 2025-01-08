@@ -11,7 +11,6 @@ using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.DATABASE.Helpers;
 using AGVSystemCommonNet6.HttpTools;
-using AGVSystemCommonNet6.Log;
 using AGVSystemCommonNet6.MAP;
 using AGVSystemCommonNet6.Material;
 using AGVSystemCommonNet6.Microservices.MCS;
@@ -24,6 +23,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
+using NLog;
 using System.ComponentModel.Design;
 using System.Threading.Tasks;
 using WebSocketSharp;
@@ -43,6 +43,12 @@ namespace AGVSystem.TaskManagers
             Local_MANUAL,
             REMOTE,
         }
+
+        internal static AGVSDbContext _dbContext;
+
+        private static SemaphoreSlim _deepChargeDbTableAccesslock = new SemaphoreSlim(1, 1);
+        private static SemaphoreSlim _taskDbTableAccesslock = new SemaphoreSlim(1, 1);
+        private static NLog.Logger logger = LogManager.GetCurrentClassLogger();
 
         public static async Task<(bool confirm, ALARMS alarm_code, string message, string message_en)> AddTask(clsTaskDto taskData, TASK_RECIEVE_SOURCE source)
         {
@@ -303,7 +309,7 @@ namespace AGVSystem.TaskManagers
                 }
                 catch (Exception ex)
                 {
-                    LOG.Critical(ex);
+                    logger.Error(ex);
                 }
             }
 
@@ -328,44 +334,25 @@ namespace AGVSystem.TaskManagers
                 if (GoalCheckReuslt.confirm == false)
                     return GoalCheckReuslt;
 
-
-                using (var db = new AGVSDatabase())
+                if (source == TASK_RECIEVE_SOURCE.LOCAL_Auto || source == TASK_RECIEVE_SOURCE.Local_MANUAL)
                 {
-                    if (source == TASK_RECIEVE_SOURCE.LOCAL_Auto || source == TASK_RECIEVE_SOURCE.Local_MANUAL)
-                    {
-                        if (_order_action == ACTION_TYPE.Unload)
-                            taskData.Carrier_ID = destineDeviceIDInfo.carrierIDMounted;
-                        else if (_order_action == ACTION_TYPE.Carry)
-                            taskData.Carrier_ID = sourceDeviceIDInfo.carrierIDMounted;
-                    }
-
-                    //test
-                    //taskData.Carrier_ID ="TAE1314123123";
-                    SetUpHighestPriorityState(taskData);
-                    SetUpDeviceIDState(taskData, sourceDeviceIDInfo, destineDeviceIDInfo);
-                    await SetUnknowCarrierID(taskData);
-                    taskData.CST_TYPE = taskData.Carrier_ID.StartsWith("T") ? 200 : 201;
-                    db.tables.Tasks.Add(taskData);
-                    var added = await db.SaveChanges();
-
-                    if (taskData.Action == ACTION_TYPE.DeepCharge)
-                    {
-                        db.tables.DeepChargeRecords.Add(new AGVSystemCommonNet6.Equipment.AGV.DeepChargeRecord()
-                        {
-                            AGVID = taskData.DesignatedAGVName,
-                            OrderRecievedTime = DateTime.Now,
-                            TaskID = taskData.TaskName,
-                            OrderStatus = TASK_RUN_STATUS.WAIT,
-                            TriggerBy = AGVSystemCommonNet6.Equipment.AGV.DeepChargeRecord.DEEP_CHARGE_TRIGGER_MOMENT.MANUAL,
-                        });
-                        await db.SaveChanges();
-                    }
-
+                    if (_order_action == ACTION_TYPE.Unload)
+                        taskData.Carrier_ID = destineDeviceIDInfo.carrierIDMounted;
+                    else if (_order_action == ACTION_TYPE.Carry)
+                        taskData.Carrier_ID = sourceDeviceIDInfo.carrierIDMounted;
                 }
+
+                SetUpHighestPriorityState(taskData);
+                SetUpDeviceIDState(taskData, sourceDeviceIDInfo, destineDeviceIDInfo);
+                await SetUnknowCarrierID(taskData);
+                taskData.CST_TYPE = taskData.Carrier_ID.StartsWith("T") ? 200 : 201;
+                await WriteTaskDtoToDatabase(taskData);
+                if (taskData.Action == ACTION_TYPE.DeepCharge)
+                    await SaveDeepChargeRecordData(taskData);
             }
             catch (Exception ex)
             {
-                LOG.ERROR(ex);
+                logger.Error(ex, ex.InnerException?.Message);
                 AlarmManagerCenter.AddAlarmAsync(ALARMS.Task_Add_To_Database_Fail, ALARM_SOURCE.AGVS);
                 return new(false, ALARMS.Task_Add_To_Database_Fail, ex.Message, ex.Message);
             }
@@ -378,9 +365,60 @@ namespace AGVSystem.TaskManagers
             }
             catch (Exception ex)
             {
-                LOG.ERROR(ex);
+                logger.Error(ex);
                 AlarmManagerCenter.AddAlarmAsync(ALARMS.Task_Add_To_Database_Fail, ALARM_SOURCE.AGVS);
                 return new(false, ALARMS.Task_Add_To_Database_Fail, ex.Message, ex.Message);
+            }
+        }
+
+        private static async Task WriteTaskDtoToDatabase(clsTaskDto taskData)
+        {
+            try
+            {
+                await _taskDbTableAccesslock.WaitAsync();
+                while (_dbContext.IsTaskTableLocking())
+                {
+                    await Task.Delay(1000);
+                }
+                _dbContext.Tasks.Add(taskData);
+                await _dbContext.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex);
+                throw ex;
+            }
+            finally
+            {
+                _taskDbTableAccesslock.Release();
+            }
+        }
+
+        private static async Task SaveDeepChargeRecordData(clsTaskDto taskData)
+        {
+            try
+            {
+                await _deepChargeDbTableAccesslock.WaitAsync();
+                if (taskData.Action != ACTION_TYPE.DeepCharge)
+                    return;
+
+                _dbContext.DeepChargeRecords.Add(new AGVSystemCommonNet6.Equipment.AGV.DeepChargeRecord()
+                {
+                    AGVID = taskData.DesignatedAGVName,
+                    OrderRecievedTime = DateTime.Now,
+                    TaskID = taskData.TaskName,
+                    OrderStatus = TASK_RUN_STATUS.WAIT,
+                    TriggerBy = AGVSystemCommonNet6.Equipment.AGV.DeepChargeRecord.DEEP_CHARGE_TRIGGER_MOMENT.MANUAL,
+                });
+                await _dbContext.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex);
+            }
+            finally
+            {
+                _deepChargeDbTableAccesslock.Release();
             }
         }
 
@@ -519,7 +557,7 @@ namespace AGVSystem.TaskManagers
             }
             catch (Exception ex)
             {
-
+                logger.Error(ex);
                 throw ex;
             }
 
@@ -613,37 +651,11 @@ namespace AGVSystem.TaskManagers
             }
             catch (Exception ex)
             {
+                logger.Error(ex);
                 AlarmManagerCenter.AddAlarmAsync(ALARMS.Task_Cancel_Fail);
                 return false;
             }
 
         }
-
-
-        internal static bool TaskStatusChangeToWait(string task_name, string reason = "")
-        {
-            LOG.TRACE($"Change Task-{task_name} Status = Wait.[Reason:{reason}]");
-            try
-            {
-                using (var db = new AGVSDatabase())
-                {
-                    var task = db.tables.Tasks.Where(tk => tk.TaskName == task_name).FirstOrDefault();
-                    if (task != null)
-                    {
-                        task.FailureReason = "";
-                        task.State = TASK_RUN_STATUS.WAIT;
-                        db.SaveChanges();
-                    }
-                }
-                return true;
-            }
-            catch (Exception ex)
-            {
-                LOG.Critical(ex);
-                return false;
-            }
-
-        }
-
     }
 }

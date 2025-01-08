@@ -279,6 +279,7 @@ public static class WebAppInitializer
         builder.Services.AddHostedService<EquipmentInitStartupService>();
         builder.Services.AddHostedService<EquipmentsCollectBackgroundService>();
         builder.Services.AddHostedService<RackPortDoubleIDMonitor>();
+        builder.Services.AddHostedService<TaskManagerInitService>();
     }
 
     private static void ConfigureCors(WebApplicationBuilder builder)
