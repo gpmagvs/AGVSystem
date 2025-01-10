@@ -272,6 +272,7 @@ public static class WebAppInitializer
         builder.Services.AddScoped<DatabaseMigrateService>();
         builder.Services.AddScoped<SECSConfigsService>(service => _secsConfigsService);
         builder.Services.AddScoped<TrafficStateDataQueryService>();
+        builder.Services.AddSingleton<DBDataService>();
         builder.Services.AddHostedService<DatabaseBackgroundService>();
         builder.Services.AddHostedService<VehicleLocationMonitorBackgroundService>();
         builder.Services.AddHostedService<FrontEndDataBrocastService>();
