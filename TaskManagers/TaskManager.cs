@@ -44,8 +44,7 @@ namespace AGVSystem.TaskManagers
             REMOTE,
         }
 
-        internal static AGVSDbContext _dbContext;
-
+        internal static DBDataService dbDataService;
         private static SemaphoreSlim _deepChargeDbTableAccesslock = new SemaphoreSlim(1, 1);
         private static SemaphoreSlim _taskDbTableAccesslock = new SemaphoreSlim(1, 1);
         private static NLog.Logger logger = LogManager.GetCurrentClassLogger();
@@ -376,12 +375,7 @@ namespace AGVSystem.TaskManagers
             try
             {
                 await _taskDbTableAccesslock.WaitAsync();
-                while (_dbContext.IsTaskTableLocking())
-                {
-                    await Task.Delay(1000);
-                }
-                _dbContext.Tasks.Add(taskData);
-                await _dbContext.SaveChangesAsync();
+                await dbDataService.AddEntityToTableAsync(taskData);
             }
             catch (Exception ex)
             {
@@ -401,8 +395,7 @@ namespace AGVSystem.TaskManagers
                 await _deepChargeDbTableAccesslock.WaitAsync();
                 if (taskData.Action != ACTION_TYPE.DeepCharge)
                     return;
-
-                _dbContext.DeepChargeRecords.Add(new AGVSystemCommonNet6.Equipment.AGV.DeepChargeRecord()
+                await dbDataService.AddEntityToTableAsync(new AGVSystemCommonNet6.Equipment.AGV.DeepChargeRecord()
                 {
                     AGVID = taskData.DesignatedAGVName,
                     OrderRecievedTime = DateTime.Now,
@@ -410,7 +403,6 @@ namespace AGVSystem.TaskManagers
                     OrderStatus = TASK_RUN_STATUS.WAIT,
                     TriggerBy = AGVSystemCommonNet6.Equipment.AGV.DeepChargeRecord.DEEP_CHARGE_TRIGGER_MOMENT.MANUAL,
                 });
-                await _dbContext.SaveChangesAsync();
             }
             catch (Exception ex)
             {

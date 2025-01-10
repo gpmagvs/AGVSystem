@@ -10,17 +10,19 @@ using EquipmentManagment.Manager;
 using EquipmentManagment.WIP;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using NLog.Config;
 
 namespace AGVSystem.Service
 {
     public class EquipmentInitStartupService : IHostedService
     {
-        private readonly AGVSDbContext _dbContext;
+        IServiceScopeFactory _ServiceScopeFactory;
         IHubContext<FrontEndDataHub> hubContext;
         RackService rackService;
         public EquipmentInitStartupService(IServiceScopeFactory factory, IHubContext<FrontEndDataHub> hubContext)
         {
-            _dbContext = factory.CreateScope().ServiceProvider.GetRequiredService<AGVSDbContext>();
+            _ServiceScopeFactory = factory;
             rackService = factory.CreateScope().ServiceProvider.GetRequiredService<RackService>();
             this.hubContext = hubContext;
         }
@@ -153,6 +155,7 @@ namespace AGVSystem.Service
         {
             try
             {
+                using AGVSDbContext _dbContext = _ServiceScopeFactory.CreateScope().ServiceProvider.GetRequiredService<AGVSDbContext>();
                 return await _dbContext.StationStatus.AsNoTracking()
                                                      .Where(d => !string.IsNullOrEmpty(d.MaterialID))
                                                      .ToListAsync();

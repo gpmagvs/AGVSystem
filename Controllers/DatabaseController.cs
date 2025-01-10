@@ -22,19 +22,19 @@ namespace AGVSystem.Controllers
             return new OperationResult(true, "Success");
         }
 
-        [HttpPost("clsTaskDto")]
+        [HttpPost("AddTaskDto")]
         public async Task<OperationResult> AddTaskDto([FromBody] clsTaskDto taskDto)
         {
             return await _dbDataService.AddEntityToTableAsync(taskDto);
         }
 
-        [HttpPut("clsTaskDto")]
+        [HttpPost("ModifyTaskDto")]
         public async Task<OperationResult> ModifyTaskDto([FromBody] clsTaskDto taskDto)
         {
             return await _dbDataService.ModifyEntityInTableAsync(taskDto);
         }
 
-        [HttpDelete("clsTaskDto")]
+        [HttpPost("DeleteTaskDto")]
         public async Task<OperationResult> DeleteTaskDto([FromBody] clsTaskDto taskDto)
         {
             return await _dbDataService.DeleteEntityFromTableAsync(taskDto);

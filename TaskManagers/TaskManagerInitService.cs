@@ -5,15 +5,15 @@ namespace AGVSystem.TaskManagers
 {
     public class TaskManagerInitService : IHostedService
     {
-        AGVSDbContext dbContext;
-        public TaskManagerInitService(IServiceScopeFactory factory)
+        DBDataService _dbDataService;
+        public TaskManagerInitService(DBDataService dbDataService)
         {
-            dbContext = factory.CreateScope().ServiceProvider.GetRequiredService<AGVSDbContext>();
+            _dbDataService = dbDataService;
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
-            TaskManager._dbContext = dbContext;//為TaskManager注入 dbcontext實體.
+            TaskManager.dbDataService = _dbDataService;
         }
 
         public async Task StopAsync(CancellationToken cancellationToken)

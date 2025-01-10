@@ -3,6 +3,7 @@ using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.AGVDispatch;
 using AGVSystemCommonNet6.AGVDispatch.Messages;
 using AGVSystemCommonNet6.Alarm;
+using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.DATABASE.Helpers;
 using AGVSystemCommonNet6.Microservices.VMS;
@@ -25,7 +26,7 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
     {
         public static List<HotRunScript> HotRunScripts { get; set; } = new List<HotRunScript>();
         public static List<HotRunScript> RunningScriptList = new List<HotRunScript>();
-
+        public static string HotRunScriptFilePullPath => Path.Combine(AGVSConfigulator.ConfigsFilesFolder, "HotRunScripts.json");
         public static bool IsRegularUnloadRequstHotRunRunning { get; set; } = false;
         public static IHubContext<FrontEndDataHub> FrontendHub { get; internal set; }
 
@@ -40,20 +41,20 @@ namespace AGVSystem.Models.TaskAllocation.HotRun
 
         private static void SaveScriptsToJsonFile(List<HotRunScript> settings)
         {
-            var folder = "C://AGVS";
-            Directory.CreateDirectory(folder);
-            var filename = Path.Combine(folder, "HotRunScripts.json");
-            System.IO.File.WriteAllText(filename, JsonConvert.SerializeObject(settings, Formatting.Indented));
+            if (!string.IsNullOrEmpty(HotRunScriptFilePullPath))
+            {
+                string? directoryName = Path.GetDirectoryName(HotRunScriptFilePullPath);
+                if (!string.IsNullOrEmpty(directoryName))
+                    Directory.CreateDirectory(directoryName);
+            }
+            System.IO.File.WriteAllText(HotRunScriptFilePullPath, JsonConvert.SerializeObject(settings, Formatting.Indented));
         }
 
         public static async Task ReloadHotRunScripts()
         {
-            var folder = "C://AGVS";
-            Directory.CreateDirectory(folder);
-            var filename = Path.Combine(folder, "HotRunScripts.json");
-            if (File.Exists(filename))
+            if (File.Exists(HotRunScriptFilePullPath))
             {
-                HotRunScripts = JsonConvert.DeserializeObject<List<HotRunScript>>(System.IO.File.ReadAllText(filename));
+                HotRunScripts = JsonConvert.DeserializeObject<List<HotRunScript>>(System.IO.File.ReadAllText(HotRunScriptFilePullPath));
                 bool _AnyScriptIDCreated = false;
                 foreach (var script in HotRunScripts)
                 {
