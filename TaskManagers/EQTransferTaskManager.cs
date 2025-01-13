@@ -83,7 +83,7 @@ namespace AGVSystem.TaskManagers
                     return new(false, ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, $"設備站點TAG-{station_tag},EQ不存在於當前地圖", $"Tag of EQ Station({station_tag}) not exist on current map", null, null);
                 deviceIDInfo.portID = Eq.EndPointOptions.DeviceID;
                 deviceIDInfo.carrierIDMounted = Eq.PortStatus.CarrierID;
-                if (TryGetZoneIDOfEqLocateing(Eq.EndPointOptions.TagID, out string zoneID))
+                if (Eq.EndPointOptions.IsRoleAsZone && TryGetZoneIDOfEqLocateing(Eq.EndPointOptions.TagID, out string zoneID))
                     deviceIDInfo.zoneID = zoneID;
                 logger.Trace($"AGV請求[{actiontype}]於設備-{MapPoint.Graph.Display}(Tag={station_tag}),設備狀態=>\r\n{Eq.GetStatusDescription()}");
 
