@@ -72,6 +72,18 @@ namespace AGVSystem.Controllers
                 cargoIDToLoad = order.Carrier_ID;
             //await MCSCIMService.CarrierRemoveCompletedReport(cargoID, agvID, "", 1);
             await _rackCargoStatusContorlService.AddRackCargoID(tagNumber, slot, cargoIDToLoad, this.GetType().Name, isByAgvLoadend: true);
+
+            await Task.Delay(1).ContinueWith(async t =>
+            {
+                try
+                {
+                    await GPMCIMService.ChangePortTypeOfEq(tagNumber, 1);
+                }
+                catch (Exception ex)
+                {
+
+                }
+            });
             //if (isEmuEqStation)
             //    _ = Task.Delay(100).ContinueWith((t) =>
             //    {
