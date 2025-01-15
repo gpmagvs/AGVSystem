@@ -17,6 +17,7 @@ using EquipmentManagment.WIP;
 using Microsoft.EntityFrameworkCore;
 using NLog;
 using static AGVSystemCommonNet6.MAP.MapPoint;
+using static EquipmentManagment.MainEquipment.clsEQ;
 
 namespace AGVSystem.TaskManagers
 {

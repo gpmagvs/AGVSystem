@@ -24,6 +24,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NLog;
 using static AGVSystem.TaskManagers.EQTransferTaskManager;
+using static EquipmentManagment.MainEquipment.clsEQ;
 
 namespace AGVSystem.Controllers
 {
