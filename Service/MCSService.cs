@@ -11,6 +11,7 @@ using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.Microservices.AudioPlay;
 using AGVSystemCommonNet6.Microservices.MCS;
+using AGVSystemCommonNet6.Notify;
 using AGVSystemCommonNet6.Vehicle_Control.VCS_ALARM;
 using EquipmentManagment.Device;
 using EquipmentManagment.MainEquipment;
@@ -139,6 +140,12 @@ namespace AGVSystem.Service.MCS
                         SECSHCACKAlarmCodeMapper alarmCodeMapper = new AlarmCodeMapperBaseOnKGSSpec();
                         MapResult mapresult = alarmCodeMapper.GetHCACKReturnCode(alarm_code);
                         Exception ex = new AddOrderFailException(message, alarm_code, order, mapresult);
+
+                        if (alarm_code == ALARMS.EQ_UNLOAD_REQUEST_IS_NOT_ON)
+                        {
+                            HandleEQUnloadRequestNotOnAsync(order);
+                        }
+
                         logger.Error(ex);
                         throw ex;
                     }
@@ -168,6 +175,22 @@ namespace AGVSystem.Service.MCS
             finally
             {
                 TransportCommandHandleSemaphoreSlim.Release();
+            }
+        }
+
+        private async Task HandleEQUnloadRequestNotOnAsync(clsTaskDto order)
+        {
+            if (StaEQPManagager.TryGetEQByTag(order.From_Station_Tag, out clsEQ eq))
+            {
+                bool isTransferStation = eq.EndPointOptions.EqType == EquipmentManagment.Device.Options.EQ_TYPE.EQ_TransferStation;//是否為轉換架;
+                if (isTransferStation && !eq.Port_Exist)
+                {
+                    string logLine = $"[{eq.EQName}] HOST請求搬運轉換架但轉換架無貨，進行CarrierRemovedCompleted 上報(Carrier ID={order.Carrier_ID},Loc:{eq.EndPointOptions.DeviceID})";
+                    logger.Warn(logLine);
+                    NotifyServiceHelper.WARNING(logLine);
+                    //carrier remove report 
+                    await MCSCIMService.CarrierRemoveCompletedReport(order.Carrier_ID, eq.EndPointOptions.DeviceID, "", 0);
+                }
             }
         }
 
