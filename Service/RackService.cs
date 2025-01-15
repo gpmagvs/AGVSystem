@@ -8,6 +8,7 @@ using EquipmentManagment.Manager;
 using EquipmentManagment.WIP;
 using Microsoft.EntityFrameworkCore;
 using NLog;
+using System;
 
 namespace AGVSystem.Service
 {
@@ -71,7 +72,6 @@ namespace AGVSystem.Service
             try
             {
                 string removedCarrierID = "";
-                await dbSemaphoreSlim.WaitAsync();
 
                 if (!TryGetPort(tagNumber, slot, out clsPortOfRack port))
                     return (false, "", "Port Not Found"); ;
@@ -90,13 +90,8 @@ namespace AGVSystem.Service
 
                 if (eq != null)
                     eq.PortStatus.CarrierID = string.Empty;
+                UpdateMaterialIDStoreOfDataBase(tagNumber, slot, string.Empty);
 
-                if (TryGetStationStatus(tagNumber, slot, out clsStationStatus portStatus))
-                {
-                    portStatus.MaterialID = string.Empty;
-                    portStatus.UpdateTime = DateTime.Now;
-                    await _dbContext.SaveChangesAsync();
-                }
                 if (!isByAgvUnloadend)
                     MCSCIMService.CarrierRemoveCompletedReport(removedCarrierID, locID, zoneName, 0);
                 EQDeviceEventsHandler.BrocastRackData();
@@ -116,9 +111,10 @@ namespace AGVSystem.Service
             }
             finally
             {
-                dbSemaphoreSlim.Release();
             }
         }
+
+
         internal async Task<(bool confirm, string message)> AddRackCargoIDManual(string WIPID, string PortID, string cargoID, string triggerBy, bool isByAgvLoadend, bool bypassHasCSTReaderCheck = false)
         {
             if (TryGetPort(WIPID, PortID, out clsPortOfRack port))
@@ -144,7 +140,6 @@ namespace AGVSystem.Service
         {
             try
             {
-                await dbSemaphoreSlim.WaitAsync();
                 if (!TryGetPort(tagNumber, slot, out clsPortOfRack port))
                     return (false, "Port Not Found");
 
@@ -159,6 +154,12 @@ namespace AGVSystem.Service
                 if (!string.IsNullOrEmpty(oldCarrierID))
                 {
                     MCSCIMService.CarrierRemoveCompletedReport(oldCarrierID, locID, zoneName, 0);
+                    port.CarrierID = "";
+                    if (eq != null)
+                        eq.PortStatus.CarrierID = "";
+                    await Task.Delay(300);
+                    await EQDeviceEventsHandler.ShelfStatusChangeEventReport(port.GetParentRack());
+                    await Task.Delay(300);
                 }
                 DateTime installTime = DateTime.Now;
                 port.VehicleLoadToPortFlag = isByAgvLoadend;
@@ -170,12 +171,7 @@ namespace AGVSystem.Service
                     eq.PortStatus.CarrierID = cargoID;
                     eq.PortStatus.InstallTime = installTime;
                 }
-                if (TryGetStationStatus(tagNumber, slot, out clsStationStatus portStatus))
-                {
-                    portStatus.MaterialID = cargoID;
-                    portStatus.UpdateTime = installTime;
-                    await _dbContext.SaveChangesAsync();
-                }
+                UpdateMaterialIDStoreOfDataBase(tagNumber, slot, cargoID);
                 if (!isByAgvLoadend)
                     MCSCIMService.CarrierInstallCompletedReport(cargoID, locID, zoneName, 0);
                 _logger.Info($"WIP:{port.GetParentRack().EQName} Port-{port.Properties.ID} Cargo ID Changed to {cargoID}(Trigger By:{triggerBy})");
@@ -193,7 +189,6 @@ namespace AGVSystem.Service
             }
             finally
             {
-                dbSemaphoreSlim.Release();
             }
         }
 
@@ -224,10 +219,32 @@ namespace AGVSystem.Service
             else
                 return (false, "Port Not Found");
         }
-        private bool TryGetStationStatus(int tagNumber, int slot, out clsStationStatus status)
+        internal async Task UpdateMaterialIDStoreOfDataBase(clsPortOfRack port, string carrierID)
         {
-            status = _dbContext.StationStatus.FirstOrDefault(data => data.StationTag == tagNumber.ToString() && data.StationRow == slot);
-            return status != null;
+            await UpdateMaterialIDStoreOfDataBase(port.TagNumbers.FirstOrDefault(), port.Properties.Column, carrierID);
+        }
+
+        private async Task UpdateMaterialIDStoreOfDataBase(int tagNumber, int slot, string materialID)
+        {
+            try
+            {
+                await dbSemaphoreSlim.WaitAsync();
+                DateTime updateTime = DateTime.Now;
+                foreach (var item in _dbContext.StationStatus.Where(data => data.StationTag == tagNumber.ToString() && data.StationRow == slot).ToList())
+                {
+                    item.MaterialID = materialID;
+                    item.UpdateTime = updateTime;
+                    await _dbContext.SaveChangesAsync();
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex);
+            }
+            finally
+            {
+                dbSemaphoreSlim.Release();
+            }
         }
         private bool TryGetPort(int tagNumber, int slot, out clsPortOfRack port)
         {
@@ -253,32 +270,6 @@ namespace AGVSystem.Service
             return port != null;
         }
 
-        internal void UpdateRackPortCarrierIDOfDatabase(clsPortOfRack port, string carrierID)
-        {
-            string stationNameKey = $"{port.GetParentRack().EQName}_{port.Properties.ID}";
-            clsStationStatus entity = _dbContext.StationStatus.FirstOrDefault(p => p.StationName == stationNameKey);
-            if (entity != null)
-            {
-                entity.MaterialID = carrierID;
-                entity.UpdateTime = port.InstallTime;
-            }
-            else
-            {
-                _dbContext.StationStatus.Add(new clsStationStatus()
-                {
-                    StationName = stationNameKey,
-                    StationCol = port.Properties.Column,
-                    StationRow = port.Properties.Row,
-                    MaterialID = carrierID,
-                    Type = MaterialType.Tray,
-                    StationTag = port.TagNumbers.FirstOrDefault().ToString(),
-                    IsNGPort = false,
-                    IsEnable = true,
-                    UpdateTime = port.InstallTime
-                });
-            }
-            _dbContext.SaveChanges();
-        }
 
     }
 }
