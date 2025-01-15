@@ -3,6 +3,7 @@ using AGVSystem.Service;
 using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.AGVDispatch.RunMode;
 using AGVSystemCommonNet6.Configuration;
+using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.Microservices.MCS;
 using AGVSystemCommonNet6.Microservices.VMS;
 using Microsoft.AspNetCore.Authorization;
@@ -103,7 +104,11 @@ namespace AGVSystem.Controllers
                 return Ok(new { confirm = false, message = $"HostConnMode is not ONLINE" });
             (bool confirm, string message) response = new(false, "[HostOperationMode] Fail");
             if (mode == HOST_OPER_MODE.LOCAL)
+            {
+                if (_AnyMCSTransferOrderRunning())
+                    return Ok(new { confirm = false, message = $"有Host任務執行中，無法切換至LOCAL" });
                 response = await MCSCIMService.OnlineRemote2OnlineLocal();
+            }
             else
                 response = await MCSCIMService.OnlineLocalToOnlineRemote();
             if (response.confirm == true)
@@ -111,6 +116,10 @@ namespace AGVSystem.Controllers
 
                 SystemModes.HostOperMode = mode;
                 //_SystemStatusDbStoreService.ModifyHostOperMode(mode);
+            }
+            bool _AnyMCSTransferOrderRunning()
+            {
+                return DatabaseCaches.TaskCaches.InCompletedTasks.Any(order => order.isFromMCS);
             }
             return Ok(new { confirm = response.confirm, message = response.message });
         }
