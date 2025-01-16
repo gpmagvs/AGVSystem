@@ -270,6 +270,28 @@ namespace AGVSystem.Service
             return port != null;
         }
 
+        internal List<RackPortAbnoramlStatus> GetAbnormalPortsInfo()
+        {
+            List<RackPortAbnoramlStatus> abnormalPorts = new List<RackPortAbnoramlStatus>();
+            //goal 找出有帳無料、有料無帳的儲格們
+            List<clsPortOfRack> hasIDButNoCargoPorts = StaEQPManagager.RackPortsList.Where(port => _IsCarrierIDExist(port) && !_IsCargoExist(port))
+                                                                                    .ToList();
+            List<clsPortOfRack> hasCargoButNoIDPorts = StaEQPManagager.RackPortsList.Where(port => !_IsCarrierIDExist(port) && _IsCargoExist(port))
+                                                                                    .ToList();
 
+            abnormalPorts.AddRange(hasIDButNoCargoPorts.Select(port => new RackPortAbnoramlStatus(port.GetParentRack().EQName, port.Properties.PortNo, "有帳無料")));
+            abnormalPorts.AddRange(hasCargoButNoIDPorts.Select(port => new RackPortAbnoramlStatus(port.GetParentRack().EQName, port.Properties.PortNo, "有料無帳")));
+
+            return abnormalPorts;
+            bool _IsCargoExist(clsPortOfRack port)
+            {
+                return port.CargoExist || (port.IsRackPortIsEQ(out clsEQ eq) && eq.EndPointOptions.IsRoleAsZone && eq.Port_Exist);
+            }
+
+            bool _IsCarrierIDExist(clsPortOfRack port)
+            {
+                return !string.IsNullOrEmpty(port.CarrierID) || (port.IsRackPortIsEQ(out clsEQ eq) && eq.EndPointOptions.IsRoleAsZone && !string.IsNullOrEmpty(eq.PortStatus.CarrierID));
+            }
+        }
     }
 }
