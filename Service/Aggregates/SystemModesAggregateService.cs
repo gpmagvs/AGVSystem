@@ -65,9 +65,28 @@ namespace AGVSystem.Service.Aggregates
                 SystemModes.HostConnMode = mode;
                 if (SystemModes.HostConnMode == HOST_CONN_MODE.OFFLINE)
                     SystemModes.HostOperMode = HOST_OPER_MODE.LOCAL;
-                //_SystemStatusDbStoreService.ModifyHostConnMode(mode);
             }
+            TryPostCurrentHostModeToCIM();
             return response;
+        }
+
+        private async Task TryPostCurrentHostModeToCIM()
+        {
+            try
+            {
+                int modeTransfer = 0;
+                if (SystemModes.HostConnMode == HOST_CONN_MODE.OFFLINE)
+                    modeTransfer = 0;
+                else if (SystemModes.HostOperMode == HOST_OPER_MODE.LOCAL)
+                    modeTransfer = 1;
+                else
+                    modeTransfer = 2;
+                await GPMCIMService.HostModeState(modeTransfer);
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex);
+            }
         }
 
         public async Task<(bool, string)> HostOnlineRemoteLocalModeSwitch(HOST_OPER_MODE mode)
@@ -92,6 +111,7 @@ namespace AGVSystem.Service.Aggregates
             {
                 return DatabaseCaches.TaskCaches.InCompletedTasks.Any(order => order.isFromMCS);
             }
+            TryPostCurrentHostModeToCIM();
             return response;
         }
 
