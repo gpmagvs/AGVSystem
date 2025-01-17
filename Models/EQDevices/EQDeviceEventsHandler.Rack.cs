@@ -71,7 +71,7 @@ namespace AGVSystem.Models.EQDevices
                         await Task.Delay(100);
                         BrocastRackData();
                     }
-                    await ZoneCapacityChangeEventReport(port.GetParentRack());
+                    await HandleZoneCapacityChanged(port.GetParentRack());
                 });
 
             }
@@ -112,7 +112,7 @@ namespace AGVSystem.Models.EQDevices
                     NotifyServiceHelper.WARNING($"[{port.GetParentRack().RackOption.Name} - Port:{port.PortNo}] 現在有帳無料!");
                 }
 
-                await ZoneCapacityChangeEventReport(port.GetParentRack());
+                await HandleZoneCapacityChanged(port.GetParentRack());
             });
         }
 

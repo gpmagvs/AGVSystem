@@ -12,6 +12,7 @@ using EquipmentManagment.ChargeStation;
 using EquipmentManagment.Device;
 using EquipmentManagment.MainEquipment;
 using EquipmentManagment.Manager;
+using EquipmentManagment.Tool;
 using EquipmentManagment.WIP;
 using Microsoft.AspNetCore.SignalR;
 using NLog;
@@ -36,6 +37,8 @@ namespace AGVSystem.Models.EQDevices
 
         private static ConcurrentDictionary<int, EqUnloadState> _EqUnloadStateRecordTempStore = new ConcurrentDictionary<int, EqUnloadState>();
         private static ConcurrentDictionary<string, int> _ZoneCapacityStore = new ConcurrentDictionary<string, int>();
+        private static ConcurrentDictionary<string, Debouncer> _ZoneCapacityMontorDebouncer = new ConcurrentDictionary<string, Debouncer>();
+
         internal static void Initialize()
         {
             EndPointDeviceAbstract.OnEQDisconnected += HandleDeviceDisconnected;
@@ -166,7 +169,7 @@ namespace AGVSystem.Models.EQDevices
                         await ShelfStatusChangeEventReport(rack).ContinueWith(async t =>
                         {
                             await Task.Delay(100);
-                            await ZoneCapacityChangeEventReport(rack);
+                            await HandleZoneCapacityChanged(rack);
                         });
                     }
                 }
@@ -292,7 +295,7 @@ namespace AGVSystem.Models.EQDevices
                         await Task.Delay(200);
                     }
 
-                    await ZoneCapacityChangeEventReport(rack);
+                    await HandleZoneCapacityChanged(rack);
                     BrocastRackData();
                 });
 
@@ -303,7 +306,7 @@ namespace AGVSystem.Models.EQDevices
         {
             BrocastRackData();
             if (eq.IsEQInRack(out clsRack rack, out clsPortOfRack port) && eq.EndPointOptions.IsRoleAsZone)
-                ZoneCapacityChangeEventReport(rack);
+                HandleZoneCapacityChanged(rack);
         }
 
         private static void HandleMaterialDelete(object? sender, clsMaterialInfo e)
@@ -465,24 +468,52 @@ namespace AGVSystem.Models.EQDevices
                 await MCSCIMService.ShelfStatusChange(zoneData);
             });
         }
-        internal static async Task ZoneCapacityChangeEventReport(clsRack rack)
+        public static async Task HandleZoneCapacityChanged(clsRack rack)
+        {
+            MCSCIMService.ZoneData zoneData = GenerateZoneData(rack);
+            if (_ZoneCapacityStore.TryGetValue(zoneData.ZoneName, out int count))
+            {
+                bool _isCapacityChanged = count != zoneData.ZoneCapacity;
+                if (_isCapacityChanged)
+                {
+                    TryNotifyZoneCarriersNumberNotEnough(zoneData);
+                    await ZoneCapacityChangeEventReport(zoneData);
+                }
+                _ZoneCapacityStore.TryUpdate(zoneData.ZoneName, zoneData.ZoneCapacity, count);
+            }
+            else
+            {
+                _ZoneCapacityStore.TryAdd(zoneData.ZoneName, zoneData.ZoneCapacity);
+                await ZoneCapacityChangeEventReport(zoneData);
+            }
+        }
+
+        private static async Task TryNotifyZoneCarriersNumberNotEnough(MCSCIMService.ZoneData zoneData)
+        {
+            try
+            {
+                if (!_ZoneCapacityMontorDebouncer.TryGetValue(zoneData.ZoneName, out Debouncer debouncer))
+                {
+                    debouncer = new Debouncer();
+                    _ZoneCapacityMontorDebouncer.TryAdd(zoneData.ZoneName, debouncer);
+                }
+                debouncer.Debounce(() =>
+                {
+                    using ZoneCapacityStatusMonitor zoneCapacityStatusMonitor = new ZoneCapacityStatusMonitor(zoneData, HubContext);
+                    zoneCapacityStatusMonitor.TryNotifyCapacityCarrierNotEnough();
+                }, 3000);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex);
+            }
+        }
+
+        private static async Task ZoneCapacityChangeEventReport(MCSCIMService.ZoneData zoneData)
         {
             await Task.Delay(1).ContinueWith(async t =>
             {
-                MCSCIMService.ZoneData zoneData = GenerateZoneData(rack);
-
-                if (_ZoneCapacityStore.TryGetValue(zoneData.ZoneName, out int count))
-                {
-                    if (count != zoneData.ZoneCapacity)
-                        await MCSCIMService.ZoneCapacityChange(zoneData);
-                    _ZoneCapacityStore.TryUpdate(zoneData.ZoneName, zoneData.ZoneCapacity, count);
-                }
-                else
-                {
-                    _ZoneCapacityStore.TryAdd(zoneData.ZoneName, zoneData.ZoneCapacity);
-                    await MCSCIMService.ZoneCapacityChange(zoneData);
-                }
-
+                await MCSCIMService.ZoneCapacityChange(zoneData);
             });
         }
 
@@ -515,7 +546,7 @@ namespace AGVSystem.Models.EQDevices
                     {
                         ShelfId = port.GetLocID(),
                         CarrierID = port.CarrierID,
-                        IsCargoExist = port.CarrierExist,
+                        IsCargoExist = port.CargoExist,
                         DisabledStatus = port.Properties.PortUsable == clsPortOfRack.PORT_USABLE.USABLE ? 0 : 1,
                         ProcessState = 0
                     };

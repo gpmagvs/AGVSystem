@@ -96,7 +96,7 @@ namespace AGVSystem.Service
                     MCSCIMService.CarrierRemoveCompletedReport(removedCarrierID, locID, zoneName, 0);
                 EQDeviceEventsHandler.BrocastRackData();
                 await Task.Delay(200);
-                await EQDeviceEventsHandler.ZoneCapacityChangeEventReport(port.GetParentRack());
+                await EQDeviceEventsHandler.HandleZoneCapacityChanged(port.GetParentRack());
                 await Task.Delay(200);
                 await EQDeviceEventsHandler.ShelfStatusChangeEventReport(port.GetParentRack());
                 _logger.Info($"WIP:{port.GetParentRack().EQName} Port-{port.Properties.ID} Cargo ID Removed. (Trigger By:{triggerBy})");
@@ -177,7 +177,7 @@ namespace AGVSystem.Service
                 _logger.Info($"WIP:{port.GetParentRack().EQName} Port-{port.Properties.ID} Cargo ID Changed to {cargoID}(Trigger By:{triggerBy})");
                 EQDeviceEventsHandler.BrocastRackData();
                 await Task.Delay(200);
-                await EQDeviceEventsHandler.ZoneCapacityChangeEventReport(port.GetParentRack());
+                await EQDeviceEventsHandler.HandleZoneCapacityChanged(port.GetParentRack());
                 await Task.Delay(200);
                 await EQDeviceEventsHandler.ShelfStatusChangeEventReport(port.GetParentRack());
                 return (true, "");
@@ -199,6 +199,7 @@ namespace AGVSystem.Service
                 StaEQPManagager.RacksOptions.TryGetValue(wIPID, out var wipOption);
                 var portPropertyStore = wipOption.PortsOptions.FirstOrDefault(p => p.ID == port.Properties.ID);
                 portPropertyStore.PortUsable = port.Properties.PortUsable = usable ? clsPortOfRack.PORT_USABLE.USABLE : clsPortOfRack.PORT_USABLE.NOT_USABLE;
+                EQDeviceEventsHandler.HandleZoneCapacityChanged(port.GetParentRack());
                 StaEQPManagager.SaveRackConfigs();
                 return (true, "");
             }
