@@ -240,7 +240,6 @@ namespace AGVSystem.Controllers
 
                         mainEQ.Reserve(carrierIDAssigned);
                         mainEQ.ToEQ();
-
                         if (action == ACTION_TYPE.Unload)
                         {
                             clsTaskDto? taskExist = DatabaseCaches.TaskCaches.RunningTasks.FirstOrDefault(task => task.From_Station_Tag == mainEQ.EndPointOptions.TagID && task.Action == ACTION_TYPE.Carry);
@@ -467,6 +466,19 @@ namespace AGVSystem.Controllers
                     }
 
                     clsAGVSTaskReportResponse result_to = await CheckStatus(taskID, to, ToSlot, ACTION_TYPE.Load);
+
+                    await Task.Delay(1).ContinueWith(async t =>
+                    {
+                        try
+                        {
+                            await GPMCIMService.ChangePortTypeOfEq(to, 1);
+                        }
+                        catch (Exception ex)
+                        {
+
+                        }
+                    });
+
                     return result_to;
                 }
                 else

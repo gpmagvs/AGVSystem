@@ -11,8 +11,16 @@ namespace AGVSystem.Controllers
         [HttpPost("ChangePortType")]
         public async Task<IActionResult> ChangePortType(int eqTag, int portType)
         {
-            GPMCIMService.clsCIMResponse response = await GPMCIMService.ChangePortTypeOfEq(eqTag, portType);
-            return Ok(response);
+            try
+            {
+
+                GPMCIMService.clsCIMResponse response = await GPMCIMService.ChangePortTypeOfEq(eqTag, portType);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return Ok(ex.Message + ex.StackTrace);
+            }
         }
     }
 }
