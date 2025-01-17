@@ -107,8 +107,16 @@ namespace AGVSystem.Models.Sys
             bool confirm = true;
             LOG.INFO($"User Try Swich RUN_MODE To {mode}");
 
+
+
             if (!forecing_change)
             {
+                if (mode == RUN_MODE.MAINTAIN && (HostOperMode == HOST_OPER_MODE.REMOTE || HostConnMode == HOST_CONN_MODE.ONLINE))
+                {
+                    Message = "與Host連線必須切換為 OFFLINE 才能切換為維護模式";
+                    confirm = false;
+                }
+
                 bool isAnyTaskExecuting = DatabaseCaches.TaskCaches.RunningTasks.Count() > 0;
                 if (isAnyTaskExecuting)
                 {
