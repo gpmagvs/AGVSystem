@@ -4,6 +4,7 @@ using AGVSystemCommonNet6.Microservices.MCS;
 using Microsoft.AspNetCore.SignalR;
 using Newtonsoft.Json;
 using System.Collections.Concurrent;
+using System.Text.RegularExpressions;
 using static AGVSystemCommonNet6.Microservices.MCS.MCSCIMService.ZoneData;
 
 namespace AGVSystem.Models.EQDevices
@@ -15,7 +16,7 @@ namespace AGVSystem.Models.EQDevices
         private IHubContext<FrontEndDataHub> hubContext;
 
         clsZoneUsableCarrierOptions options;
-        public static Dictionary<string, clsZoneUsableCarrierOptions> thresholdOfZones = new Dictionary<string, clsZoneUsableCarrierOptions>();
+        public static Dictionary<string, clsZoneUsableCarrierOptions> lowLevelMonitorOptionsOfZones = new Dictionary<string, clsZoneUsableCarrierOptions>();
         public static ConcurrentDictionary<string, DateTime> NotifyingZoneNames = new();
         static string audioFilePath => Path.Combine(Environment.CurrentDirectory, $"Audios/mcs_transfer_command_recieved.wav");
 
@@ -46,13 +47,31 @@ namespace AGVSystem.Models.EQDevices
                 return;
             }
             NotifyingZoneNames.TryAdd(this.zoneData.ZoneName, DateTime.Now);
+            string notifyMessage = $"{this.options.DisplayZoneName}({zoneData.ZoneName}) {GenerateNotiftMessage(this.options.NotifyMessageTemplate, availabeNumber)}";
             if (this.hubContext != null)
-            {
-                string _message = $"{this.options.DisplayZoneName}({zoneData.ZoneName}) 剩餘可用的 Carriers 已快用盡，請補料! 當前可用數量 = [{availabeNumber}]";
-                this.hubContext.Clients.All.SendAsync("ZoneUsableCarrierNotEnoughNotify", _message);
-            }
+                this.hubContext.Clients.All.SendAsync("ZoneUsableCarrierNotEnoughNotify", notifyMessage);
             PlayAudio();
         }
+
+        private string GenerateNotiftMessage(string notifyMessageTemplate, int availabeNumber)
+        {
+            if (string.IsNullOrEmpty(notifyMessageTemplate))
+                return $"剩餘可用的 Carriers 已快用盡，請補料! 當前可用數量 = [{availabeNumber}]"; // default message
+            else
+            {
+                //{RackName}{ZoneID} 可用的Tray盤數即將不足，請補空Tray. 當前數量:{AvailableNumber}
+                string messageReplaced = notifyMessageTemplate.Replace("{RackName}", this.options.DisplayZoneName)
+                                            .Replace("{ZoneID}", zoneData.ZoneName)
+                                            .Replace("{AvailableNumber}", availabeNumber.ToString());
+
+                //檢查是否有未取代的變數，若有則把變數取代成空字串
+                messageReplaced = Regex.Replace(messageReplaced, @"\{.*?\}", "");
+                //檢查若有()則移除
+                messageReplaced = messageReplaced.Replace("()", "");
+                return messageReplaced;
+            }
+        }
+
         private static async Task StopAudio()
         {
             await AudioPlayService.StopSpecficAudio(audioFilePath);
@@ -77,24 +96,24 @@ namespace AGVSystem.Models.EQDevices
 
         private static clsZoneUsableCarrierOptions GetOptionOfZone(string zoneName)
         {
-            if (thresholdOfZones.TryGetValue(zoneName, out clsZoneUsableCarrierOptions result))
+            if (lowLevelMonitorOptionsOfZones.TryGetValue(zoneName, out clsZoneUsableCarrierOptions result))
                 return result;
             else
             {
-                thresholdOfZones = LoadThresholdSettingFromJsonFile();
-                if (!thresholdOfZones.ContainsKey(zoneName))
+                lowLevelMonitorOptionsOfZones = LoadThresholdSettingFromJsonFile();
+                if (!lowLevelMonitorOptionsOfZones.ContainsKey(zoneName))
                 {
                     clsZoneUsableCarrierOptions _default = new() { DisplayZoneName = zoneName, ThresHoldValue = 0 };
-                    thresholdOfZones.Add(zoneName, _default);
+                    lowLevelMonitorOptionsOfZones.Add(zoneName, _default);
                     SaveThresholdSettingToJsonFile();
                     return _default;
                 }
                 else
-                    return thresholdOfZones[zoneName];
+                    return lowLevelMonitorOptionsOfZones[zoneName];
             }
         }
 
-        private static Dictionary<string, clsZoneUsableCarrierOptions> LoadThresholdSettingFromJsonFile()
+        internal static Dictionary<string, clsZoneUsableCarrierOptions> LoadThresholdSettingFromJsonFile()
         {
             if (File.Exists(ThresholdStoreFileName))
             {
@@ -105,12 +124,12 @@ namespace AGVSystem.Models.EQDevices
                 return new Dictionary<string, clsZoneUsableCarrierOptions>();
         }
 
-        private static void SaveThresholdSettingToJsonFile()
+        internal static void SaveThresholdSettingToJsonFile()
         {
             Directory.CreateDirectory(Path.GetDirectoryName(ThresholdStoreFileName));
             try
             {
-                string json = JsonConvert.SerializeObject(thresholdOfZones, Formatting.Indented);
+                string json = JsonConvert.SerializeObject(lowLevelMonitorOptionsOfZones, Formatting.Indented);
                 File.WriteAllText(ThresholdStoreFileName, json);
             }
             catch (Exception ex)
@@ -152,6 +171,11 @@ namespace AGVSystem.Models.EQDevices
         {
             public string DisplayZoneName { get; set; } = "";
             public int ThresHoldValue { get; set; } = 0;
+
+            /// <summary>
+            /// 當可用的Tray盤數即將不足時，通知的訊息模板,RackName, ZoneID, AvailableNumber 為變數
+            /// </summary>
+            public string NotifyMessageTemplate { get; set; } = "{RackName}{ZoneID} 可用的Tray盤數即將不足，請補空Tray. 當前數量:{AvailableNumber}";
         }
     }
 }

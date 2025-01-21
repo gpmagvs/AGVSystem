@@ -6,6 +6,7 @@ using EquipmentManagment.Device.Options;
 using EquipmentManagment.Manager;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using static AGVSystem.Models.EQDevices.ZoneCapacityStatusMonitor;
 
 namespace AGVSystem.Controllers
 {
@@ -81,6 +82,26 @@ namespace AGVSystem.Controllers
         public async Task<List<ViewModel.WIPDataViewModel>> GetRackStatusData()
         {
             return _rackControlService.GetWIPDataViewModels();
+        }
+
+        [HttpGet("LowLevelNotifyOptions")]
+        public async Task<object> GetLowLevelNotifyOptions()
+        {
+            Dictionary<string, clsZoneUsableCarrierOptions> options = ZoneCapacityStatusMonitor.LoadThresholdSettingFromJsonFile();
+            return options.Select(pair => new
+            {
+                ZoneID = pair.Key,
+                pair.Value.DisplayZoneName,
+                pair.Value.ThresHoldValue,
+                pair.Value.NotifyMessageTemplate,
+            });
+        }
+
+        [HttpPost("LowLevelNotifyOptions")]
+        public async Task SaveLowLevelNotifyOptions([FromBody] Dictionary<string, clsZoneUsableCarrierOptions> options)
+        {
+            ZoneCapacityStatusMonitor.lowLevelMonitorOptionsOfZones = options;
+            ZoneCapacityStatusMonitor.SaveThresholdSettingToJsonFile();
         }
     }
 }
