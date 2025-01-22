@@ -376,6 +376,8 @@ namespace AGVSystem.Models.EQDevices
 
             _ = Task.Run(async () =>
             {
+                if (DatabaseCaches.Alarms.UnCheckedAlarms.Any(al => al.Equipment_Name == device.EQName && al.AlarmCode == (int)ALARMS.EQ_Disconnect))
+                    return;
                 await AlarmManagerCenter.AddAlarmAsync(ALARMS.EQ_Disconnect, source: ALARM_SOURCE.EQP, Equipment_Name: device.EQName);
             });
         }
