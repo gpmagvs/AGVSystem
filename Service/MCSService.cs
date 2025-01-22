@@ -243,7 +243,7 @@ namespace AGVSystem.Service.MCS
                     }
                 }
 
-                allPorts = allPorts.OrderByDescending(p => p.TagNumbers.All(tag => tag.GetMapPoint().StationType == AGVSystemCommonNet6.MAP.MapPoint.STATION_TYPE.Buffer))
+                allPorts = allPorts.OrderByDescending(p => p.TagNumbers.All(tag => tag.GetMapPoint().StationType == AGVSystemCommonNet6.MAP.MapPoint.STATION_TYPE.Buffer && !tag.GetMapPoint().IsParking))
                                    .ToList();
                 //Filter : 不可以是轉換架,不可以有貨物,不可以有被指派任務
 

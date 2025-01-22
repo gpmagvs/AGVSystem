@@ -6,8 +6,8 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<ApplicationIcon>favicon.ico</ApplicationIcon>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
-		<AssemblyVersion>1.6.8</AssemblyVersion>
-		<FileVersion>1.6.8</FileVersion>
+		<AssemblyVersion>1.6.9</AssemblyVersion>
+		<FileVersion>1.6.9</FileVersion>
 		<RunAnalyzersDuringLiveAnalysis>False</RunAnalyzersDuringLiveAnalysis>
 		<RunAnalyzersDuringBuild>False</RunAnalyzersDuringBuild>
 		<PackageReadmeFile></PackageReadmeFile>
