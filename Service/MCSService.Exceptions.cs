@@ -53,5 +53,14 @@ namespace AGVSystem.Service.MCS
             {
             }
         }
+
+        public class PortDisabledException : Exception
+        {
+            public readonly bool isSource;
+            public PortDisabledException(string message, bool isSource) : base(message)
+            {
+                this.isSource = isSource;
+            }
+        }
     }
 }

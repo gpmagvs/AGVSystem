@@ -197,10 +197,12 @@ namespace AGVSystem.Service
             if (TryGetPort(wIPID, portID, out clsPortOfRack port))
             {
                 StaEQPManagager.RacksOptions.TryGetValue(wIPID, out var wipOption);
-                var portPropertyStore = wipOption.PortsOptions.FirstOrDefault(p => p.ID == port.Properties.ID);
-                portPropertyStore.PortUsable = port.Properties.PortUsable = usable ? clsPortOfRack.PORT_USABLE.USABLE : clsPortOfRack.PORT_USABLE.NOT_USABLE;
-                EQDeviceEventsHandler.HandleZoneCapacityChanged(port.GetParentRack());
-                StaEQPManagager.SaveRackConfigs();
+                if (port.ChangeUsableState(usable))
+                {
+                    var portPropertyStore = wipOption.PortsOptions.FirstOrDefault(p => p.ID == port.Properties.ID);
+                    portPropertyStore = port.Properties;
+                    StaEQPManagager.SaveRackConfigs();
+                }
                 return (true, "");
             }
             else
@@ -293,6 +295,27 @@ namespace AGVSystem.Service
             {
                 return !string.IsNullOrEmpty(port.CarrierID) || (port.IsRackPortIsEQ(out clsEQ eq) && eq.EndPointOptions.IsRoleAsZone && !string.IsNullOrEmpty(eq.PortStatus.CarrierID));
             }
+        }
+
+        internal void DisablePortsColumnTempotary(int tag)
+        {
+            List<clsPortOfRack> hasIDButNoCargoPorts = StaEQPManagager.RackPortsList.Where(port => port.TagNumbers.Contains(tag)).ToList();
+            foreach (var port in hasIDButNoCargoPorts)
+            {
+                port.DisableTemportary();
+            }
+
+            EQDeviceEventsHandler.BrocastRackData();
+        }
+
+        internal void EnablePortsColumnByDisableTempotary(int tag)
+        {
+            List<clsPortOfRack> hasIDButNoCargoPorts = StaEQPManagager.RackPortsList.Where(port => port.TagNumbers.Contains(tag)).ToList();
+            foreach (var port in hasIDButNoCargoPorts)
+            {
+                port.RestoreDisableByTemportary();
+            }
+            EQDeviceEventsHandler.BrocastRackData();
         }
     }
 }

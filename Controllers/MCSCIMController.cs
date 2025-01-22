@@ -105,6 +105,13 @@ namespace AGVSystem.Controllers
                 result.Message = ex.Message;
                 SendMCSMessage($"[MCS命令-{transportCommand.commandID} 已被系統拒絕] Result Code = {result.ResultCode} ,({ex.Message})", true);
             }
+            catch (PortDisabledException ex)
+            {
+                result.Confirmed = false;
+                result.ResultCode = ex.isSource ? (byte)HCACK_RETURN_CODE_YELLOW.Rack_Source_Port_Position_Is_Disable : (byte)HCACK_RETURN_CODE_YELLOW.Rack_Destination_Port_Position_Is_Disable;
+                result.Message = ex.Message;
+                SendMCSMessage($"[MCS命令-{transportCommand.commandID} 已被系統拒絕] Result Code = {result.ResultCode} ,({ex.Message})", true);
+            }
             catch (Exception ex)
             {
                 result.Confirmed = false;

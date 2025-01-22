@@ -68,6 +68,11 @@ namespace AGVSystem.Service.MCS
                         {
                             TryGetRackPort(transportCommand.source, asDestine: false, transportCommand.carrierID, out clsPortOfRack? sourceRackPort);
 
+                            if (sourceRackPort != null && sourceRackPort.disabledTempotary || sourceRackPort.Properties.PortUsable == clsPortOfRack.PORT_USABLE.NOT_USABLE)
+                            {
+                                throw new PortDisabledException($"Source is empty or disabled.", true);
+                            }
+
                             sourceTag = sourceRackPort == null ? -1 : sourceRackPort.TagNumbers.FirstOrDefault();
                             sourceSlot = sourceRackPort == null ? -1 : sourceRackPort.Layer;
 
@@ -247,7 +252,7 @@ namespace AGVSystem.Service.MCS
                                    .ToList();
                 //Filter : 不可以是轉換架,不可以有貨物,不可以有被指派任務
 
-                port = allPorts.Where(p => p.Properties.PortUsable == clsPortOfRack.PORT_USABLE.USABLE && NotTransferStationPort(p) && !p.CargoExist && string.IsNullOrEmpty(p.CarrierID) && !_IsEqAsZoneAndHasCargo(p) && !HasOrderAssigned(p)).FirstOrDefault(); //TODO 可以更優化，找PORT的邏輯 , 比如從最低層開始找
+                port = allPorts.Where(p => p.Properties.PortUsable == clsPortOfRack.PORT_USABLE.USABLE && !p.disabledTempotary && NotTransferStationPort(p) && !p.CargoExist && string.IsNullOrEmpty(p.CarrierID) && !_IsEqAsZoneAndHasCargo(p) && !HasOrderAssigned(p)).FirstOrDefault(); //TODO 可以更優化，找PORT的邏輯 , 比如從最低層開始找
 
                 bool _IsEqAsZoneAndHasCargo(clsPortOfRack rackPort)
                 {

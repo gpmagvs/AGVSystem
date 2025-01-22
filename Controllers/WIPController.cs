@@ -45,6 +45,19 @@ namespace AGVSystem.Controllers
             return Ok(new { confirm = confirm, message = message });
         }
 
+        [HttpPost("DisablePortsColumnTempotary")]
+        public async Task<IActionResult> DisablePortsColumnTempotary(int tag = -1)
+        {
+            _rackControlService.DisablePortsColumnTempotary(tag);
+            return Ok();
+        }
+        [HttpPost("EnablePortsColumnByDisableTempotary")]
+        public async Task<IActionResult> EnablePortsColumnByDisableTempotary(int tag = -1)
+        {
+            _rackControlService.EnablePortsColumnByDisableTempotary(tag);
+            return Ok();
+        }
+
 
         [HttpPost("PortNoRename")]
         public async Task<IActionResult> PortNoRename(string WIPID, string PortID, string NewPortNo)
