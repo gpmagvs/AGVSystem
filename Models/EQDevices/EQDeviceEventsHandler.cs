@@ -66,6 +66,7 @@ namespace AGVSystem.Models.EQDevices
             clsPortOfRack.OnPortCargoChangedToExist += HandlePortCargoChangedToExist;
             clsPortOfRack.OnPortCargoChangeToDisappear += HandlePortCargoChangeToDisappear;
             clsPortOfRack.OnPortUsableStateChanged += HandleRackPortUsableStateChanged;
+            clsPortOfRack.OnPortDisabledStateReleased += ClsPortOfRack_OnPortDisabledStateReleased;
             clsEQ.OnIOStateChanged += HandleEQIOStateChanged;
             clsEQ.OnUnloadRequestChanged += HandleEQUnloadRequestChanged;
             clsEQ.OnEQPortCargoChangedToExist += HandleEQPortCargoChangedToExist;
@@ -79,6 +80,11 @@ namespace AGVSystem.Models.EQDevices
             MaterialManagerEventHandler.OnMaterialDelete += HandleMaterialDelete;
         }
 
+        private static void ClsPortOfRack_OnPortDisabledStateReleased(object? sender, clsPortOfRack e)
+        {
+            _logger.Trace($"{e.GetParentRack().EQName} - {e.Properties.ID}({e.PortNo}) 暫時被禁用的狀態已解除(Release State t.)");
+        }
+
         private static void HandleRackPortUsableStateChanged(object? sender, clsPortOfRack e)
         {
             clsRack rackBelong = e.GetParentRack();
@@ -87,6 +93,8 @@ namespace AGVSystem.Models.EQDevices
                 await HandleZoneCapacityChanged(rackBelong);
                 await ShelfStatusChangeEventReport(rackBelong);
             });
+
+            BrocastRackData();
         }
 
         private static void ClsEQ_OnCSTReaderIDChanged(object? sender, (clsEQ eq, string newValue, string oldValue) e)
