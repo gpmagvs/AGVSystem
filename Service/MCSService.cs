@@ -248,11 +248,11 @@ namespace AGVSystem.Service.MCS
                     }
                 }
 
-                allPorts = allPorts.OrderByDescending(p => p.TagNumbers.All(tag => tag.GetMapPoint().StationType == AGVSystemCommonNet6.MAP.MapPoint.STATION_TYPE.Buffer && !tag.GetMapPoint().IsParking))
+                allPorts = allPorts.OrderByDescending(p => p.TagNumbers.All(tag => tag.GetMapPoint().StationType == AGVSystemCommonNet6.MAP.MapPoint.STATION_TYPE.Buffer && !tag.GetMapPoint().IsParking) && !HasOrderAssigned(p.TagNumbers))
                                    .ToList();
                 //Filter : 不可以是轉換架,不可以有貨物,不可以有被指派任務
 
-                port = allPorts.Where(p => p.Properties.PortUsable == clsPortOfRack.PORT_USABLE.USABLE && !p.disabledTempotary && NotTransferStationPort(p) && !p.CargoExist && string.IsNullOrEmpty(p.CarrierID) && !_IsEqAsZoneAndHasCargo(p) && !HasOrderAssigned(p)).FirstOrDefault(); //TODO 可以更優化，找PORT的邏輯 , 比如從最低層開始找
+                port = allPorts.Where(p => p.Properties.PortUsable == clsPortOfRack.PORT_USABLE.USABLE && !p.disabledTempotary && NotTransferStationPort(p) && !p.CargoExist && string.IsNullOrEmpty(p.CarrierID) && !_IsEqAsZoneAndHasCargo(p)).FirstOrDefault(); //TODO 可以更優化，找PORT的邏輯 , 比如從最低層開始找
 
                 bool _IsEqAsZoneAndHasCargo(clsPortOfRack rackPort)
                 {
@@ -299,6 +299,12 @@ namespace AGVSystem.Service.MCS
             runningGoalKeys.AddRange(DatabaseCaches.TaskCaches.InCompletedTasks.Select(order => order.To_Station + "_" + order.To_Slot));
             return rackPort.TagNumbers.Any(tag => runningGoalKeys.Contains($"{tag}_{rackPort.Layer}"));
         }
+
+        private bool HasOrderAssigned(IEnumerable<int> tags)
+        {
+            return DatabaseCaches.TaskCaches.InCompletedTasks.Any(order => tags.Contains(order.From_Station_Tag) || tags.Contains(order.To_Station_Tag));
+        }
+
         private bool isDeviceIDBelongRack(string deviceID)
         {
             return !MainEQMap.TryGetValue(deviceID, out clsEQ eq);
