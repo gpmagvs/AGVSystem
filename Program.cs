@@ -6,6 +6,7 @@ using AGVSystem.Models.Map;
 using AGVSystem.Models.Sys;
 using AGVSystem.Models.TaskAllocation.HotRun;
 using AGVSystem.Service;
+using AGVSystem.Service.Aggregates;
 using AGVSystem.Service.MCS;
 using AGVSystem.TaskManagers;
 using AGVSystemCommonNet6.Alarm;
@@ -274,6 +275,7 @@ public static class WebAppInitializer
         builder.Services.AddScoped<DatabaseMigrateService>();
         builder.Services.AddScoped<SECSConfigsService>(service => _secsConfigsService);
         builder.Services.AddScoped<TrafficStateDataQueryService>();
+        builder.Services.AddScoped<SystemModesAggregateService>();
         builder.Services.AddSingleton<DBDataService>();
         builder.Services.AddSingleton<EQIOStatusMonitorBackgroundService>(provider => qIOStatusMonitorBackgroundService);
         builder.Services.AddHostedService<DatabaseBackgroundService>();

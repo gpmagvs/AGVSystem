@@ -1,5 +1,6 @@
 ﻿using AGVSystem.Models.Sys;
 using AGVSystem.Service;
+using AGVSystem.Service.Aggregates;
 using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.AGVDispatch.RunMode;
 using AGVSystemCommonNet6.Configuration;
@@ -24,8 +25,10 @@ namespace AGVSystem.Controllers
         SystemStatusDbStoreService _SystemStatusDbStoreService;
         DatabaseMigrateService dbMigrateService;
         Logger logger = LogManager.GetCurrentClassLogger();
-        public SystemController(SystemStatusDbStoreService _SystemStatusDbStoreService, DatabaseMigrateService dbMigrateService)
+        SystemModesAggregateService systemModesAggregateService;
+        public SystemController(SystemStatusDbStoreService _SystemStatusDbStoreService, DatabaseMigrateService dbMigrateService, SystemModesAggregateService systemModesAggregateService)
         {
+            this.systemModesAggregateService = systemModesAggregateService;
             this._SystemStatusDbStoreService = _SystemStatusDbStoreService;
             this.dbMigrateService = dbMigrateService;
         }
@@ -52,47 +55,14 @@ namespace AGVSystem.Controllers
         [HttpPost("RunMode")]
         public async Task<IActionResult> RunMode(RUN_MODE mode, bool forecing_change = false)
         {
-            var _previousMode = SystemModes.RunMode;
-            SystemModes.RunMode = mode == RUN_MODE.MAINTAIN ? RUN_MODE.SWITCH_TO_MAITAIN_ING : RUN_MODE.SWITCH_TO_RUN_ING;
-            //AGVS先確認
-            bool agvs_confirm = SystemModes.RunModeSwitch(mode, out string message, forecing_change);
-            if (!agvs_confirm)
-            {
-                SystemModes.RunMode = _previousMode;
-                return Ok(new { confirm = false, message = message });
-            }
-            logger.Info($"[Run Mode Switch] 等待VMS回覆 {mode}模式請求");
-            (bool confirm, string message) vms_response = await VMSSerivces.RunModeSwitch(mode, forecing_change);
-            OkObjectResult oko = Ok(new { confirm = false, message = "" });
-            if (vms_response.confirm == false)
-            {
-                SystemModes.RunMode = _previousMode;
-                oko = Ok(new { confirm = vms_response.confirm, message = vms_response.message });
-            }
-            else
-            {
-                oko = Ok(new { confirm = vms_response.confirm, message = vms_response.message });
-                _SystemStatusDbStoreService.ModifyRunModeStored(mode);
-            }
-            return oko;
+            (bool success, string message) = await systemModesAggregateService.MaintainRunSwitch(mode, forecing_change);
+            return Ok(new { confirm = success, message = message });
         }
 
         [HttpPost("HostConn")]
         public async Task<IActionResult> HostConnMode(HOST_CONN_MODE mode)
         {
-            (bool confirm, string message) response = new(false, "[HostConnMode] Fail");
-
-            if (mode == HOST_CONN_MODE.ONLINE)
-                response = await MCSCIMService.Online();
-            else
-                response = await MCSCIMService.Offline();
-            if (response.confirm == true)
-            {
-                SystemModes.HostConnMode = mode;
-                if (SystemModes.HostConnMode == HOST_CONN_MODE.OFFLINE)
-                    SystemModes.HostOperMode = HOST_OPER_MODE.LOCAL;
-                //_SystemStatusDbStoreService.ModifyHostConnMode(mode);
-            }
+            (bool confirm, string message) response = await systemModesAggregateService.HostOnlineOfflineModeSwitch(mode);
             return Ok(new { confirm = response.confirm, message = response.message });
         }
 
@@ -100,27 +70,7 @@ namespace AGVSystem.Controllers
         [HttpPost("HostOperation")]
         public async Task<IActionResult> HostOperationMode(HOST_OPER_MODE mode)
         {
-            if (SystemModes.HostConnMode != HOST_CONN_MODE.ONLINE)
-                return Ok(new { confirm = false, message = $"HostConnMode is not ONLINE" });
-            (bool confirm, string message) response = new(false, "[HostOperationMode] Fail");
-            if (mode == HOST_OPER_MODE.LOCAL)
-            {
-                if (_AnyMCSTransferOrderRunning())
-                    return Ok(new { confirm = false, message = $"有Host任務執行中，無法切換至LOCAL" });
-                response = await MCSCIMService.OnlineRemote2OnlineLocal();
-            }
-            else
-                response = await MCSCIMService.OnlineLocalToOnlineRemote();
-            if (response.confirm == true)
-            {
-
-                SystemModes.HostOperMode = mode;
-                //_SystemStatusDbStoreService.ModifyHostOperMode(mode);
-            }
-            bool _AnyMCSTransferOrderRunning()
-            {
-                return DatabaseCaches.TaskCaches.InCompletedTasks.Any(order => order.isFromMCS);
-            }
+            (bool confirm, string message) response = await systemModesAggregateService.HostOnlineRemoteLocalModeSwitch(mode);
             return Ok(new { confirm = response.confirm, message = response.message });
         }
 

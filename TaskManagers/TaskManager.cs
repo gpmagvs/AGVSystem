@@ -614,7 +614,11 @@ namespace AGVSystem.TaskManagers
                         await agvsDb.SaveChanges();
                     }
 
-                    MCSCIMService.TransferAbortCompletedReport(transportCommandDto);
+                    _ = MCSCIMService.TransferCancelInitiatedReport(transportCommandDto).ContinueWith(async t =>
+                    {
+                        await Task.Delay(400);
+                        await MCSCIMService.TransferCancelCompletedReport(transportCommandDto);
+                    });
                     return true;
                 }
 

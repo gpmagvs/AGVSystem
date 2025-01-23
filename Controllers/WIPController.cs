@@ -6,6 +6,7 @@ using EquipmentManagment.Device.Options;
 using EquipmentManagment.Manager;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using static AGVSystem.Models.EQDevices.ZoneCapacityStatusMonitor;
 
 namespace AGVSystem.Controllers
 {
@@ -42,6 +43,19 @@ namespace AGVSystem.Controllers
             (bool confirm, string message) = await _rackControlService.PortUsableSwitch(WIPID, PortID, Usable);
             Task.Delay(100).ContinueWith((t) => { EQDeviceEventsHandler.BrocastRackData(); });
             return Ok(new { confirm = confirm, message = message });
+        }
+
+        [HttpPost("DisablePortsColumnTempotary")]
+        public async Task<IActionResult> DisablePortsColumnTempotary(int tag = -1)
+        {
+            _rackControlService.DisablePortsColumnTempotary(tag);
+            return Ok();
+        }
+        [HttpPost("EnablePortsColumnByDisableTempotary")]
+        public async Task<IActionResult> EnablePortsColumnByDisableTempotary(int tag = -1)
+        {
+            _rackControlService.EnablePortsColumnByDisableTempotary(tag);
+            return Ok();
         }
 
 
@@ -81,6 +95,26 @@ namespace AGVSystem.Controllers
         public async Task<List<ViewModel.WIPDataViewModel>> GetRackStatusData()
         {
             return _rackControlService.GetWIPDataViewModels();
+        }
+
+        [HttpGet("LowLevelNotifyOptions")]
+        public async Task<object> GetLowLevelNotifyOptions()
+        {
+            Dictionary<string, clsZoneUsableCarrierOptions> options = ZoneCapacityStatusMonitor.LoadThresholdSettingFromJsonFile();
+            return options.Select(pair => new
+            {
+                ZoneID = pair.Key,
+                pair.Value.DisplayZoneName,
+                pair.Value.ThresHoldValue,
+                pair.Value.NotifyMessageTemplate,
+            });
+        }
+
+        [HttpPost("LowLevelNotifyOptions")]
+        public async Task SaveLowLevelNotifyOptions([FromBody] Dictionary<string, clsZoneUsableCarrierOptions> options)
+        {
+            ZoneCapacityStatusMonitor.lowLevelMonitorOptionsOfZones = options;
+            ZoneCapacityStatusMonitor.SaveThresholdSettingToJsonFile();
         }
     }
 }

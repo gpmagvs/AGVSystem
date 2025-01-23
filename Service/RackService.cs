@@ -96,7 +96,7 @@ namespace AGVSystem.Service
                     MCSCIMService.CarrierRemoveCompletedReport(removedCarrierID, locID, zoneName, 0);
                 EQDeviceEventsHandler.BrocastRackData();
                 await Task.Delay(200);
-                await EQDeviceEventsHandler.ZoneCapacityChangeEventReport(port.GetParentRack());
+                await EQDeviceEventsHandler.HandleZoneCapacityChanged(port.GetParentRack());
                 await Task.Delay(200);
                 await EQDeviceEventsHandler.ShelfStatusChangeEventReport(port.GetParentRack());
                 _logger.Info($"WIP:{port.GetParentRack().EQName} Port-{port.Properties.ID} Cargo ID Removed. (Trigger By:{triggerBy})");
@@ -177,7 +177,7 @@ namespace AGVSystem.Service
                 _logger.Info($"WIP:{port.GetParentRack().EQName} Port-{port.Properties.ID} Cargo ID Changed to {cargoID}(Trigger By:{triggerBy})");
                 EQDeviceEventsHandler.BrocastRackData();
                 await Task.Delay(200);
-                await EQDeviceEventsHandler.ZoneCapacityChangeEventReport(port.GetParentRack());
+                await EQDeviceEventsHandler.HandleZoneCapacityChanged(port.GetParentRack());
                 await Task.Delay(200);
                 await EQDeviceEventsHandler.ShelfStatusChangeEventReport(port.GetParentRack());
                 return (true, "");
@@ -197,9 +197,12 @@ namespace AGVSystem.Service
             if (TryGetPort(wIPID, portID, out clsPortOfRack port))
             {
                 StaEQPManagager.RacksOptions.TryGetValue(wIPID, out var wipOption);
-                var portPropertyStore = wipOption.PortsOptions.FirstOrDefault(p => p.ID == port.Properties.ID);
-                portPropertyStore.PortUsable = port.Properties.PortUsable = usable ? clsPortOfRack.PORT_USABLE.USABLE : clsPortOfRack.PORT_USABLE.NOT_USABLE;
-                StaEQPManagager.SaveRackConfigs();
+                if (port.ChangeUsableState(usable))
+                {
+                    var portPropertyStore = wipOption.PortsOptions.FirstOrDefault(p => p.ID == port.Properties.ID);
+                    portPropertyStore = port.Properties;
+                    StaEQPManagager.SaveRackConfigs();
+                }
                 return (true, "");
             }
             else
@@ -270,6 +273,49 @@ namespace AGVSystem.Service
             return port != null;
         }
 
+        internal List<RackPortAbnoramlStatus> GetAbnormalPortsInfo()
+        {
+            List<RackPortAbnoramlStatus> abnormalPorts = new List<RackPortAbnoramlStatus>();
+            //goal 找出有帳無料、有料無帳的儲格們
+            List<clsPortOfRack> hasIDButNoCargoPorts = StaEQPManagager.RackPortsList.Where(port => _IsCarrierIDExist(port) && !_IsCargoExist(port))
+                                                                                    .ToList();
+            List<clsPortOfRack> hasCargoButNoIDPorts = StaEQPManagager.RackPortsList.Where(port => !_IsCarrierIDExist(port) && _IsCargoExist(port))
+                                                                                    .ToList();
 
+            abnormalPorts.AddRange(hasIDButNoCargoPorts.Select(port => new RackPortAbnoramlStatus(port.GetParentRack().EQName, port.Properties.PortNo, "有帳無料")));
+            abnormalPorts.AddRange(hasCargoButNoIDPorts.Select(port => new RackPortAbnoramlStatus(port.GetParentRack().EQName, port.Properties.PortNo, "有料無帳")));
+
+            return abnormalPorts;
+            bool _IsCargoExist(clsPortOfRack port)
+            {
+                return port.CargoExist || (port.IsRackPortIsEQ(out clsEQ eq) && eq.EndPointOptions.IsRoleAsZone && eq.Port_Exist);
+            }
+
+            bool _IsCarrierIDExist(clsPortOfRack port)
+            {
+                return !string.IsNullOrEmpty(port.CarrierID) || (port.IsRackPortIsEQ(out clsEQ eq) && eq.EndPointOptions.IsRoleAsZone && !string.IsNullOrEmpty(eq.PortStatus.CarrierID));
+            }
+        }
+
+        internal void DisablePortsColumnTempotary(int tag)
+        {
+            List<clsPortOfRack> hasIDButNoCargoPorts = StaEQPManagager.RackPortsList.Where(port => port.TagNumbers.Contains(tag)).ToList();
+            foreach (var port in hasIDButNoCargoPorts)
+            {
+                port.DisableTemportary();
+            }
+
+            EQDeviceEventsHandler.BrocastRackData();
+        }
+
+        internal void EnablePortsColumnByDisableTempotary(int tag)
+        {
+            List<clsPortOfRack> hasIDButNoCargoPorts = StaEQPManagager.RackPortsList.Where(port => port.TagNumbers.Contains(tag)).ToList();
+            foreach (var port in hasIDButNoCargoPorts)
+            {
+                port.RestoreDisableByTemportary();
+            }
+            EQDeviceEventsHandler.BrocastRackData();
+        }
     }
 }
