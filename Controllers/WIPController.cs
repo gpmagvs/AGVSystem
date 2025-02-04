@@ -116,5 +116,12 @@ namespace AGVSystem.Controllers
             ZoneCapacityStatusMonitor.lowLevelMonitorOptionsOfZones = options;
             ZoneCapacityStatusMonitor.SaveThresholdSettingToJsonFile();
         }
+
+        [HttpPost("ClearAllIDWithoutCargo")]
+        public async Task<object> ClearAllIDWithoutCargo()
+        {
+            (int total, int success, int fail) = await _rackControlService.ClearAllIDWithoutCargoAsync();
+            return new { total, success, fail };
+        }
     }
 }
