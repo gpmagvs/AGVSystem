@@ -276,7 +276,7 @@ namespace AGVSystem.Service.MCS
             {
                 //Rack 是來源地[取貨], 找有貨的Port且ID = carrierID
                 //有帳無料
-                port = rack.PortsStatus.FirstOrDefault(p => p.CarrierID == carrierID || (p.IsRackPortIsEQ(out clsEQ eq) && (eq.PortStatus.CarrierID == carrierID || eq.CSTIDReadValue == carrierID)));
+                port = rack.PortsStatus.Where(p => !p.Properties.EQInstall.IsUseForEQ).FirstOrDefault(p => p.CarrierID == carrierID || (p.IsRackPortIsEQ(out clsEQ eq) && (eq.PortStatus.CarrierID == carrierID || eq.CSTIDReadValue == carrierID)));
             }
             return port != null;
         }
