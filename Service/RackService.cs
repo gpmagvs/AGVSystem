@@ -143,6 +143,11 @@ namespace AGVSystem.Service
                 if (!TryGetPort(tagNumber, slot, out clsPortOfRack port))
                     return (false, "Port Not Found");
 
+                if (port.Properties.EQInstall.IsUseForEQ)
+                {
+                    return (false, "該Port為設備，無須修改儲格帳料資訊");
+                }
+
                 bool isEqAsZonePortHasCSTIDReader = port.IsRackPortIsEQ(out clsEQ eq) && eq.EndPointOptions.IsRoleAsZone && eq.EndPointOptions.IsCSTIDReportable;
                 if (!bypassHasCSTReaderCheck && isEqAsZonePortHasCSTIDReader)
                     return (false, "該Port具有Carrier ID Reader 功能，無法修改帳料資訊");
@@ -224,7 +229,7 @@ namespace AGVSystem.Service
         }
         internal async Task UpdateMaterialIDStoreOfDataBase(clsPortOfRack port, string carrierID)
         {
-            await UpdateMaterialIDStoreOfDataBase(port.TagNumbers.FirstOrDefault(), port.Properties.Column, carrierID);
+            await UpdateMaterialIDStoreOfDataBase(port.TagNumbers.FirstOrDefault(), port.Properties.Row, carrierID);
         }
 
         private async Task UpdateMaterialIDStoreOfDataBase(int tagNumber, int slot, string materialID)
