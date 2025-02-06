@@ -83,6 +83,22 @@ public class Program
             WebAppInitializer.ConfigureBuilder(builder);
 
             var app = builder.Build();
+
+            var lifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
+            lifetime.ApplicationStopping.Register(() =>
+            {
+                logger.Error($"Ctrl+c triggered 應用程式正在關閉中...");
+            });
+            lifetime.ApplicationStopped.Register(() =>
+            {
+                logger.Error($"Ctrl+c triggered 應用程式已關閉");
+            });
+
+            AppDomain.CurrentDomain.ProcessExit += (sender, e) =>
+            {
+                logger.Error($"Close action botton triggered.  應用程式正在關閉中...");
+            };
+
             WebAppInitializer.ConfigureApp(builder, app);
 
             if (hotRunEnabled)
