@@ -118,11 +118,19 @@ namespace AGVSystem.Service.Aggregates
             }
             else
                 response = await MCSCIMService.OnlineLocalToOnlineRemote();
+
             if (response.confirm == true)
             {
                 SystemModes.HostOperMode = mode;
                 await NotifyAbnormalyRackPortsStatus();
             }
+            else if (mode == HOST_OPER_MODE.LOCAL)
+            {
+                SystemModes.HostOperMode = HOST_OPER_MODE.LOCAL;
+                SystemModes.HostConnMode = HOST_CONN_MODE.OFFLINE;
+                return (true,"Host Connection Error, Now is OFFLine/Local");
+            }
+
             bool _AnyMCSTransferOrderRunning()
             {
                 return DatabaseCaches.TaskCaches.InCompletedTasks.Any(order => order.isFromMCS);
