@@ -3,6 +3,7 @@ using AGVSystem.Service;
 using AGVSystem.Service.Aggregates;
 using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.AGVDispatch.RunMode;
+using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.Microservices.MCS;
@@ -63,6 +64,22 @@ namespace AGVSystem.Controllers
         public async Task<IActionResult> HostConnMode(HOST_CONN_MODE mode)
         {
             (bool confirm, string message) response = await systemModesAggregateService.HostOnlineOfflineModeSwitch(mode);
+            return Ok(new { confirm = response.confirm, message = response.message });
+        }
+
+
+        [HttpPost("HostDisconnectNotify")]
+        public async Task<IActionResult> HostDisconnectNotify()
+        {
+            (bool confirm, string message) response = await systemModesAggregateService.HostDisconnectNotify();
+            return Ok(new { confirm = response.confirm, message = response.message });
+        }
+
+
+        [HttpPost("HosConnectionRestoredNotify")]
+        public async Task<IActionResult> HosConnectionRestoredNotify()
+        {
+            (bool confirm, string message) response = await systemModesAggregateService.HosConnectionRestoredNotify();
             return Ok(new { confirm = response.confirm, message = response.message });
         }
 

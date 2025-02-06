@@ -1,6 +1,7 @@
 ﻿using AGVSystem.Models.EQDevices;
 using AGVSystem.Models.Sys;
 using AGVSystemCommonNet6.AGVDispatch.RunMode;
+using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.Microservices.MCS;
 using AGVSystemCommonNet6.Microservices.VMS;
@@ -52,6 +53,21 @@ namespace AGVSystem.Service.Aggregates
                 return (true, message);
             }
         }
+
+
+        internal async Task<(bool confirm, string message)> HostDisconnectNotify()
+        {
+            HostOnlineOfflineModeSwitch(HOST_CONN_MODE.OFFLINE);
+            await AlarmManagerCenter.AddAlarmAsync(ALARMS.HostCommunicationError, level: ALARM_LEVEL.WARNING, Equipment_Name: "HOST");
+            return (true, "OK");
+        }
+
+        internal async Task<(bool confirm, string message)> HosConnectionRestoredNotify()
+        {
+            await AlarmManagerCenter.SetAlarmCheckedAsync("HOST", ALARMS.HostCommunicationError);
+            return (true, "OK");
+        }
+
         public async Task<(bool, string)> HostOnlineOfflineModeSwitch(HOST_CONN_MODE mode)
         {
             (bool confirm, string message) response = new(false, "[HostConnMode] Fail");
@@ -60,7 +76,7 @@ namespace AGVSystem.Service.Aggregates
                 response = await MCSCIMService.Online();
             else
                 response = await MCSCIMService.Offline();
-            if (response.confirm == true)
+            if (response.confirm == true || mode == HOST_CONN_MODE.OFFLINE)
             {
                 SystemModes.HostConnMode = mode;
                 if (SystemModes.HostConnMode == HOST_CONN_MODE.OFFLINE)
@@ -127,5 +143,6 @@ namespace AGVSystem.Service.Aggregates
                 await hubContext.Clients.All.SendAsync("RackPortStatusAbnormalNotify", abnormalPorts);
             });
         }
+
     }
 }
