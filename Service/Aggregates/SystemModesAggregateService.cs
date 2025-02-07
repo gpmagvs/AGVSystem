@@ -58,7 +58,7 @@ namespace AGVSystem.Service.Aggregates
         internal async Task<(bool confirm, string message)> HostDisconnectNotify()
         {
             HostOnlineOfflineModeSwitch(HOST_CONN_MODE.OFFLINE);
-            await AlarmManagerCenter.AddAlarmAsync(ALARMS.HostCommunicationError, level: ALARM_LEVEL.WARNING, Equipment_Name: "HOST");
+            await AlarmManagerCenter.AddAlarmAsync(ALARMS.HostCommunicationError, level: ALARM_LEVEL.ALARM, Equipment_Name: "HOST");
             return (true, "OK");
         }
 
@@ -128,7 +128,7 @@ namespace AGVSystem.Service.Aggregates
             {
                 SystemModes.HostOperMode = HOST_OPER_MODE.LOCAL;
                 SystemModes.HostConnMode = HOST_CONN_MODE.OFFLINE;
-                return (true,"Host Connection Error, Now is OFFLine/Local");
+                return (true, "Host Connection Error, Now is OFFLine/Local");
             }
 
             bool _AnyMCSTransferOrderRunning()
