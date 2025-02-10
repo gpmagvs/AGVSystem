@@ -274,7 +274,7 @@ public static class WebAppInitializer
     private static void ServicesInjection(WebApplicationBuilder builder)
     {
         SECSConfigsService _secsConfigsService = new SECSConfigsService(Path.Combine(AGVSConfigulator.SysConfigs.CONFIGS_ROOT_FOLDER, "SECSConfigs"));
-        _secsConfigsService.Reload();
+        _secsConfigsService.InitializeAsync();
 
         EQIOStatusMonitorBackgroundService qIOStatusMonitorBackgroundService = new EQIOStatusMonitorBackgroundService();
 
