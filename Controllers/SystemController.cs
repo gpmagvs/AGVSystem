@@ -11,6 +11,7 @@ using AGVSystemCommonNet6.Microservices.VMS;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Newtonsoft.Json;
 using NLog;
 using System.Reflection;
@@ -43,7 +44,8 @@ namespace AGVSystem.Controllers
                 system_run_mode = SystemModes.RunMode,
                 host_online_mode = SystemModes.HostConnMode,
                 host_remote_mode = SystemModes.HostOperMode,
-                transfer_mode = SystemModes.TransferTaskMode
+                transfer_mode = SystemModes.TransferTaskMode,
+                isMaintaining = SystemModes.IsMaintaining
             });
         }
 
@@ -143,6 +145,18 @@ namespace AGVSystem.Controllers
             {
                 return Ok(new { result = false, message = ex.Message });
             }
+        }
+        [HttpPost("SystemMaintain")]
+        public async Task SystemMaintain()
+        {
+            SystemModes.IsMaintaining = true;
+            await systemModesAggregateService.hubContext.Clients.All.SendAsync("SystemMaintainNotify");
+        }
+        [HttpPost("FinishSystemMaintain")]
+        public async Task FinishSystemMaintain()
+        {
+            SystemModes.IsMaintaining = false;
+            await systemModesAggregateService.hubContext.Clients.All.SendAsync("FinishSystemMaintain");
         }
 
         private string GetAppVersion()
