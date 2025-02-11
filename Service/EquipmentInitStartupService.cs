@@ -54,13 +54,31 @@ namespace AGVSystem.Service
                     EQGroupConfigPath = $"{eqConfigsStoreFolder}//EQGroupConfigs.json",
                 });
                 List<clsStationStatus> cargoIDStored = await QueryCargoIDStoredFromDataBase();
-                RestoreCargoID(cargoIDStored);
+                RestoreCargoID(cargoIDStored, out List<string> needRemoveIDList);
+                await RemoveUselessMaterialIDOfDatabaseAsync(needRemoveIDList);
                 await clsStationInfoManager.ScanWIP_EQ();
                 StaEQPManagager.DevicesConnectToAsync();
             }
             catch (Exception ex)
             {
                 AlarmManagerCenter.AddAlarmAsync(ALARMS.SYSTEM_EQP_MANAGEMENT_INITIALIZE_FAIL_WITH_EXCEPTION);
+            }
+        }
+
+        private async Task RemoveUselessMaterialIDOfDatabaseAsync(List<string> needRemoveIDList)
+        {
+            try
+            {
+                using AGVSDbContext _dbContext = _ServiceScopeFactory.CreateScope().ServiceProvider.GetRequiredService<AGVSDbContext>();
+                foreach (var item in _dbContext.StationStatus.Where(raw => needRemoveIDList.Contains(raw.MaterialID)).ToList())
+                {
+                    item.MaterialID = "";
+                };
+                int _changed = await _dbContext.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+
             }
         }
 
@@ -103,8 +121,9 @@ namespace AGVSystem.Service
             throw new NotImplementedException();
         }
 
-        private void RestoreCargoID(List<clsStationStatus> cargoIDStored)
+        private void RestoreCargoID(List<clsStationStatus> cargoIDStored, out List<string> needRemoveIDList)
         {
+            needRemoveIDList = new List<string>();
             var allRackPorts = StaEQPManagager.RacksList.SelectMany(rack => rack.PortsStatus);
             var wipPortIDList = StaEQPManagager.RacksList.SelectMany(rack => rack.RackOption.PortsOptions.Select(p => rack.EQName + "_" + p.ID)).ToList();
 
@@ -119,6 +138,13 @@ namespace AGVSystem.Service
                     bool isEqAsZonePortAndHasCstReader = rackport.IsRackPortIsEQ(out clsEQ eq) && eq.EndPointOptions.IsRoleAsZone && eq.EndPointOptions.IsCSTIDReportable;
                     if (!isEqAsZonePortAndHasCstReader)
                     {
+
+                        if (rackport.Properties.EQInstall.IsUseForEQ)
+                        {
+                            needRemoveIDList.Add(_materialID.ToString());
+                            _materialID = "";
+                        }
+
                         rackport.CarrierID = _materialID;
                         rackport.InstallTime = item.UpdateTime;
                         if (eq != null && eq.EndPointOptions.IsRoleAsZone)

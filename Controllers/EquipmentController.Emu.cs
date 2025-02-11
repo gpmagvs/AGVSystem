@@ -37,6 +37,12 @@ namespace AGVSystem.Controllers
             return Ok(confirm);
         }
 
+        [HttpPost("Emu/DisposeModbusTcpServer")]
+        public async Task<IActionResult> DisposeModbusTcpServer(string EqName)
+        {
+            StaEQPEmulatorsManagager.DisposeModbusTcpServer(EqName);
+            return Ok();
+        }
         [HttpPost("Emu/AsUnloadState")]
         public async Task<IActionResult> AsUnloadState(string EqName)
         {

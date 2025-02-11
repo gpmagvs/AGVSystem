@@ -143,7 +143,15 @@ namespace AGVSystem.Service
                 if (!TryGetPort(tagNumber, slot, out clsPortOfRack port))
                     return (false, "Port Not Found");
 
+
                 bool isEqAsZonePortHasCSTIDReader = port.IsRackPortIsEQ(out clsEQ eq) && eq.EndPointOptions.IsRoleAsZone && eq.EndPointOptions.IsCSTIDReportable;
+
+
+                if (port.Properties.EQInstall.IsUseForEQ && eq != null && !eq.EndPointOptions.IsRoleAsZone)
+                {
+                    return (false, "該Port為設備，無須修改儲格帳料資訊");
+                }
+
                 if (!bypassHasCSTReaderCheck && isEqAsZonePortHasCSTIDReader)
                     return (false, "該Port具有Carrier ID Reader 功能，無法修改帳料資訊");
 
@@ -224,7 +232,7 @@ namespace AGVSystem.Service
         }
         internal async Task UpdateMaterialIDStoreOfDataBase(clsPortOfRack port, string carrierID)
         {
-            await UpdateMaterialIDStoreOfDataBase(port.TagNumbers.FirstOrDefault(), port.Properties.Column, carrierID);
+            await UpdateMaterialIDStoreOfDataBase(port.TagNumbers.FirstOrDefault(), port.Properties.Row, carrierID);
         }
 
         private async Task UpdateMaterialIDStoreOfDataBase(int tagNumber, int slot, string materialID)
@@ -316,6 +324,25 @@ namespace AGVSystem.Service
                 port.RestoreDisableByTemportary();
             }
             EQDeviceEventsHandler.BrocastRackData();
+        }
+
+        /// <summary>
+        /// 移除所有有障無料的PORT帳料
+        /// </summary>
+        internal async Task<(int total, int success, int fail)> ClearAllIDWithoutCargoAsync()
+        {
+            var _ports = StaEQPManagager.RackPortsList.Where(port => !string.IsNullOrEmpty(port.CarrierID) && !port.CargoExist).ToList();
+            List<bool> result = new List<bool>();
+            foreach (clsPortOfRack port in _ports)
+            {
+                string rackName = port.GetParentRack().RackOption.Name;
+                (bool confirm, string removedCarrierID, string message) = await RemoveRackCargoIDManual(rackName, port.Properties.ID, "ClearIDWithoutCargoTriggerByUser", false);
+                result.Add(confirm);
+            }
+            int total = _ports.Count();
+            int success = result.Count(bol => bol);
+            int fail = result.Count(bol => !bol);
+            return (total, success, fail);
         }
     }
 }

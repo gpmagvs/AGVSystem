@@ -1,6 +1,7 @@
 ﻿using AGVSystem.Models.EQDevices;
 using AGVSystem.Models.Sys;
 using AGVSystemCommonNet6.AGVDispatch.RunMode;
+using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.Microservices.MCS;
 using AGVSystemCommonNet6.Microservices.VMS;
@@ -52,6 +53,21 @@ namespace AGVSystem.Service.Aggregates
                 return (true, message);
             }
         }
+
+
+        internal async Task<(bool confirm, string message)> HostDisconnectNotify()
+        {
+            HostOnlineOfflineModeSwitch(HOST_CONN_MODE.OFFLINE);
+            await AlarmManagerCenter.AddAlarmAsync(ALARMS.HostCommunicationError, level: ALARM_LEVEL.ALARM, Equipment_Name: "HOST");
+            return (true, "OK");
+        }
+
+        internal async Task<(bool confirm, string message)> HosConnectionRestoredNotify()
+        {
+            await AlarmManagerCenter.SetAlarmCheckedAsync("HOST", ALARMS.HostCommunicationError);
+            return (true, "OK");
+        }
+
         public async Task<(bool, string)> HostOnlineOfflineModeSwitch(HOST_CONN_MODE mode)
         {
             (bool confirm, string message) response = new(false, "[HostConnMode] Fail");
@@ -60,7 +76,7 @@ namespace AGVSystem.Service.Aggregates
                 response = await MCSCIMService.Online();
             else
                 response = await MCSCIMService.Offline();
-            if (response.confirm == true)
+            if (response.confirm == true || mode == HOST_CONN_MODE.OFFLINE)
             {
                 SystemModes.HostConnMode = mode;
                 if (SystemModes.HostConnMode == HOST_CONN_MODE.OFFLINE)
@@ -102,11 +118,19 @@ namespace AGVSystem.Service.Aggregates
             }
             else
                 response = await MCSCIMService.OnlineLocalToOnlineRemote();
+
             if (response.confirm == true)
             {
                 SystemModes.HostOperMode = mode;
                 await NotifyAbnormalyRackPortsStatus();
             }
+            else if (mode == HOST_OPER_MODE.LOCAL)
+            {
+                SystemModes.HostOperMode = HOST_OPER_MODE.LOCAL;
+                SystemModes.HostConnMode = HOST_CONN_MODE.OFFLINE;
+                return (true, "Host Connection Error, Now is OFFLine/Local");
+            }
+
             bool _AnyMCSTransferOrderRunning()
             {
                 return DatabaseCaches.TaskCaches.InCompletedTasks.Any(order => order.isFromMCS);
@@ -127,5 +151,6 @@ namespace AGVSystem.Service.Aggregates
                 await hubContext.Clients.All.SendAsync("RackPortStatusAbnormalNotify", abnormalPorts);
             });
         }
+
     }
 }

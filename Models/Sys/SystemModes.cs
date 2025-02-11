@@ -12,6 +12,7 @@ namespace AGVSystem.Models.Sys
     {
         internal static Action OnRunModeON;
         internal static Action OnRunModeOFF;
+        internal static bool IsMaintaining = false;
         private static RUN_MODE _RunMode = RUN_MODE.MAINTAIN;
         private static TRANSFER_MODE _TransferTaskMode = TRANSFER_MODE.MANUAL;
 

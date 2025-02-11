@@ -201,7 +201,12 @@ namespace AGVSystem.Controllers
             }
             catch (Exception ex)
             {
-                throw ex;
+                return new clsAGVSTaskReportResponse
+                {
+                    confirm = false,
+                    message = ex.Message,
+                    AlarmCode = ALARMS.VMSOrderActionStatusReportToAGVSButAGVSGetException
+                };
             }
         }
 
@@ -489,7 +494,12 @@ namespace AGVSystem.Controllers
             }
             catch (Exception ex)
             {
-                return new clsAGVSTaskReportResponse() { confirm = false, message = $"{ex}" };
+                return new clsAGVSTaskReportResponse
+                {
+                    confirm = false,
+                    message=ex.Message,
+                    AlarmCode = ALARMS.VMSOrderActionStatusReportToAGVSButAGVSGetException
+                };
             }
         }
 

@@ -3,6 +3,7 @@ using AGVSystem.Service;
 using AGVSystem.Service.Aggregates;
 using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.AGVDispatch.RunMode;
+using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.Microservices.MCS;
@@ -10,6 +11,7 @@ using AGVSystemCommonNet6.Microservices.VMS;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Newtonsoft.Json;
 using NLog;
 using System.Reflection;
@@ -42,7 +44,8 @@ namespace AGVSystem.Controllers
                 system_run_mode = SystemModes.RunMode,
                 host_online_mode = SystemModes.HostConnMode,
                 host_remote_mode = SystemModes.HostOperMode,
-                transfer_mode = SystemModes.TransferTaskMode
+                transfer_mode = SystemModes.TransferTaskMode,
+                isMaintaining = SystemModes.IsMaintaining
             });
         }
 
@@ -63,6 +66,22 @@ namespace AGVSystem.Controllers
         public async Task<IActionResult> HostConnMode(HOST_CONN_MODE mode)
         {
             (bool confirm, string message) response = await systemModesAggregateService.HostOnlineOfflineModeSwitch(mode);
+            return Ok(new { confirm = response.confirm, message = response.message });
+        }
+
+
+        [HttpPost("HostDisconnectNotify")]
+        public async Task<IActionResult> HostDisconnectNotify()
+        {
+            (bool confirm, string message) response = await systemModesAggregateService.HostDisconnectNotify();
+            return Ok(new { confirm = response.confirm, message = response.message });
+        }
+
+
+        [HttpPost("HosConnectionRestoredNotify")]
+        public async Task<IActionResult> HosConnectionRestoredNotify()
+        {
+            (bool confirm, string message) response = await systemModesAggregateService.HosConnectionRestoredNotify();
             return Ok(new { confirm = response.confirm, message = response.message });
         }
 
@@ -126,6 +145,18 @@ namespace AGVSystem.Controllers
             {
                 return Ok(new { result = false, message = ex.Message });
             }
+        }
+        [HttpPost("SystemMaintain")]
+        public async Task SystemMaintain()
+        {
+            SystemModes.IsMaintaining = true;
+            await systemModesAggregateService.hubContext.Clients.All.SendAsync("SystemMaintainNotify");
+        }
+        [HttpPost("FinishSystemMaintain")]
+        public async Task FinishSystemMaintain()
+        {
+            SystemModes.IsMaintaining = false;
+            await systemModesAggregateService.hubContext.Clients.All.SendAsync("FinishSystemMaintain");
         }
 
         private string GetAppVersion()

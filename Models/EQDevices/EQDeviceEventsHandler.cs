@@ -391,18 +391,19 @@ namespace AGVSystem.Models.EQDevices
 
         internal static async void HandleDeviceDisconnected(object? sender, EndPointDeviceAbstract device)
         {
+            EQDeviceEventsHandler.BrocastEQkData();
             _logger.Trace($"EQ-{device.EQName} 連線中斷({device.EndPointOptions.ConnOptions.IP}:{device.EndPointOptions.ConnOptions.Port}-{device.EndPointOptions.ConnOptions.ConnMethod})", device.EQName);
-
             _ = Task.Run(async () =>
-            {
-                if (DatabaseCaches.Alarms.UnCheckedAlarms.Any(al => al.Equipment_Name == device.EQName && al.AlarmCode == (int)ALARMS.EQ_Disconnect))
-                    return;
-                await AlarmManagerCenter.AddAlarmAsync(ALARMS.EQ_Disconnect, source: ALARM_SOURCE.EQP, Equipment_Name: device.EQName);
-            });
+             {
+                 if (DatabaseCaches.Alarms.UnCheckedAlarms.Any(al => al.Equipment_Name == device.EQName && al.AlarmCode == (int)ALARMS.EQ_Disconnect))
+                     return;
+                 await AlarmManagerCenter.AddAlarmAsync(ALARMS.EQ_Disconnect, source: ALARM_SOURCE.EQP, Equipment_Name: device.EQName);
+             });
         }
 
         internal static async void HandleDeviceReconnected(object? sender, EndPointDeviceAbstract device)
         {
+            EQDeviceEventsHandler.BrocastEQkData();
             _logger.Trace($"EQ-{device.EQName} 已連線({device.EndPointOptions.ConnOptions.IP}-{device.EndPointOptions.ConnOptions.ConnMethod})", device.EQName);
             _ = Task.Run(async () =>
             {

@@ -15,6 +15,7 @@ namespace AGVSystem
             "/AGVImages",
             "/api/system",
             "/api/Equipment",
+            "/api/Alarm",
             "/api/WIP",
             "/api/system/website",
             "/api/TaskQuery",
