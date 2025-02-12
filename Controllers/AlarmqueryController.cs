@@ -9,11 +9,19 @@ namespace AGVSystem.Controllers
     public class AlarmqueryController : ControllerBase
     {
         [HttpGet("QueryAlarm")]
-        public async Task<IActionResult> AlarmQuery(int currentpage, string StartTime, string EndTime, string? TaskName = "ALL", string? AGV_Name = "ALL", string AlarmType = "ALL",string? Alarm_description ="ALL")
+        public async Task<IActionResult> AlarmQuery(int currentpage, string StartTime, string EndTime, string? TaskName = "ALL", string? AGV_Name = "ALL", string AlarmType = "ALL", string? Alarm_description = "ALL")
         {
             DateTime start = DateTime.Parse(StartTime);
             DateTime end = DateTime.Parse(EndTime);
-            AlarmManagerCenter.AlarmQuery(out int count, currentpage, start, end, AGV_Name, TaskName, Alarm_description,out List<clsAlarmDto>? alarms, AlarmType);
+            AlarmManagerCenter.AlarmQuery(out int count, currentpage, start, end, AGV_Name, TaskName, Alarm_description, out List<clsAlarmDto>? alarms, AlarmType);
+            return Ok(new { count, alarms });
+        }
+        [HttpGet("QueryAlarmWithKeyword")]
+        public async Task<IActionResult> QueryAlarmWithKeyword(int currentpage, string StartTime, string EndTime, string? keyword = "")
+        {
+            DateTime start = DateTime.Parse(StartTime);
+            DateTime end = DateTime.Parse(EndTime);
+            AlarmManagerCenter.QueryAlarmWithKeyword(currentpage, start, end, keyword, out int count, out List<clsAlarmDto>? alarms);
             return Ok(new { count, alarms });
         }
         [HttpGet("SaveTocsv")]
