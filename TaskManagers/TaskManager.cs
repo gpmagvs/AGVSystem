@@ -347,7 +347,7 @@ namespace AGVSystem.TaskManagers
                 await SetUnknowCarrierID(taskData);
                 taskData.CST_TYPE = taskData.Carrier_ID.StartsWith("T") ? 200 : 201;
                 await WriteTaskDtoToDatabase(taskData);
-                await AudioPlayService.PlaySpecficAudio(Path.Combine(Environment.CurrentDirectory, $"Audios/order_created.mp3"));
+                AudioPlayService.PlaySpecficAudio(Path.Combine(Environment.CurrentDirectory, $"Audios/order_created.mp3"));
                 if (taskData.Action == ACTION_TYPE.DeepCharge)
                     await SaveDeepChargeRecordData(taskData);
             }
