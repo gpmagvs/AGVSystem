@@ -158,16 +158,22 @@ namespace AGVSystem.Service
                 string locID = port.GetLocID();
                 string zoneName = port.GetParentRack().RackOption.DeviceID;
 
-                string oldCarrierID = port.CarrierID;
-                if (!string.IsNullOrEmpty(oldCarrierID))
+                string oldCarrierID = port.CarrierID + "";
+                bool isNeedReportCarrierRemoved = !string.IsNullOrEmpty(oldCarrierID);
+                ManualResetEventSlim _waitCarrierRemovedRptDone = new ManualResetEventSlim(true);
+                if (isNeedReportCarrierRemoved)
                 {
-                    MCSCIMService.CarrierRemoveCompletedReport(oldCarrierID, locID, zoneName, 0);
+                    _waitCarrierRemovedRptDone.Reset();
+                    _ = Task.Factory.StartNew(async () =>
+                    {
+                        await MCSCIMService.CarrierRemoveCompletedReport(oldCarrierID, locID, zoneName, 0);
+                        await EQDeviceEventsHandler.ShelfStatusChangeEventReport(port.GetParentRack());
+                        _waitCarrierRemovedRptDone.Set();
+                    });
+
                     port.CarrierID = "";
                     if (eq != null)
                         eq.PortStatus.CarrierID = "";
-                    await Task.Delay(300);
-                    await EQDeviceEventsHandler.ShelfStatusChangeEventReport(port.GetParentRack());
-                    await Task.Delay(300);
                 }
                 DateTime installTime = DateTime.Now;
                 port.VehicleLoadToPortFlag = isByAgvLoadend;
@@ -181,7 +187,10 @@ namespace AGVSystem.Service
                 }
                 UpdateMaterialIDStoreOfDataBase(tagNumber, slot, cargoID);
                 if (!isByAgvLoadend)
-                    MCSCIMService.CarrierInstallCompletedReport(cargoID, locID, zoneName, 0);
+                {
+                    _waitCarrierRemovedRptDone.Wait(TimeSpan.FromSeconds(10));
+                    await Task.Delay(1000).ContinueWith(async t => await MCSCIMService.CarrierInstallCompletedReport(cargoID, locID, zoneName, 0));
+                }
                 _logger.Info($"WIP:{port.GetParentRack().EQName} Port-{port.Properties.ID} Cargo ID Changed to {cargoID}(Trigger By:{triggerBy})");
                 EQDeviceEventsHandler.BrocastRackData();
                 await Task.Delay(200);

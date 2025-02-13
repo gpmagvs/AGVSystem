@@ -13,6 +13,7 @@ using AGVSystemCommonNet6.DATABASE.Helpers;
 using AGVSystemCommonNet6.HttpTools;
 using AGVSystemCommonNet6.MAP;
 using AGVSystemCommonNet6.Material;
+using AGVSystemCommonNet6.Microservices.AudioPlay;
 using AGVSystemCommonNet6.Microservices.MCS;
 using AGVSystemCommonNet6.Microservices.ResponseModel;
 using AGVSystemCommonNet6.Microservices.VMS;
@@ -346,6 +347,7 @@ namespace AGVSystem.TaskManagers
                 await SetUnknowCarrierID(taskData);
                 taskData.CST_TYPE = taskData.Carrier_ID.StartsWith("T") ? 200 : 201;
                 await WriteTaskDtoToDatabase(taskData);
+                AudioPlayService.PlaySpecficAudio(Path.Combine(Environment.CurrentDirectory, $"Audios/order_created.mp3"));
                 if (taskData.Action == ACTION_TYPE.DeepCharge)
                     await SaveDeepChargeRecordData(taskData);
             }

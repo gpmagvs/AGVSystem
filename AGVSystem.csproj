@@ -6,8 +6,8 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<ApplicationIcon>favicon.ico</ApplicationIcon>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
-		<AssemblyVersion>1.6.20</AssemblyVersion>
-		<FileVersion>1.6.20</FileVersion>
+		<AssemblyVersion>1.6.24</AssemblyVersion>
+		<FileVersion>1.6.24</FileVersion>
 		<RunAnalyzersDuringLiveAnalysis>False</RunAnalyzersDuringLiveAnalysis>
 		<RunAnalyzersDuringBuild>False</RunAnalyzersDuringBuild>
 		<PackageReadmeFile></PackageReadmeFile>
@@ -89,8 +89,17 @@
 		<None Update="agvs-system-config-folder-backup.cmd">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
+		<None Update="Audios\mcs_command_recieved.mp3">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
 		<None Update="Audios\mcs_transfer_command_recieved.wav">
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="Audios\order_created.mp3">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="Audios\shelf_available_materials_insufficient.mp3">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 		<None Update="Resources\AGVS_TrobleShooting.csv">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>

@@ -36,7 +36,7 @@ namespace AGVSystem.Service.MCS
         Dictionary<string, clsEQ> MainEQMap => StaEQPManagager.MainEQList.Where(eq => !eq.EndPointOptions.IsRoleAsZone)
                                                                          .ToDictionary(eq => eq.EndPointOptions.DeviceID, eq => eq);
         private static SemaphoreSlim TransportCommandHandleSemaphoreSlim = new SemaphoreSlim(1, 1);
-        public string MCSOrderRecievedAudioFilaPath => Path.Combine(Environment.CurrentDirectory, $"Audios/mcs_transfer_command_recieved.wav");
+        public string MCSOrderRecievedAudioFilaPath => Path.Combine(Environment.CurrentDirectory, $"Audios/mcs_command_recieved.mp3");
 
         public MCSService(AGVSDbContext dbContext, SECSConfigsService secsConfigService)
         {

@@ -20,6 +20,7 @@ namespace AGVSystem
             "/api/system/website",
             "/api/TaskQuery",
             "/FrontEndDataHub",
+            "/sw.js",
         };
         private List<string> contentTypesToIgnore = new() { "image", "text/css", "text/html", "application/javascript", "application/zip", "application/x-zip-compressed", "font" };
 
@@ -57,13 +58,22 @@ namespace AGVSystem
                 await responseBody.CopyToAsync(originalBodyStream);
                 return;
             }
-
+            string controllerName = GetControllerNameFromPath(context.Request.Path);
             // 紀錄資訊
-            _logger.Info("Request: \n{Request}", request);
-            _logger.Info("Response: \n{Response}", response);
+            var logger = LogManager.GetLogger($"{this.GetType().Name}/{controllerName}");
+            logger.Info("Request: \n{Request}", request);
+            logger.Info("Response: \n{Response}", response);
 
             // 將原始回應內容寫回
             await responseBody.CopyToAsync(originalBodyStream);
+        }
+
+        private string GetControllerNameFromPath(PathString path)
+        {
+            string pathStr = path.ToString();
+            pathStr = pathStr.Replace("api/", "api_").TrimStart(new char[] { '/' });
+            string? controller_name = pathStr.Split('/').FirstOrDefault();
+            return controller_name ?? "api";
         }
 
         /// <summary>
