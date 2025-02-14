@@ -130,8 +130,13 @@ public static class SystemInitializer
     public static void Initialize(Logger logger)
     {
         WebApplicationBuilder builder = WebApplication.CreateBuilder();
+        string testAppsettingJsonFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "appsettings.Test.json");
+        builder.Configuration.AddJsonFile(testAppsettingJsonFilePath, optional: true, true);//嘗試注入測試用   
+
         string configRootFolder = builder.Configuration.GetValue<string>("AGVSConfigFolder");
         configRootFolder = string.IsNullOrEmpty(configRootFolder) ? @"C:\AGVS" : configRootFolder;
+        logger.Debug($"派車系統參數檔資料夾路徑={configRootFolder}");
+
         AGVSConfigulator.Init(configRootFolder);
         InitializeDatabase(logger);
 
