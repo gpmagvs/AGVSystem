@@ -22,13 +22,26 @@ namespace AGVSystem.Controllers
         {
             return service;
         }
-
         [HttpPost("saveReturnCodeSetting")]
         public async Task<object> SaveReturnCodeSetting([FromBody] clsSaveReturnCodeRequest returnCodeSettings)
         {
             try
             {
-                service.UpdateReturnCodes(returnCodeSettings.transferCompletedResultCodes);
+                service.UpdateReturnCodes(returnCodeSettings.taskreplyReturnCodes);
+                return new { confirm = true, message = "" };
+            }
+            catch (Exception ex)
+            {
+                return new { confirm = false, message = ex.Message };
+            }
+        }
+
+        [HttpPost("SaveResultCodeSetting")]
+        public async Task<object> SaveResultCodeSetting([FromBody] clsSaveReturnCodeRequest resultCodeSettings)
+        {
+            try
+            {
+                service.UpdateResultCodes(resultCodeSettings.transferCompletedResultCodes);
                 return new { confirm = true, message = "" };
             }
             catch (Exception ex)
@@ -55,6 +68,7 @@ namespace AGVSystem.Controllers
         public class clsSaveReturnCodeRequest
         {
             public clsResultCodes transferCompletedResultCodes { get; set; } = new clsResultCodes();
+            public clsReturnCodes taskreplyReturnCodes { get; set; } = new clsReturnCodes();
         }
 
     }

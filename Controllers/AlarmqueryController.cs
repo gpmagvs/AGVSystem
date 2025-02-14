@@ -10,7 +10,7 @@ namespace AGVSystem.Controllers
     {
         [HttpGet("QueryAlarm")]
         public async Task<IActionResult> AlarmQuery(int currentpage, string StartTime, string EndTime, string? alarmCodeParam, string? TaskName = "ALL", string? AGV_Name = "ALL", string AlarmType = "ALL", string? Alarm_description = "ALL")
-        {
+       {
             DateTime start = DateTime.Parse(StartTime);
             DateTime end = DateTime.Parse(EndTime);
             AlarmManagerCenter.AlarmQuery(out int count, currentpage, start, end, alarmCodeParam,  AGV_Name, TaskName, Alarm_description, out List<clsAlarmDto>? alarms, AlarmType);
