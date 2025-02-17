@@ -322,9 +322,12 @@ public static class WebAppInitializer
                             .ToList();
 
         List<string> allowedOrigins = new List<string> {
-            "http://localhost:8080",
             "http://127.0.0.1:8080",
-            "http://127.0.0.1:7107"
+            "http://127.0.0.1:5216",
+            "http://127.0.0.1:5036",
+            "http://localhost:8080",
+            "http://localhost:5216",
+            "http://localhost:5036",
         };
         foreach (var ip in localIPs)
         {
