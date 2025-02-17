@@ -78,8 +78,7 @@ public class Program
             LOG.SetLogFolderName("AGVS LOG");
             logger.Info("AGVS Start");
 
-            SystemInitializer.Initialize(logger);
-            WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+            WebApplicationBuilder builder = SystemInitializer.Initialize(args,logger);
             WebAppInitializer.ConfigureBuilder(builder);
 
             var app = builder.Build();
@@ -127,9 +126,9 @@ public class Program
 
 public static class SystemInitializer
 {
-    public static void Initialize(Logger logger)
+    public static WebApplicationBuilder  Initialize(string[] args,Logger logger)
     {
-        WebApplicationBuilder builder = WebApplication.CreateBuilder();
+        WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
         string testAppsettingJsonFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "appsettings.Test.json");
         builder.Configuration.AddJsonFile(testAppsettingJsonFilePath, optional: true, true);//嘗試注入測試用   
 
@@ -179,6 +178,8 @@ public static class SystemInitializer
                 //
             });
         }
+
+        return builder;
     }
     private static void InitializeDatabase(Logger logger)
     {
@@ -430,9 +431,11 @@ public static class StaticFileInitializer
         {
             string mapFileFolderRelativePath = app.Configuration.GetValue<string>("StaticFileOptions:MapFile:FolderPath");
             string mapFileRequestPath = app.Configuration.GetValue<string>("StaticFileOptions:MapFile:RequestPath");
-
+            mapFileRequestPath = mapFileRequestPath ?? "/MapFiles";
             string agvImageFileFolderRelativePath = app.Configuration.GetValue<string>("StaticFileOptions:AGVImageStoreFile:FolderPath");
+            agvImageFileFolderRelativePath = agvImageFileFolderRelativePath ?? "/AGVImages";
             string agvImageFileRequestPath = app.Configuration.GetValue<string>("StaticFileOptions:AGVImageStoreFile:RequestPath");
+            agvImageFileRequestPath = agvImageFileRequestPath ?? "/AGVImages";
 
             string mapFileFolderPath = Path.Combine(configRootFolder, mapFileRequestPath.Trim('/'));
             string agvImageFileFolderPath = Path.Combine(configRootFolder, agvImageFileFolderRelativePath.Trim('/'));
