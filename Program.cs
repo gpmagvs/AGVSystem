@@ -282,7 +282,7 @@ public static class WebAppInitializer
         SECSConfigsService _secsConfigsService = new SECSConfigsService(Path.Combine(AGVSConfigulator.SysConfigs.CONFIGS_ROOT_FOLDER, "SECSConfigs"));
         _secsConfigsService.InitializeAsync();
 
-        EQIOStatusMonitorBackgroundService qIOStatusMonitorBackgroundService = new EQIOStatusMonitorBackgroundService();
+        //EQIOStatusMonitorBackgroundService qIOStatusMonitorBackgroundService = new EQIOStatusMonitorBackgroundService();
 
         if (!Debugger.IsAttached)
             builder.Services.AddHostedService<ThirdPartyProgramStartService>();
@@ -299,7 +299,7 @@ public static class WebAppInitializer
         builder.Services.AddScoped<TrafficStateDataQueryService>();
         builder.Services.AddScoped<SystemModesAggregateService>();
         builder.Services.AddSingleton<DBDataService>();
-        builder.Services.AddSingleton<EQIOStatusMonitorBackgroundService>(provider => qIOStatusMonitorBackgroundService);
+        //builder.Services.AddSingleton<EQIOStatusMonitorBackgroundService>(provider => qIOStatusMonitorBackgroundService);
         builder.Services.AddHostedService<DatabaseBackgroundService>();
         builder.Services.AddHostedService<VehicleLocationMonitorBackgroundService>();
         builder.Services.AddHostedService<FrontEndDataBrocastService>();
@@ -308,7 +308,7 @@ public static class WebAppInitializer
         builder.Services.AddHostedService<EquipmentsCollectBackgroundService>();
         builder.Services.AddHostedService<RackPortDoubleIDMonitor>();
         builder.Services.AddHostedService<TaskManagerInitService>();
-        builder.Services.AddHostedService<EQIOStatusMonitorBackgroundService>(provider => qIOStatusMonitorBackgroundService);
+        //builder.Services.AddHostedService<EQIOStatusMonitorBackgroundService>(provider => qIOStatusMonitorBackgroundService);
     }
 
     private static void ConfigureCors(WebApplicationBuilder builder)
