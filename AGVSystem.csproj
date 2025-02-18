@@ -17,25 +17,27 @@
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
 		<ShouldCreateLogs>True</ShouldCreateLogs>
 		<AdvancedSettingsExpanded>False</AdvancedSettingsExpanded>
-		<UpdateAssemblyVersion>False</UpdateAssemblyVersion>
-		<UpdateAssemblyFileVersion>False</UpdateAssemblyFileVersion>
+		<UpdateAssemblyVersion>True</UpdateAssemblyVersion>
+		<UpdateAssemblyFileVersion>True</UpdateAssemblyFileVersion>
 		<UpdateAssemblyInfoVersion>False</UpdateAssemblyInfoVersion>
-		<AssemblyVersionSettings>IncrementOnDemand.IncrementOnDemand.DayOfYearStamp.IncrementOnDemandWithResetOnIncrease</AssemblyVersionSettings>
+		<AssemblyVersionSettings>IncrementOnDemand.IncrementOnDemand.IncrementOnDemand.None</AssemblyVersionSettings>
 		<UpdatePackageVersion>False</UpdatePackageVersion>
 		<AssemblyInfoVersionType>SettingsVersion</AssemblyInfoVersionType>
 		<InheritWinAppVersionFrom>None</InheritWinAppVersionFrom>
-		<AssemblyFileVersionSettings>IncrementOnDemand.IncrementOnDemand.DayOfYearStamp.IncrementOnDemand</AssemblyFileVersionSettings>
+		<AssemblyFileVersionSettings>IncrementOnDemand.IncrementOnDemand.IncrementOnDemand.None</AssemblyFileVersionSettings>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
 		<ShouldCreateLogs>True</ShouldCreateLogs>
 		<AdvancedSettingsExpanded>False</AdvancedSettingsExpanded>
-		<UpdateAssemblyVersion>False</UpdateAssemblyVersion>
-		<UpdateAssemblyFileVersion>False</UpdateAssemblyFileVersion>
+		<UpdateAssemblyVersion>True</UpdateAssemblyVersion>
+		<UpdateAssemblyFileVersion>True</UpdateAssemblyFileVersion>
 		<UpdateAssemblyInfoVersion>False</UpdateAssemblyInfoVersion>
 		<UpdatePackageVersion>False</UpdatePackageVersion>
 		<AssemblyInfoVersionType>SettingsVersion</AssemblyInfoVersionType>
 		<InheritWinAppVersionFrom>None</InheritWinAppVersionFrom>
+		<AssemblyVersionSettings>IncrementOnDemand.IncrementOnDemand.IncrementOnDemand.None</AssemblyVersionSettings>
+		<AssemblyFileVersionSettings>IncrementOnDemand.IncrementOnDemand.IncrementOnDemand.None</AssemblyFileVersionSettings>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -90,16 +92,16 @@
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 		<None Update="Audios\mcs_command_recieved.mp3">
-		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 		<None Update="Audios\mcs_transfer_command_recieved.wav">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 		<None Update="Audios\order_created.mp3">
-		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 		<None Update="Audios\shelf_available_materials_insufficient.mp3">
-		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 		<None Update="Resources\AGVS_TrobleShooting.csv">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
