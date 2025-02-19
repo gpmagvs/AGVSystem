@@ -16,6 +16,7 @@ namespace AGVSystem.Hubs
         public override Task OnDisconnectedAsync(Exception? exception)
         {
             NotifyServiceHelper.WARNING($"SECS/GEM Platform is offline.");
+            SystemModes.UpdateHosOperModeWhenHostDisconnected();
             SystemModes.HostConnMode = HOST_CONN_MODE.OFFLINE;
             SystemModes.HostOperMode = HOST_OPER_MODE.LOCAL;
             return base.OnDisconnectedAsync(exception);
