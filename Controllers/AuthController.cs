@@ -1,4 +1,5 @@
 ﻿using AGVSystem.Service;
+using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.User;
 using AGVSystemCommonNet6.ViewModels;
@@ -162,6 +163,11 @@ namespace AGVSystem.Controllers
             if (user_ != null)
             {
                 return Ok(new { Success = false, Message = $"使用者名稱:{new_user.UserName} 已經存在於用戶清單中" });
+            }
+            if (new_user.Role == ERole.Operator)
+            {
+                string opPermissionJson = new AGVSystemCommonNet6.ViewModels.WebFunctionViewPermissions(ERole.Operator).ToJson();
+                new_user.WebFunctionPermissionsJson = opPermissionJson;
             }
 
             _userDbContext.Users.Add(new_user);
