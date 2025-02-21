@@ -24,11 +24,11 @@ namespace AGVSystem.Controllers
         }
 
         [HttpPost("saveReturnCodeSetting")]
-        public async Task<object> SaveReturnCodeSetting([FromBody] clsSaveReturnCodeRequest returnCodeSettings)
+        public async Task<object> SaveReturnCodeSetting([FromBody] clsReturnCodes returnCodeSettings)
         {
             try
             {
-                service.UpdateReturnCodes(returnCodeSettings.transferCompletedResultCodes);
+                service.UpdateReturnCodes(returnCodeSettings);
                 return new { confirm = true, message = "" };
             }
             catch (Exception ex)
