@@ -59,7 +59,7 @@ namespace AGVSystem.Service.Aggregates
         {
             (bool confirm, string message) response = new(false, "[HostConnMode] Fail");
 
-            if (!bypassRunModeCheck && SystemModes.RunMode != RUN_MODE.RUN)
+            if (mode == HOST_CONN_MODE.ONLINE && !bypassRunModeCheck && SystemModes.RunMode != RUN_MODE.RUN)
                 return (false, "請切換為'運轉模式'後再嘗試 ONLINE (Please switch to 'RUN mode' and then try again ONLINE.)");
 
             if (mode == HOST_CONN_MODE.ONLINE)
