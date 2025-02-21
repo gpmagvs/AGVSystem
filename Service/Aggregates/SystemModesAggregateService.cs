@@ -55,22 +55,25 @@ namespace AGVSystem.Service.Aggregates
             }
         }
 
-        public async Task<(bool, string)> HostOnlineOfflineModeSwitch(HOST_CONN_MODE mode)
+        public async Task<(bool, string)> HostOnlineOfflineModeSwitch(HOST_CONN_MODE mode, bool bypassRunModeCheck = false)
         {
             (bool confirm, string message) response = new(false, "[HostConnMode] Fail");
 
-            if (SystemModes.RunMode != RUN_MODE.RUN)
+            if (!bypassRunModeCheck && SystemModes.RunMode != RUN_MODE.RUN)
                 return (false, "請切換為'運轉模式'後再嘗試 ONLINE (Please switch to 'RUN mode' and then try again ONLINE.)");
 
             if (mode == HOST_CONN_MODE.ONLINE)
-                response = await MCSCIMService.Online();
+                response = await MCSCIMService.Online(3);
             else
-                response = await MCSCIMService.Offline();
+                response = await MCSCIMService.Offline(1);
             if (response.confirm == true || mode == HOST_CONN_MODE.OFFLINE)
             {
                 SystemModes.HostConnMode = mode;
                 if (SystemModes.HostConnMode == HOST_CONN_MODE.OFFLINE)
+                {
                     SystemModes.HostOperMode = HOST_OPER_MODE.LOCAL;
+                    response.confirm = true;
+                }
             }
             TryPostCurrentHostModeToCIM();
             return response;
@@ -118,16 +121,24 @@ namespace AGVSystem.Service.Aggregates
         }
 
 
-        internal async Task<(bool confirm, string message)> HostDisconnectNotify()
+        internal async Task<(bool confirm, string message)> HostDisconnectNotify(ALARMS alarmCode = ALARMS.HostCommunicationError, string source = "HOST")
         {
+            ALARM_LEVEL alarmLevel = alarmCode == ALARMS.SecsPlatformNotRun ? ALARM_LEVEL.WARNING : ALARM_LEVEL.ALARM;
+            await AlarmManagerCenter.AddAlarmAsync(alarmCode, level: alarmLevel, Equipment_Name: source);
             SystemModes.UpdateHosOperModeWhenHostDisconnected();
-            SystemModes.HostConnMode = HOST_CONN_MODE.OFFLINE;
-            SystemModes.HostOperMode = HOST_OPER_MODE.LOCAL;
-            HostOnlineOfflineModeSwitch(HOST_CONN_MODE.OFFLINE);
-            await systemStatusDbStoreService.ModifyHostModeStored(HOST_CONN_MODE.OFFLINE, HOST_OPER_MODE.LOCAL);
+            try
+            {
+                await systemStatusDbStoreService.ModifyHostModeStored(HOST_CONN_MODE.OFFLINE, HOST_OPER_MODE.LOCAL);
+                SystemModes.HostConnMode = HOST_CONN_MODE.OFFLINE;
+                SystemModes.HostOperMode = HOST_OPER_MODE.LOCAL;
+                HostOnlineOfflineModeSwitch(HOST_CONN_MODE.OFFLINE, true);
+                return (true, "OK");
+            }
+            catch (Exception ex)
+            {
+                return (false, ex.Message);
+            }
 
-            await AlarmManagerCenter.AddAlarmAsync(ALARMS.HostCommunicationError, level: ALARM_LEVEL.ALARM, Equipment_Name: "HOST");
-            return (true, "OK");
         }
 
         internal async Task<(bool confirm, string message)> HosConnectionRestoredNotify()
@@ -138,6 +149,7 @@ namespace AGVSystem.Service.Aggregates
                 TryRestoreToRemoteAutomaticallyAsync();
             }
             await AlarmManagerCenter.SetAlarmCheckedAsync("HOST", ALARMS.HostCommunicationError);
+            await AlarmManagerCenter.SetAlarmCheckedAsync("SECS Platform", ALARMS.SecsPlatformNotRun);
             return (true, "OK");
         }
 

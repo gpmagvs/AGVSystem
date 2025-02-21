@@ -19,11 +19,11 @@ namespace AGVSystem.Hubs
             return base.OnConnectedAsync();
         }
 
-        public override Task OnDisconnectedAsync(Exception? exception)
+        public override async Task OnDisconnectedAsync(Exception? exception)
         {
-            NotifyServiceHelper.WARNING($"SECS/GEM Platform is offline.");
-            _systemModesAggregate.HostDisconnectNotify();
-            return base.OnDisconnectedAsync(exception);
+            NotifyServiceHelper.WARNING($"SECS/GEM Platform is not running...");
+            (bool confirm, string message) = await _systemModesAggregate.HostDisconnectNotify(AGVSystemCommonNet6.Alarm.ALARMS.SecsPlatformNotRun, "SECS Platform");
+            await base.OnDisconnectedAsync(exception);
         }
     }
 }
