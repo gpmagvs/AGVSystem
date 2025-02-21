@@ -24,18 +24,26 @@ namespace AGVSystem.Service
 
         internal List<ViewModel.WIPDataViewModel> GetWIPDataViewModels()
         {
-            Random random = new Random(DateTime.Now.Second);
-
-            return StaEQPManagager.RacksList.Select(wip => new ViewModel.WIPDataViewModel()
+            try
             {
-                WIPName = wip.EQName,
-                Columns = wip.RackOption.Columns,
-                Rows = wip.RackOption.Rows,
-                DeviceID = string.IsNullOrEmpty(wip.RackOption.DeviceID) ? $"SYS-{random.NextInt64(1, 12222222)}" : wip.RackOption.DeviceID,
-                Ports = wip.GetPortStatusWithEqInfo().ToList(),
-                ColumnsTagMap = wip.RackOption.ColumnTagMap,
-                IsOvenAsRacks = wip.RackOption.MaterialInfoFromEquipment
-            }).OrderBy(wip => wip.WIPName).ToList();
+
+                Random random = new Random(DateTime.Now.Second);
+
+                return StaEQPManagager.RacksList.Select(wip => new ViewModel.WIPDataViewModel()
+                {
+                    WIPName = wip.EQName,
+                    Columns = wip.RackOption.Columns,
+                    Rows = wip.RackOption.Rows,
+                    DeviceID = string.IsNullOrEmpty(wip.RackOption.DeviceID) ? $"SYS-{random.NextInt64(1, 12222222)}" : wip.RackOption.DeviceID,
+                    Ports = wip.GetPortStatusWithEqInfo().ToList(),
+                    ColumnsTagMap = wip.RackOption.ColumnTagMap,
+                    IsOvenAsRacks = wip.RackOption.MaterialInfoFromEquipment
+                }).OrderBy(wip => wip.WIPName).ToList();
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
         }
 
 
@@ -255,7 +263,8 @@ namespace AGVSystem.Service
                     item.MaterialID = materialID;
                     item.UpdateTime = updateTime;
                     await _dbContext.SaveChangesAsync();
-                };
+                }
+                ;
             }
             catch (Exception ex)
             {
