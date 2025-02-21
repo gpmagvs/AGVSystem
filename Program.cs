@@ -13,6 +13,7 @@ using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.DATABASE.BackgroundServices;
+using AGVSystemCommonNet6.HttpTools.ApiMiddlewares;
 using AGVSystemCommonNet6.Log;
 using AGVSystemCommonNet6.Material;
 using AGVSystemCommonNet6.Microservices.MCS;
@@ -78,7 +79,7 @@ public class Program
             LOG.SetLogFolderName("AGVS LOG");
             logger.Info("AGVS Start");
 
-            WebApplicationBuilder builder = SystemInitializer.Initialize(args,logger);
+            WebApplicationBuilder builder = SystemInitializer.Initialize(args, logger);
             WebAppInitializer.ConfigureBuilder(builder);
 
             var app = builder.Build();
@@ -126,7 +127,7 @@ public class Program
 
 public static class SystemInitializer
 {
-    public static WebApplicationBuilder  Initialize(string[] args,Logger logger)
+    public static WebApplicationBuilder Initialize(string[] args, Logger logger)
     {
         WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
         string testAppsettingJsonFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "appsettings.Test.json");
