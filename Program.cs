@@ -78,8 +78,7 @@ public class Program
             LOG.SetLogFolderName("AGVS LOG");
             logger.Info("AGVS Start");
 
-            SystemInitializer.Initialize(logger);
-            WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+            WebApplicationBuilder builder = SystemInitializer.Initialize(args,logger);
             WebAppInitializer.ConfigureBuilder(builder);
 
             var app = builder.Build();
@@ -127,11 +126,16 @@ public class Program
 
 public static class SystemInitializer
 {
-    public static void Initialize(Logger logger)
+    public static WebApplicationBuilder  Initialize(string[] args,Logger logger)
     {
-        WebApplicationBuilder builder = WebApplication.CreateBuilder();
+        WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+        string testAppsettingJsonFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "appsettings.Test.json");
+        builder.Configuration.AddJsonFile(testAppsettingJsonFilePath, optional: true, true);//嘗試注入測試用   
+
         string configRootFolder = builder.Configuration.GetValue<string>("AGVSConfigFolder");
         configRootFolder = string.IsNullOrEmpty(configRootFolder) ? @"C:\AGVS" : configRootFolder;
+        logger.Debug($"派車系統參數檔資料夾路徑={configRootFolder}");
+
         AGVSConfigulator.Init(configRootFolder);
         InitializeDatabase(logger);
 
@@ -174,6 +178,8 @@ public static class SystemInitializer
                 //
             });
         }
+
+        return builder;
     }
     private static void InitializeDatabase(Logger logger)
     {
@@ -276,7 +282,7 @@ public static class WebAppInitializer
         SECSConfigsService _secsConfigsService = new SECSConfigsService(Path.Combine(AGVSConfigulator.SysConfigs.CONFIGS_ROOT_FOLDER, "SECSConfigs"));
         _secsConfigsService.InitializeAsync();
 
-        EQIOStatusMonitorBackgroundService qIOStatusMonitorBackgroundService = new EQIOStatusMonitorBackgroundService();
+        //EQIOStatusMonitorBackgroundService qIOStatusMonitorBackgroundService = new EQIOStatusMonitorBackgroundService();
 
         if (!Debugger.IsAttached)
             builder.Services.AddHostedService<ThirdPartyProgramStartService>();
@@ -293,7 +299,7 @@ public static class WebAppInitializer
         builder.Services.AddScoped<TrafficStateDataQueryService>();
         builder.Services.AddScoped<SystemModesAggregateService>();
         builder.Services.AddSingleton<DBDataService>();
-        builder.Services.AddSingleton<EQIOStatusMonitorBackgroundService>(provider => qIOStatusMonitorBackgroundService);
+        //builder.Services.AddSingleton<EQIOStatusMonitorBackgroundService>(provider => qIOStatusMonitorBackgroundService);
         builder.Services.AddHostedService<DatabaseBackgroundService>();
         builder.Services.AddHostedService<VehicleLocationMonitorBackgroundService>();
         builder.Services.AddHostedService<FrontEndDataBrocastService>();
@@ -302,7 +308,7 @@ public static class WebAppInitializer
         builder.Services.AddHostedService<EquipmentsCollectBackgroundService>();
         builder.Services.AddHostedService<RackPortDoubleIDMonitor>();
         builder.Services.AddHostedService<TaskManagerInitService>();
-        builder.Services.AddHostedService<EQIOStatusMonitorBackgroundService>(provider => qIOStatusMonitorBackgroundService);
+        //builder.Services.AddHostedService<EQIOStatusMonitorBackgroundService>(provider => qIOStatusMonitorBackgroundService);
     }
 
     private static void ConfigureCors(WebApplicationBuilder builder)
@@ -316,9 +322,12 @@ public static class WebAppInitializer
                             .ToList();
 
         List<string> allowedOrigins = new List<string> {
-            "http://localhost:8080",
             "http://127.0.0.1:8080",
-            "http://127.0.0.1:7107"
+            "http://127.0.0.1:5216",
+            "http://127.0.0.1:5036",
+            "http://localhost:8080",
+            "http://localhost:5216",
+            "http://localhost:5036",
         };
         foreach (var ip in localIPs)
         {
@@ -425,9 +434,11 @@ public static class StaticFileInitializer
         {
             string mapFileFolderRelativePath = app.Configuration.GetValue<string>("StaticFileOptions:MapFile:FolderPath");
             string mapFileRequestPath = app.Configuration.GetValue<string>("StaticFileOptions:MapFile:RequestPath");
-
+            mapFileRequestPath = mapFileRequestPath ?? "/MapFiles";
             string agvImageFileFolderRelativePath = app.Configuration.GetValue<string>("StaticFileOptions:AGVImageStoreFile:FolderPath");
+            agvImageFileFolderRelativePath = agvImageFileFolderRelativePath ?? "/AGVImages";
             string agvImageFileRequestPath = app.Configuration.GetValue<string>("StaticFileOptions:AGVImageStoreFile:RequestPath");
+            agvImageFileRequestPath = agvImageFileRequestPath ?? "/AGVImages";
 
             string mapFileFolderPath = Path.Combine(configRootFolder, mapFileRequestPath.Trim('/'));
             string agvImageFileFolderPath = Path.Combine(configRootFolder, agvImageFileFolderRelativePath.Trim('/'));

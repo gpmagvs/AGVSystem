@@ -5,6 +5,7 @@ using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.Microservices.MCS;
 using AGVSystemCommonNet6.Microservices.VMS;
+using AGVSystemCommonNet6.Notify;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using NLog;
@@ -54,61 +55,41 @@ namespace AGVSystem.Service.Aggregates
             }
         }
 
-
-        internal async Task<(bool confirm, string message)> HostDisconnectNotify()
-        {
-            HostOnlineOfflineModeSwitch(HOST_CONN_MODE.OFFLINE);
-            await AlarmManagerCenter.AddAlarmAsync(ALARMS.HostCommunicationError, level: ALARM_LEVEL.ALARM, Equipment_Name: "HOST");
-            return (true, "OK");
-        }
-
-        internal async Task<(bool confirm, string message)> HosConnectionRestoredNotify()
-        {
-            await AlarmManagerCenter.SetAlarmCheckedAsync("HOST", ALARMS.HostCommunicationError);
-            return (true, "OK");
-        }
-
-        public async Task<(bool, string)> HostOnlineOfflineModeSwitch(HOST_CONN_MODE mode)
+        public async Task<(bool, string)> HostOnlineOfflineModeSwitch(HOST_CONN_MODE mode, bool bypassRunModeCheck = false)
         {
             (bool confirm, string message) response = new(false, "[HostConnMode] Fail");
 
+            if (mode == HOST_CONN_MODE.ONLINE && !bypassRunModeCheck && SystemModes.RunMode != RUN_MODE.RUN)
+                return (false, "請切換為'運轉模式'後再嘗試 ONLINE (Please switch to 'RUN mode' and then try again ONLINE.)");
+
             if (mode == HOST_CONN_MODE.ONLINE)
-                response = await MCSCIMService.Online();
+                response = await MCSCIMService.Online(3);
             else
-                response = await MCSCIMService.Offline();
+                response = await MCSCIMService.Offline(1);
             if (response.confirm == true || mode == HOST_CONN_MODE.OFFLINE)
             {
                 SystemModes.HostConnMode = mode;
                 if (SystemModes.HostConnMode == HOST_CONN_MODE.OFFLINE)
+                {
                     SystemModes.HostOperMode = HOST_OPER_MODE.LOCAL;
+                    response.confirm = true;
+                }
             }
             TryPostCurrentHostModeToCIM();
             return response;
         }
 
-        private async Task TryPostCurrentHostModeToCIM()
-        {
-            try
-            {
-                int modeTransfer = 0;
-                if (SystemModes.HostConnMode == HOST_CONN_MODE.OFFLINE)
-                    modeTransfer = 0;
-                else if (SystemModes.HostOperMode == HOST_OPER_MODE.LOCAL)
-                    modeTransfer = 1;
-                else
-                    modeTransfer = 2;
-                await GPMCIMService.HostModeState(modeTransfer);
-            }
-            catch (Exception ex)
-            {
-                logger.Error(ex);
-            }
-        }
-
         public async Task<(bool, string)> HostOnlineRemoteLocalModeSwitch(HOST_OPER_MODE mode)
         {
-            if (SystemModes.HostConnMode != HOST_CONN_MODE.ONLINE)
-                return (false, $"HostConnMode is not ONLINE");
+
+            if (mode == HOST_OPER_MODE.REMOTE && SystemModes.HostConnMode != HOST_CONN_MODE.ONLINE)
+            {
+                // Try online first
+                (bool autoOnlineSuccsee, string message) = await HostOnlineOfflineModeSwitch(HOST_CONN_MODE.ONLINE);
+                if (!autoOnlineSuccsee || SystemModes.HostConnMode != HOST_CONN_MODE.ONLINE)
+                    return (false, $"HostConnMode is not ONLINE {(string.IsNullOrEmpty(message) ? "" : $"({message})")}");
+            }
+
             (bool confirm, string message) response = new(false, "[HostOperationMode] Fail");
             if (mode == HOST_OPER_MODE.LOCAL)
             {
@@ -137,6 +118,111 @@ namespace AGVSystem.Service.Aggregates
             }
             TryPostCurrentHostModeToCIM();
             return response;
+        }
+
+
+        internal async Task<(bool confirm, string message)> HostDisconnectNotify(ALARMS alarmCode = ALARMS.HostCommunicationError, string source = "HOST")
+        {
+            ALARM_LEVEL alarmLevel = alarmCode == ALARMS.SecsPlatformNotRun ? ALARM_LEVEL.WARNING : ALARM_LEVEL.ALARM;
+            await AlarmManagerCenter.AddAlarmAsync(alarmCode, level: alarmLevel, Equipment_Name: source);
+            SystemModes.UpdateHosOperModeWhenHostDisconnected();
+            try
+            {
+                await systemStatusDbStoreService.ModifyHostModeStored(HOST_CONN_MODE.OFFLINE, HOST_OPER_MODE.LOCAL);
+                SystemModes.HostConnMode = HOST_CONN_MODE.OFFLINE;
+                SystemModes.HostOperMode = HOST_OPER_MODE.LOCAL;
+                HostOnlineOfflineModeSwitch(HOST_CONN_MODE.OFFLINE, true);
+                return (true, "OK");
+            }
+            catch (Exception ex)
+            {
+                return (false, ex.Message);
+            }
+
+        }
+
+        internal async Task<(bool confirm, string message)> HosConnectionRestoredNotify()
+        {
+            if (SystemModes.HosOperModeWhenHostDisconnected == HOST_OPER_MODE.REMOTE)
+            {
+                SystemModes.UpdateHosOperModeWhenHostDisconnected();
+                TryRestoreToRemoteAutomaticallyAsync();
+            }
+            await AlarmManagerCenter.SetAlarmCheckedAsync("HOST", ALARMS.HostCommunicationError);
+            await AlarmManagerCenter.SetAlarmCheckedAsync("SECS Platform", ALARMS.SecsPlatformNotRun);
+            return (true, "OK");
+        }
+
+        private async Task TryRestoreToRemoteAutomaticallyAsync()
+        {
+            await Task.Run(async () =>
+            {
+
+                string autoRemoteRejectionMessgge = string.Empty;
+                //確認是否有任務
+                if (DatabaseCaches.TaskCaches.RunningTasks.Any(order => order.Action == AGVSystemCommonNet6.AGVDispatch.Messages.ACTION_TYPE.Carry))
+                    autoRemoteRejectionMessgge += "尚有任務仍在進行中";
+
+                //確認是否有AGV載著貨異常貨OR IDLE
+
+                if (GetVehicleNotRunWithCargo(out List<string> agvNames))
+                {
+                    autoRemoteRejectionMessgge += ";須將AGV車上的貨物移除";
+                }
+
+
+                if (!String.IsNullOrEmpty(autoRemoteRejectionMessgge))
+                {
+                    _ = hubContext.Clients.All.SendAsync("TrySwitchToRemoteWhenHostReConnectedButConditionNotAllow", autoRemoteRejectionMessgge);
+                    return;
+                }
+
+                logger.Trace("[Host狀態自動賦歸] Start try online->remote after host connection restored.");
+                (bool onlineSuccess, string message) = await HostOnlineOfflineModeSwitch(HOST_CONN_MODE.ONLINE);
+                logger.Trace($"[Host狀態自動賦歸] Switch host 'Online' result : {(onlineSuccess ? "Success" : $"Fail,{message}")}");
+                if (!onlineSuccess)
+                {
+                    NotifyServiceHelper.WARNING($"[Host狀態自動賦歸] Host 重新 Online 未成功:{message}");
+                    return;
+                }
+                NotifyServiceHelper.SUCCESS($"[Host狀態自動賦歸] Host 重新 Online成功!");
+
+                (bool remoteSuccess, message) = await HostOnlineRemoteLocalModeSwitch(HOST_OPER_MODE.REMOTE);
+                logger.Trace($"[Host狀態自動賦歸] Switch host 'Remote' result : {(remoteSuccess ? "Success" : $"Fail,{message}")}");
+                if (remoteSuccess)
+                    NotifyServiceHelper.SUCCESS($"[Host狀態自動賦歸] Host 重新 Remote成功!");
+                else
+                    NotifyServiceHelper.WARNING($"[Host狀態自動賦歸] Host 重新 Remote 未成功:{message}");
+                //confirm remote able
+            });
+
+            bool GetVehicleNotRunWithCargo(out List<string> agvNames)
+            {
+                agvNames = new();
+                var withCargoAgvStates = DatabaseCaches.Vehicle.VehicleStates.Where(agv => agv.CargoStatus == 1);
+                agvNames = withCargoAgvStates.Select(state => state.AGV_Name).ToList();
+                return agvNames.Any();
+            }
+        }
+
+
+        private async Task TryPostCurrentHostModeToCIM()
+        {
+            try
+            {
+                int modeTransfer = 0;
+                if (SystemModes.HostConnMode == HOST_CONN_MODE.OFFLINE)
+                    modeTransfer = 0;
+                else if (SystemModes.HostOperMode == HOST_OPER_MODE.LOCAL)
+                    modeTransfer = 1;
+                else
+                    modeTransfer = 2;
+                await GPMCIMService.HostModeState(modeTransfer);
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex);
+            }
         }
 
         private async Task NotifyAbnormalyRackPortsStatus()

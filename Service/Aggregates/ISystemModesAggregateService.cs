@@ -6,7 +6,7 @@ namespace AGVSystem.Service.Aggregates
     {
         Task<(bool, string)> MaintainRunSwitch(RUN_MODE mode, bool forecing_change = false);
 
-        Task<(bool, string)> HostOnlineOfflineModeSwitch(HOST_CONN_MODE mode);
+        Task<(bool, string)> HostOnlineOfflineModeSwitch(HOST_CONN_MODE mode, bool bypassRunModeCheck = false);
 
         Task<(bool, string)> HostOnlineRemoteLocalModeSwitch(HOST_OPER_MODE mode);
 

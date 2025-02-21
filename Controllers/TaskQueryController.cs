@@ -32,13 +32,12 @@ namespace AGVSystem.Controllers
             this.cache = cache;
         }
 
-
         [HttpPost]
         public async Task<IActionResult> TaskQuery([FromBody] TaskQueryCondition conditions)
         {
             using var taskDBHelper = new TaskDatabaseHelper();
             (int total, List<clsTaskDto> tasksQueryOut, int CompleteNum, int FailNum, int CancelNum) = taskDBHelper.TaskQuery(conditions);
-            tasksQueryOut.ForEach(task => 
+            tasksQueryOut.ForEach(task =>
             {
                 if (task.From_Station_Tag != -1)
                 {

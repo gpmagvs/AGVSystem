@@ -6,23 +6,19 @@ namespace AGVSystem
     public class ApiLoggingMiddleware
     {
         private readonly Logger _logger;
-
         private readonly RequestDelegate _next;
 
-        private List<string> IngnorePath = new List<string>()
+        private static readonly HashSet<string> IgnorePaths = new(StringComparer.OrdinalIgnoreCase)
         {
-            "/api/Map",
-            "/AGVImages",
-            "/api/system",
-            "/api/Equipment",
-            "/api/Alarm",
-            "/api/WIP",
-            "/api/system/website",
-            "/api/TaskQuery",
-            "/FrontEndDataHub",
-            "/sw.js",
+            "/api/Map", "/AGVImages", "/api/system", "/api/Equipment", "/api/Alarm",
+            "/api/WIP", "/api/system/website", "/api/TaskQuery", "/FrontEndDataHub", "/sw.js"
         };
-        private List<string> contentTypesToIgnore = new() { "image", "text/css", "text/html", "application/javascript", "application/zip", "application/x-zip-compressed", "font" };
+
+        private static readonly HashSet<string> ContentTypesToIgnore = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "image", "text/css", "text/html", "application/javascript",
+            "application/zip", "application/x-zip-compressed", "font"
+        };
 
         public ApiLoggingMiddleware(RequestDelegate next)
         {
@@ -32,85 +28,95 @@ namespace AGVSystem
 
         public async Task InvokeAsync(HttpContext context)
         {
-            // 攔截請求
-            var request = await FormatRequest(context.Request);
-            // 紀錄回應前的狀態
-            var originalBodyStream = context.Response.Body;
+            // 只攔截需要記錄的請求，避免影響所有請求效能
+            if (ShouldIgnoreRequest(context))
+            {
+                await _next(context);
+                return;
+            }
 
+            // 記錄請求
+            var requestTask = FormatRequest(context.Request);
+
+            // 攔截回應 Body
+            var originalBodyStream = context.Response.Body;
             using var responseBody = new MemoryStream();
             context.Response.Body = responseBody;
-            await _next(context);
 
-            // 攔截回應
-            var response = await FormatResponse(context.Response);
+            await _next(context); // 繼續執行請求
 
-            //如果回應的Contetn-type 是圖片、html、javascript、字體等不需要紀錄的資料，直接回傳
-            if (contentTypesToIgnore.Any(type => context.Response.ContentType?.Contains(type) == true))
-            {
-                await responseBody.CopyToAsync(originalBodyStream);
-                return;
-            }
+            // 讀取 Response
+            var responseTask = FormatResponse(context.Response);
 
-            string? _requestPath = context.Request.Path.Value;
-
-            if (IngnorePath.Any(ingnore => _requestPath.ToLower().Contains(ingnore.ToLower())))
-            {
-                await responseBody.CopyToAsync(originalBodyStream);
-                return;
-            }
-            string controllerName = GetControllerNameFromPath(context.Request.Path);
-            // 紀錄資訊
-            var logger = LogManager.GetLogger($"{this.GetType().Name}/{controllerName}");
-            logger.Info("Request: \n{Request}", request);
-            logger.Info("Response: \n{Response}", response);
-
-            // 將原始回應內容寫回
+            // 恢復 Response Body
             await responseBody.CopyToAsync(originalBodyStream);
+
+            // 非同步記錄日誌，避免影響回應時間
+            _ = Task.Run(async () =>
+            {
+                string requestLog = await requestTask;
+                string responseLog = await responseTask;
+                string controllerName = GetControllerNameFromPath(context.Request.Path);
+                var logger = LogManager.GetLogger($"{this.GetType().Name}/{controllerName}");
+                logger.Info("Request:\n{Request}", requestLog);
+                logger.Info("Response:\n{Response}", responseLog);
+            });
+        }
+
+        /// <summary>
+        /// 判斷是否忽略該請求
+        /// </summary>
+        private bool ShouldIgnoreRequest(HttpContext context)
+        {
+            string? path = context.Request.Path.Value;
+            if (string.IsNullOrEmpty(path))
+                return true;
+
+            // 檢查忽略路徑
+            if (IgnorePaths.Contains(path))
+                return true;
+
+            // 檢查忽略的 Content-Type
+            if (context.Response.Headers.TryGetValue("Content-Type", out var contentType))
+                return ContentTypesToIgnore.Any(type => contentType.ToString().Contains(type, StringComparison.OrdinalIgnoreCase));
+            return false;
         }
 
         private string GetControllerNameFromPath(PathString path)
         {
-            string pathStr = path.ToString();
-            pathStr = pathStr.Replace("api/", "api_").TrimStart(new char[] { '/' });
-            string? controller_name = pathStr.Split('/').FirstOrDefault();
-            return controller_name ?? "api";
+            string pathStr = path.ToString().Replace("api/", "api_").TrimStart('/');
+            return pathStr.Split('/').FirstOrDefault() ?? "api";
         }
 
-        /// <summary>
-        /// 格式化請求
-        /// </summary>
         private async Task<string> FormatRequest(HttpRequest request)
         {
             request.EnableBuffering();
             var headers = FormatHeaders(request.Headers);
-            var body = await new StreamReader(request.Body, Encoding.UTF8).ReadToEndAsync();
+            string body = await ReadBody(request.Body);
             request.Body.Position = 0;
             var ip = request.HttpContext.Connection.RemoteIpAddress?.ToString();
 
-            return $"Method: {request.Method}\n" +
-                   $"URL: {request.Scheme}://{request.Host}{request.Path}{request.QueryString}\n" +
-                   $"Body: {body}\n" +
-                   $"IP: {ip}";
+            return $"Method: {request.Method}\nURL: {request.Scheme}://{request.Host}{request.Path}{request.QueryString}\nIP: {ip}\nHeaders:\n{headers}\nBody: {body}";
         }
 
-        /// <summary>
-        /// 格式化回應
-        /// </summary>
         private async Task<string> FormatResponse(HttpResponse response)
         {
             response.Body.Seek(0, SeekOrigin.Begin);
             var headers = FormatHeaders(response.Headers);
-            var body = await new StreamReader(response.Body, Encoding.UTF8).ReadToEndAsync();
+            string body = await ReadBody(response.Body);
             response.Body.Seek(0, SeekOrigin.Begin);
 
-            return $"Status code: {response.StatusCode}\n" +
-                   $"Headers: \n{headers}" +
-                   $"Body: {body}";
+            return $"Status code: {response.StatusCode}\nHeaders:\n{headers}\nBody: {body}";
         }
 
-        /// <summary>
-        /// 格式化標頭
-        /// </summary>
+        private async Task<string> ReadBody(Stream bodyStream, int maxLength = 5000)
+        {
+            using var reader = new StreamReader(bodyStream, Encoding.UTF8, leaveOpen: true);
+            char[] buffer = new char[maxLength];
+            int readLength = await reader.ReadBlockAsync(buffer, 0, maxLength);
+            return readLength == maxLength ? new string(buffer) + "..." : new string(buffer, 0, readLength);
+        }
+
         private string FormatHeaders(IHeaderDictionary headers)
         {
             var formattedHeaders = new StringBuilder();
@@ -118,7 +124,6 @@ namespace AGVSystem
             {
                 formattedHeaders.AppendLine($"\t{key}: {string.Join(",", value)}");
             }
-
             return formattedHeaders.ToString();
         }
     }

@@ -77,6 +77,12 @@ namespace AGVSystem.Models.Sys
             }
         }
 
+        /// <summary>
+        /// 當Host連線異常當下原Host操作模式
+        /// </summary>
+        internal static HOST_OPER_MODE HosOperModeWhenHostDisconnected { get; private set; } = HOST_OPER_MODE.LOCAL;
+
+
         internal static TRANSFER_MODE TransferTaskMode
         {
             get => _TransferTaskMode;
@@ -132,6 +138,11 @@ namespace AGVSystem.Models.Sys
             }
             LOG.INFO($"RUN_MODE Switch To {mode} {(confirm ? "SUCCESS" : "FAIL")} : {Message}");
             return confirm;
+        }
+
+        public static void UpdateHosOperModeWhenHostDisconnected()
+        {
+            HosOperModeWhenHostDisconnected = _HostOperMode;
         }
     }
 }
