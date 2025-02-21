@@ -121,8 +121,11 @@ namespace AGVSystem.Service.Aggregates
         internal async Task<(bool confirm, string message)> HostDisconnectNotify()
         {
             SystemModes.UpdateHosOperModeWhenHostDisconnected();
-
+            SystemModes.HostConnMode = HOST_CONN_MODE.OFFLINE;
+            SystemModes.HostOperMode = HOST_OPER_MODE.LOCAL;
             HostOnlineOfflineModeSwitch(HOST_CONN_MODE.OFFLINE);
+            await systemStatusDbStoreService.ModifyHostModeStored(HOST_CONN_MODE.OFFLINE, HOST_OPER_MODE.LOCAL);
+
             await AlarmManagerCenter.AddAlarmAsync(ALARMS.HostCommunicationError, level: ALARM_LEVEL.ALARM, Equipment_Name: "HOST");
             return (true, "OK");
         }

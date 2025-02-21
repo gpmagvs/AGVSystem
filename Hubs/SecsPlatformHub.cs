@@ -1,4 +1,5 @@
 ﻿using AGVSystem.Models.Sys;
+using AGVSystem.Service.Aggregates;
 using AGVSystemCommonNet6.AGVDispatch.RunMode;
 using AGVSystemCommonNet6.Notify;
 using Microsoft.AspNetCore.SignalR;
@@ -7,6 +8,11 @@ namespace AGVSystem.Hubs
 {
     public class SecsPlatformHub : Hub
     {
+        SystemModesAggregateService _systemModesAggregate;
+        public SecsPlatformHub(SystemModesAggregateService systemModesAggregate)
+        {
+            _systemModesAggregate = systemModesAggregate;
+        }
         public override Task OnConnectedAsync()
         {
             NotifyServiceHelper.SUCCESS($"SECS/GEM Platform is online.");
@@ -16,9 +22,7 @@ namespace AGVSystem.Hubs
         public override Task OnDisconnectedAsync(Exception? exception)
         {
             NotifyServiceHelper.WARNING($"SECS/GEM Platform is offline.");
-            SystemModes.UpdateHosOperModeWhenHostDisconnected();
-            SystemModes.HostConnMode = HOST_CONN_MODE.OFFLINE;
-            SystemModes.HostOperMode = HOST_OPER_MODE.LOCAL;
+            _systemModesAggregate.HostDisconnectNotify();
             return base.OnDisconnectedAsync(exception);
         }
     }
