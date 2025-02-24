@@ -224,3 +224,4 @@ project.lock.json
 /EQGroupConfigs.json
 
 appsettings.Development.json
+/.history
