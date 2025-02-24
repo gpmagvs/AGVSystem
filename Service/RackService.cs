@@ -1,4 +1,5 @@
 ﻿using AGVSystem.Models.EQDevices;
+using AGVSystemCommonNet6.AGVDispatch;
 using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.Material;
@@ -98,7 +99,7 @@ namespace AGVSystem.Service
 
                 if (eq != null)
                     eq.PortStatus.CarrierID = string.Empty;
-                UpdateMaterialIDStoreOfDataBase(tagNumber, slot, string.Empty);
+                UpdateMaterialIDStoreOfDataBase(tagNumber, slot, string.Empty, -1, -1);
 
                 if (!isByAgvUnloadend)
                     MCSCIMService.CarrierRemoveCompletedReport(removedCarrierID, locID, zoneName, 0);
@@ -144,7 +145,7 @@ namespace AGVSystem.Service
         /// <param name="triggerBy"></param>
         /// <param name="isByAgvLoadend">是不是因為車子放貨到port修改帳籍</param>
         /// <returns></returns>
-        internal async Task<(bool confirm, string message)> AddRackCargoID(int tagNumber, int slot, string cargoID, string triggerBy, bool isByAgvLoadend, bool bypassHasCSTReaderCheck = false)
+        internal async Task<(bool confirm, string message)> AddRackCargoID(int tagNumber, int slot, string cargoID, string triggerBy, bool isByAgvLoadend, bool bypassHasCSTReaderCheck = false, clsTaskDto? order = null)
         {
             try
             {
@@ -183,17 +184,25 @@ namespace AGVSystem.Service
                     if (eq != null)
                         eq.PortStatus.CarrierID = "";
                 }
+
+                int _sourceTag = order == null || order.Action != AGVSystemCommonNet6.AGVDispatch.Messages.ACTION_TYPE.Carry || order.IsFromAGV ? -1 : order.From_Station_Tag;
+                int _sourceSlot = order == null || order.Action != AGVSystemCommonNet6.AGVDispatch.Messages.ACTION_TYPE.Carry || order.IsFromAGV ? -1 : order.GetFromSlotInt();
+
                 DateTime installTime = DateTime.Now;
                 port.VehicleLoadToPortFlag = isByAgvLoadend;
                 port.CarrierID = cargoID;
                 port.InstallTime = installTime;
-
+                port.SourceTag = _sourceTag;
+                port.SourceSlot = _sourceSlot;
                 if (eq != null)
                 {
                     eq.PortStatus.CarrierID = cargoID;
                     eq.PortStatus.InstallTime = installTime;
+                    eq.PortStatus.SourceTag = _sourceTag;
+                    eq.PortStatus.SourceSlot = _sourceSlot;
                 }
-                UpdateMaterialIDStoreOfDataBase(tagNumber, slot, cargoID);
+
+                UpdateMaterialIDStoreOfDataBase(tagNumber, slot, cargoID, _sourceTag, _sourceSlot);
                 if (!isByAgvLoadend)
                 {
                     _waitCarrierRemovedRptDone.Wait(TimeSpan.FromSeconds(10));
@@ -247,12 +256,12 @@ namespace AGVSystem.Service
             else
                 return (false, "Port Not Found");
         }
-        internal async Task UpdateMaterialIDStoreOfDataBase(clsPortOfRack port, string carrierID)
+        internal async Task UpdateMaterialIDStoreOfDataBase(clsPortOfRack port, string carrierID, int sourceTag, int sourceSlot)
         {
-            await UpdateMaterialIDStoreOfDataBase(port.TagNumbers.FirstOrDefault(), port.Properties.Row, carrierID);
+            await UpdateMaterialIDStoreOfDataBase(port.TagNumbers.FirstOrDefault(), port.Properties.Row, carrierID, sourceTag, sourceSlot);
         }
 
-        private async Task UpdateMaterialIDStoreOfDataBase(int tagNumber, int slot, string materialID)
+        private async Task UpdateMaterialIDStoreOfDataBase(int tagNumber, int slot, string materialID, int sourceTag, int sourceSlot)
         {
             try
             {
@@ -262,6 +271,9 @@ namespace AGVSystem.Service
                 {
                     item.MaterialID = materialID;
                     item.UpdateTime = updateTime;
+                    item.SourceEqTag = sourceTag;
+                    item.SourceEqSlot = sourceSlot;
+
                     await _dbContext.SaveChangesAsync();
                 }
                 ;

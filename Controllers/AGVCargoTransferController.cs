@@ -1,4 +1,5 @@
 ﻿using AGVSystem.Service;
+using AGVSystem.TaskManagers;
 using AGVSystemCommonNet6.AGVDispatch;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.Microservices.MCS;
@@ -39,6 +40,7 @@ namespace AGVSystem.Controllers
                 await Task.Delay(300);
             }
             (bool confirm, removedCarrierID, string message) = await _rackCargoStatusContorlService.RemoveRackCargoID(tagNumber, slot, this.GetType().Name, isByAgvUnloadend: true);
+            int removedNum = EQTransferTaskManager.TryRemoveWaitUnloadEQ(tagNumber, slot);
 
             if (isEmuEqStation)
             {
@@ -61,16 +63,16 @@ namespace AGVSystem.Controllers
         [HttpPost("LoadCargoToPort")]
         public async Task<IActionResult> LoadCargoToPort(string taskName, string agvName, int tagNumber, int slot, string cargoID = "")
         {
-            //bool isEmuEqStation = IsSimulationEq(tagNumber, slot, out EQEmulatorBase emulator);
-            //if (isEmuEqStation)
-            //    emulator.SetPortExist(1);
             var agvState = dbContext.AgvStates.FirstOrDefault(agv => agv.AGV_Name == agvName);
             string agvID = agvState.AGV_ID;
             clsTaskDto? order = dbContext.Tasks.AsNoTracking().FirstOrDefault(task => task.TaskName == taskName);
             string cargoIDToLoad = cargoID;
             if (order != null && order.soucePortID == agvID && (order.Carrier_ID.ToUpper().Contains("UN") || order.Carrier_ID.ToUpper().Contains("MI")))
                 cargoIDToLoad = order.Carrier_ID;
-            await _rackCargoStatusContorlService.AddRackCargoID(tagNumber, slot, cargoIDToLoad, this.GetType().Name, isByAgvLoadend: true);
+            await _rackCargoStatusContorlService.AddRackCargoID(tagNumber, slot, cargoIDToLoad, this.GetType().Name, isByAgvLoadend: true, order: order);
+
+            int removedNum = EQTransferTaskManager.TryRemoveWaitLoadEQ(tagNumber, slot);
+
             //await MCSCIMService.CarrierRemoveCompletedReport(cargoID, agvID, "", 1);
 
             //if (isEmuEqStation)

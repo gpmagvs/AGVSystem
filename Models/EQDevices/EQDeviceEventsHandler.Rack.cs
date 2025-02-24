@@ -89,7 +89,7 @@ namespace AGVSystem.Models.EQDevices
                     eqInport.PortStatus.InstallBy = port.InstallBy;
                 }
 
-                rackService.UpdateMaterialIDStoreOfDataBase(port, tunid);
+                rackService.UpdateMaterialIDStoreOfDataBase(port, tunid, -1, -1);
             }
         }
 

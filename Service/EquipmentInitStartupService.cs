@@ -73,7 +73,8 @@ namespace AGVSystem.Service
                 foreach (var item in _dbContext.StationStatus.Where(raw => needRemoveIDList.Contains(raw.MaterialID)).ToList())
                 {
                     item.MaterialID = "";
-                };
+                }
+                ;
                 int _changed = await _dbContext.SaveChangesAsync();
             }
             catch (Exception ex)
@@ -95,7 +96,8 @@ namespace AGVSystem.Service
                 foreach (var item in toModify)
                 {
                     item.Value.DeviceID = "SYL" + item.Key;
-                };
+                }
+                ;
             }
         }
 
@@ -112,7 +114,8 @@ namespace AGVSystem.Service
                 foreach (var item in toModify)
                 {
                     item.Value.DeviceID = "SYS00" + item.Key;
-                };
+                }
+                ;
             }
         }
 
@@ -147,10 +150,14 @@ namespace AGVSystem.Service
 
                         rackport.CarrierID = _materialID;
                         rackport.InstallTime = item.UpdateTime;
+                        rackport.SourceTag = item.SourceEqTag;
+                        rackport.SourceSlot = item.SourceEqSlot;
                         if (eq != null && eq.EndPointOptions.IsRoleAsZone)
                         {
                             eq.PortStatus.CarrierID = _materialID;
                             eq.PortStatus.InstallTime = item.UpdateTime;
+                            eq.PortStatus.SourceTag = item.SourceEqTag;
+                            eq.PortStatus.SourceSlot = item.SourceEqSlot;
                         }
                     }
                 }

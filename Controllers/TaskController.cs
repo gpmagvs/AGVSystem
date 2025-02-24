@@ -16,6 +16,7 @@ using AGVSystemCommonNet6.Microservices.MCS;
 using AGVSystemCommonNet6.Microservices.ResponseModel;
 using AGVSystemCommonNet6.Notify;
 using EquipmentManagment.Device;
+using EquipmentManagment.Emu;
 using EquipmentManagment.MainEquipment;
 using EquipmentManagment.Manager;
 using EquipmentManagment.WIP;
@@ -197,7 +198,24 @@ namespace AGVSystem.Controllers
         {
             try
             {
-                return await CheckStatus(taskID, tag, slot, action);
+                clsAGVSTaskReportResponse response = await CheckStatus(taskID, tag, slot, action);
+
+
+                bool isEmuEqStation = IsSimulationEq(tag, slot, out EQEmulatorBase emulator);
+                if (response.confirm && isEmuEqStation && action == ACTION_TYPE.Load)
+                {
+                    _ = Task.Delay(500).ContinueWith(t =>
+                    {
+                        var orderRunning = DatabaseCaches.TaskCaches.RunningTasks.FirstOrDefault(order => order.TaskName == taskID);
+                        if (orderRunning?.currentProgress == VehicleMovementStage.WorkingAtDestination)
+                        {
+                            emulator.SetStatusBUSY();
+                        }
+                    });
+
+                }
+
+                return response;
             }
             catch (Exception ex)
             {
@@ -207,6 +225,15 @@ namespace AGVSystem.Controllers
                     message = ex.Message,
                     AlarmCode = ALARMS.VMSOrderActionStatusReportToAGVSButAGVSGetException
                 };
+            }
+
+            bool IsSimulationEq(int _tag, int _slot, out EQEmulatorBase emulator)
+            {
+                emulator = null;
+                var eq = StaEQPManagager.GetEQByTag(_tag, _slot);
+                if (eq != null && eq.EndPointOptions.IsEmulation)
+                    emulator = StaEQPEmulatorsManagager.GetEQEmuByName(eq.EQName);
+                return emulator != null;
             }
         }
 
@@ -389,9 +416,13 @@ namespace AGVSystem.Controllers
             finally
             {
 
-                if (isCarryTask && action == ACTION_TYPE.Unload)
+                if (isCarryTask && !normalDone && action == ACTION_TYPE.Unload)
                 {
                     int removedNum = EQTransferTaskManager.TryRemoveWaitUnloadEQ(order.From_Station_Tag, order.GetFromSlotInt());
+                }
+                if (isCarryTask && !normalDone && action == ACTION_TYPE.Load)
+                {
+                    int removedNum = EQTransferTaskManager.TryRemoveWaitLoadEQ(order.To_Station_Tag, order.GetToSlotInt());
                 }
 
                 if (SystemModes.TransferTaskMode == AGVSystemCommonNet6.AGVDispatch.RunMode.TRANSFER_MODE.LOCAL_AUTO && endPoint.EndPointOptions.IsEmulation)
