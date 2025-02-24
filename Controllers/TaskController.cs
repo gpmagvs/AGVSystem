@@ -389,9 +389,9 @@ namespace AGVSystem.Controllers
             finally
             {
 
-                if (isCarryTask && action == ACTION_TYPE.Load)
+                if (isCarryTask && action == ACTION_TYPE.Unload)
                 {
-                    EQTransferTaskManager.HandleTransferOrderFinish(order);
+                    int removedNum = EQTransferTaskManager.TryRemoveWaitUnloadEQ(order.From_Station_Tag, order.GetFromSlotInt());
                 }
 
                 if (SystemModes.TransferTaskMode == AGVSystemCommonNet6.AGVDispatch.RunMode.TRANSFER_MODE.LOCAL_AUTO && endPoint.EndPointOptions.IsEmulation)
@@ -497,7 +497,7 @@ namespace AGVSystem.Controllers
                 return new clsAGVSTaskReportResponse
                 {
                     confirm = false,
-                    message=ex.Message,
+                    message = ex.Message,
                     AlarmCode = ALARMS.VMSOrderActionStatusReportToAGVSButAGVSGetException
                 };
             }

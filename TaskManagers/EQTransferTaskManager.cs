@@ -1,6 +1,7 @@
 ﻿using AGVSystem.Models.EQDevices;
 using AGVSystem.Models.Map;
 using AGVSystem.Models.Sys;
+using AGVSystem.Models.TaskAllocation.HotRun;
 using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.AGVDispatch;
 using AGVSystemCommonNet6.AGVDispatch.Messages;
@@ -35,7 +36,7 @@ namespace AGVSystem.TaskManagers
         /// <summary>
         /// 儲存自動搬運任務, key=> SourceEQ , value=>DestineEQ
         /// </summary>
-        public static Dictionary<clsEQ, clsEQ> UnloadEQQueueing { get; private set; } = new Dictionary<clsEQ, clsEQ>();
+        public static HashSet<clsEQ> WaitingUnloadEQ { get; private set; } = new HashSet<clsEQ>();
         internal static async void SwitchToMaintainMode()
         {
             while (AutoRunning)
@@ -48,7 +49,6 @@ namespace AGVSystem.TaskManagers
             {
                 eq.CancelReserve();
             });
-            UnloadEQQueueing.Clear();
         }
 
         internal static async void SwitchToRunMode()
@@ -295,16 +295,6 @@ namespace AGVSystem.TaskManagers
 
         }
 
-
-        public static void HandleTransferOrderFinish(clsTaskDto TransferOrder)
-        {
-            KeyValuePair<clsEQ, clsEQ> storedTransferEQPair = UnloadEQQueueing.FirstOrDefault(kp => kp.Key.EndPointOptions.TagID == TransferOrder.From_Station_Tag && kp.Value.EndPointOptions.TagID == TransferOrder.To_Station_Tag);
-            if (storedTransferEQPair.Key != null && storedTransferEQPair.Value != null)
-            {
-                UnloadEQQueueing.Remove(storedTransferEQPair.Key);
-            }
-        }
-
         static async Task TransferTaskPairWorker()
         {
             _ = Task.Run(async () =>
@@ -312,98 +302,218 @@ namespace AGVSystem.TaskManagers
                 while (true)
                 {
                     await Task.Delay(10);
-                    if (SystemModes.RunMode == RUN_MODE.MAINTAIN || SystemModes.TransferTaskMode == TRANSFER_MODE.MANUAL)
+                    try
                     {
-                        UnloadEQQueueing.Clear();
-                        AutoRunning = false;
-                        continue;
-                    }
-                    AutoRunning = true;
-
-                    List<string> waitOrRunningSouceEQTagStrList = DatabaseCaches.TaskCaches.InCompletedTasks.Select(task => task.From_Station)
-                                                                                                       .ToList();
-                    List<clsEQ> unload_req_eq_list = StaEQPManagager.MainEQList.Where(eq => !IsEQDisabled(eq))
-                                                                               .Where(eq => eq.lduld_type == EQLDULD_TYPE.ULD || eq.lduld_type == EQLDULD_TYPE.LDULD)
-                                                                                .Where(eq => eq.IsCreateUnloadTaskAble() && !UnloadEQQueueing.TryGetValue(eq, out clsEQ _eq))
-                                                                                .Where(eq => !waitOrRunningSouceEQTagStrList.Contains(eq.EndPointOptions.TagID + ""))
-                                                                                .OrderBy(eq => eq.UnloadRequestRaiseTime).ToList();
-                    bool IsEQDisabled(clsEQ eq)
-                    {
-                        var mapPt = AGVSMapManager.CurrentMap.Points.Values.FirstOrDefault(pt => pt.TagNumber == eq.EndPointOptions.TagID);
-                        if (mapPt == null)
-                            return true;
-                        return !mapPt.Enable;
-                    }
-                    if (unload_req_eq_list.Count > 0)
-                    {
-                        foreach (clsEQ sourceEQ in unload_req_eq_list)
+                        if (SystemModes.RunMode == RUN_MODE.MAINTAIN || SystemModes.TransferTaskMode == TRANSFER_MODE.MANUAL)
                         {
-                            List<clsEQ> downstreamLoadableEQList = sourceEQ.DownstremEQ.FindAll(downstrem_eq => downstrem_eq.IsCreateLoadTaskAble());
-                            List<string> waitOrRunningEQTagStrList = DatabaseCaches.TaskCaches.InCompletedTasks.Select(task => task.To_Station)
-                                                                                                                .ToList();
-                            downstreamLoadableEQList = downstreamLoadableEQList.Where(item => !waitOrRunningEQTagStrList.Contains(item.EndPointOptions.TagID.ToString())).ToList();
+                            WaitingUnloadEQ.Clear();
+                            AutoRunning = false;
+                            continue;
+                        }
+                        AutoRunning = true;
 
-                            if (sourceEQ.EndPointOptions.CheckRackContentStateIOSignal)
+                        List<clsEQ> unload_req_eq_list = StaEQPManagager.MainEQList.Where(eq => !IsEQDisabled(eq))
+                                                                                   .Where(eq => eq.lduld_type == EQLDULD_TYPE.ULD || eq.lduld_type == EQLDULD_TYPE.LDULD)
+                                                                                    .Where(eq => eq.IsCreateUnloadTaskAble() && !WaitingUnloadEQ.TryGetValue(eq, out clsEQ _eq))
+                                                                                    .Where(eq => !IsEqOrderRunningAsSourceAndEqNotUnloadDone(eq))
+                                                                                    .OrderBy(eq => eq.UnloadRequestRaiseTime).ToList();
+                        bool IsEQDisabled(clsEQ eq)
+                        {
+                            var mapPt = AGVSMapManager.CurrentMap.Points.Values.FirstOrDefault(pt => pt.TagNumber == eq.EndPointOptions.TagID);
+                            if (mapPt == null)
+                                return true;
+                            return !mapPt.Enable;
+                        }
+                        if (unload_req_eq_list.Count > 0)
+                        {
+                            foreach (clsEQ sourceEQ in unload_req_eq_list)
                             {
-                                downstreamLoadableEQList = downstreamLoadableEQList.Where(downstreamEQ => downstreamEQ.EndPointOptions.IsFullEmptyUnloadAsVirtualInput ? true : (sourceEQ.Full_RACK_To_LDULD == downstreamEQ.Full_RACK_To_LDULD) || (sourceEQ.Empty_RACK_To_LDULD == downstreamEQ.Empty_RACK_To_LDULD))
-                                                                                   .ToList();
-                            }
 
-                            if (downstreamLoadableEQList.Count == 0)
-                                continue;
-                            clsEQ destineEQ = downstreamLoadableEQList.OrderBy(eq => _CalculateDistanceFromSourceToDestine(eq, sourceEQ)).First();
+                                if (WaitingUnloadEQ.Contains(sourceEQ))
+                                    continue;
 
-                            double _CalculateDistanceFromSourceToDestine(clsEQ destineEQ, clsEQ sourceEQ)
-                            {
-                                MapPoint destinePt = AGVSMapManager.CurrentMap.Points.Values.FirstOrDefault(pt => pt.TagNumber == destineEQ.EndPointOptions.TagID);
-                                MapPoint sourcePt = AGVSMapManager.CurrentMap.Points.Values.FirstOrDefault(pt => pt.TagNumber == sourceEQ.EndPointOptions.TagID);
-                                double diffX = destinePt.X - sourcePt.X;
-                                double diffY = destinePt.Y - sourcePt.Y;
-                                return Math.Sqrt(diffX * diffX + diffY * diffY);
-                            }
+                                List<clsEQ> downstreamLoadableEQList = sourceEQ.DownstremEQ.FindAll(downstrem_eq => downstrem_eq.IsCreateLoadTaskAble());
+                                List<string> waitOrRunningEQTagStrList = DatabaseCaches.TaskCaches.InCompletedTasks.Select(task => task.To_Station)
+                                                                                                                    .ToList();
+                                downstreamLoadableEQList = downstreamLoadableEQList.Where(item => !waitOrRunningEQTagStrList.Contains(item.EndPointOptions.TagID.ToString())).ToList();
 
-                            var taskOrder = new clsTaskDto
-                            {
-                                Action = ACTION_TYPE.Carry,
-                                DesignatedAGVName = "",
-                                From_Station = sourceEQ.EndPointOptions.TagID.ToString(),
-                                To_Station = destineEQ.EndPointOptions.TagID.ToString(),
-                                TaskName = $"*Local-{DateTime.Now.ToString("yyyyMMddHHmmssffff")}",
-                                DispatcherName = "Local_Auto",
-                                From_Slot = sourceEQ.EndPointOptions.Height + "",
-                                To_Slot = destineEQ.EndPointOptions.Height + "",
-                                Priority = 80,
-                                Height = destineEQ.EndPointOptions.Height
-                            };
-                            var taskAddedResult = await TaskManager.AddTask(taskOrder, taskOrder.isFromMCS ? TaskManager.TASK_RECIEVE_SOURCE.REMOTE : TaskManager.TASK_RECIEVE_SOURCE.Local_MANUAL);
-                            if (taskAddedResult.confirm)
-                            {
-                                UnloadEQQueueing.Add(sourceEQ, destineEQ); ;
-                                logger.Info($"[Local Auto EQ Transfer] Task-{taskOrder.TaskName}-(From={taskOrder.From_Station} To={taskOrder.To_Station}>> Execute AGV={taskOrder.DesignatedAGVName}) is added.");
-                            }
-                            else
-                            {
-                                logger.Error($"[Local Auto EQ Transfer] Task-{taskOrder.TaskName}-(From={taskOrder.From_Station} To={taskOrder.To_Station}>> Execute AGV={taskOrder.DesignatedAGVName}) add FAILURE,{taskAddedResult.alarm_code}");
-                                AlarmManagerCenter.AddAlarmAsync(new clsAlarmDto
+                                if (sourceEQ.EndPointOptions.CheckRackContentStateIOSignal)
                                 {
-                                    Time = DateTime.Now,
-                                    AlarmCode = (int)taskAddedResult.alarm_code,
-                                    Description_Zh = taskAddedResult.alarm_code.ToString(),
-                                    Description_En = taskAddedResult.alarm_code.ToString(),
-                                    Level = ALARM_LEVEL.ALARM,
-                                    Task_Name = taskOrder.TaskName,
-                                    Source = ALARM_SOURCE.AGVS,
-                                    Equipment_Name = taskOrder.DesignatedAGVName,
-                                });
+                                    downstreamLoadableEQList = downstreamLoadableEQList.Where(downstreamEQ => downstreamEQ.EndPointOptions.IsFullEmptyUnloadAsVirtualInput ? true : (sourceEQ.Full_RACK_To_LDULD == downstreamEQ.Full_RACK_To_LDULD) || (sourceEQ.Empty_RACK_To_LDULD == downstreamEQ.Empty_RACK_To_LDULD))
+                                                                                       .ToList();
+                                }
+
+                                if (downstreamLoadableEQList.Count == 0)
+                                {
+                                    if (!TryGetRackPortToStore(sourceEQ, out clsPortOfRack port))
+                                        continue;
+                                    else
+                                    {
+                                        int destinTag = port.TagNumbers.First();
+                                        int destineSlot = port.Properties.Row;
+                                        var eqToWipOrder = new clsTaskDto
+                                        {
+                                            Action = ACTION_TYPE.Carry,
+                                            DesignatedAGVName = "",
+                                            From_Station = sourceEQ.EndPointOptions.TagID.ToString(),
+                                            To_Station = destinTag.ToString(),
+                                            TaskName = $"*Local-{DateTime.Now.ToString("yyyyMMddHHmmssffff")}",
+                                            DispatcherName = "Local_Auto",
+                                            From_Slot = sourceEQ.EndPointOptions.Height + "",
+                                            To_Slot = destineSlot + "",
+                                            Priority = 80,
+                                            Height = destineSlot
+                                        };
+                                        if (!await AddOrderToDatabase(sourceEQ, eqToWipOrder))
+                                            await Task.Delay(1000);
+                                        continue;
+                                    }
+                                }
+                                clsEQ destineEQ = downstreamLoadableEQList.OrderBy(eq => _CalculateDistanceFromSourceToDestine(eq, sourceEQ)).First();
+
+                                double _CalculateDistanceFromSourceToDestine(clsEQ destineEQ, clsEQ sourceEQ)
+                                {
+                                    MapPoint destinePt = AGVSMapManager.CurrentMap.Points.Values.FirstOrDefault(pt => pt.TagNumber == destineEQ.EndPointOptions.TagID);
+                                    MapPoint sourcePt = AGVSMapManager.CurrentMap.Points.Values.FirstOrDefault(pt => pt.TagNumber == sourceEQ.EndPointOptions.TagID);
+                                    double diffX = destinePt.X - sourcePt.X;
+                                    double diffY = destinePt.Y - sourcePt.Y;
+                                    return Math.Sqrt(diffX * diffX + diffY * diffY);
+                                }
+
+                                var taskOrder = new clsTaskDto
+                                {
+                                    Action = ACTION_TYPE.Carry,
+                                    DesignatedAGVName = "",
+                                    From_Station = sourceEQ.EndPointOptions.TagID.ToString(),
+                                    To_Station = destineEQ.EndPointOptions.TagID.ToString(),
+                                    TaskName = $"*Local-{DateTime.Now.ToString("yyyyMMddHHmmssffff")}",
+                                    DispatcherName = "Local_Auto",
+                                    From_Slot = sourceEQ.EndPointOptions.Height + "",
+                                    To_Slot = destineEQ.EndPointOptions.Height + "",
+                                    Priority = 80,
+                                    Height = destineEQ.EndPointOptions.Height
+                                };
+                                if (!await AddOrderToDatabase(sourceEQ, taskOrder))
+                                    await Task.Delay(1000);
                             }
+
                         }
 
+                    }
+                    catch (Exception ex)
+                    {
+                        continue;
                     }
 
                 }
                 AutoRunning = false;
+
+                static async Task<bool> AddOrderToDatabase(clsEQ sourceEQ, clsTaskDto taskOrder)
+                {
+                    var taskAddedResult = await TaskManager.AddTask(taskOrder, taskOrder.isFromMCS ? TaskManager.TASK_RECIEVE_SOURCE.REMOTE : TaskManager.TASK_RECIEVE_SOURCE.Local_MANUAL);
+                    if (taskAddedResult.confirm)
+                    {
+                        //UnloadEQQueueing.Add(sourceEQ, destineEQ); ;
+                        WaitingUnloadEQ.Add(sourceEQ);
+                        logger.Info($"[Local Auto EQ Transfer] Task-{taskOrder.TaskName}-(From={taskOrder.From_Station} To={taskOrder.To_Station}>> Execute AGV={taskOrder.DesignatedAGVName}) is added.");
+                    }
+                    else
+                    {
+                        logger.Error($"[Local Auto EQ Transfer] Task-{taskOrder.TaskName}-(From={taskOrder.From_Station} To={taskOrder.To_Station}>> Execute AGV={taskOrder.DesignatedAGVName}) add FAILURE,{taskAddedResult.alarm_code}");
+                        AlarmManagerCenter.AddAlarmAsync(new clsAlarmDto
+                        {
+                            Time = DateTime.Now,
+                            AlarmCode = (int)taskAddedResult.alarm_code,
+                            Description_Zh = taskAddedResult.alarm_code.ToString(),
+                            Description_En = taskAddedResult.alarm_code.ToString(),
+                            Level = ALARM_LEVEL.ALARM,
+                            Task_Name = taskOrder.TaskName,
+                            Source = ALARM_SOURCE.AGVS,
+                            Equipment_Name = taskOrder.DesignatedAGVName,
+                        });
+                    }
+
+                    return taskAddedResult.confirm;
+                }
             });
         }
 
+        private static bool TryGetRackPortToStore(clsEQ sourceEQ, out clsPortOfRack port)
+        {
+            port = null;
+            if (sourceEQ == null || !sourceEQ.EndPointOptions.ValidDownStreamWIPNames.Any())
+                return false;
+
+            HashSet<string> validWipNames = new HashSet<string>(sourceEQ.EndPointOptions.ValidDownStreamWIPNames);
+
+            HashSet<clsPortOfRack> validPorts = EquipmentManagment.Manager.StaEQPManagager.RackPortsList.Where(port => validWipNames.Contains(port.GetParentRack().EndPointOptions.Name))
+                                                                                                        .Where(port => !port.CargoExist && string.IsNullOrEmpty(port.CarrierID))
+                                                                                                        .Where(port => !IsRackPortOrderRunningAsSourceAndEqNotUnloadDone(port))
+                                                                                                        .ToHashSet();
+            //calulate distance and order 
+            MapPoint sourceEqMapPt = sourceEQ.EndPointOptions.TagID.GetMapPoint();
+            HashSet<clsPortOfRack> validPortsOrderedByDistance = validPorts.OrderBy(port => port.TagNumbers.First().GetMapPoint().CalculateDistance(sourceEqMapPt) * _GetWeightOfRackPortToLoad(port)).ToHashSet();
+            port = validPortsOrderedByDistance.FirstOrDefault();
+            return port != null;
+        }
+
+        private static double _GetWeightOfRackPortToLoad(clsPortOfRack portOfRack)
+        {
+            double _weight = 1;
+            int tag = portOfRack.TagNumbers.FirstOrDefault();
+            if (IsAnyVehicleParkAtTag(tag))
+                _weight = _weight * 1000;
+            _weight = _weight * (portOfRack.Properties.Row + 1);
+            return _weight;
+        }
+
+
+        private static bool IsAnyVehicleParkAtTag(int tag)
+        {
+            HashSet<clsAGVStateDto> vehicleStates = new HashSet<clsAGVStateDto>(DatabaseCaches.Vehicle.VehicleStates);
+            return vehicleStates.Any(vehicle => vehicle.CurrentLocation == tag.ToString());
+        }
+
+        /// <summary>
+        /// 設備是否有任務進行中:條件 任一訂單包含起點
+        /// </summary>
+        /// <param name="eq"></param>
+        /// <returns></returns>
+        private static bool IsEqOrderRunningAsSourceAndEqNotUnloadDone(clsEQ eq)
+        {
+
+            List<clsTaskDto> list = new();
+            list.AddRange(DatabaseCaches.TaskCaches.InCompletedTasks);
+            list.AddRange(DatabaseCaches.TaskCaches.RunningTasks);
+            var order = list.FirstOrDefault(order => order.From_Station == eq.EndPointOptions.TagID + "" && order.From_Slot == eq.EndPointOptions.Height + "");
+            if (order == null || order.currentProgress == VehicleMovementStage.Traveling_To_Destine || order.currentProgress == VehicleMovementStage.WorkingAtDestination)
+                return false;
+            return true;
+        }
+
+        private static bool IsRackPortOrderRunningAsSourceAndEqNotUnloadDone(clsPortOfRack rackPort)
+        {
+
+            if (OrderCheck(DatabaseCaches.TaskCaches.InCompletedTasks, rackPort) || OrderCheck(DatabaseCaches.TaskCaches.RunningTasks, rackPort))
+                return true;
+
+            return false;
+
+            bool OrderCheck(List<clsTaskDto> taskCollection, clsPortOfRack rackPort)
+            {
+                var order = taskCollection.FirstOrDefault(order => order.From_Station == rackPort.TagNumbers.FirstOrDefault() + "" && order.From_Slot == rackPort.Properties.Row + "");
+                bool isPortAsSource = order != null && (order.currentProgress == VehicleMovementStage.Traveling_To_Source || order.currentProgress == VehicleMovementStage.WorkingAtSource);
+
+                //作為終點
+                bool isPortAsDestine = null != taskCollection.FirstOrDefault(order => order.To_Station == rackPort.TagNumbers.FirstOrDefault() + "" && order.From_Slot == rackPort.Properties.Row + "");
+                return isPortAsSource || isPortAsDestine;
+            }
+
+        }
+
+        internal static int TryRemoveWaitUnloadEQ(int unloadEq_tag, int unloadEq_slot_height)
+        {
+            return WaitingUnloadEQ.RemoveWhere(eq => eq.EndPointOptions.TagID == unloadEq_tag && eq.EndPointOptions.Height == unloadEq_slot_height);
+        }
     }
 }
