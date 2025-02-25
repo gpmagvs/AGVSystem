@@ -388,6 +388,17 @@ namespace AGVSystem.Controllers
                 {
                     _ = Task.Run(async () =>
                     {
+
+                        bool isMainEQExecuteOrdering()
+                        {
+                            return DatabaseCaches.TaskCaches.RunningTasks.Where(_order => _order.TaskName != order.TaskName)
+                                                                  .Any(_order =>
+                                                                (_order.From_Station_Tag == mainEQ.EndPointOptions.TagID && _order.GetFromSlotInt() == mainEQ.EndPointOptions.Height) ||
+                                                                (_order.To_Station_Tag == mainEQ.EndPointOptions.TagID && _order.GetToSlotInt() == mainEQ.EndPointOptions.Height));
+                        }
+                        if (action == ACTION_TYPE.Load && isMainEQExecuteOrdering())
+                            return;
+
                         bool IsEQZoneAndHasReader = mainEQ.EndPointOptions.IsRoleAsZone && mainEQ.EndPointOptions.IsCSTIDReportable;
                         mainEQ.CancelToEQUpAndLow();
                         if (IsEQZoneAndHasReader)
@@ -415,16 +426,6 @@ namespace AGVSystem.Controllers
             }
             finally
             {
-
-                if (isCarryTask && !normalDone && action == ACTION_TYPE.Unload)
-                {
-                    int removedNum = EQTransferTaskManager.TryRemoveWaitUnloadEQ(order.From_Station_Tag, order.GetFromSlotInt());
-                }
-                if (isCarryTask && !normalDone && action == ACTION_TYPE.Load)
-                {
-                    int removedNum = EQTransferTaskManager.TryRemoveWaitLoadEQ(order.To_Station_Tag, order.GetToSlotInt());
-                }
-
                 if (SystemModes.TransferTaskMode == AGVSystemCommonNet6.AGVDispatch.RunMode.TRANSFER_MODE.LOCAL_AUTO && endPoint.EndPointOptions.IsEmulation)
                 {
                     if (action == ACTION_TYPE.Load)

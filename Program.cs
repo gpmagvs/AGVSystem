@@ -7,8 +7,10 @@ using AGVSystem.Models.Sys;
 using AGVSystem.Models.TaskAllocation.HotRun;
 using AGVSystem.Service;
 using AGVSystem.Service.Aggregates;
+using AGVSystem.Service.LocalAutomationTransfer;
 using AGVSystem.Service.MCS;
 using AGVSystem.TaskManagers;
+using AGVSystemCommonNet6;
 using AGVSystemCommonNet6.Alarm;
 using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.DATABASE;
@@ -39,6 +41,7 @@ using System.Diagnostics;
 using System.Net;
 using System.Reflection;
 using System.Text;
+using static AGVSystem.Models.Automation.AutoTransferSettings;
 using static AGVSystemCommonNet6.MAP.Map;
 using Task = System.Threading.Tasks.Task;
 
@@ -135,6 +138,15 @@ public static class SystemInitializer
         string configRootFolder = builder.Configuration.GetValue<string>("AGVSConfigFolder");
         configRootFolder = string.IsNullOrEmpty(configRootFolder) ? @"C:\AGVS" : configRootFolder;
         logger.Debug($"派車系統參數檔資料夾路徑={configRootFolder}");
+
+        string autoTransferSettingJsonFilePath = Path.Combine(configRootFolder, "DispatchConfigs\\AutoTransferSettings.json");
+
+        if (!File.Exists(autoTransferSettingJsonFilePath))
+            File.WriteAllText(autoTransferSettingJsonFilePath, new AutoTransferSettings().ToJson());
+
+        builder.Configuration.AddJsonFile(autoTransferSettingJsonFilePath, optional: true, true);//嘗試注入測試用   
+        builder.Services.Configure<AutoTransferSetting>(builder.Configuration.GetSection("AutoTransfer"));
+
 
         AGVSConfigulator.Init(configRootFolder);
         InitializeDatabase(logger);
@@ -297,6 +309,7 @@ public static class WebAppInitializer
         builder.Services.AddScoped<SECSConfigsService>(service => _secsConfigsService);
         builder.Services.AddScoped<TrafficStateDataQueryService>();
         builder.Services.AddScoped<SystemModesAggregateService>();
+        builder.Services.AddSingleton<LocalAutomationTransferSettingService>();
         builder.Services.AddSingleton<DBDataService>();
         //builder.Services.AddSingleton<EQIOStatusMonitorBackgroundService>(provider => qIOStatusMonitorBackgroundService);
         builder.Services.AddHostedService<DatabaseBackgroundService>();
@@ -307,6 +320,11 @@ public static class WebAppInitializer
         builder.Services.AddHostedService<EquipmentsCollectBackgroundService>();
         builder.Services.AddHostedService<RackPortDoubleIDMonitor>();
         builder.Services.AddHostedService<TaskManagerInitService>();
+
+        //builder.Services.AddSingleton<clsOptimizeAGVDispatcher>(optimizedVehicleDispatcher);
+
+        builder.Services.AddHostedService<LocalAutomationTransferService>();
+
         //builder.Services.AddHostedService<EQIOStatusMonitorBackgroundService>(provider => qIOStatusMonitorBackgroundService);
     }
 

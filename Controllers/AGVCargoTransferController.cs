@@ -45,7 +45,6 @@ namespace AGVSystem.Controllers
                 await Task.Delay(300);
             }
             (bool confirm, removedCarrierID, string message) = await _rackCargoStatusContorlService.RemoveRackCargoID(tagNumber, slot, this.GetType().Name, isByAgvUnloadend: true);
-            int removedNum = EQTransferTaskManager.TryRemoveWaitUnloadEQ(tagNumber, slot);
 
             if (isEmuEqStation)
             {
@@ -80,9 +79,6 @@ namespace AGVSystem.Controllers
             if (order != null && order.soucePortID == agvID && (order.Carrier_ID.ToUpper().Contains("UN") || order.Carrier_ID.ToUpper().Contains("MI")))
                 cargoIDToLoad = order.Carrier_ID;
             await _rackCargoStatusContorlService.AddRackCargoID(tagNumber, slot, cargoIDToLoad, this.GetType().Name, isByAgvLoadend: true, order: order);
-
-            int removedNum = EQTransferTaskManager.TryRemoveWaitLoadEQ(tagNumber, slot);
-
             //await MCSCIMService.CarrierRemoveCompletedReport(cargoID, agvID, "", 1);
 
             //if (isEmuEqStation)
