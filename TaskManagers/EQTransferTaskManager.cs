@@ -63,6 +63,8 @@ namespace AGVSystem.TaskManagers
             public string zoneID { get; set; } = "";
 
             public string carrierIDMounted { get; set; } = string.Empty;
+
+            public RACK_CONTENT_STATE outputRackType { get; set; } = RACK_CONTENT_STATE.UNKNOWN;
         }
 
         public static (bool confirm, ALARMS alarm_code, string message, string message_en, object obj, Type objtype) CheckLoadUnloadStation(int station_tag, int LayerorSlot, ACTION_TYPE actiontype, out DeviceIDInfo deviceIDInfo, bool check_rack_move_out_is_empty_or_full = true, bool bypasseqandrackckeck = false)
@@ -85,6 +87,7 @@ namespace AGVSystem.TaskManagers
                     return new(false, ALARMS.EQ_TAG_NOT_EXIST_IN_CURRENT_MAP, $"設備站點TAG-{station_tag},EQ不存在於當前地圖", $"Tag of EQ Station({station_tag}) not exist on current map", null, null);
                 deviceIDInfo.portID = Eq.EndPointOptions.DeviceID;
                 deviceIDInfo.carrierIDMounted = Eq.PortStatus.CarrierID;
+                deviceIDInfo.outputRackType = Eq.EndPointOptions.SpeficRackContentOutput;
                 if (Eq.EndPointOptions.IsRoleAsZone && TryGetZoneIDOfEqLocateing(Eq.EndPointOptions.TagID, out string zoneID))
                     deviceIDInfo.zoneID = zoneID;
                 logger.Trace($"AGV請求[{actiontype}]於設備-{MapPoint.Graph.Display}(Tag={station_tag}),設備狀態=>\r\n{Eq.GetStatusDescription()}");
@@ -134,6 +137,7 @@ namespace AGVSystem.TaskManagers
                 {
                     deviceIDInfo.portID = Eq.EndPointOptions.DeviceID;
                     deviceIDInfo.carrierIDMounted = Eq.PortStatus.CarrierID;
+                    deviceIDInfo.outputRackType = Eq.EndPointOptions.SpeficRackContentOutput;
                     if (!Eq.IsConnected)
                         return new(false, ALARMS.Endpoint_EQ_NOT_CONNECTED, $"設備[{Eq.EQName}] 尚未連線,無法確認狀態", $"EQ {Eq.EQName} is not connected, can't confirm status", null, null);
                     if (actiontype == ACTION_TYPE.Unload)
@@ -177,6 +181,7 @@ namespace AGVSystem.TaskManagers
                     deviceIDInfo.zoneID = Rack.EndPointOptions.DeviceID;
                     deviceIDInfo.portID = specificport.GetLocID();
                     deviceIDInfo.carrierIDMounted = specificport.CarrierID;
+                    deviceIDInfo.outputRackType = specificport.StoredRackContentType;
 
                     if (actiontype == ACTION_TYPE.Unload)
                     {
@@ -328,57 +333,64 @@ namespace AGVSystem.TaskManagers
 
                 static async Task BufferToEQTransportPairWork()
                 {
-                    var hasCargoPorts = StaEQPManagager.RackPortsList.Where(port => port.CargoExist && !string.IsNullOrEmpty(port.CarrierID));
-                    var StoredByUpStreamEqPorts = hasCargoPorts.Where(port => port.SourceTag > 0 && port.SourceSlot >= 0);
-                    StoredByUpStreamEqPorts = StoredByUpStreamEqPorts.OrderBy(port => port.InstallTime);
-                    //所有下游可入料的PORT
-
-                    Dictionary<clsPortOfRack, clsEQ> rackPortToEqPairs = StoredByUpStreamEqPorts.ToDictionary(port => port, port => _GetLoadableDownstreamEq(port))
-                                                                                   .Where(pair => pair.Value != null)
-                                                                                   .ToDictionary(pair => pair.Key, pair => pair.Value);
-
-                    foreach (var item in rackPortToEqPairs)
+                    try
                     {
-                        clsPortOfRack port = item.Key;
-                        clsEQ eq = item.Value;
 
-                        if (WaitingLoadEQ.Contains(eq))
-                            continue;
+                        var hasCargoPorts = StaEQPManagager.RackPortsList.Where(port => port.CargoExist && !string.IsNullOrEmpty(port.CarrierID));
+                        var StoredByUpStreamEqPorts = hasCargoPorts.Where(port => port.SourceTag > 0 && port.SourceSlot >= 0);
+                        StoredByUpStreamEqPorts = StoredByUpStreamEqPorts.OrderBy(port => port.InstallTime);
+                        //所有下游可入料的PORT
 
-                        int sourceTag = port.TagNumbers.First();
-                        int sourceSlot = port.Properties.Row;
+                        Dictionary<clsPortOfRack, clsEQ> rackPortToEqPairs = StoredByUpStreamEqPorts.ToDictionary(port => port, port => _GetLoadableDownstreamEq(port))
+                                                                                       .Where(pair => pair.Value != null)
+                                                                                       .ToDictionary(pair => pair.Key, pair => pair.Value);
 
-                        int destinTag = eq.EndPointOptions.TagID;
-                        int destineSlot = eq.EndPointOptions.Height;
-
-                        var wipToEqOrder = new clsTaskDto
+                        foreach (var item in rackPortToEqPairs)
                         {
-                            TaskName = $"*Local-{DateTime.Now.ToString("yyyyMMddHHmmssffff")}",
-                            Action = ACTION_TYPE.Carry,
-                            DesignatedAGVName = "",
-                            From_Station = sourceTag.ToString(),
-                            From_Slot = sourceSlot + "",
-                            To_Station = destinTag.ToString(),
-                            To_Slot = destineSlot + "",
-                            DispatcherName = "Local_Auto",
-                            Priority = 80,
-                            Height = destineSlot
-                        };
+                            clsPortOfRack port = item.Key;
+                            clsEQ eq = item.Value;
 
-                        (bool confirm, ALARMS alarm_code, string message, string message_en) = await TaskManager.AddTask(wipToEqOrder, wipToEqOrder.isFromMCS ? TaskManager.TASK_RECIEVE_SOURCE.REMOTE : TaskManager.TASK_RECIEVE_SOURCE.Local_MANUAL);
-                        if (confirm)
-                        {
-                            WaitingLoadEQ.Add(eq);
+                            if (WaitingLoadEQ.Contains(eq))
+                                continue;
+
+                            int sourceTag = port.TagNumbers.First();
+                            int sourceSlot = port.Properties.Row;
+
+                            int destinTag = eq.EndPointOptions.TagID;
+                            int destineSlot = eq.EndPointOptions.Height;
+
+                            var wipToEqOrder = new clsTaskDto
+                            {
+                                TaskName = $"*Local-{DateTime.Now.ToString("yyyyMMddHHmmssffff")}",
+                                Action = ACTION_TYPE.Carry,
+                                DesignatedAGVName = "",
+                                From_Station = sourceTag.ToString(),
+                                From_Slot = sourceSlot + "",
+                                To_Station = destinTag.ToString(),
+                                To_Slot = destineSlot + "",
+                                DispatcherName = "Local_Auto",
+                                Priority = 80,
+                                Height = destineSlot
+                            };
+
+                            (bool confirm, ALARMS alarm_code, string message, string message_en) = await TaskManager.AddTask(wipToEqOrder, wipToEqOrder.isFromMCS ? TaskManager.TASK_RECIEVE_SOURCE.REMOTE : TaskManager.TASK_RECIEVE_SOURCE.Local_MANUAL);
+                            if (confirm)
+                            {
+                                WaitingLoadEQ.Add(eq);
+                            }
+
                         }
 
+
+                        clsEQ _GetLoadableDownstreamEq(clsPortOfRack rackPort)
+                        {
+                            clsEQ sourceEQ = StaEQPManagager.GetEQByTag(rackPort.SourceTag, rackPort.SourceSlot);
+                            var ValidDownStreamEqList = GetValidDownStreamEqList(sourceEQ);
+                            return ValidDownStreamEqList.FirstOrDefault();
+                        }
                     }
-
-
-                    clsEQ _GetLoadableDownstreamEq(clsPortOfRack rackPort)
+                    catch (Exception ex)
                     {
-                        clsEQ sourceEQ = StaEQPManagager.GetEQByTag(rackPort.SourceTag, rackPort.SourceSlot);
-                        var ValidDownStreamEqList = GetValidDownStreamEqList(sourceEQ);
-                        return ValidDownStreamEqList.FirstOrDefault();
                     }
                 }
 
@@ -466,18 +478,28 @@ namespace AGVSystem.TaskManagers
 
                 static List<clsEQ> GetValidDownStreamEqList(clsEQ sourceEQ)
                 {
-                    List<clsEQ> downstreamLoadableEQList = sourceEQ.DownstremEQ.FindAll(downstrem_eq => !WaitingLoadEQ.Contains(downstrem_eq) && downstrem_eq.IsCreateLoadTaskAble());
-                    List<string> waitOrRunningEQTagStrList = DatabaseCaches.TaskCaches.InCompletedTasks.Select(task => task.To_Station)
-                                                                                                        .ToList();
-                    downstreamLoadableEQList = downstreamLoadableEQList.Where(item => !waitOrRunningEQTagStrList.Contains(item.EndPointOptions.TagID.ToString())).ToList();
-
-                    if (sourceEQ.EndPointOptions.CheckRackContentStateIOSignal)
+                    try
                     {
-                        downstreamLoadableEQList = downstreamLoadableEQList.Where(downstreamEQ => downstreamEQ.EndPointOptions.IsFullEmptyUnloadAsVirtualInput ? true : (sourceEQ.Full_RACK_To_LDULD == downstreamEQ.Full_RACK_To_LDULD) || (sourceEQ.Empty_RACK_To_LDULD == downstreamEQ.Empty_RACK_To_LDULD))
-                                                                           .ToList();
-                    }
+                        if (sourceEQ == null)
+                            return new List<clsEQ>();
+                        List<clsEQ> downstreamLoadableEQList = sourceEQ.DownstremEQ.FindAll(downstrem_eq => !WaitingLoadEQ.Contains(downstrem_eq) && downstrem_eq.IsCreateLoadTaskAble());
+                        List<string> waitOrRunningEQTagStrList = DatabaseCaches.TaskCaches.InCompletedTasks.Select(task => task.To_Station)
+                                                                                                            .ToList();
+                        downstreamLoadableEQList = downstreamLoadableEQList.Where(item => !waitOrRunningEQTagStrList.Contains(item.EndPointOptions.TagID.ToString())).ToList();
 
-                    return downstreamLoadableEQList;
+                        if (sourceEQ.EndPointOptions.CheckRackContentStateIOSignal)
+                        {
+                            downstreamLoadableEQList = downstreamLoadableEQList.Where(downstreamEQ => downstreamEQ.EndPointOptions.IsFullEmptyUnloadAsVirtualInput ? true : (sourceEQ.Full_RACK_To_LDULD == downstreamEQ.Full_RACK_To_LDULD) || (sourceEQ.Empty_RACK_To_LDULD == downstreamEQ.Empty_RACK_To_LDULD))
+                                                                               .ToList();
+                        }
+
+                        return downstreamLoadableEQList;
+
+                    }
+                    catch (Exception ex)
+                    {
+                        throw;
+                    }
                 }
 
                 static async Task<bool> AddOrderToDatabase(clsEQ sourceEQ, clsTaskDto taskOrder)

@@ -152,12 +152,14 @@ namespace AGVSystem.Service
                         rackport.InstallTime = item.UpdateTime;
                         rackport.SourceTag = item.SourceEqTag;
                         rackport.SourceSlot = item.SourceEqSlot;
+                        rackport.StoredRackContentType = item.rackContentType;
                         if (eq != null && eq.EndPointOptions.IsRoleAsZone)
                         {
                             eq.PortStatus.CarrierID = _materialID;
                             eq.PortStatus.InstallTime = item.UpdateTime;
                             eq.PortStatus.SourceTag = item.SourceEqTag;
                             eq.PortStatus.SourceSlot = item.SourceEqSlot;
+                            eq.PortStatus.StoredRackContentType = item.rackContentType;
                         }
                     }
                 }

@@ -5,6 +5,7 @@ using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.Microservices.MCS;
 using EquipmentManagment.Emu;
 using EquipmentManagment.Manager;
+using EquipmentManagment.WIP;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -31,6 +32,10 @@ namespace AGVSystem.Controllers
         [HttpPost("UnloadCargoFromPort")]
         public async Task<IActionResult> UnloadCargoFromPort(string taskName, string agvName, int tagNumber, int slot)
         {
+            if (IsSimulationRackPort(tagNumber, slot, out clsPortOfRack rackPort, out clsWIPEmu wipEmu))
+            {
+                wipEmu.OffExistSensor(rackPort);
+            }
             string removedCarrierID = string.Empty;
             bool isEmuEqStation = IsSimulationEq(tagNumber, slot, out EQEmulatorBase emulator);
             if (isEmuEqStation)
@@ -63,6 +68,11 @@ namespace AGVSystem.Controllers
         [HttpPost("LoadCargoToPort")]
         public async Task<IActionResult> LoadCargoToPort(string taskName, string agvName, int tagNumber, int slot, string cargoID = "")
         {
+            if (IsSimulationRackPort(tagNumber, slot, out clsPortOfRack rackPort, out clsWIPEmu emulator))
+            {
+                emulator.OnExistSensor(rackPort);
+                await Task.Delay(500);
+            }
             var agvState = dbContext.AgvStates.FirstOrDefault(agv => agv.AGV_Name == agvName);
             string agvID = agvState.AGV_ID;
             clsTaskDto? order = dbContext.Tasks.AsNoTracking().FirstOrDefault(task => task.TaskName == taskName);
@@ -83,7 +93,18 @@ namespace AGVSystem.Controllers
             return Ok();
         }
 
+        bool IsSimulationRackPort(int tag, int slot, out clsPortOfRack rackPort, out clsWIPEmu emulator)
+        {
+            emulator = null;
+            rackPort = null;
+            rackPort = StaEQPManagager.RackPortsList.FirstOrDefault(port => port.TagNumbers.Contains(tag) && port.Properties.Row == slot);
+            if (rackPort == null)
+                return false;
 
+            StaEQPEmulatorsManagager.WIPEmulators.TryGetValue(rackPort.GetParentRack().EQName, out emulator);
+
+            return emulator != null;
+        }
         bool IsSimulationEq(int _tag, int _slot, out EQEmulatorBase emulator)
         {
             emulator = null;

@@ -53,9 +53,8 @@ public class Program
             Console.WriteLine($"AGVSystem Program is already running({string.Join(",", pids)})");
             Console.WriteLine("Press any key to exit...");
             Console.ReadKey(true);
+            Environment.Exit(0);
         }
-
-        Console.WriteLine("args:" + string.Join(",", args));
         foreach (var arg in args)
         {
             if (arg.Equals("--hotrun", StringComparison.OrdinalIgnoreCase))
@@ -179,7 +178,6 @@ public static class SystemInitializer
                 //
             });
         }
-
         return builder;
     }
     private static void InitializeDatabase(Logger logger)

@@ -62,6 +62,9 @@ namespace AGVSystem.Models.EQDevices
 
                     string tunid = isTraySensorOn ? await AGVSConfigulator.GetTrayUnknownFlowID() : await AGVSConfigulator.GetRackUnknownFlowID();
 
+                    port.StoredRackContentType = clsEQ.RACK_CONTENT_STATE.UNKNOWN;
+                    rackService.UpdateMaterialRackContentOfDataBase(port, clsEQ.RACK_CONTENT_STATE.UNKNOWN);
+
                     if (string.IsNullOrEmpty(port.CarrierID))
                     {
                         await Task.Delay(600);
@@ -101,6 +104,8 @@ namespace AGVSystem.Models.EQDevices
         /// <param name="port"></param>
         private static void HandlePortCargoChangeToDisappear(object? sender, clsPortOfRack port)
         {
+            port.StoredRackContentType = clsEQ.RACK_CONTENT_STATE.UNKNOWN;
+            rackService.UpdateMaterialRackContentOfDataBase(port, clsEQ.RACK_CONTENT_STATE.UNKNOWN);
             BrocastRackData();
             Task.Factory.StartNew(async () =>
             {

@@ -473,6 +473,7 @@ namespace AGVSystem.TaskManagers
             taskData.sourceZoneID = sourceDeviceIDInfo.zoneID;
             taskData.destinePortID = destineDeviceIDInfo.portID;
             taskData.destineZoneID = destineDeviceIDInfo.zoneID;
+            taskData.sourceRackType = sourceDeviceIDInfo.outputRackType;
         }
 
         private static void SetUpHighestPriorityState(clsTaskDto taskData)

@@ -4,12 +4,15 @@ using AGVSystemCommonNet6.Configuration;
 using AGVSystemCommonNet6.DATABASE;
 using AGVSystemCommonNet6.Material;
 using AGVSystemCommonNet6.Microservices.MCS;
+using AGVSystemCommonNet6.PartsModels;
 using EquipmentManagment.MainEquipment;
 using EquipmentManagment.Manager;
 using EquipmentManagment.WIP;
 using Microsoft.EntityFrameworkCore;
 using NLog;
 using System;
+using static EquipmentManagment.MainEquipment.clsEQ;
+using Task = System.Threading.Tasks.Task;
 
 namespace AGVSystem.Service
 {
@@ -188,21 +191,30 @@ namespace AGVSystem.Service
                 int _sourceTag = order == null || order.Action != AGVSystemCommonNet6.AGVDispatch.Messages.ACTION_TYPE.Carry || order.IsFromAGV ? -1 : order.From_Station_Tag;
                 int _sourceSlot = order == null || order.Action != AGVSystemCommonNet6.AGVDispatch.Messages.ACTION_TYPE.Carry || order.IsFromAGV ? -1 : order.GetFromSlotInt();
 
+                RACK_CONTENT_STATE _rackContentType = order != null && isByAgvLoadend ? order.sourceRackType : RACK_CONTENT_STATE.UNKNOWN;
+
                 DateTime installTime = DateTime.Now;
                 port.VehicleLoadToPortFlag = isByAgvLoadend;
                 port.CarrierID = cargoID;
                 port.InstallTime = installTime;
                 port.SourceTag = _sourceTag;
                 port.SourceSlot = _sourceSlot;
+                port.StoredRackContentType = _rackContentType;
                 if (eq != null)
                 {
                     eq.PortStatus.CarrierID = cargoID;
                     eq.PortStatus.InstallTime = installTime;
                     eq.PortStatus.SourceTag = _sourceTag;
                     eq.PortStatus.SourceSlot = _sourceSlot;
+                    eq.PortStatus.StoredRackContentType = _rackContentType;
                 }
 
-                UpdateMaterialIDStoreOfDataBase(tagNumber, slot, cargoID, _sourceTag, _sourceSlot);
+                _ = UpdateMaterialRackContentOfDataBase(tagNumber, slot, _rackContentType).ContinueWith(async t =>
+                {
+                    await UpdateMaterialIDStoreOfDataBase(tagNumber, slot, cargoID, _sourceTag, _sourceSlot);
+                });
+
+
                 if (!isByAgvLoadend)
                 {
                     _waitCarrierRemovedRptDone.Wait(TimeSpan.FromSeconds(10));
@@ -259,6 +271,31 @@ namespace AGVSystem.Service
         internal async Task UpdateMaterialIDStoreOfDataBase(clsPortOfRack port, string carrierID, int sourceTag, int sourceSlot)
         {
             await UpdateMaterialIDStoreOfDataBase(port.TagNumbers.FirstOrDefault(), port.Properties.Row, carrierID, sourceTag, sourceSlot);
+        }
+        internal async Task UpdateMaterialRackContentOfDataBase(clsPortOfRack port, RACK_CONTENT_STATE rackContentType = RACK_CONTENT_STATE.UNKNOWN)
+        {
+            await UpdateMaterialRackContentOfDataBase(port.TagNumbers.FirstOrDefault(), port.Properties.Row, rackContentType);
+        }
+        internal async Task UpdateMaterialRackContentOfDataBase(int tagNumber, int slot, RACK_CONTENT_STATE rackContentType = RACK_CONTENT_STATE.UNKNOWN)
+        {
+            try
+            {
+                await dbSemaphoreSlim.WaitAsync();
+                DateTime updateTime = DateTime.Now;
+                foreach (var item in _dbContext.StationStatus.Where(data => data.StationTag == tagNumber.ToString() && data.StationRow == slot).ToList())
+                {
+                    item.rackContentType = rackContentType;
+                    await _dbContext.SaveChangesAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex);
+            }
+            finally
+            {
+                dbSemaphoreSlim.Release();
+            }
         }
 
         private async Task UpdateMaterialIDStoreOfDataBase(int tagNumber, int slot, string materialID, int sourceTag, int sourceSlot)
