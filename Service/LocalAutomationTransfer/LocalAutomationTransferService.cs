@@ -102,7 +102,7 @@ namespace AGVSystem.Service.LocalAutomationTransfer
 
 
                         Dictionary<clsPortOfRack, List<UnloadPortFinder.PortInfoDto>> RackPortUnloadToCandicatesKeyPairs = StaEQPManagager.RackPortsList
-                       .Where(port => port.CargoExist && !string.IsNullOrEmpty(port.CarrierID))
+                       .Where(port => port.CargoExist && !string.IsNullOrEmpty(port.CarrierID) && port.StoredRackContentType != RACK_CONTENT_STATE.UNKNOWN)
                        .Where(port => !IsRackPortOrderRunningAsSourceAndEqNotUnloadDone(port))
                        .ToDictionary(port => port, port =>
                        {
