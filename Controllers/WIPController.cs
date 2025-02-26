@@ -3,6 +3,7 @@ using AGVSystem.Models.Map;
 using AGVSystem.Service;
 using AGVSystemCommonNet6.MAP;
 using EquipmentManagment.Device.Options;
+using EquipmentManagment.MainEquipment;
 using EquipmentManagment.Manager;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -21,10 +22,11 @@ namespace AGVSystem.Controllers
         }
 
         [HttpPost("ModifyCargoID")]
-        public async Task<IActionResult> ModifyCargoID(string WIPID, string PortID, string NewCargoID)
+        public async Task<IActionResult> ModifyCargoID(string WIPID, string PortID, string NewCargoID, clsEQ.RACK_CONTENT_STATE NewCargoType)
         {
             //StaEQPManagager.WIPController.ModifyCargoID(WIPID, PortID, NewCargoID);
             (bool confirm, string message) = await _rackControlService.AddRackCargoIDManual(WIPID, PortID, NewCargoID, this.GetType().Name, false);
+            await _rackControlService.ModifyCargoType(WIPID, PortID, NewCargoType);
             return Ok(new { confirm = confirm, message = message });
         }
 

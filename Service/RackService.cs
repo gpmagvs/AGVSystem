@@ -411,5 +411,29 @@ namespace AGVSystem.Service
             int fail = result.Count(bol => !bol);
             return (total, success, fail);
         }
+
+        internal async Task<(bool, string)> ModifyCargoType(string WIPID, string PortID, RACK_CONTENT_STATE newCargoType)
+        {
+            try
+            {
+
+                if (TryGetPort(WIPID, PortID, out clsPortOfRack port))
+                {
+                    port.StoredRackContentType = newCargoType;
+                    await UpdateMaterialRackContentOfDataBase(port, port.StoredRackContentType);
+                    return (true, "");
+                }
+                else
+                    return (false, "Port Not Found");
+            }
+            catch (Exception ex)
+            {
+                return (false, ex.Message);
+            }
+            finally
+            {
+                EQDeviceEventsHandler.BrocastRackData();
+            }
+        }
     }
 }

@@ -62,14 +62,16 @@ namespace AGVSystem.Models.EQDevices
 
                     string tunid = isTraySensorOn ? await AGVSConfigulator.GetTrayUnknownFlowID() : await AGVSConfigulator.GetRackUnknownFlowID();
 
-                    port.StoredRackContentType = clsEQ.RACK_CONTENT_STATE.UNKNOWN;
-                    rackService.UpdateMaterialRackContentOfDataBase(port, clsEQ.RACK_CONTENT_STATE.UNKNOWN);
 
                     if (string.IsNullOrEmpty(port.CarrierID))
                     {
                         await Task.Delay(600);
                         UpdateCarrierID(tunid);
                         NotifyServiceHelper.INFO($"{portLocID}因非搬運過程但偵測到在席有貨,已生成未知帳-{tunid}");
+
+                        port.StoredRackContentType = clsEQ.RACK_CONTENT_STATE.UNKNOWN;
+                        rackService.UpdateMaterialRackContentOfDataBase(port, clsEQ.RACK_CONTENT_STATE.UNKNOWN);
+
                         await MCSCIMService.CarrierInstallCompletedReport(tunid, locID, zoneID, 0);
                         await Task.Delay(100);
                         BrocastRackData();
@@ -104,8 +106,6 @@ namespace AGVSystem.Models.EQDevices
         /// <param name="port"></param>
         private static void HandlePortCargoChangeToDisappear(object? sender, clsPortOfRack port)
         {
-            port.StoredRackContentType = clsEQ.RACK_CONTENT_STATE.UNKNOWN;
-            rackService.UpdateMaterialRackContentOfDataBase(port, clsEQ.RACK_CONTENT_STATE.UNKNOWN);
             BrocastRackData();
             Task.Factory.StartNew(async () =>
             {
@@ -116,7 +116,12 @@ namespace AGVSystem.Models.EQDevices
                     //TODO 系統提示 [有帳無料]
                     NotifyServiceHelper.WARNING($"[{port.GetParentRack().RackOption.Name} - Port:{port.PortNo}] 現在有帳無料!");
                 }
-
+                else
+                {
+                    port.StoredRackContentType = clsEQ.RACK_CONTENT_STATE.UNKNOWN;
+                    await rackService.UpdateMaterialRackContentOfDataBase(port, clsEQ.RACK_CONTENT_STATE.UNKNOWN);
+                    BrocastRackData();
+                }
                 await HandleZoneCapacityChanged(port.GetParentRack());
             });
         }
