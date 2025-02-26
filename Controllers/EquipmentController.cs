@@ -115,7 +115,7 @@ namespace AGVSystem.Controllers
         }
 
         [HttpPost("SaveEQOptions")]
-        public async Task<IActionResult> SaveEQOptions(List<clsEndPointOptions> datas)
+        public async Task<IActionResult> SaveEQOptions([FromBody] List<clsEndPointOptions> datas)
         {
             //TODO 檢查是否有重複的設定 , 包含 Tag重複、IP:Port 重複、ComPort 重複
             var eqNames = datas.Select(data => data.Name).ToList().Distinct();
